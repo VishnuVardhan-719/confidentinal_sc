@@ -5,7 +5,7 @@
 **Master instructions:** v2.3 — pre-start review addendum to v2.2, preserving source recovery and agent workflow  
 **Prepared:** 17 November 2026  
 **Target milestone:** 23 November 2026 (acceptance/staging candidate; not a promise of production readiness)  
-**Current state:** PRE-EXECUTION / OWNER REVIEW — no development authorized by this review alone  
+**Current state:** EXECUTING since 2026-11-17 (owner gave explicit start; R00 done, S00/R01 drafted, F01 built). Production readiness is NOT claimed.  
 **Human controller:** Project owner  
 **Lead orchestrator:** Claude Code CLI  
 **Delegated engineering agents:** OpenAI Codex CLI and Kiro CLI  
@@ -299,7 +299,7 @@ Mandatory security rules:
 - No user can self-grant admin or privileged roles.
 - Admin verification does not imply clinical access.
 - Staff see only minimum necessary data for their assignment.
-- Provider exact address/contact is disclosed only after acceptance and only to authorized assigned personnel.
+- Patient exact address/contact is disclosed to the provider only after acceptance and only to authorized assigned personnel.
 - Family relationships do not grant record access; explicit scoped consent is required.
 - Private IDs, reports and clinical documents never live in public buckets.
 - Signed links are short-lived and each issuance is authorized.
@@ -527,7 +527,7 @@ Proceed in dependency order. Do not spend the whole session planning. Reconnaiss
 - Category-specific states and data.
 
 ## Phase 6 — Pay-after, payment test mode and notifications
-- Pay-after collection records and receipts.
+- Pay-after collection records; receipts/invoices only after the legal issuer decision (D25).
 - Payment ledger/state separation.
 - Razorpay sandbox only if core flows are stable.
 - Webhook inbox, deduplication and reconciliation tests.
