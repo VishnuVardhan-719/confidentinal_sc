@@ -4,7 +4,7 @@ import { ErrorState } from "@/components/ui/states";
 
 export default function RouteError({ retry }: { error: unknown; retry: () => void }) {
   return (
-    <div className="container page">
+    <div className="frame page">
       <header className="page-header">
         <h1>Something went wrong</h1>
       </header>

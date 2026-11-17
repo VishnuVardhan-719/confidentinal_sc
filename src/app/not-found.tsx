@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Page not found" };
 
 export default function NotFound() {
   return (
-    <div className="container page">
+    <div className="frame page">
       <header className="page-header">
         <h1>Page not found</h1>
         <p className="lead">The address may be mistyped, or the page may have moved.</p>

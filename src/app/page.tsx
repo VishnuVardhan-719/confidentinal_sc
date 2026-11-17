@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <>
       <section className="hero" aria-labelledby="hero-title">
-        <div className="container hero-grid">
+        <div className="frame hero-grid">
           <div className="hero-copy">
             <h1 id="hero-title">
               Care you <em>choose</em>, arranged with clarity.
@@ -46,7 +46,7 @@ export default function Home() {
       </section>
 
       <section className="section" aria-labelledby="services-title">
-        <div className="container">
+        <div className="frame">
           <div className="section-header">
             <h2 id="services-title">Four kinds of care</h2>
             <p>What each service is for, and where it stops.</p>
@@ -56,7 +56,7 @@ export default function Home() {
       </section>
 
       <section className="band" aria-labelledby="flow-title">
-        <div className="container band-grid">
+        <div className="frame band-grid">
           <div className="band-intro">
             <h2 id="flow-title">You choose. The provider accepts.</h2>
             <p>A request only becomes a booking when the provider says yes. Until then, nothing is confirmed.</p>

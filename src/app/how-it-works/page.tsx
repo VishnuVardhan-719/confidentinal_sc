@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function HowItWorksPage() {
   return (
-    <div className="container page">
+    <div className="frame page">
       <header className="page-header">
         <h1>You choose. The provider accepts.</h1>
         <p className="lead">This is how the service is designed to work once booking opens.</p>

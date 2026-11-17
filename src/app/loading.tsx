@@ -2,7 +2,7 @@ import { Loading } from "@/components/ui/states";
 
 export default function RouteLoading() {
   return (
-    <div className="container page">
+    <div className="frame page">
       <Loading label="Loading page" />
     </div>
   );

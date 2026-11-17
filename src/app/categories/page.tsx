@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function CategoriesPage() {
   return (
-    <div className="container page">
+    <div className="frame page">
       <header className="page-header">
         <h1>Four ways to arrange care</h1>
         <p className="lead">

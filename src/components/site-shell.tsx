@@ -20,7 +20,7 @@ function Brand() {
 export function SiteHeader() {
   return (
     <header className="site-header">
-      <div className="container header-inner">
+      <div className="frame header-inner">
         <Link className="brand" href="/" aria-label="SureCure Visit home">
           <Brand />
         </Link>
@@ -33,7 +33,7 @@ export function SiteHeader() {
 export function SiteFooter() {
   return (
     <footer className="site-footer">
-      <div className="container footer-inner">
+      <div className="frame footer-inner">
         <div>
           <p className="brand">
             <Brand />

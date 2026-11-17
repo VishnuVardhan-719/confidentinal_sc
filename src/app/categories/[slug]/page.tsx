@@ -23,7 +23,7 @@ export default async function CategoryPage({ params }: Props) {
   if (!category) notFound();
 
   return (
-    <div className="container page">
+    <div className="frame page">
       <nav className="breadcrumb" aria-label="Breadcrumb">
         <ol>
           <li>
