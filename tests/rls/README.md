@@ -2,6 +2,38 @@
 
 ## I02 provider onboarding handoff — 2026-11-17
 
+### Kiro re-review N2/N3/N6 — latest follow-up
+
+Owner confirmed no shared database applied I02 and authorized editing it in place; no commit.
+N2: readiness ignores pending reservations without objects. Required category evidence
+still needs a current uploaded object; uploaded pending evidence still must be current,
+and verified evidence must retain its object. Optional reservations stay pending and
+are excluded from approval's reviewed IDs. This supersedes the earlier strict M3
+expectation that every pending reservation must have bytes.
+N3: the 50-document cap counts only pending and verified rows. Rejected/superseded
+history no longer exhausts it. Historical metadata/files remain unbounded by this cap;
+retention/cleanup remains a separate operational follow-up.
+
+N6 is an I01-side follow-up: set_organization_member updates membership_role but only
+resets acceptance for invitation, scope expansion or disabled-member reactivation.
+An active staff-to-manager promotion with unchanged scopes retains accepted_at, so
+I02 org_admin treats it as accepted. The I01 follow-up must set status=invited and
+accepted_at=NULL on role promotion; accept_organization_invite must then record
+a fresh accepted_at. Add same-scope promotion/re-acceptance coverage there. I01's
+migration is unchanged in this round; this finding remains open for that owner.
+
+SQL regressions reproduced credentials_required for the optional reservation and
+document_limit for 50 historical rows before the fixes. Now cover submit, approval,
+suspension/re-approval, exact reviewed IDs, required missing bytes, expired uploaded
+optional evidence, missing verified objects, and enforcement at 50 pending/verified.
+Local DB received only the two revised function definitions. Independent narrow
+review found no readiness/authorization defect.
+
+Actual verification: lint and typecheck exited 0; npm test: 8 files passed/1 skipped,
+78 tests passed/1 skipped; production build passed, 14/14 static pages generated.
+Both SQL suites passed directly from disk and rolled back fixtures. The opt-in Storage
+HTTP test was not rerun because these changes affect SQL readiness/counting only.
+
 ### CodeRabbit submission profile guard — latest follow-up
 
 Base commit `6c31773`; owner explicitly authorized editing the I02 migration in place.
