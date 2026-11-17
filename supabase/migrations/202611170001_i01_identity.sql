@@ -375,8 +375,8 @@ grant execute on function public.update_self_profile(text,text,integer), public.
 
 -- Restrictive policies are fail-closed even if permissive policies are added by
 -- accident. I02 must replace these only alongside document metadata authorization.
-alter table storage.objects enable row level security;
-alter table storage.buckets enable row level security;
+-- RLS is already enabled on storage.objects/buckets by Supabase Storage (the migration role
+-- is not their owner, so ALTER TABLE fails on a real project). Only add restrictive policies.
 create policy i01_objects_locked on storage.objects as restrictive for all to anon, authenticated using (false) with check (false);
 create policy i01_buckets_locked on storage.buckets as restrictive for all to anon, authenticated using (false) with check (false);
 commit;

@@ -57,7 +57,7 @@ All four application checks passed. The previous Google font download failure di
 not recur; no frontend files were changed. Changed-file review covered the auth
 routes, strict validation, user-token client, migration and SQL authorization suite.
 Diff whitespace checks and a separate check of scoped untracked files passed.
-SQL/RLS/migration tests: **NOT RUN**, Docker Desktop unavailable as stated in task;
+SQL/RLS/migration tests: PASSED later on local Supabase (see "Verification update" at the end); originally NOT RUN, Docker was down;
 no DB or external account was touched. Unit tests use boundary mocks for Supabase;
 they do not prove live RLS/Auth behavior. Integration/release still requires actual
 migration execution, SQL assertions and Auth/Storage HTTP tests.
@@ -140,12 +140,12 @@ count; exact idempotent retries are resolved before the cap, without creating ro
 F13: SQL assertions cover aal1; future/expired/revoked capabilities; org scope and
 audit-only exclusion; disabled profiles/orgs; anonymous table reads/RPC privileges;
 private helper denial; empty definer search_path and PUBLIC/anon EXECUTE revokes;
-Storage denial and absence of any public bucket. SQL remains NOT RUN.
+Storage denial and absence of any public bucket. SQL suite PASSED on local Supabase (see end).
 The invitation validation tests first failed (2 failures), then passed after the fix.
 Final verification: lint and typecheck passed; Vitest 6 files / 46 tests passed;
 Next.js production compilation and generation of all 12 static pages passed.
 
-- F3 OPEN: Storage RLS/DDL ownership must be verified on a disposable real Supabase
+- F3 FIXED (verified on local Supabase; see end). Was: Storage RLS/DDL ownership must be verified on a disposable real Supabase
   target, including storage.objects/buckets ALTER and policy creation as the actual
   migration role. A managed-table permission failure may abort this transaction.
   Public buckets bypass object-read RLS via public URLs; test absence using a trusted
@@ -172,7 +172,7 @@ Next.js production compilation and generation of all 12 static pages passed.
   SQL checks cover fresh scope acceptance, reactivation, and stale-consent bypass.
 - Actor profile locking uses FOR NO KEY UPDATE so reciprocal invitations can obtain
   FK KEY SHARE locks. The two-connection regression procedure is recorded at the
-  end of i01_identity.sql: **NOT RUN** without the local database.
+  end of i01_identity.sql: still NOT RUN (needs a two-connection harness).
 - Auth retryable/network/5xx failures return 503 identity_unavailable; known invalid
   sessions remain 401, and upstream throttling remains 429. Login/refresh/signup
   use the same returned-error classification; error details remain private.
@@ -181,7 +181,7 @@ Next.js production compilation and generation of all 12 static pages passed.
   most 100 rows. No pagination contract was added in this task.
 - N3 DEFERRED: invitation expiry and a per-organization invitation cap. Pending
   invitations currently have no expiry; do not claim these abuse controls exist.
-- F3 OPEN: actual Supabase Storage DDL ownership/RLS/public-URL behavior still needs
+- F3 FIXED, still needs Storage HTTP test: actual Supabase Storage DDL ownership/RLS/public-URL behavior still needs
   verification on the intended disposable local target. No database migration,
   SQL/RLS suite or concurrency test was executed here.
 
@@ -192,3 +192,10 @@ npm run typecheck exit 0 (Types generated successfully); npm test exit 0
 in 2.2s; Generating static pages 13/13 in 641ms). Commands ran the unchanged package
 scripts through Windows Node/npm. Scoped whitespace validation passed.
 Changes remain uncommitted on task/I01-auth-rls. No SQL execution or migration applied.
+
+## Verification update (2026-11-17, local Supabase on Docker)
+- `supabase start` applies `202611170001_i01_identity.sql` cleanly (project id `surecurevisit`, ports 584xx so it does not collide with other local stacks).
+- First attempt FAILED: `ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY` raised `must be owner of table objects` (Kiro F3, CodeRabbit major). Fixed by removing both ALTER statements; Supabase already enables RLS on those tables. The restrictive deny-all policies remain and apply.
+- `tests/rls/i01_identity.sql` run with `psql -v ON_ERROR_STOP=1` against the local DB: all assertions passed, fixtures rolled back.
+- Command: `docker exec -i supabase_db_surecurevisit psql -U postgres -d postgres -v ON_ERROR_STOP=1 < tests/rls/i01_identity.sql`
+- Still NOT done: reciprocal-invite two-connection concurrency test, Auth/Storage HTTP tests, list pagination, invite expiry/cap.
