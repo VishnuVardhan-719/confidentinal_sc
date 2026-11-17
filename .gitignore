@@ -10,3 +10,5 @@ coverage/
 *.log
 _archive/
 .worktrees/
+tsconfig.tsbuildinfo
+next-env.d.ts
