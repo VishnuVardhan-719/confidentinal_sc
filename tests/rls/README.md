@@ -1,5 +1,107 @@
 # I01 identity and follow-up verification handoff
 
+## C01 Kiro review fixes — current handoff, 17 November 2026
+
+Uncommitted changes to `202611170004_c01_catalog.sql` are authorized in place.
+Apply the complete edited file to a disposable I01/I02/I01-followups baseline;
+do not rerun its CREATE statements over an already migrated shared database.
+This verification uses a schema-only local clone retaining original ownership,
+removes only C01 objects inside that disposable DB, then applies the edited file.
+The shared local database is not reset or migrated by this review-fix task.
+Existing multi-block migration history is retained; no new migration number is
+introduced. Deployments that already recorded 004 need explicit integration
+reconciliation and must not assume an edit to 004 will automatically run (M2).
+
+Implemented review policy: M1 price range is 0 through `10000000000` paise,
+enforced by a DB CHECK, RPC validation and Zod. Zero remains accepted pending the
+owner's minimum-price decision. M3 checks run after provider locking and after
+idempotent-replay lookup: at most 100 services (all statuses), 200 price versions
+per service (all history), and 50 non-revoked areas (including rejected/expired
+rows). Replay at each cap succeeds; a new N+1th create fails `23514` without
+changing any counter or closing the current price. Revoked coverage history and
+idempotency/audit history remain unbounded; retention is a separate operation.
+L6 duration is 1–10080 minutes in SQL and Zod.
+
+L2 approvals require a finite future expiry within 12 calendar months. Zod uses
+UTC calendar arithmetic including leap-day clamping; SQL is authoritative.
+L3 re-proposing the same expired approved PIN under the provider lock retires
+the old row to revoked, writes an immutable expiry event/audit record and creates
+a fresh proposed area. An org manager can request renewal, but independent
+`coverage:verify` plus MFA is still required to approve it. Unexpired approved or
+already proposed coverage keeps its unique-key protection.
+
+L4 contract change: `POST /api/provider/coverage`'s `expectedVersion` now refers
+to the **coverage proposal counter**, initially 1, not `providers.version`.
+`GET /api/provider/services?providerId=...` returns `coverageVersion` alongside
+the unchanged `providerVersion`. `provider_catalog_counters` is private/RLS,
+has no client write grants and advances only on successful fresh proposals.
+Provider onboarding versions are never changed by coverage creation/renewal.
+Each area's own version still controls review and withdrawal. Exact idempotent
+retries recheck authority and return the original area without advancing counters.
+
+Reviewer queue sorts pending (`proposed`) first, then each group's oldest
+`created_at`, with UUID as a final deterministic tie. Queue results now include
+`created_at`; HTTP `nextCursor` is `priority,created_at,area_uuid` (0 pending,
+1 reviewed). The RPC accepts `p_after`, `p_after_priority`, `p_after_created_at`
+together or all null. Cursor scope and immutable timestamp are checked; unknown
+or inaccessible cursors return the same 422. The original priority is preserved
+when a reviewer approves the last row of a page, so remaining pending work is
+not skipped. This is live continuation, not a snapshot; other records can still
+change between pages. Older UUID-only queue cursors must be discarded.
+
+Document-only findings, deliberately unchanged:
+
+- **L1:** public discovery stays `private, no-store` and rechecks credential/price/
+  coverage eligibility per candidate. There is no edge/platform rate limiter;
+  callers can use the guest RPC directly. Production-scale query plans, upstream
+  throttling and a revocation-safe cache/filter strategy need a separate review.
+  Do not add caching that can keep revoked providers publicly visible.
+- **L5:** service titles and provider-chosen `terms_version` can change without
+  moderation. Titles are not vetted credential claims and a terms label is not a
+  platform-approved policy identifier. Bind accepted policies in B01 and decide
+  moderation/PII rules separately; this task adds no filtering or moderation.
+- **L7:** an I02 provider verifier can read an authorized provider skeleton but
+  cannot read C01's owner/manager-only services, so the private catalog route can
+  return 200 with empty lists versus 404 for an unknown provider. This existence
+  distinction is limited to already-authorized verifiers and remains accepted.
+
+Regression coverage: ceiling/ceiling+1/zero, one-week duration boundary, approval
+at/exceeding 12 months (plus leap-day validation), all N/N+1 caps and replay at
+caps, private counter isolation, manager renewal/history, unchanged onboarding
+versions, stale coverage counters, queue priority/chronology/review-then-next. Four
+SQL suites run with `ON_ERROR_STOP=1` on the disposable DB and roll back fixtures.
+Final application verification totals are recorded after execution below.
+
+Integration guard: `.gitignore` now anchors generated coverage output to
+`/coverage/`. The former unanchored `coverage/` hid the provider coverage and
+admin coverage API directories from Git. Include those newly visible route
+sources when integrating; they are required by the tested C01 API contract.
+
+Final verification for this review-fix task:
+
+```text
+Fresh complete 004 migration on disposable I01/I02/followups schema -> exit 0
+i01_identity.sql  -> exit 0; I01 SQL assertions passed
+i01_followups.sql -> exit 0; I01 follow-up SQL assertions passed
+i02_providers.sql -> exit 0; I02 SQL assertions passed
+c01_catalog.sql   -> exit 0; C01 SQL assertions passed
+npm run lint      -> exit 0; no diagnostics
+npm run typecheck -> exit 0; Types generated successfully
+npm test          -> 11 files passed / 1 skipped; 135 tests passed / 1 skipped
+npm run build     -> exit 0; compiled successfully; static pages 19/19
+git diff --check  -> exit 0
+```
+
+SQL ran via `docker exec -i supabase_db_surecurevisit psql -U postgres
+-d c01_review_verify_20261117 -v ON_ERROR_STOP=1 < tests/rls/<suite>.sql`.
+Every suite rolled back its synthetic fixtures. The schema-only disposable DB
+was removed after verification; shared DB/migration history was unchanged.
+Independent review's queue-cursor finding was fixed and regression-tested;
+the hidden-route ignore finding was fixed as described above. No commits, push,
+`.context` edits, remote migrations, live data or UI changes. Actual HTTP/Auth/MFA
+gateway behavior, staging/E2E and all cap/revocation concurrency races remain
+outside this run; unit HTTP tests mock boundaries and SQL simulates JWT claims.
+
 ## I02 provider onboarding handoff — 2026-11-17
 
 ### Kiro re-review N2/N3/N6 — latest follow-up

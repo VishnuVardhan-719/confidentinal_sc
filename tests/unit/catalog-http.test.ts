@@ -5,7 +5,7 @@ vi.mock("@/lib/db/request-client", () => ({ publicAuthClient: () => ({ rpc: mock
 vi.mock("@/lib/auth/http", async original => ({ ...await original<typeof import("@/lib/auth/http")>(), session: mock.session }));
 import { GET as search } from "@/app/api/catalog/route";
 import { GET as detail } from "@/app/api/catalog/[id]/route";
-import { POST as create } from "@/app/api/provider/services/route";
+import { GET as privateRead, POST as create } from "@/app/api/provider/services/route";
 import { POST as price } from "@/app/api/provider/services/[id]/prices/route";
 import { POST as coverage } from "@/app/api/provider/coverage/route";
 import { POST as review } from "@/app/api/catalog/admin/coverage/[id]/review/route";
@@ -18,7 +18,7 @@ const post = (body: unknown, key: string | null = other) => new Request("http://
   method: "POST", body: JSON.stringify(body), headers: key ? { "Idempotency-Key": key } : {},
 });
 const row = { provider_id: id, category: "doctor", display_name: "Synthetic", service_id: other,
-  service_title: "Synthetic visit", duration_minutes: 30, amount_paise: "9007199254740993", currency: "INR", unit: "visit",
+  service_title: "Synthetic visit", duration_minutes: 30, amount_paise: "10000000000", currency: "INR", unit: "visit",
   terms_version: "synthetic-v1", pin_code: "500001", city: "Synthetic", advisory_availability: null };
 beforeEach(() => { vi.resetAllMocks(); mock.rpc.mockResolvedValue({ data: [], error: null }); mock.session.mockResolvedValue({ db: { rpc: mock.rpc } }); });
 it("rejects invalid, duplicate, unknown and missing search parameters before RPC", async () => {
@@ -49,6 +49,20 @@ it("requires authentication for provider commands", async () => {
   expect((await create(post({}))).status).toBe(401);
   expect(mock.rpc).not.toHaveBeenCalled();
 });
+it.each([[null, 1], [{ coverage_version: 4 }, 4]])("returns an independent coverage counter %j", async (counter, expected) => {
+  const from = vi.fn((table: string) => {
+    const chain = {
+      select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+      maybeSingle: vi.fn().mockResolvedValue({ data: table === "providers" ? { id, version: 9 } : counter, error: null }),
+    };
+    return chain;
+  });
+  mock.session.mockResolvedValue({ db: { from } });
+  const result = await privateRead(get(`providerId=${id}`));
+  expect(result.status).toBe(200);
+  expect(await result.json()).toEqual({ providerVersion: 9, coverageVersion: expected, services: [], coverage: [] });
+});
 it("requires a session and bounded cursor for the coverage queue", async () => {
   expect((await queue(get("limit=51"))).status).toBe(422);
   expect(mock.rpc).not.toHaveBeenCalled();
@@ -56,8 +70,16 @@ it("requires a session and bounded cursor for the coverage queue", async () => {
   expect((await queue(get("limit=20"))).status).toBe(401);
 });
 it("parameters coverage queue reads without accepting authority", async () => {
-  expect((await queue(get(`limit=1&cursor=${id}`))).status).toBe(200);
-  expect(mock.rpc).toHaveBeenCalledWith("list_service_area_reviews", { p_limit: 1, p_after: id });
+  expect((await queue(get(`limit=1&cursor=0,2026-11-17T10:00:00.000Z,${id}`))).status).toBe(200);
+  expect(mock.rpc).toHaveBeenCalledWith("list_service_area_reviews", { p_limit: 1, p_after: id,
+    p_after_priority: 0, p_after_created_at: "2026-11-17T10:00:00.000Z" });
+});
+it("preserves the queue row's original sort tuple in its cursor", async () => {
+  const entry = { area_id: id, provider_id: other, category: "doctor", display_name: "Synthetic", pin_code: "500001",
+    status: "proposed", valid_from: null, valid_to: null, version: 1, created_at: "2026-11-17T10:00:00.000Z" };
+  mock.rpc.mockResolvedValue({ data: [entry], error: null });
+  const result = await queue(get("limit=1"));
+  expect(await result.json()).toEqual({ results: [entry], nextCursor: `0,2026-11-17T10:00:00.000Z,${id}` });
 });
 it("requires creation idempotency and rejects injected approval", async () => {
   const value = { providerId: id, catalogTypeId: other, title: "Synthetic", durationMinutes: 30, status: "draft", expectedVersion: 0 };
@@ -68,7 +90,7 @@ it("requires creation idempotency and rejects injected approval", async () => {
   expect(mock.rpc).toHaveBeenCalledWith("upsert_service", expect.objectContaining({ p_request_key: other, p_provider_id: id, p_expected_version: 0 }));
 });
 it("never accepts numeric/float paise or client effective dates", async () => {
-  for (const amountPaise of [100, "1.5", "-1"]) expect((await price(post({ amountPaise, termsVersion: "v1", expectedVersion: 1 }), context)).status).toBe(422);
+  for (const amountPaise of [100, "1.5", "-1", "10000000001"]) expect((await price(post({ amountPaise, termsVersion: "v1", expectedVersion: 1 }), context)).status).toBe(422);
   expect(mock.rpc).not.toHaveBeenCalled();
 });
 it("requires approval expiry and does not accept coverage status from providers", async () => {
