@@ -1,3 +1,4 @@
+import { listQuery } from "@/lib/auth/pagination";
 import { z } from "zod";
 import { endpoint, input, json, session } from "@/lib/auth/http";
 import { command, IdentityError } from "@/lib/auth/identity";
@@ -6,9 +7,8 @@ import { organizationCreateSchema } from "@/lib/validation/identity";
 export async function GET(request: Request) {
   return endpoint(async () => {
     const { db } = await session(request);
-    const { data, error } = await db.from("organizations").select("id,name,version").order("id").limit(100);
-    if (error) throw new IdentityError(500, "identity_unavailable");
-    return json({ organizations: data });
+    const { limit, cursor } = listQuery(request);
+    return json(await command(db, "list_organizations", { p_limit: limit, p_cursor: cursor ?? null }));
   });
 }
 export async function POST(request: Request) {

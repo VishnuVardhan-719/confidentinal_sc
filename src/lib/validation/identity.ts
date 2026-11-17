@@ -29,3 +29,9 @@ export const membershipSchema = z.strictObject({
 });
 export const acceptInviteSchema = z.strictObject({ expectedVersion: z.int().positive() });
 export const selfPatientSchema = z.strictObject({ policyVersion: z.string().trim().min(1).max(80), consent: z.literal(true) });
+
+
+export const listQuerySchema = z.strictObject({
+  limit: z.string().regex(/^[0-9]{1,2}$/).transform(Number).pipe(z.int().min(1).max(50)).default(20),
+  cursor: z.uuid().optional(),
+});
