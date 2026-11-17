@@ -1,3 +1,4 @@
+import { listQuery } from "@/lib/auth/pagination";
 import { z } from "zod";
 import { endpoint, input, json, session } from "@/lib/auth/http";
 import { command, IdentityError } from "@/lib/auth/identity";
@@ -9,9 +10,8 @@ export async function GET(request: Request, context: Context) {
     const { db } = await session(request);
     const id = z.uuid().safeParse((await context.params).id);
     if (!id.success) throw new IdentityError(422, "invalid_input");
-    const { data, error } = await db.from("organization_members").select("id,profile_id,membership_role,status,scopes,version").eq("organization_id", id.data).order("id").limit(100);
-    if (error) throw new IdentityError(500, "identity_unavailable");
-    return json({ members: data });
+    const { limit, cursor } = listQuery(request);
+    return json(await command(db, "list_organization_members", { p_organization_id: id.data, p_limit: limit, p_cursor: cursor ?? null }));
   });
 }
 export async function POST(request: Request, context: Context) {

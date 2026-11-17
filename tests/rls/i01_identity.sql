@@ -39,8 +39,16 @@ insert into public.organizations(id,name) values
 insert into public.organization_members(organization_id,profile_id,membership_role,status,scopes) values
  ('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001','owner','active',array['org:read','org:edit','members:read','provider:read']),
  ('20000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000002','owner','active',array['org:read','org:edit','members:read','provider:read']),
- ('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000003','manager','disabled',array['org:read','org:edit','members:read','provider:read']),
- ('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000004','manager','invited',array['org:read','org:edit','members:read','provider:read']);
+ ('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000003','manager','disabled',array['org:read','org:edit','members:read','provider:read']);
+-- Compatible with both the base schema and explicit-expiry migration 003.
+do $$
+begin
+  if exists(select 1 from information_schema.columns where table_schema='public' and table_name='organization_members' and column_name='invite_expires_at') then
+    execute $q$insert into public.organization_members(organization_id,profile_id,membership_role,status,scopes,invite_expires_at) values ('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000004','manager','invited',array['org:read','org:edit','members:read','provider:read'],clock_timestamp()+interval '14 days')$q$;
+  else
+    insert into public.organization_members(organization_id,profile_id,membership_role,status,scopes) values ('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000004','manager','invited',array['org:read','org:edit','members:read','provider:read']);
+  end if;
+end $$;
 -- Synthetic legacy active/disabled members have already accepted; invited has not.
 update public.organization_members set accepted_at=now() where status in ('active','disabled');
 insert into public.providers(individual_owner_profile_id,category) values

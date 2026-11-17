@@ -1,4 +1,4 @@
-# I01 identity test and review handoff
+# I01 identity and follow-up verification handoff
 
 ## I02 provider onboarding handoff — 2026-11-17
 
@@ -304,193 +304,200 @@ Branch: `task/I01-auth-rls`; base: `d532f09b6f8d091a1843485f11ab3cd3ec3b549e` (`
 Changes are uncommitted. No packages installed, migrations applied, or external accounts changed.
 Status: IMPLEMENTED_UNVERIFIED; local application checks pass; DB execution remains blocked.
 This file holds task state because I01's exclusive file scope excludes `.context/` and project docs.
+## Current task and scope
 
-## Scope and implementation plan
+Task: I01 follow-ups. Implementer: Codex. Human owner/integrator: Owner/Claude.
+Branch: task/I01-auth-rls. Follow-up base: 84321ae26cc6708c56d69f8a542f254b7c6b49b7.
+Changes are uncommitted. No commits, pushes, stashes, packages, frontend changes,
+shared-contract edits, external accounts or source-database mutations.
 
-Dependencies: F01, S00 owner-approved Q01–Q12 defaults in `docs/DECISIONS.md`.
-Contract: canonical schema v0.1; I01 additions below need integrator contract review.
-Allowed: migrations, auth/db/identity validation, I01 API routes, auth/RLS tests.
-No pages, layouts, components, CI, environment or shared docs changed.
+The earlier I01 implementation and review fixes are in the base commit. This task
+adds migration 202611170003_i01_followups.sql; migration 001 is unchanged.
+Allowed paths: this new migration, organization API routes, shared libraries/tests.
+The task explicitly excludes auth API route edits, so paginated invites are exposed
+at /api/organizations/invitations. The existing /api/auth/invitations route remains
+a bounded compatibility endpoint; its underlying RPC now filters expiry and caps
+results at 50. It does not accept pagination query parameters.
 
-- [x] Read required rules, schema and API/security contracts; inspect actual Git state.
-- [x] Write failing identity tests, then shared validation and request/session services.
-- [x] Add numbered transactional migration with identity, self-patient access, org membership and capability RLS.
-- [x] Add narrow versioned/audited commands, DB-derived workspace roles and bearer API handlers.
-- [x] Write SQL negative integration tests and run Vitest.
-- [x] Independent source security review; fix older-password login and revoked patient replay.
-- [x] Run lint/typecheck/test/build and record real evidence.
-- [ ] Apply migration and execute SQL tests on a disposable local Supabase DB.
-- [ ] Auth/Storage HTTP integration, generated DB types and staging E2E.
-- [x] Resume and rerun production build; the prior font-fetch failure did not recur.
+Plan completed: failing pagination/SQL tests; scoped cursor RPCs/routes; invitation
+expiry/cap; real local SQL and reciprocal-invitation concurrency tests; application
+checks; changed-file review and this handoff. SQL tests cover DB-role simulation;
+actual Auth/Storage HTTP and staging E2E still require separate verification.
 
-## Actual verification, resumed 2026-11-17
+## Pagination contract
 
-Verified branch/base: task/I01-auth-rls / d532f09b6f8d091a1843485f11ab3cd3ec3b549e.
-Preserved the interrupted implementation, then applied the scoped Kiro review fixes below; no packages installed.
-The shell exposes WSL paths while the worktree/dependencies use Windows paths. Used
-Windows git.exe and Windows Node to invoke npm's existing JavaScript entry point
-(C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js), executing the unchanged
-package scripts for the required npm commands.
+All three paginated GET routes require a valid user bearer session and an active
+profile. Query validation uses shared strict Zod schemas. limit defaults to 20,
+accepts integers 1 through 50, and rejects values over 50, empty/noninteger values,
+unknown fields and repeated query parameters. cursor is an optional UUID.
 
-Actual output tails:
+| Route | Result |
+|---|---|
+| GET /api/organizations?limit=&cursor= | organizations: id/name/version; nextCursor |
+| GET /api/organizations/:id/members?limit=&cursor= | members: id/profile_id/membership_role/status/scopes/version/invite_expires_at; nextCursor |
+| GET /api/organizations/invitations?limit=&cursor= | invitations: own organization_id/scopes/version/invite_expires_at; nextCursor |
 
-    npm run lint
+Use nextCursor as the next request's cursor; null means exhausted. Organization and
+member pages sort by UUID id; invite pages sort by organization_id. A page returns
+at most limit rows; one extra authorized row is inspected internally to determine
+continuation. This is live keyset pagination, not an immutable multi-request snapshot.
+
+RPCs: list_organizations(integer,uuid),
+list_organization_members(uuid,integer,uuid),
+list_organization_invites_page(integer,uuid). SQL independently enforces 1..50.
+The first two are SECURITY INVOKER and retain table RLS; own-invite discovery is a
+narrow SECURITY DEFINER projection pinned to auth.uid(), active profile/org and
+unexpired invited status. All three pin search_path and revoke PUBLIC/anon execute.
+No count or row from a foreign organization is disclosed. Staff without members:read
+continue to see only their own active membership. New contracts need integrator
+review; docs/API_CONTRACTS.md intentionally remains untouched.
+
+## Invitation lifecycle and cap
+
+Migration 003 adds invite_expires_at and an organization/pending-expiry index.
+New invitations expire after 14 days. Existing pending invitations are backfilled
+from their last updated_at plus 14 days, so old invitations are not silently renewed.
+Expiry is relevant only to invited status; other membership states do not expire
+through this field. The temporary column default is dropped after backfill; only
+invitation commands explicitly assign expiry. Active owners inserted by the existing
+organization-creation command retain NULL expiry. Trusted invitation fixtures must
+provide expiry after migration 003 (the baseline suite supports both schemas).
+
+Acceptance locks the active organization and invitee membership and checks expiry
+with clock_timestamp after locking. Starting a transaction before expiry cannot
+revive an expired invite. Successful acceptance clears the pending expiry and records
+acceptance, a version increment and audit. Discovery excludes expired invitations.
+
+At most 25 unexpired pending invitations may exist per organization. The existing
+organization row lock serializes slot checks and mutations across owners. An expired
+invite frees capacity, but renewing it must reacquire a slot. Active/disabled members
+do not consume slots. Disable/re-invite/expanded-scope/reactivation operations retain
+version, grantor scope, self-promotion/owner and fresh-acceptance protections.
+Promoting staff or billing to manager requires fresh acceptance even with unchanged
+scopes: status becomes invited, accepted_at clears and a new expiry is assigned.
+Manager is the higher privileged role; staff and billing are separate peer roles.
+
+Renewal uses the existing owner membership command with status invited and the current
+expectedVersion. It receives a fresh 14-day expiry and clears old acceptance. There
+is no new unauthenticated invite token or self-supplied profile authority.
+
+## Actual verification, 2026-11-17
+
+Application commands executed through the existing Windows Node/npm entry point;
+package scripts were unchanged. Actual tails:
+
+    npm run lint: exit 0
     > eslint
     (no diagnostics)
 
-    npm run typecheck
+    npm run typecheck: exit 0
     Generating route types...
-    ✓ Types generated successfully
+    Types generated successfully
 
-    npm test
-    Test Files  6 passed (6)
-         Tests  58 passed (58)
+    npm test: exit 0
+    Test Files  7 passed (7)
+         Tests  77 passed (77)
 
-    npm run build
-    ✓ Compiled successfully in 2.2s
-      Finished TypeScript in 4.9s ...
-    ✓ Generating static pages using 11 workers (13/13) in 641ms
-      Finalizing page optimization ...
+    npm run build: exit 0
+    Build exited 0; generated route table includes /api/organizations/invitations.
 
-All four application checks passed. The previous Google font download failure did
-not recur; no frontend files were changed. Changed-file review covered the auth
-routes, strict validation, user-token client, migration and SQL authorization suite.
-Diff whitespace checks and a separate check of scoped untracked files passed.
-SQL/RLS/migration tests: PASSED later on local Supabase (see "Verification update" at the end); originally NOT RUN, Docker was down;
-no DB or external account was touched. Unit tests use boundary mocks for Supabase;
-they do not prove live RLS/Auth behavior. Integration/release still requires actual
-migration execution, SQL assertions and Auth/Storage HTTP tests.
+Test-first evidence: three list-route behavior tests failed before route changes;
+the new SQL suite failed before migration 003 because its schema was absent.
+After implementation, all pagination unit tests and application checks passed.
 
-## DB verification procedure
+## Real local Supabase tests and isolation
 
-1. Start a disposable LOCAL Supabase database, verify target and apply migrations in order.
-2. Run `psql "$LOCAL_TEST_DATABASE_URL" -X -v ON_ERROR_STOP=1 -f tests/rls/i01_identity.sql`.
-3. Expect no assertion failures, transaction rollback, and `I01 SQL assertions passed` at the end.
-4. The script uses only `example.invalid` identities and synthetic records, actual DB roles,
-   JWT subjects, table/RPC/Storage assertions; it rolls back every fixture.
-5. Add Auth/Storage HTTP tests before staging approval; SQL role simulation cannot prove HTTP gateway behavior.
+Container verified: supabase_db_surecurevisit, published DB port 58422. The runner
+creates a unique i01_followups_<random> database in that local container. It copies
+schema only, never source data. Supabase managed infrastructure is restored with
+original owners using local supabase_admin; all application migrations and tests
+run as postgres, matching the real migration role. Synthetic fixtures use only
+example.invalid contacts and no clinical/patient records.
 
-## Proposed I01 API additions (shared API doc intentionally untouched)
+Commands:
 
-All responses: private/no-store, structured `{error:{code}}`. Protected routes require
-`Authorization: Bearer <user-access-token>`. No cookie authentication or service-role key.
-Clients must manage returned sessions securely; this task does not choose browser token persistence.
+    python3 tests/rls/test_i01_runner.py
+    python3 tests/rls/run_i01_followups.py --red
+    python3 tests/rls/run_i01_followups.py
+    python3 tests/rls/run_i01_followups.py --current-schema
 
-| Method / route | Input / result |
-|---|---|
-| POST `/api/auth/signup` | email/password (12–128 characters); generic 202 `signup_received` |
-| POST `/api/auth/login` | email/nonempty existing password; accessToken/refreshToken/expiresAt |
-| POST `/api/auth/refresh` | refreshToken; rotated token response after active-account check |
-| POST `/api/auth/logout` | bearer; revoke current refresh session; discard client tokens |
-| GET `/api/auth/me` | own safe profile plus DB-derived workspace roles |
-| PATCH `/api/auth/profile` | displayName, locale en/te/hi, expectedVersion |
-| POST `/api/auth/patient` | policyVersion, consent:true; self patient ID, idempotent while authorized |
-| GET/POST `/api/organizations` | scoped first 100 orgs / name + UUID Idempotency-Key header; org ID |
-| PATCH `/api/organizations/:id` | name, expectedVersion; scoped owner/manager only |
-| GET/POST `/api/organizations/:id/members` | scoped first 100 members / profileId, membershipRole, status, scopes, expectedVersion |
+The default rebuilds only scratch application schemas from this branch's migration
+001, preserving Supabase Auth/Storage infrastructure. The current-schema mode tests
+a clone of the actually running schema, including concurrent I02 changes. The runner
+never resets or applies anything to the source postgres database. It removes only
+the unique validated scratch database created by that run, including on failure.
 
-Membership creation uses expectedVersion 0 and requires status invited; edits require
-current positive version. New members never activate until the invitee calls
-POST /api/organizations/:id/members/accept with expectedVersion. The RPC derives
-the invitee from auth.uid(), validates account/org/invitation and records accepted_at,
-a version increment and an audit event. Owner updates cannot activate unaccepted
-invitations, including invitations disabled before acceptance. Existing active memberships remain editable. Scope expansion, explicit re-invitation
-and disabled-member reactivation clear acceptance; active requests that expand scopes
-or reactivate a previously accepted disabled member become invitations. GET /api/auth/invitations returns only the caller's invited organization_id, scopes and version through a narrow RPC. It exposes no
-organization details or other membership rows. Invitation delivery remains deferred.
-Only active owners can mutate other non-owner memberships; no self promotion, owner transfer or last-owner removal.
-Scopes cannot exceed grantor's current scopes. Invitations alone confer no authority.
-Pagination beyond the bounded first 100 rows is a later contract addition.
+Observed output, default mode (exit 0):
 
-## Migration notes and security boundaries
+    PASS: existing I01 SQL authorization suite before migration 003
+    PASS: migration 003 applied on isolated database
+    PASS: existing I01 SQL authorization suite after migration 003
+    PASS: follow-up pagination/expiry/cap/ACL SQL suite
+    PASS: reciprocal invitations commit on two overlapping connections, no deadlock
+    PASS: two owners race for final invite slot; one success, one 23514; exactly 25 pending
+    PASS: disposable test database removed; source DB unchanged
 
-Migration: `202611170001_i01_identity.sql`, not applied. Tables: profiles, patients,
-patient_access, organizations, organization_members, admin_capabilities, providers,
-consent_events, audit_events, idempotency_requests. Every table has RLS and no direct client writes.
-Privileged functions pin search_path and actor identity; internal helpers do not export rows.
-Auth trigger ignores raw user role/status metadata; existing auth users receive safe profile defaults.
-Patient identity and access consent are separate from the later questionnaire; no booking eligibility is asserted.
-Provider table is an ownership/category skeleton for I02, with no public listing or bookability.
-Workspace roles indicate navigation/onboarding access, not verification or clinical authority.
-Provider/admin grants and owner transfer require a separately reviewed trusted process; no client bootstrap endpoint.
-Admin workspace needs a current global provider:verify, coverage:verify or membership:admin capability plus aal2; it never bypasses patient/org RLS.
-Revocation is checked on every new command/read, including idempotent replay.
-Account/org/membership mutations serialize on actor/org rows; future trusted revocation paths must follow that locking order.
-Storage objects AND buckets have restrictive deny-all policies for anon/authenticated.
-I02 must replace them only alongside metadata ownership checks, private buckets and signed URL authorization.
-Signup delivery, email confirmation, MFA enrollment/recovery, password recovery and durable edge abuse controls
-remain client-owned Auth/integration configuration; Supabase auth 429 is propagated.
-Logout invalidates the current refresh session, but existing access JWTs remain valid until expiry.
-No generated DB schema types are claimed: generate from the migrated DB once available.
-The SQL suite is required before integration/release; source review and Vitest cannot establish DB correctness.
-Forward corrective migrations only after application; no destructive rollback was attempted.
+Current-schema mode (exit 0): migration 003, follow-up SQL suite and reciprocal
+invitations and final-slot race all passed; scratch database removed. The source database already
+contains I02 provider-role changes, so the old I01-only provider-workspace assertions
+are run only against the branch baseline. They are not silently weakened.
 
+The reciprocal test holds connection A open after it invites B, waits until A reaches
+its sleep barrier, then has B invite A into a separate organization. B must finish
+while A still holds profile/FK locks; both transactions must commit with exactly two
+unaccepted invitations. This exercises FOR NO KEY UPDATE versus FK KEY SHARE locks.
 
-## Follow-up review fixes and open risks
+The SQL suite verifies all page boundaries and max limits; distinct/no-skip traversal;
+foreign/anonymous/staff isolation; 14-day defaults; expired acceptance/discovery;
+renewal and version behavior; the 25/26 pending boundary; expired-slot reuse;
+renewal rejection at capacity; wall-clock expiry in old transactions; RPC ACLs and
+search_path. The original I01 suite verifies cross-patient/org denial, escalation,
+revocation/MFA, base-table DML denial and restrictive Storage policies.
 
-F1: identity_roles requires global scope and an operational admin capability;
-security:audit and org-scoped capabilities never yield global admin. Every sensitive
-admin action must still authorize its specific capability and scope independently.
-F2: invited-only creation and invitee-only acceptance, version checks, accepted_at,
-audit and account/org/member locks; no owner activation of unaccepted invitations.
-F5: create_organization caps each actor at five historical successful creations,
-using immutable audit events under the existing actor lock. Disabled organizations
-count; exact idempotent retries are resolved before the cap, without creating rows.
-F13: SQL assertions cover aal1; future/expired/revoked capabilities; org scope and
-audit-only exclusion; disabled profiles/orgs; anonymous table reads/RPC privileges;
-private helper denial; empty definer search_path and PUBLIC/anon EXECUTE revokes;
-Storage denial and absence of any public bucket. SQL suite PASSED on local Supabase (see end).
-The invitation validation tests first failed (2 failures), then passed after the fix.
-Final verification: lint and typecheck passed; Vitest 6 files / 46 tests passed;
-Next.js production compilation and generation of all 12 static pages passed.
+## Remaining limits and risks
 
-- F3 FIXED (verified on local Supabase; see end). Was: Storage RLS/DDL ownership must be verified on a disposable real Supabase
-  target, including storage.objects/buckets ALTER and policy creation as the actual
-  migration role. A managed-table permission failure may abort this transaction.
-  Public buckets bypass object-read RLS via public URLs; test absence using a trusted
-  DB role and verify actual Storage HTTP behavior before integration.
-- F4: provider category roles grant workspace/onboarding navigation only. Draft,
-  inactive, rejected or expired providers are never made bookable by identity_roles.
-  I02/catalog/booking must independently enforce active verification, credential
-  validity, coverage, assignment and active ownership/membership for each operation.
-- Supabase email confirmation, upstream abuse controls, actual user-JWT getUser and
-  logout behavior still need real Auth/Storage integration verification. No account
-  settings, packages, shared contracts, frontend files or external systems changed.
+- Migration 003 was applied only to disposable local databases. No shared staging or
+  production migration, release, deployment or source migration-history update.
+- Actual Auth/Storage/PostgREST HTTP integration, token refresh/logout, email/MFA
+  settings, signed URLs and staging E2E are not established by SQL-role simulation
+  or mocked unit tests. Storage DDL/RLS passed in local SQL; Storage HTTP remains open.
+- SQL cap boundary/serialization and reciprocal invitation overlap are tested;
+  the two-owner final-slot race passed in both schema modes. No load/soak test is claimed.
+- The historical provider category role means workspace access in the I01 baseline;
+  I02/current schema may impose stronger checks. Bookability always needs independent
+  current verification, credential, coverage and assignment authorization.
+- Client legal/privacy/payment/clinical/emergency gates remain unchanged. Synthetic
+  staging only; no real patient data, live payments or emergency activation.
 
+## I01f review fixes and verification
 
-## Round 2 fixes and deferred checks
+Addressed M1, L1, L4 and L5 in the uncommitted follow-up work. Migration 001 remains
+unchanged. No commit, push or stash. Promotion regression failed against the old 003
+with FAIL: staff to manager requires fresh acceptance, then passed after the fix.
+The SQL suite also asserts that the expiry column has no default and active fixture
+owners have NULL expiry. Python guard tests first failed because the guard was absent;
+all five test methods now pass, including remote host/context/endpoint/database denial.
 
-- N1: list_organization_invites and GET /api/auth/invitations provide own pending
-  invitation metadata only (organization_id, scopes, version), require an active
-  account and organization, and derive the invitee exclusively from auth.uid().
-  Base-table org/member policies remain unchanged. SQL checks cover own invite,
-  other-invite denial, no org/base-member leakage and removal after acceptance.
-- N2: larger scopes, explicit re-invitation and disabled-member reactivation clear
-  accepted_at. Scope expansion/reactivation requesting active is converted to
-  invited; direct activation of an unaccepted invitation remains forbidden.
-  SQL checks cover fresh scope acceptance, reactivation, and stale-consent bypass.
-- Actor profile locking uses FOR NO KEY UPDATE so reciprocal invitations can obtain
-  FK KEY SHARE locks. The two-connection regression procedure is recorded at the
-  end of i01_identity.sql: still NOT RUN (needs a two-connection harness).
-- Auth retryable/network/5xx failures return 503 identity_unavailable; known invalid
-  sessions remain 401, and upstream throttling remains 429. Login/refresh/signup
-  use the same returned-error classification; error details remain private.
-  The new Auth tests first reproduced six failures before the fix.
-- DEFERRED: organization and membership list pagination; existing lists return at
-  most 100 rows. No pagination contract was added in this task.
-- N3 DEFERRED: invitation expiry and a per-organization invitation cap. Pending
-  invitations currently have no expiry; do not claim these abuse controls exist.
-- F3 FIXED, still needs Storage HTTP test: actual Supabase Storage DDL ownership/RLS/public-URL behavior still needs
-  verification on the intended disposable local target. No database migration,
-  SQL/RLS suite or concurrency test was executed here.
+The runner checks DOCKER_HOST, DOCKER_CONTEXT, the selected context name and its
+actual endpoint before inspecting or dumping any container. It allows only default
+or desktop-linux contexts and Unix socket/named-pipe endpoints, rejects TCP/SSH even
+on loopback, then verifies PostgreSQL uses a Unix socket or loopback address before
+creating any database. It never prints environment endpoint values. Guard tests mock
+all Docker/SQL calls and assert early rejection before database access.
 
+The final-slot test seeds 24 pending invitations and two distinct active owners.
+Connection A allocates slot 25 and stays open at a sleep barrier. Connection B must
+be observed waiting on a lock before A commits. Exactly one transaction succeeds;
+the other must fail with SQLSTATE 23514 and invitation_limit. The committed database
+must have exactly 25 pending invitations and exactly one of the two target members.
+Both default and current-schema runs passed, including reciprocal invitations and
+cleanup. Fresh application verification: lint 0, typecheck 0, Vitest 7 files/77 tests
+passed, production build 0. Guard suite: 5 methods passed.
 
-Round 2 final verification (2026-11-17): npm run lint exit 0 (no diagnostics);
-npm run typecheck exit 0 (Types generated successfully); npm test exit 0
-(Test Files 6 passed, Tests 58 passed); npm run build exit 0 (Compiled successfully
-in 2.2s; Generating static pages 13/13 in 641ms). Commands ran the unchanged package
-scripts through Windows Node/npm. Scoped whitespace validation passed.
-Changes remain uncommitted on task/I01-auth-rls. No SQL execution or migration applied.
+L2 (document only): the 50-row limit bounds these API/RPC responses; it is not an
+authorization or global resource-consumption limit. Authenticated clients may query
+base tables directly through PostgREST within existing RLS permissions. Operational
+PostgREST max_rows configuration remains an owner/integrator decision, not implemented.
 
 ## Verification update (2026-11-17, local Supabase on Docker)
 - `supabase start` applies `202611170001_i01_identity.sql` cleanly (project id `surecurevisit`, ports 584xx so it does not collide with other local stacks).
@@ -648,3 +655,8 @@ approved PIN/service references and operational/commercial decisions; implement
 B01 server-derived price snapshots and booking/resource eligibility. Frontend
 handover can use the proposed routes and shared validation after contract review;
 all UI screens remain outside C01.
+L3 (document only): the 25-pending cap is per organization, not per invitee. A caller
+controlling five organizations could direct up to 125 pending invitations at one
+profile. There is no per-invitee cap, decline/block control or platform-wide rate
+limit in this change. Those anti-harassment/product decisions remain open for the
+owner; this task adds no cross-organization recipient quota.

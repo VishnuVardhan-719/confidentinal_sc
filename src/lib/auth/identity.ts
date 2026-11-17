@@ -32,7 +32,7 @@ export async function authenticate(db: AuthReader) {
   if (!profile) throw new IdentityError(403, "inactive_account");
   return { userId: data.user.id };
 }
-export type IdentityCommand = "identity_roles" | "update_self_profile" | "create_self_patient" | "create_organization" | "update_organization" | "set_organization_member" | "accept_organization_invite" | "list_organization_invites";
+export type IdentityCommand = "identity_roles" | "update_self_profile" | "create_self_patient" | "create_organization" | "update_organization" | "set_organization_member" | "accept_organization_invite" | "list_organization_invites" | "list_organizations" | "list_organization_members" | "list_organization_invites_page";
 export async function command(db: Pick<IdentityClient, "rpc">, name: IdentityCommand, args: Record<string, unknown>) {
   const { data, error } = await db.rpc(name, args);
   if (error) {
