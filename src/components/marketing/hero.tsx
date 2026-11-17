@@ -1,4 +1,7 @@
+import Link from "next/link";
+import { Suspense } from "react";
 import { ButtonLink } from "@/components/button-link";
+import { getDemoSession } from "@/lib/demo/auth";
 import { HeroPoster } from "./hero-poster";
 import { HeroVisual } from "./hero-visual";
 import styles from "./hero.module.css";
@@ -19,12 +22,9 @@ export function Hero() {
             Doctor visits, lab services, scheduled ambulance transport and non-clinical caretaker support. You pick the
             provider, and the provider accepts your request.
           </p>
-          <div className="actions">
-            <ButtonLink href="/categories">Explore services</ButtonLink>
-            <ButtonLink href="/how-it-works" variant="secondary">
-              How it works
-            </ButtonLink>
-          </div>
+          <Suspense fallback={<HeroActions />}>
+            <SessionHeroActions />
+          </Suspense>
         </div>
 
         <div className={styles.side}>
@@ -52,4 +52,42 @@ export function Hero() {
       </div>
     </section>
   );
+}
+
+/**
+ * Hero calls to action. Guests get "Find care" + "Create account" and a sign-in link; a demo session
+ * swaps the secondary action for the person's own dashboard. Same shape either way, so no layout shift.
+ */
+function HeroActions({ home, name }: { home?: string; name?: string }) {
+  return (
+    <div className={styles.ctas}>
+      <div className="actions">
+        <ButtonLink href="/categories">Find care</ButtonLink>
+        {home ? (
+          <ButtonLink href={home} variant="secondary">
+            Go to your dashboard
+          </ButtonLink>
+        ) : (
+          <ButtonLink href="/sign-up" variant="secondary">
+            Create account
+          </ButtonLink>
+        )}
+      </div>
+      <p className={styles.signin}>
+        {name ? (
+          <>Signed in as {name} (demo).</>
+        ) : (
+          <>
+            Already have an account? <Link href="/sign-in">Sign in</Link>
+          </>
+        )}
+      </p>
+    </div>
+  );
+}
+
+/** Reads the demo cookie, so it streams inside Suspense; the guest version is the prerendered fallback. */
+async function SessionHeroActions() {
+  const session = await getDemoSession();
+  return session ? <HeroActions home={session.home} name={session.name} /> : <HeroActions />;
 }
