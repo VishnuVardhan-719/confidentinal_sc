@@ -101,6 +101,10 @@ export const STATUS_LABEL: Record<BookingStatus, string> = {
 
 export const PAYMENT_LABEL = "Payment not collected";
 
+/** The provider and admin screens act as these demo users until demo sign-in (t27) provides a session. */
+export const DEMO_PROVIDER_ID = "demo-dr-1";
+export const DEMO_PATIENT_NAME = "Demo Patient One";
+
 /** Category slug on the public site -> demo provider kind. Caretakers have no demo providers. */
 export const KIND_FOR_SERVICE = {
   doctor: "doctor",

@@ -7,9 +7,9 @@ import { canOpenStep } from "./steps";
  * Step state for a multi-step form. Moving to a step focuses its heading so keyboard and screen reader
  * users land at the start of the new step (and hear its title). The first render does not move focus.
  */
-export function useFlow(count: number) {
-  const [step, setStep] = useState(0);
-  const [furthest, setFurthest] = useState(0);
+export function useFlow(count: number, initialStep = 0) {
+  const [step, setStep] = useState(initialStep);
+  const [furthest, setFurthest] = useState(initialStep);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const moved = useRef(false);
 
@@ -35,7 +35,14 @@ export function useFlow(count: number) {
     open(Math.max(step - 1, 0));
   }
 
-  return { step, furthest, open, advance, back, headingRef };
+  /** Back to step 1 with nothing reached, e.g. after a demo request is sent. */
+  function reset() {
+    moved.current = true;
+    setStep(0);
+    setFurthest(0);
+  }
+
+  return { step, furthest, open, advance, back, reset, headingRef };
 }
 
 /**
