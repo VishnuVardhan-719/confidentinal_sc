@@ -15,33 +15,35 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTAINER = "supabase_db_surecurevisit"
-DOCKER = shutil.which("docker.exe") or shutil.which("docker")
-if not DOCKER:
-    raise SystemExit("Docker executable not found")
+DOCKER = None
 TARGET = "i01_followups_" + uuid.uuid4().hex[:12]
 assert re.fullmatch(r"i01_followups_[0-9a-f]{12}", TARGET)
 
 
 def call(args, text=None, timeout=60):
-    proc = subprocess.run([DOCKER, *args], input=text, text=True, stdout=subprocess.PIPE,
+    docker = DOCKER or shutil.which("docker.exe") or shutil.which("docker")
+    if not docker:
+        raise RuntimeError("Docker executable not found")
+    proc = subprocess.run([docker, *args], input=text, text=True, stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE, timeout=timeout)
     if proc.returncode:
         raise RuntimeError("Docker/PostgreSQL failed: " + proc.stderr[-2500:])
     return proc.stdout
 
 
-def psql_args(db=TARGET, user="postgres"):
+def psql_args(db=None, user="postgres"):
+    db = TARGET if db is None else db
     return ["exec", "-i", CONTAINER, "psql", "-X", "-q", "-A", "-t", "-v", "ON_ERROR_STOP=1", "-U", user, "-d", db]
 
 
-def sql(statement, db=TARGET, user="postgres"):
+def sql(statement, db=None, user="postgres"):
     return call(psql_args(db,user), statement)
 
 
 def assert_local_target():
     allowed = {"default", "desktop-linux"}
     def local_endpoint(value):
-        return value.startswith(("unix://", "npipe://"))
+        return value.startswith(("unix:///", "npipe:////./pipe/"))
     host = os.environ.get("DOCKER_HOST", "")
     if host and not local_endpoint(host):
         raise RuntimeError("Refusing non-local DOCKER_HOST")
@@ -168,6 +170,20 @@ def final_slot_race():
 
 
 def main():
+    global DOCKER, TARGET
+    DOCKER = shutil.which("docker.exe") or shutil.which("docker")
+    if not DOCKER:
+        raise SystemExit("Docker executable not found")
+    if "--database" in sys.argv:
+        if len(sys.argv) != 3 or sys.argv[1] != "--database" or not re.fullmatch(r"rls_all_[0-9a-f]{24}", sys.argv[2]):
+            raise RuntimeError("Refusing non-Q01a scratch database")
+        TARGET = sys.argv[2]
+        assert_local_target()
+        if call(["inspect", "--format", "{{.State.Running}}", CONTAINER]).strip() != "true":
+            raise RuntimeError("Named local Supabase DB container is not running")
+        reciprocal()
+        final_slot_race()
+        return
     assert_local_target()
     created = False
     try:
