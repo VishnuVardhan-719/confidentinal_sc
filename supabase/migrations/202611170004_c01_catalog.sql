@@ -22,7 +22,7 @@ create table public.services (
  id uuid primary key default gen_random_uuid(), provider_id uuid not null, category text not null,
  catalog_type_id uuid not null, title text not null check(char_length(btrim(title)) between 1 and 160),
  description text not null default '' check(char_length(description)<=2000),
- duration_minutes integer not null check(duration_minutes>0),
+ duration_minutes integer not null check(duration_minutes between 1 and 10080),
  status text not null default 'draft' check(status in ('draft','published','archived')),
  version integer not null default 1 check(version>0),
  created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
@@ -33,7 +33,7 @@ create table public.services (
 create index c01_services_provider on public.services(provider_id);
 create table public.service_price_versions (
  id uuid primary key default gen_random_uuid(), service_id uuid not null, catalog_type_id uuid not null,
- version integer not null check(version>0), amount_paise bigint not null check(amount_paise>=0),
+ version integer not null check(version>0), amount_paise bigint not null check(amount_paise between 0 and 10000000000),
  currency text not null default 'INR' check(currency='INR'), unit text not null,
  terms_version text not null check(char_length(btrim(terms_version)) between 1 and 160),
  effective_from timestamptz not null, effective_to timestamptz,
@@ -54,10 +54,16 @@ create table public.provider_service_areas (
  version integer not null default 1 check(version>0),
  created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
  check(status<>'approved' or (approved_by is not null and approved_at is not null and valid_from is not null and valid_to is not null)),
- check(valid_from is null or isfinite(valid_from)), check(valid_to is null or (isfinite(valid_to) and valid_to>valid_from))
+ check(valid_from is null or isfinite(valid_from)), check(valid_to is null or (isfinite(valid_to) and valid_to>valid_from and valid_to<=valid_from+interval '12 months'))
 );
 create unique index c01_area_current on public.provider_service_areas(provider_id,pin_code) where status in ('proposed','approved');
 create index c01_area_pin on public.provider_service_areas(pin_code,provider_id);
+-- Separate proposal counter: never changes the I02 onboarding aggregate version.
+create table public.provider_catalog_counters (
+ id uuid primary key default gen_random_uuid(),
+ provider_id uuid not null unique references public.providers(id) on delete restrict,
+ coverage_version integer not null default 1 check(coverage_version>0)
+);
 create table public.coverage_review_events (
  id uuid primary key default gen_random_uuid(), area_id uuid not null references public.provider_service_areas(id) on delete restrict,
  actor_profile_id uuid not null references public.profiles(id) on delete restrict,
@@ -126,10 +132,10 @@ language plpgsql stable security definer set search_path='' as $$
 begin
  if p_category is null or p_category not in ('doctor','lab','ambulance','caretaker') or p_pin is null or p_pin !~ '^[1-9][0-9]{5}$'
   or p_limit is null or p_limit not between 1 and 50 or
-  (p_price_max is not null and (p_price_max !~ '^(0|[1-9][0-9]{0,18})$' or p_price_max::numeric>9223372036854775807)) or
+  (p_price_max is not null and (p_price_max !~ '^(0|[1-9][0-9]{0,18})$' or p_price_max::numeric>10000000000)) or
   (num_nonnulls(p_after_amount,p_after_provider,p_after_service) not in (0,3)) then
   raise exception using errcode='22023',message='invalid_input'; end if;
- if p_after_amount is not null and (p_after_amount !~ '^(0|[1-9][0-9]{0,18})$' or p_after_amount::numeric>9223372036854775807) then
+ if p_after_amount is not null and (p_after_amount !~ '^(0|[1-9][0-9]{0,18})$' or p_after_amount::numeric>10000000000) then
   raise exception using errcode='22023',message='invalid_input'; end if;
  return query select p.id,p.category,pp.display_name,s.id,s.title,s.duration_minutes,v.amount_paise::text,v.currency,v.unit,v.terms_version,a.pin_code,d.city,null::text
  from public.providers p join public.provider_profiles pp on pp.provider_id=p.id
@@ -158,7 +164,7 @@ declare actor uuid:=identity_private.require_actor(); p public.providers; result
 begin
  p:=catalog_private.lock_manager(p_provider_id);
  if p_title is null or char_length(btrim(p_title)) not between 1 and 160 or p_description is null or char_length(p_description)>2000
-  or p_duration_minutes is null or p_duration_minutes<=0 or p_status is null or p_status not in ('draft','published','archived') then
+  or p_duration_minutes is null or p_duration_minutes not between 1 and 10080 or p_status is null or p_status not in ('draft','published','archived') then
   raise exception using errcode='22023',message='invalid_input'; end if;
  if p_service_id is null then
   if p_request_key is null or p_expected_version is distinct from 0 then raise exception using errcode='22023',message='invalid_input'; end if;
@@ -168,6 +174,8 @@ begin
    select * into result from public.services where id=prior.result_id; return result;
   end if;
   if p_status<>'draft' then raise exception using errcode='23514',message='initial_draft_required'; end if;
+  if (select count(*) from public.services where provider_id=p.id)>=100 then
+   raise exception using errcode='23514',message='service_limit'; end if;
   insert into public.services(provider_id,category,catalog_type_id,title,description,duration_minutes,status)
    values(p.id,p.category,p_catalog_type_id,btrim(p_title),p_description,p_duration_minutes,p_status) returning * into result;
   insert into public.idempotency_requests(actor_profile_id,action,request_key,request_hash,result_id)
@@ -196,7 +204,7 @@ begin
  perform catalog_private.lock_manager(p_id);
  select * into s from public.services where id=p_service_id for update;
  if p_request_key is null or p_amount_paise is null or p_amount_paise !~ '^(0|[1-9][0-9]{0,18})$'
-  or p_amount_paise::numeric>9223372036854775807 or p_terms_version is null or char_length(btrim(p_terms_version)) not between 1 and 160 then
+  or p_amount_paise::numeric>10000000000 or p_terms_version is null or char_length(btrim(p_terms_version)) not between 1 and 160 then
   raise exception using errcode='22023',message='invalid_input'; end if;
  select * into prior from public.idempotency_requests where actor_profile_id=actor and action='catalog.price.create' and request_key=p_request_key;
  if found then
@@ -204,6 +212,8 @@ begin
   return jsonb_build_object('priceVersionId',prior.result_id);
  end if;
  if s.version is distinct from p_expected_version then raise exception using errcode='40001',message='conflict'; end if;
+ if (select count(*) from public.service_price_versions where service_id=s.id)>=200 then
+  raise exception using errcode='23514',message='price_version_limit'; end if;
  stamp:=clock_timestamp();
  update public.service_price_versions set effective_to=stamp where service_id=s.id and effective_to is null;
  select coalesce(max(version),0)+1 into next_version from public.service_price_versions where service_id=s.id;
@@ -219,7 +229,7 @@ end $$;
 
 create function public.propose_service_area(p_provider_id uuid,p_pin text,p_expected_version integer,p_request_key uuid)
 returns public.provider_service_areas language plpgsql security definer set search_path='' as $$
-declare actor uuid:=identity_private.require_actor(); p public.providers; result public.provider_service_areas; prior public.idempotency_requests;
+declare actor uuid:=identity_private.require_actor(); p public.providers; result public.provider_service_areas; prior public.idempotency_requests; counter_version integer; expired public.provider_service_areas;
  request_hash text:=jsonb_build_array(p_provider_id,p_pin,p_expected_version)::text;
 begin
  p:=catalog_private.lock_manager(p_provider_id);
@@ -229,9 +239,21 @@ begin
   if prior.request_hash<>request_hash then raise exception using errcode='40001',message='conflict'; end if;
   select * into result from public.provider_service_areas where id=prior.result_id; return result;
  end if;
- if p.version is distinct from p_expected_version then raise exception using errcode='40001',message='conflict'; end if;
+ insert into public.provider_catalog_counters(provider_id) values(p.id) on conflict(provider_id) do nothing;
+ select coverage_version into counter_version from public.provider_catalog_counters where provider_id=p.id for update;
+ if counter_version is distinct from p_expected_version then raise exception using errcode='40001',message='conflict'; end if;
+ -- Re-proposal retires only expired approval, preserving the old review/history.
+ for expired in update public.provider_service_areas set status='revoked',version=version+1,updated_at=now()
+  where provider_id=p.id and pin_code=p_pin and status='approved' and valid_to<=now() returning * loop
+  insert into public.coverage_review_events(area_id,actor_profile_id,from_status,to_status,reason,area_version)
+   values(expired.id,actor,'approved','revoked','Expired approval replaced by a new proposal.',expired.version);
+  insert into public.audit_events(actor_profile_id,action,target_type,target_id)
+   values(actor,'catalog.coverage.expired','provider_service_area',expired.id);
+ end loop;
+ if (select count(*) from public.provider_service_areas where provider_id=p.id and status<>'revoked')>=50 then
+  raise exception using errcode='23514',message='coverage_limit'; end if;
  insert into public.provider_service_areas(provider_id,pin_code,proposed_by) values(p.id,p_pin,actor) returning * into result;
- update public.providers set version=version+1,updated_at=now() where id=p.id;
+ update public.provider_catalog_counters set coverage_version=coverage_version+1 where provider_id=p.id;
  insert into public.idempotency_requests(actor_profile_id,action,request_key,request_hash,result_id)
   values(actor,'catalog.coverage.create',p_request_key,request_hash,result.id);
  insert into public.audit_events(actor_profile_id,action,target_type,target_id) values(actor,'catalog.coverage.proposed','provider_service_area',result.id);
@@ -271,7 +293,7 @@ begin
  if a.version is distinct from p_expected_version then raise exception using errcode='40001',message='conflict'; end if;
  if p_reason is null or char_length(btrim(p_reason)) not between 1 and 1000 or p_decision is null or not
   ((a.status='proposed' and p_decision in ('approved','rejected')) or (a.status='approved' and p_decision='revoked'))
-  or (p_decision='approved' and (p_valid_until is null or not isfinite(p_valid_until) or p_valid_until<=now())) then
+  or (p_decision='approved' and (p_valid_until is null or not isfinite(p_valid_until) or p_valid_until<=now() or p_valid_until>now()+interval '12 months')) then
   raise exception using errcode='22023',message='invalid_transition'; end if;
  insert into public.coverage_review_events(area_id,actor_profile_id,from_status,to_status,reason,area_version)
   values(a.id,actor,a.status,p_decision,btrim(p_reason),a.version+1);
@@ -285,12 +307,13 @@ begin
 end $$;
 
 do $$ declare t text; begin
- foreach t in array array['service_catalog_types','pin_directory','services','service_price_versions','provider_service_areas','coverage_review_events'] loop
+ foreach t in array array['service_catalog_types','pin_directory','services','service_price_versions','provider_service_areas','coverage_review_events','provider_catalog_counters'] loop
   execute format('alter table public.%I enable row level security',t);
   execute format('revoke all on public.%I from public,anon,authenticated',t);
   execute format('grant select on public.%I to authenticated',t);
  end loop;
 end $$;
+create policy c01_counter_read on public.provider_catalog_counters for select to authenticated using(catalog_private.can_read(provider_id));
 create policy c01_types_read on public.service_catalog_types for select to authenticated using(identity_private.active_account());
 create policy c01_pins_read on public.pin_directory for select to authenticated using(identity_private.active_account());
 create policy c01_services_read on public.services for select to authenticated using(catalog_private.can_read(provider_id));
@@ -335,10 +358,10 @@ language plpgsql stable security definer set search_path='' as $$
 begin
  if p_category is null or p_category not in ('doctor','lab','ambulance','caretaker') or p_pin is null or p_pin !~ '^[1-9][0-9]{5}$'
   or p_limit is null or p_limit not between 1 and 50 or
-  (p_price_max is not null and (p_price_max !~ '^(0|[1-9][0-9]{0,18})$' or p_price_max::numeric>9223372036854775807)) or
+  (p_price_max is not null and (p_price_max !~ '^(0|[1-9][0-9]{0,18})$' or p_price_max::numeric>10000000000)) or
   (num_nonnulls(p_after_amount,p_after_provider,p_after_service) not in (0,3)) then
   raise exception using errcode='22023',message='invalid_input'; end if;
- if p_after_amount is not null and (p_after_amount !~ '^(0|[1-9][0-9]{0,18})$' or p_after_amount::numeric>9223372036854775807) then
+ if p_after_amount is not null and (p_after_amount !~ '^(0|[1-9][0-9]{0,18})$' or p_after_amount::numeric>10000000000) then
   raise exception using errcode='22023',message='invalid_input'; end if;
  return query select p.id,p.category,pp.display_name,s.id,s.title,s.duration_minutes,v.amount_paise::text,v.currency,v.unit,v.terms_version,a.pin_code,d.city,null::text
  from public.providers p join public.provider_profiles pp on pp.provider_id=p.id
@@ -359,7 +382,7 @@ declare actor uuid:=identity_private.require_actor(); p public.providers; result
 begin
  p:=catalog_private.lock_manager(p_provider_id);
  if p_title is null or char_length(btrim(p_title)) not between 1 and 160 or p_description is null or char_length(p_description)>2000
-  or p_duration_minutes is null or p_duration_minutes<=0 or p_status is null or p_status not in ('draft','published','archived') then
+  or p_duration_minutes is null or p_duration_minutes not between 1 and 10080 or p_status is null or p_status not in ('draft','published','archived') then
   raise exception using errcode='22023',message='invalid_input'; end if;
  if p_service_id is null then
   if p_request_key is null or p_expected_version is distinct from 0 then raise exception using errcode='22023',message='invalid_input'; end if;
@@ -369,6 +392,8 @@ begin
    select * into result from public.services where id=prior.result_id; return result;
   end if;
   if p_status<>'draft' then raise exception using errcode='23514',message='initial_draft_required'; end if;
+  if (select count(*) from public.services where provider_id=p.id)>=100 then
+   raise exception using errcode='23514',message='service_limit'; end if;
   insert into public.services(provider_id,category,catalog_type_id,title,description,duration_minutes,status)
    values(p.id,p.category,p_catalog_type_id,btrim(p_title),p_description,p_duration_minutes,p_status) returning * into result;
   insert into public.idempotency_requests(actor_profile_id,action,request_key,request_hash,result_id)
@@ -396,7 +421,7 @@ begin
  perform catalog_private.lock_manager(p_id);
  select * into s from public.services where id=p_service_id for update;
  if p_request_key is null or p_amount_paise is null or p_amount_paise !~ '^(0|[1-9][0-9]{0,18})$'
-  or p_amount_paise::numeric>9223372036854775807 or p_terms_version is null or char_length(btrim(p_terms_version)) not between 1 and 160 then
+  or p_amount_paise::numeric>10000000000 or p_terms_version is null or char_length(btrim(p_terms_version)) not between 1 and 160 then
   raise exception using errcode='22023',message='invalid_input'; end if;
  select * into prior from public.idempotency_requests where actor_profile_id=actor and action='catalog.price.create' and request_key=p_request_key;
  if found then
@@ -404,6 +429,8 @@ begin
   return jsonb_build_object('priceVersionId',prior.result_id);
  end if;
  if s.version is distinct from p_expected_version then raise exception using errcode='40001',message='conflict'; end if;
+ if (select count(*) from public.service_price_versions where service_id=s.id)>=200 then
+  raise exception using errcode='23514',message='price_version_limit'; end if;
  stamp:=statement_timestamp();
  update public.service_price_versions set effective_to=stamp where service_id=s.id and effective_to is null;
  select coalesce(max(version),0)+1 into next_version from public.service_price_versions where service_id=s.id;
@@ -418,7 +445,7 @@ begin
 end $$;
 create or replace function public.propose_service_area(p_provider_id uuid,p_pin text,p_expected_version integer,p_request_key uuid)
 returns public.provider_service_areas language plpgsql security definer set search_path='' as $$
-declare actor uuid:=identity_private.require_actor(); p public.providers; result public.provider_service_areas; prior public.idempotency_requests;
+declare actor uuid:=identity_private.require_actor(); p public.providers; result public.provider_service_areas; prior public.idempotency_requests; counter_version integer; expired public.provider_service_areas;
  request_hash text:=jsonb_build_array(p_provider_id,p_pin,p_expected_version)::text;
 begin
  p:=catalog_private.lock_manager(p_provider_id);
@@ -428,9 +455,21 @@ begin
   if prior.request_hash<>request_hash then raise exception using errcode='40001',message='conflict'; end if;
   select * into result from public.provider_service_areas where id=prior.result_id; result.approved_by:=null; result.proposed_by:=null; return result;
  end if;
- if p.version is distinct from p_expected_version then raise exception using errcode='40001',message='conflict'; end if;
+ insert into public.provider_catalog_counters(provider_id) values(p.id) on conflict(provider_id) do nothing;
+ select coverage_version into counter_version from public.provider_catalog_counters where provider_id=p.id for update;
+ if counter_version is distinct from p_expected_version then raise exception using errcode='40001',message='conflict'; end if;
+ -- Re-proposal retires only expired approval, preserving the old review/history.
+ for expired in update public.provider_service_areas set status='revoked',version=version+1,updated_at=now()
+  where provider_id=p.id and pin_code=p_pin and status='approved' and valid_to<=now() returning * loop
+  insert into public.coverage_review_events(area_id,actor_profile_id,from_status,to_status,reason,area_version)
+   values(expired.id,actor,'approved','revoked','Expired approval replaced by a new proposal.',expired.version);
+  insert into public.audit_events(actor_profile_id,action,target_type,target_id)
+   values(actor,'catalog.coverage.expired','provider_service_area',expired.id);
+ end loop;
+ if (select count(*) from public.provider_service_areas where provider_id=p.id and status<>'revoked')>=50 then
+  raise exception using errcode='23514',message='coverage_limit'; end if;
  insert into public.provider_service_areas(provider_id,pin_code,proposed_by) values(p.id,p_pin,actor) returning * into result;
- update public.providers set version=version+1,updated_at=now() where id=p.id;
+ update public.provider_catalog_counters set coverage_version=coverage_version+1 where provider_id=p.id;
  insert into public.idempotency_requests(actor_profile_id,action,request_key,request_hash,result_id)
   values(actor,'catalog.coverage.create',p_request_key,request_hash,result.id);
  insert into public.audit_events(actor_profile_id,action,target_type,target_id) values(actor,'catalog.coverage.proposed','provider_service_area',result.id);
@@ -468,9 +507,9 @@ begin;
 drop policy c01_areas_read on public.provider_service_areas;
 create policy c01_areas_read on public.provider_service_areas for select to authenticated
  using(catalog_private.can_read(provider_id) or catalog_private.area_reviewer(id));
-create function public.list_service_area_reviews(p_limit integer default 20,p_after uuid default null)
+create function public.list_service_area_reviews(p_limit integer default 20,p_after uuid default null,p_after_priority integer default null,p_after_created_at timestamptz default null)
 returns table(area_id uuid,provider_id uuid,category text,display_name text,pin_code text,status text,
- valid_from timestamptz,valid_to timestamptz,version integer)
+ valid_from timestamptz,valid_to timestamptz,version integer,created_at timestamptz)
 language plpgsql stable security definer set search_path='' as $$
 begin
  if not identity_private.active_account() or auth.jwt()->>'aal' is distinct from 'aal2' or not exists(
@@ -478,21 +517,28 @@ begin
    and valid_from<=now() and (expires_at is null or expires_at>now()) and revoked_at is null) then
   raise exception using errcode='42501',message='forbidden'; end if;
  if p_limit is null or p_limit not between 1 and 50 then raise exception using errcode='22023',message='invalid_input'; end if;
- return query select a.id,p.id,p.category,pp.display_name,a.pin_code,a.status,a.valid_from,a.valid_to,a.version
+ if num_nonnulls(p_after,p_after_priority,p_after_created_at) not in (0,3)
+  or (p_after_priority is not null and p_after_priority not in (0,1)) then
+  raise exception using errcode='22023',message='invalid_cursor'; end if;
+ if p_after is not null and not exists(
+  select 1 from public.provider_service_areas a join public.providers p on p.id=a.provider_id
+   where a.id=p_after and a.created_at=p_after_created_at and catalog_private.verifier(p.organization_id)) then
+  raise exception using errcode='22023',message='invalid_cursor'; end if;
+ return query select a.id,p.id,p.category,pp.display_name,a.pin_code,a.status,a.valid_from,a.valid_to,a.version,a.created_at
   from public.provider_service_areas a join public.providers p on p.id=a.provider_id
   join public.provider_profiles pp on pp.provider_id=p.id
-  where catalog_private.verifier(p.organization_id) and (p_after is null or a.id>p_after)
-  order by a.id limit p_limit;
+  where catalog_private.verifier(p.organization_id) and (p_after is null or ((a.status<>'proposed'),a.created_at,a.id)>((p_after_priority=1),p_after_created_at,p_after))
+  order by (a.status<>'proposed'),a.created_at,a.id limit p_limit;
 end $$;
-revoke all on function public.list_service_area_reviews(integer,uuid) from public,anon,authenticated;
-grant execute on function public.list_service_area_reviews(integer,uuid) to authenticated;
+revoke all on function public.list_service_area_reviews(integer,uuid,integer,timestamptz) from public,anon,authenticated;
+grant execute on function public.list_service_area_reviews(integer,uuid,integer,timestamptz) to authenticated;
 commit;
 
 -- Forward SQL regression fix: qualify capability fields against queue OUT columns.
 begin;
-create or replace function public.list_service_area_reviews(p_limit integer default 20,p_after uuid default null)
+create or replace function public.list_service_area_reviews(p_limit integer default 20,p_after uuid default null,p_after_priority integer default null,p_after_created_at timestamptz default null)
 returns table(area_id uuid,provider_id uuid,category text,display_name text,pin_code text,status text,
- valid_from timestamptz,valid_to timestamptz,version integer)
+ valid_from timestamptz,valid_to timestamptz,version integer,created_at timestamptz)
 language plpgsql stable security definer set search_path='' as $$
 begin
  if not identity_private.active_account() or auth.jwt()->>'aal' is distinct from 'aal2' or not exists(
@@ -500,11 +546,18 @@ begin
    and cap.valid_from<=now() and (cap.expires_at is null or cap.expires_at>now()) and cap.revoked_at is null) then
   raise exception using errcode='42501',message='forbidden'; end if;
  if p_limit is null or p_limit not between 1 and 50 then raise exception using errcode='22023',message='invalid_input'; end if;
- return query select a.id,p.id,p.category,pp.display_name,a.pin_code,a.status,a.valid_from,a.valid_to,a.version
+ if num_nonnulls(p_after,p_after_priority,p_after_created_at) not in (0,3)
+  or (p_after_priority is not null and p_after_priority not in (0,1)) then
+  raise exception using errcode='22023',message='invalid_cursor'; end if;
+ if p_after is not null and not exists(
+  select 1 from public.provider_service_areas a join public.providers p on p.id=a.provider_id
+   where a.id=p_after and a.created_at=p_after_created_at and catalog_private.verifier(p.organization_id)) then
+  raise exception using errcode='22023',message='invalid_cursor'; end if;
+ return query select a.id,p.id,p.category,pp.display_name,a.pin_code,a.status,a.valid_from,a.valid_to,a.version,a.created_at
   from public.provider_service_areas a join public.providers p on p.id=a.provider_id
   join public.provider_profiles pp on pp.provider_id=p.id
-  where catalog_private.verifier(p.organization_id) and (p_after is null or a.id>p_after)
-  order by a.id limit p_limit;
+  where catalog_private.verifier(p.organization_id) and (p_after is null or ((a.status<>'proposed'),a.created_at,a.id)>((p_after_priority=1),p_after_created_at,p_after))
+  order by (a.status<>'proposed'),a.created_at,a.id limit p_limit;
 end $$;
 commit;
 

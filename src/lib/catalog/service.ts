@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { IdentityError } from "@/lib/auth/identity";
-import { categorySchema, paiseSchema, pinSchema, searchSchema } from "@/lib/validation/catalog";
+import { categorySchema, paiseSchema, pinSchema, queueCursorSchema, searchSchema } from "@/lib/validation/catalog";
 
 type Client = Pick<SupabaseClient, "rpc" | "from">;
 type Command = "upsert_service" | "publish_price_version" | "propose_service_area" | "withdraw_service_area" | "review_service_area";
@@ -48,20 +48,25 @@ export async function privateCatalog(db: Client, providerId: string) {
   const provider = await db.from("providers").select("id,version").eq("id", providerId).maybeSingle();
   catalogError(provider.error);
   if (!provider.data) throw new IdentityError(404, "not_found");
-  const [services, coverage] = await Promise.all([
+  const [services, coverage, counter] = await Promise.all([
     db.from("services").select("id,provider_id,catalog_type_id,title,description,duration_minutes,status,version,service_price_versions(id,version,amount_paise::text,currency,unit,terms_version,effective_from,effective_to)")
       .eq("provider_id", providerId).order("id").limit(100),
     db.from("provider_service_areas").select("id,pin_code,status,valid_from,valid_to,version").eq("provider_id", providerId).order("id").limit(100),
+    db.from("provider_catalog_counters").select("coverage_version").eq("provider_id", providerId).maybeSingle(),
   ]);
-  catalogError(services.error); catalogError(coverage.error);
-  return { providerVersion: provider.data.version, services: services.data, coverage: coverage.data };
+  catalogError(services.error); catalogError(coverage.error); catalogError(counter.error);
+  return { providerVersion: provider.data.version, coverageVersion: counter.data?.coverage_version ?? 1,
+    services: services.data, coverage: coverage.data };
 }
-export async function coverageQueue(db: Pick<Client, "rpc">, limit: number, after?: string) {
-  const { data, error } = await db.rpc("list_service_area_reviews", { p_limit: limit, p_after: after ?? null });
+export async function coverageQueue(db: Pick<Client, "rpc">, limit: number, after?: z.infer<typeof queueCursorSchema>) {
+  const { data, error } = await db.rpc("list_service_area_reviews", { p_limit: limit, p_after: after?.[2] ?? null,
+    p_after_priority: after ? Number(after[0]) : null, p_after_created_at: after?.[1] ?? null });
   catalogError(error);
   const rows = z.array(z.object({ area_id: z.uuid(), provider_id: z.uuid(), category: categorySchema,
     display_name: z.string(), pin_code: pinSchema, status: z.enum(["proposed", "approved", "rejected", "revoked"]),
-    valid_from: z.string().nullable(), valid_to: z.string().nullable(), version: z.number().int().positive(),
+    valid_from: z.string().nullable(), valid_to: z.string().nullable(), version: z.number().int().positive(), created_at: z.string(),
   })).parse(data);
-  return { results: rows, nextCursor: rows.length === limit ? rows.at(-1)?.area_id ?? null : null };
+  const last = rows.at(-1);
+  return { results: rows, nextCursor: rows.length === limit && last
+    ? `${last.status === "proposed" ? "0" : "1"},${last.created_at},${last.area_id}` : null };
 }
