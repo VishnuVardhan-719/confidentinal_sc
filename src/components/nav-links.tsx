@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
+import type { ReactNode } from "react";
 
 export type NavItem = { href: string; label: string };
 
@@ -39,12 +40,23 @@ export function NavLinks({ items, label, id, className = "site-nav", onNavigate 
 }
 
 /**
- * Header navigation. From 48rem up the links are always shown. Below that they collapse behind a
- * disclosure button (aria-expanded/aria-controls). The panel is in normal flow, so no focus trap or
- * scroll lock is needed. Escape closes it and returns focus to the button; navigating closes it.
- * Without JavaScript the links stay visible (see the noscript rule).
+ * Header navigation. From 64rem up the links and account actions sit in one row. Below that they
+ * collapse behind a disclosure button (aria-expanded/aria-controls). The panel is in normal flow, so no
+ * focus trap or scroll lock is needed. Escape closes it and returns focus to the button; navigating closes it.
+ * Without JavaScript the panel stays open (see the noscript rule). `children` renders inside the panel
+ * after the links (account actions), so they collapse with the menu on small screens.
  */
-export function HeaderNav({ items, label }: { items: readonly NavItem[]; label: string }) {
+export function HeaderNav({
+  items,
+  label,
+  menuLabel = "Menu",
+  children,
+}: {
+  items: readonly NavItem[];
+  label: string;
+  menuLabel?: string;
+  children?: ReactNode;
+}) {
   const pathname = usePathname() ?? "/";
   const panelId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -74,12 +86,12 @@ export function HeaderNav({ items, label }: { items: readonly NavItem[]; label: 
   return (
     <>
       <noscript>
-        <style>{".site-header .menu-toggle{display:none}.site-header .nav-panel{display:block}"}</style>
+        <style>{".site-header .sh-toggle{display:none}.site-header .sh-panel{display:flex}"}</style>
       </noscript>
       <button
         ref={buttonRef}
         type="button"
-        className="menu-toggle"
+        className="sh-toggle"
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpenedOn(open ? null : pathname)}
@@ -87,10 +99,11 @@ export function HeaderNav({ items, label }: { items: readonly NavItem[]; label: 
         <span className="menu-icon" aria-hidden="true">
           <span />
         </span>
-        Menu
+        {menuLabel}
       </button>
-      <div ref={panelRef} className="nav-panel" id={panelId} data-open={open}>
-        <NavLinks items={items} label={label} className="site-nav" onNavigate={() => setOpenedOn(null)} />
+      <div ref={panelRef} className="sh-panel" id={panelId} data-open={open}>
+        <NavLinks items={items} label={label} className="site-nav sh-nav" onNavigate={() => setOpenedOn(null)} />
+        {children}
       </div>
     </>
   );
