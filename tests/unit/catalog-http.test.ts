@@ -52,7 +52,7 @@ it("requires authentication for provider commands", async () => {
 it.each([[null, 1], [{ coverage_version: 4 }, 4]])("returns an independent coverage counter %j", async (counter, expected) => {
   const from = vi.fn((table: string) => {
     const chain = {
-      select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), order: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), neq: vi.fn().mockReturnThis(), order: vi.fn().mockReturnThis(),
       limit: vi.fn().mockResolvedValue({ data: [], error: null }),
       maybeSingle: vi.fn().mockResolvedValue({ data: table === "providers" ? { id, version: 9 } : counter, error: null }),
     };

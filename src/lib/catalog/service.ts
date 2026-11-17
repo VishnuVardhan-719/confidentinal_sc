@@ -51,7 +51,7 @@ export async function privateCatalog(db: Client, providerId: string) {
   const [services, coverage, counter] = await Promise.all([
     db.from("services").select("id,provider_id,catalog_type_id,title,description,duration_minutes,status,version,service_price_versions(id,version,amount_paise::text,currency,unit,terms_version,effective_from,effective_to)")
       .eq("provider_id", providerId).order("id").limit(100),
-    db.from("provider_service_areas").select("id,pin_code,status,valid_from,valid_to,version").eq("provider_id", providerId).order("id").limit(100),
+    db.from("provider_service_areas").select("id,pin_code,status,valid_from,valid_to,version").eq("provider_id", providerId).neq("status", "revoked").order("id").limit(100),
     db.from("provider_catalog_counters").select("coverage_version").eq("provider_id", providerId).maybeSingle(),
   ]);
   catalogError(services.error); catalogError(coverage.error); catalogError(counter.error);
