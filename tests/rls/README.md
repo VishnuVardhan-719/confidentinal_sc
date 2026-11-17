@@ -448,3 +448,153 @@ Changes remain uncommitted on task/I01-auth-rls. No SQL execution or migration a
 - `tests/rls/i01_identity.sql` run with `psql -v ON_ERROR_STOP=1` against the local DB: all assertions passed, fixtures rolled back.
 - Command: `docker exec -i supabase_db_surecurevisit psql -U postgres -d postgres -v ON_ERROR_STOP=1 < tests/rls/i01_identity.sql`
 - Still NOT done: reciprocal-invite two-connection concurrency test, Auth/Storage HTTP tests, list pagination, invite expiry/cap.
+
+---
+
+## C01 engineering handoff — 17 November 2026
+
+TASK ID: C01. AGENT: Codex. Human owner: Owner; integrator: Claude.
+BRANCH: `task/C01-catalog`. BASE COMMIT: `6c31773519cb470624cecc0b236f11a11aa7cfc0`.
+COMMIT(S): none; changes remain uncommitted as instructed. C01 implementation and
+its checks pass; final I02 regression fails against changed shared DB behavior.
+Integration/contract approval and staging remain pending.
+The master task ledger is intentionally untouched under C01's exclusive file scope;
+Claude should transfer this evidence into its ledger when integrating.
+
+Implemented private catalog types, PIN reference directory, services, immutable
+price history, coverage proposals/reviews, scoped management RPCs and public discovery.
+Every new table has RLS and no direct client writes. Public reads require I02's
+live `provider_is_publishable` predicate, a published service/current price and an
+exact approved, unexpired PIN area. The directory returns service offers, so one
+provider can appear more than once. Order is amount, provider ID, service ID;
+the last ID resolves ties between equally priced services. Availability remains
+unknown (`advisory_availability: null`); C01 does not certify a booking slot.
+
+FILES CHANGED: this README, `.context/activeContext.md`,
+`supabase/migrations/202611170004_c01_catalog.sql`, `src/lib/catalog/**`,
+`src/lib/validation/catalog.ts`, `src/app/api/catalog/**`,
+`src/app/api/provider/services/**`, `src/app/api/provider/coverage/**`,
+`tests/unit/catalog*.test.ts`, and `tests/rls/c01_catalog.sql`.
+No UI, I01/I02 source, shared API document, payment or clinical feature changes.
+
+### Proposed API/DB contract additions — integrator review required
+
+`docs/API_CONTRACTS.md` was not edited. Existing I02 private provider routes remain
+in place. C01 uses the following separate namespace to avoid that route conflict.
+All responses are `private, no-store`; protected routes require a user bearer JWT.
+Validation failures return 422; authorization 401/403; stale versions 409; hidden
+and missing public providers return the identical 404 body. Upstream details are
+not returned. Creation routes require a UUID `Idempotency-Key` header.
+
+| Route | Proposed request/result |
+|---|---|
+| GET `/api/catalog` | Required `category`, exact `pin`; optional `priceMax` paise string, `limit` 1–50 (default 20), `cursor`; returns `{results,nextCursor}` |
+| GET `/api/catalog/:id` | Required `category`, `pin`; returns up to 50 eligible service offers or 404 |
+| GET `/api/provider/services` | Required `providerId`; authorized private services/price history/coverage, first 100 services and 100 areas, and current provider version |
+| POST `/api/provider/services` | `providerId,catalogTypeId,title,description,durationMinutes,status:draft,expectedVersion:0`; creates/replays a draft service |
+| PATCH `/api/provider/services/:id` | Same service fields and positive `expectedVersion`; catalog type immutable; publishing requires a current price |
+| POST `/api/provider/services/:id/prices` | `amountPaise` decimal string, `termsVersion`, service `expectedVersion`; returns `priceVersionId` and advances service version |
+| POST `/api/provider/coverage` | `providerId,pin,expectedVersion` (provider); proposes only, advances provider version |
+| POST `/api/provider/coverage/:id/withdraw` | Area `expectedVersion`; individual owner or active organization owner with manage scope only |
+| GET `/api/catalog/admin/coverage` | MFA coverage reviewer; bounded `limit` and UUID `cursor`; scoped queue with limited provider summary |
+| POST `/api/catalog/admin/coverage/:id/review` | `decision` approved/rejected/revoked, `reason`, area `expectedVersion`; approval also requires future finite `validUntil` |
+
+Public row allowlist: provider ID, category, public display name, service ID/title,
+duration, amount as a decimal string, INR, unit, terms version, matched PIN, city,
+nullable advisory availability. No owner/org IDs, contacts, addresses, documents,
+reviewer identity/notes, storage paths or internal workflow versions are public.
+The HTTP layer also strips unexpected upstream public fields. Cursor format is
+`amount_paise,provider_uuid,service_uuid`; it conveys only public sort keys and
+is validated, never used as authority. It represents continuation, not a snapshot:
+offers can change between pages. A full final page can yield an empty next page.
+
+DB public RPC additions: `search_providers`, `get_public_provider`,
+`upsert_service`, `publish_price_version`, `propose_service_area`,
+`withdraw_service_area`, `review_service_area`, `list_service_area_reviews`.
+Guest execution is granted only to the two public discovery RPCs. All definer
+functions pin an empty search path. Creates recheck authorization before replay;
+actor/provider/service locks and expected versions serialize price mutations.
+The DB excludes overlapping price ranges and prohibits historical price changes
+except a single closing timestamp. Coverage approval requires `coverage:verify`,
+`aal2`, current capability scope/lifetime and an independent reviewer; owners,
+proposers and all members of the owning organization cannot self-review.
+
+### Migration and actual verification evidence
+
+Applied the new migration manually to LOCAL `supabase_db_surecurevisit` only,
+using `docker exec -i ... psql -U postgres -v ON_ERROR_STOP=1 < file`.
+I01/I02 were already present. Manual psql application does not record a Supabase
+migration-history entry; the integrator must reconcile local history before
+using migration-up tooling. No staging or production migration ran.
+
+Earlier locally applied definitions are preserved; forward corrective definitions
+are appended in the same assigned migration file. Regressions first reproduced
+fresh-price timestamp visibility, queue column ambiguity, missing-MFA-claim
+authorization and manager withdrawal; corrected final definitions pass. Evaluate
+the last definition when reviewing repeated functions. The complete file also
+applied successfully from scratch on a disposable schema-only I02 clone, preserving
+original function owners. Its complete C01 SQL suite passed afterward.
+
+Independent read-only security review found the missing-`aal` SQL NULL issue.
+The new denial test first failed, then passed after `IS NOT DISTINCT FROM 'aal2'`.
+No unresolved important finding from that review remains. No service-role fallback,
+Storage-policy change or real patient/provider data was introduced.
+
+Actual commands/results (final check totals recorded below):
+
+```text
+npm run lint       -> exit 0; eslint, no diagnostics
+npm run typecheck  -> exit 0; Types generated successfully
+npm test           -> 10 files passed, 1 skipped; 109 tests passed, 1 skipped
+npm run build      -> exit 0; production compile/typecheck/static generation passed
+tests/rls/i01_identity.sql -> I01 SQL assertions passed; fixtures rolled back
+tests/rls/i02_providers.sql -> initially passed; FINAL RERUN FAILED (see below)
+tests/rls/c01_catalog.sql -> C01 SQL assertions passed; fixtures rolled back
+```
+
+SQL assertions include public function/column allowlists, base grants/RLS, PIN
+abuse, price precision/immutability/overlap, provider and credential visibility,
+UTC expiry boundaries, coverage states, scoped/expired/revoked/future admin
+capabilities, MFA including absent claim, cross-tenant denial, organization
+membership/scope/invitation/disablement, self-review and owner-only withdrawal.
+The one skipped unit test is the inherited opt-in Storage HTTP test.
+
+Final I02 rerun failed with `pending optional metadata without bytes blocks
+submission, unexpectedly succeeded`. Inspection found the local DB's
+`providers_private.credentials_ready` now excludes pending reservations without
+uploaded objects, unlike the I02 migration/tests in this branch. That helper
+is also present in the isolated schema snapshot. C01 neither defines nor changes
+it. I01 and C01 still pass on the final shared DB. I02's author/integrator must
+reconcile this changed dependency behavior and its tests before integration;
+the earlier I02 pass must not be used to claim the final full SQL run is green.
+
+A separate actual two-connection test ran in the disposable database: after an
+initial price, both sessions attempted an update with service version 2. The first
+held its transaction open after publication, the second waited and then received
+`40001`; result was two historical versions, exactly one open window, service
+version 3. This checks a price-update race, not every revocation/locking race.
+The disposable database and its committed synthetic concurrency fixtures were
+removed afterward. Standard SQL suites roll back their fixtures.
+
+### Limits and next work
+
+No PINs, catalog types, coverage or provider listings are seeded. An approved
+reference-data import and human coverage review are prerequisites to any results.
+Commercial price ceiling and per-provider PIN cap remain owner decisions; only
+the PostgreSQL bigint technical price bound is enforced. Do not describe those
+commercial abuse controls as implemented. Provider read lists are bounded but
+nested price history has no pagination; public detail caps offers at 50. Nationwide
+browsing without PIN, lab baskets, radius fallback, scheduling, edge rate limits
+and provider-facing detailed coverage rejection reasons remain deferred.
+
+Not verified: live Auth/MFA enrollment, C01 HTTP requests through the Supabase/Next
+gateway (unit HTTP tests mock boundaries), generated DB types, browser/E2E/staging,
+all two-session revocation/disablement races, query plans at production scale.
+No production-readiness or bookable-capacity claim is made.
+
+Next: reconcile the I02 dependency/test mismatch, then Claude reviews/integrates
+C01 and updates shared contracts/ledger; obtain
+approved PIN/service references and operational/commercial decisions; implement
+B01 server-derived price snapshots and booking/resource eligibility. Frontend
+handover can use the proposed routes and shared validation after contract review;
+all UI screens remain outside C01.

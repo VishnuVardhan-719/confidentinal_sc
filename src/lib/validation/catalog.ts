@@ -1,0 +1,29 @@
+import { z } from "zod";
+
+export const pinSchema = z.string().trim().regex(/^[1-9][0-9]{5}$/);
+// Technical bigint bound, not an approved commercial price ceiling.
+export const paiseSchema = z.string().regex(/^(0|[1-9][0-9]{0,18})$/)
+  .refine(value => /^(0|[1-9][0-9]{0,18})$/.test(value) && BigInt(value) <= BigInt("9223372036854775807"));
+export const categorySchema = z.enum(["doctor", "lab", "ambulance", "caretaker"]);
+export const cursorSchema = z.string().max(120).regex(/^[0-9]+,[0-9a-f-]+,[0-9a-f-]+$/i)
+  .transform(value => value.split(","))
+  .pipe(z.tuple([paiseSchema, z.uuid(), z.uuid()]));
+export const searchSchema = z.strictObject({
+  category: categorySchema, pin: pinSchema, priceMax: paiseSchema.optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20), cursor: cursorSchema.optional(),
+});
+export const serviceSchema = z.strictObject({
+  providerId: z.uuid(), catalogTypeId: z.uuid(), title: z.string().trim().min(1).max(160),
+  description: z.string().max(2000).default(""),
+  durationMinutes: z.number().int().positive().max(2_147_483_647),
+  status: z.enum(["draft", "published", "archived"]),
+  expectedVersion: z.number().int().min(0).max(2_147_483_646),
+});
+export const priceSchema = z.strictObject({ amountPaise: paiseSchema, termsVersion: z.string().trim().min(1).max(160),
+  expectedVersion: z.number().int().positive().max(2_147_483_646) });
+export const coverageSchema = z.strictObject({ providerId: z.uuid(), pin: pinSchema,
+  expectedVersion: z.number().int().positive().max(2_147_483_646) });
+export const coverageReviewSchema = z.strictObject({ decision: z.enum(["approved", "rejected", "revoked"]),
+  reason: z.string().trim().min(1).max(1000), expectedVersion: z.number().int().positive().max(2_147_483_646),
+  validUntil: z.iso.datetime({ offset: true }).optional(),
+}).refine(value => value.decision !== "approved" || value.validUntil !== undefined);
