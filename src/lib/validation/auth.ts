@@ -80,23 +80,11 @@ export const signInSchema = z.discriminatedUnion("method", [
   z.object({ method: z.literal("email"), email: emailSchema, password: currentPasswordSchema }),
 ]);
 
-export const signUpSchema = z.object({
-  role: z.enum(SIGNUP_ROLES, { error: "Choose how you will use SureCure Visit" }),
-  fullName: z
-    .string()
-    .trim()
-    .min(2, "Enter your full name")
-    .max(80, "Use 80 characters or fewer"),
-  phone: indianMobileSchema,
-  email: emailSchema,
-  password: newPasswordSchema,
-});
-
 export const forgotPasswordSchema = z.object({ email: emailSchema });
 
 export const verifyOtpSchema = z.object({ code: otpSchema });
 
 export type SignInInput = z.infer<typeof signInSchema>;
-export type SignUpInput = z.infer<typeof signUpSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
+// Per-role sign-up details live in ./auth-signup.ts.

@@ -7,7 +7,6 @@ import {
   forgotPasswordSchema,
   newPasswordSchema,
   signInSchema,
-  signUpSchema,
   verifyOtpSchema,
 } from "@/lib/validation/auth";
 
@@ -70,25 +69,10 @@ describe("sign-in", () => {
   });
 });
 
-describe("sign-up", () => {
-  const valid = { role: "patient", fullName: "Test Person", phone: "9876543210", email: "t@example.com", password: "quiet river 42" };
-
+describe("sign-up roles", () => {
   it("offers exactly the five public roles", () => {
     expect([...SIGNUP_ROLES]).toEqual(["patient", "doctor", "lab", "ambulance", "caretaker"]);
     expect(SIGNUP_ROLES).not.toContain("admin");
-  });
-  it.each(SIGNUP_ROLES)("accepts role %s", (role) => {
-    expect(signUpSchema.safeParse({ ...valid, role }).success).toBe(true);
-  });
-  it.each(["admin", "Admin", "", "superuser"])("rejects role %j", (role) => {
-    const r = signUpSchema.safeParse({ ...valid, role });
-    expect(r.success).toBe(false);
-    if (!r.success) expect(fieldErrors(r.error).role).toBe("Choose how you will use SureCure Visit");
-  });
-  it("reports every invalid field by path", () => {
-    const r = signUpSchema.safeParse({ role: "", fullName: " ", phone: "123", email: "x", password: "short" });
-    expect(r.success).toBe(false);
-    if (!r.success) expect(Object.keys(fieldErrors(r.error)).sort()).toEqual(["email", "fullName", "password", "phone", "role"]);
   });
 });
 

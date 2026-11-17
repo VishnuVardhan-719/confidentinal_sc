@@ -68,7 +68,7 @@ function PendingNote() {
 const initial: DemoActionState = { error: null };
 
 /** Only rendered when NEXT_PUBLIC_DEMO_MODE=true (checked by the page and again inside the server action). */
-export function DemoPanel() {
+export function DemoPanel({ next = null }: { next?: string | null }) {
   const [state, action] = useActionState(startDemoSession, initial);
   return (
     <section aria-labelledby="demo-title" className="mt-14 border-t-2 border-[var(--ink)] pt-6">
@@ -83,6 +83,7 @@ export function DemoPanel() {
         payment is taken, and nothing you do reaches a real provider.
       </p>
       <form action={action} className="mt-5 border-t border-[var(--line)]">
+        {next ? <input type="hidden" name="next" value={next} /> : null}
         {DEMO_USERS.map((u) => (
           <RoleButton key={u.role} role={u.role} name={u.name} />
         ))}
