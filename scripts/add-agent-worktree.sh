@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Usage: bash scripts/add-agent-worktree.sh <agent-name> <branch-name> [path]
-# Example: bash scripts/add-agent-worktree.sh codex feature/codex-auth ../SureCureVisit-codex-auth
+# Example: bash scripts/add-agent-worktree.sh codex feature/codex-auth .worktrees/codex-auth
 # Run only after the shared foundation/branch exists. This script never resets, cleans or deletes data.
 
 agent="${1:-}"
@@ -36,7 +36,7 @@ fi
 if [[ -z "$path" ]]; then
   safe_agent=$(printf '%s' "$agent" | tr -cs '[:alnum:]._-' '-')
   safe_branch=$(printf '%s' "$branch" | tr '/:' '--' | tr -cs '[:alnum:]._-' '-')
-  path="$root/../SureCureVisit-${safe_agent}-${safe_branch}"
+  path="$root/.worktrees/${safe_agent}-${safe_branch}"
 fi
 
 if [[ -e "$path" ]]; then
