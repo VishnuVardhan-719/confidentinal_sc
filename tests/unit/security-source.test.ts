@@ -48,7 +48,8 @@ describe("source security guards", () => {
   });
 
   it("reads only allow-listed NEXT_PUBLIC_ variables (these ship to the browser)", () => {
-    const allowed = new Set(["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]);
+    // NEXT_PUBLIC_DEMO_MODE is a non-secret build-time switch for the synthetic demo (phase 2, t27).
+    const allowed = new Set(["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "NEXT_PUBLIC_DEMO_MODE"]);
     const used = new Set(sources.flatMap((s) => s.text.match(/NEXT_PUBLIC_[A-Z0-9_]+/g) ?? []));
     expect([...used].filter((name) => !allowed.has(name))).toEqual([]);
   });
