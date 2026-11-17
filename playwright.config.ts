@@ -1,7 +1,15 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = 3200;
-const baseURL = `http://localhost:${PORT}`;
+/*
+ * Default: production build + `next start` on 3300 with the synthetic demo switched on
+ * (NEXT_PUBLIC_DEMO_MODE is inlined at build time, so it must be set for the build).
+ *   E2E_DEV=1          -> `next dev` on 3200 instead (faster loop, dev-only warnings appear)
+ *   E2E_BASE_URL=<url> -> test an already-running server (e.g. Claude's integration build); no webServer
+ */
+const dev = process.env.E2E_DEV === "1";
+const external = process.env.E2E_BASE_URL;
+const PORT = dev ? 3200 : 3300;
+const baseURL = external ?? `http://127.0.0.1:${PORT}`;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -23,12 +31,15 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
     },
   ],
-  webServer: {
-    command: `npm run dev -- --port ${PORT}`,
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    stdout: "ignore",
-    stderr: "pipe",
-  },
+  webServer: external
+    ? undefined
+    : {
+        command: dev ? `npm run dev -- --port ${PORT}` : `npm run build && npm run start -- -p ${PORT}`,
+        url: baseURL,
+        env: { NEXT_PUBLIC_DEMO_MODE: "true" },
+        reuseExistingServer: !process.env.CI,
+        timeout: dev ? 120_000 : 300_000,
+        stdout: "ignore",
+        stderr: "pipe",
+      },
 });
