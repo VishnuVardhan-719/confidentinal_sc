@@ -1,16 +1,16 @@
 "use client";
 
 import { ButtonLink } from "@/components/button-link";
-import { DEMO_PATIENT_NAME, allBookings, lookupBooking, splitVisits } from "./demo-model";
+import { allBookings, lookupBooking, splitVisits } from "./demo-model";
 import { DemoBadge, VisitRow } from "./demo-parts";
 import { useDemoState } from "./demo-store";
 import { EmptyPanel } from "./empty-panel";
 import { SectionTitle } from "./page-parts";
 
 /** Upcoming and past visits for the demo patient, including requests sent from /book in this tab. */
-export function PatientVisits() {
+export function PatientVisits({ patientName }: { patientName: string }) {
   const demo = useDemoState();
-  const mine = allBookings(demo).filter((b) => b.patientName === DEMO_PATIENT_NAME);
+  const mine = allBookings(demo).filter((b) => b.patientName === patientName);
   const { upcoming, past } = splitVisits(mine);
 
   return (

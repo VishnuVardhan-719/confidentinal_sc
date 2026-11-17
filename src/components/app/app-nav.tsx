@@ -2,38 +2,43 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { DemoRole } from "@/lib/demo/data";
 import { cx } from "@/components/ui/cx";
 import { Icon } from "./icons";
-import { NAV_BY_ROLE, ROLE_LABEL, currentHref, roleForPath } from "./nav-model";
+import { NAV_BY_ROLE, ROLE_LABEL, SIGN_OUT, currentHref, type AppNavItem } from "./nav-model";
 
 /**
- * One nav landmark for the app area. From 48rem it is a sticky sidebar; below that it is a bottom bar
- * that sticks to the viewport while the app content is on screen and rests above the site footer.
+ * One nav landmark for the app area, for the signed-in demo role. From 48rem it is a sticky sidebar;
+ * below that it is a bottom bar that sticks to the viewport and rests above the site footer.
+ * With no session it renders only a sign-in link (the page itself redirects to /sign-in).
  */
-export function AppNav() {
-  const pathname = usePathname() ?? "/dashboard";
-  const role = roleForPath(pathname);
-  const items = NAV_BY_ROLE[role];
+export function AppNav({ role, name }: { role: DemoRole | null; name?: string }) {
+  const pathname = usePathname() ?? "/";
+  const items: readonly AppNavItem[] = role
+    ? [...NAV_BY_ROLE[role], SIGN_OUT]
+    : [{ href: "/sign-in", label: "Sign in", short: "Sign in", icon: "user" }];
   const current = currentHref(pathname, items);
 
   return (
     <nav
-      aria-label={`${ROLE_LABEL[role]} area`}
+      aria-label={role ? `${ROLE_LABEL[role]} area` : "App"}
       className={cx(
-        // Mobile: full-bleed bar pinned to the bottom of the viewport, after the content visually.
         "sticky bottom-0 z-20 order-last -mx-5 border-t border-[var(--line)] bg-[var(--paper-raised)] pb-[env(safe-area-inset-bottom)]",
-        // Desktop: sidebar column.
         "md:order-none md:mx-0 md:self-start md:border-t-0 md:border-r md:bg-transparent md:pb-0 md:pr-6 md:top-0 md:bottom-auto md:py-10",
       )}
     >
-      <p className="hidden px-3 pb-3 text-[0.8125rem] font-semibold text-[var(--ink-soft)] md:block">
-        {ROLE_LABEL[role]}
-      </p>
+      {role ? (
+        <div className="hidden px-3 pb-4 md:block">
+          <p className="text-[0.8125rem] font-semibold text-[var(--ink-soft)]">{ROLE_LABEL[role]}</p>
+          {name ? <p className="mt-0.5 text-[0.9375rem] font-semibold break-words text-[var(--ink)]">{name}</p> : null}
+        </div>
+      ) : null}
       <ul className="m-0 flex list-none p-0 md:flex-col md:gap-1">
         {items.map((item) => {
           const active = item.href === current;
+          const signOut = item.href === SIGN_OUT.href;
           return (
-            <li key={item.href} className="flex-1 md:flex-none">
+            <li key={item.href} className={cx("flex-1 md:flex-none", signOut && "md:mt-4 md:border-t md:border-[var(--line)] md:pt-4")}>
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}

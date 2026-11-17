@@ -53,9 +53,9 @@ const structureChoices = [
  * Provider onboarding, UI only. Identity checks, document storage and admin verification (I02) are not
  * built, so uploads are switched off and the final submit is disabled. Nothing typed here leaves the page.
  */
-export function OnboardingFlow() {
+export function OnboardingFlow({ kind }: { kind?: Kind }) {
   const flow = useFlow(ONBOARDING_STEPS.length);
-  const [values, setValues] = useState<Values>({ name: "", registration: "", phone: "", email: "", pins: "" });
+  const [values, setValues] = useState<Values>({ kind, name: "", registration: "", phone: "", email: "", pins: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const set = (patch: Partial<Values>) => setValues((v) => ({ ...v, ...patch }));

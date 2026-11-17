@@ -1,17 +1,10 @@
 import type { Metadata } from "next";
-import { OnboardingFlow } from "@/components/app/onboarding-flow";
-import { AppPageHeader } from "@/components/app/page-parts";
+import { requireDemoRole } from "@/components/app/require-role";
+import { OnboardingScreen } from "@/components/app/screens";
 
 export const metadata: Metadata = { title: "Provider profile" };
 
-export default function ProviderOnboardingPage() {
-  return (
-    <>
-      <AppPageHeader
-        title="Provider profile"
-        lead="Set up the details patients will see. An admin checks every profile before it is listed."
-      />
-      <OnboardingFlow />
-    </>
-  );
+export default async function ProviderOnboardingPage() {
+  const session = await requireDemoRole("/provider/onboarding");
+  return <OnboardingScreen role={session.role} />;
 }

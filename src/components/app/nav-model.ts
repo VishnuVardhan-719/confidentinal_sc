@@ -1,31 +1,50 @@
+import type { DemoRole } from "@/lib/demo/data";
+
 /**
- * Role-aware navigation for the signed-in app shell.
- *
- * Sign-in (I01) does not exist yet, so the area is inferred from the URL. This decides which links to
- * show, nothing more: it is not access control. When auth lands, the role must come from the server
- * session and every route must check it server-side; the URL must never grant a role.
+ * Role-aware navigation for the signed-in app shell. The role comes from the demo session on the server
+ * (getDemoSession), never from the URL. Showing a link is not permission: each route checks the role itself.
  */
-export type AppRole = "patient" | "provider" | "admin";
-export type AppIcon = "home" | "calendar" | "inbox" | "clipboard" | "queue" | "user";
+export type AppIcon = "home" | "calendar" | "inbox" | "clipboard" | "queue" | "user" | "users" | "logout";
 export type AppNavItem = { href: string; label: string; short: string; icon: AppIcon };
 
-export const ROLE_LABEL: Record<AppRole, string> = {
+export const ROLE_LABEL: Record<DemoRole, string> = {
   patient: "Patient",
-  provider: "Provider",
+  doctor: "Doctor",
+  lab: "Lab",
+  ambulance: "Scheduled ambulance",
+  caretaker: "Caretaker",
   admin: "Admin",
 };
 
-const account: AppNavItem = { href: "/account", label: "Account", short: "Account", icon: "user" };
+/** What a provider's requests are called, by provider kind. */
+export const PROVIDER_WORK: Record<"doctor" | "lab" | "ambulance", { plural: string; short: string }> = {
+  doctor: { plural: "Appointments", short: "Appts" },
+  lab: { plural: "Sample collections", short: "Collections" },
+  ambulance: { plural: "Scheduled transfers", short: "Transfers" },
+};
 
-export const NAV_BY_ROLE: Record<AppRole, readonly AppNavItem[]> = {
+const account: AppNavItem = { href: "/account", label: "Account", short: "Account", icon: "user" };
+export const SIGN_OUT: AppNavItem = { href: "/sign-out", label: "Sign out", short: "Sign out", icon: "logout" };
+
+function providerNav(kind: "doctor" | "lab" | "ambulance"): readonly AppNavItem[] {
+  return [
+    { href: "/provider", label: PROVIDER_WORK[kind].plural, short: PROVIDER_WORK[kind].short, icon: "inbox" },
+    { href: "/provider/onboarding", label: "Provider profile", short: "Profile", icon: "clipboard" },
+    account,
+  ];
+}
+
+export const NAV_BY_ROLE: Record<DemoRole, readonly AppNavItem[]> = {
   patient: [
     { href: "/dashboard", label: "Dashboard", short: "Home", icon: "home" },
     { href: "/book", label: "Request a visit", short: "Request", icon: "calendar" },
     account,
   ],
-  provider: [
-    { href: "/provider", label: "Requests", short: "Requests", icon: "inbox" },
-    { href: "/provider/onboarding", label: "Provider profile", short: "Profile", icon: "clipboard" },
+  doctor: providerNav("doctor"),
+  lab: providerNav("lab"),
+  ambulance: providerNav("ambulance"),
+  caretaker: [
+    { href: "/caretaker", label: "People you support", short: "Home", icon: "users" },
     account,
   ],
   admin: [
@@ -36,16 +55,9 @@ export const NAV_BY_ROLE: Record<AppRole, readonly AppNavItem[]> = {
 
 const under = (pathname: string, prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
 
-/** Area for a path. /account is shared, so it falls back to the patient area until a session exists. */
-export function roleForPath(pathname: string): AppRole {
-  if (under(pathname, "/provider")) return "provider";
-  if (under(pathname, "/admin")) return "admin";
-  return "patient";
-}
-
 /**
  * aria-current for an app nav link. Only the most specific matching item is current, so on
- * /provider/onboarding the "Requests" link (/provider) is not also marked.
+ * /provider/onboarding the /provider link is not also marked.
  */
 export function currentHref(pathname: string, items: readonly AppNavItem[]): string | undefined {
   return items

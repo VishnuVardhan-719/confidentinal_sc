@@ -1,5 +1,5 @@
 import { APP_DEMO_BOOKINGS } from "@/lib/demo/app";
-import { DEMO_BOOKINGS, DEMO_PENDING_VERIFICATIONS, providerById, type DemoBooking, type DemoProvider } from "@/lib/demo/data";
+import { DEMO_BOOKINGS, DEMO_PENDING_VERIFICATIONS, DEMO_PROVIDERS, providerById, type DemoBooking, type DemoProvider } from "@/lib/demo/data";
 
 /**
  * Pure helpers over the synthetic demo data. Screens read demo rows only through here and
@@ -10,6 +10,8 @@ export type BookingStatus = DemoBooking["status"];
 export type Decision = "approved" | "rejected";
 export type DemoApplication = { id: string; name: string; kind: string; submittedAt: string };
 
+export type DemoProfile = { name: string; phone: string; email: string; language: string };
+
 export type DemoState = {
   /** Requests created in this tab through /book. */
   created: DemoBooking[];
@@ -19,17 +21,18 @@ export type DemoState = {
   decisions: Record<string, Decision>;
   /** Profiles submitted in this tab through /provider/onboarding. */
   applications: DemoApplication[];
-  profile?: { name: string; phone: string; email: string; language: string };
+  /** Account edits per demo role, so switching roles in one tab does not mix profiles. */
+  profiles: Record<string, DemoProfile>;
 };
 
-export const EMPTY_DEMO_STATE: DemoState = { created: [], status: {}, decisions: {}, applications: [] };
+export const EMPTY_DEMO_STATE: DemoState = { created: [], status: {}, decisions: {}, applications: [], profiles: {} };
 
 export type DemoAction =
   | { type: "createBooking"; booking: DemoBooking }
   | { type: "setStatus"; id: string; status: BookingStatus }
   | { type: "decide"; id: string; decision: Decision | null }
   | { type: "submitApplication"; application: DemoApplication }
-  | { type: "saveProfile"; profile: NonNullable<DemoState["profile"]> }
+  | { type: "saveProfile"; role: string; profile: DemoProfile }
   | { type: "reset" };
 
 /** Provider responses are only valid from "requested"; anything else is ignored. */
@@ -53,7 +56,7 @@ export function reduceDemo(state: DemoState, action: DemoAction): DemoState {
     case "submitApplication":
       return { ...state, applications: [...state.applications, action.application] };
     case "saveProfile":
-      return { ...state, profile: action.profile };
+      return { ...state, profiles: { ...state.profiles, [action.role]: action.profile } };
     case "reset":
       return EMPTY_DEMO_STATE;
   }
@@ -101,9 +104,13 @@ export const STATUS_LABEL: Record<BookingStatus, string> = {
 
 export const PAYMENT_LABEL = "Payment not collected";
 
-/** The provider and admin screens act as these demo users until demo sign-in (t27) provides a session. */
+/** Demo doctor id (DEMO_USERS doctor = Dr. Demo Asha). Used by tests and the booking confirmation hint. */
 export const DEMO_PROVIDER_ID = "demo-dr-1";
-export const DEMO_PATIENT_NAME = "Demo Patient One";
+
+/** The demo provider a signed-in doctor / lab / ambulance demo user acts as: DEMO_USERS names match DEMO_PROVIDERS names. */
+export function providerForUser(name: string): DemoProvider | undefined {
+  return DEMO_PROVIDERS.find((p) => p.name === name);
+}
 
 /** Category slug on the public site -> demo provider kind. Caretakers have no demo providers. */
 export const KIND_FOR_SERVICE = {

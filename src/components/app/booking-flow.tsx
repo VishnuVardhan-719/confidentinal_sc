@@ -8,7 +8,7 @@ import { ButtonLink } from "@/components/button-link";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
-import { DEMO_USERS, formatInr, providerById, providersByKind } from "@/lib/demo/data";
+import { formatInr, providerById, providersByKind } from "@/lib/demo/data";
 import { ChoiceList } from "./choice-list";
 import {
   DEMO_PROVIDER_ID,
@@ -39,8 +39,6 @@ export const BOOKING_STEPS: readonly StepDef[] = [
   { id: "review", title: "Review" },
 ];
 
-const DEMO_PATIENT = DEMO_USERS.find((u) => u.role === "patient")!;
-
 const serviceChoices = categories.map((c) => ({
   value: c.slug as ServiceType,
   label: c.name,
@@ -53,7 +51,7 @@ const serviceChoices = categories.map((c) => ({
  * "Send request" adds a demo request to local state (status "requested", payment not collected)
  * and shows a confirmation. Links from provider profiles prefill it via ?provider=&service=&slot=.
  */
-export function BookingFlow() {
+export function BookingFlow({ patientName }: { patientName: string }) {
   const params = useSearchParams();
   const [prefill] = useState(() => prefillFromParams(params));
   const prefilled = Boolean(prefill.providerId);
@@ -92,7 +90,7 @@ export function BookingFlow() {
         id,
         providerId: values.providerId,
         serviceId: values.serviceId,
-        patientName: DEMO_PATIENT.name,
+        patientName,
         startsAt: values.slot,
         status: "requested",
         paymentStatus: "not_collected",
