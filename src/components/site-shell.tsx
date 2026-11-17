@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { NavLinks, type NavItem } from "./nav-links";
+import { HeaderNav, NavLinks, type NavItem } from "./nav-links";
 
 const mainNav: readonly NavItem[] = [
   { href: "/", label: "Home" },
@@ -24,7 +24,7 @@ export function SiteHeader() {
         <Link className="brand" href="/" aria-label="SureCure Visit home">
           <Brand />
         </Link>
-        <NavLinks items={mainNav} label="Main" />
+        <HeaderNav items={mainNav} label="Main" />
       </div>
     </header>
   );
