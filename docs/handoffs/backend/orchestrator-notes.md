@@ -1,3 +1,5 @@
+> Historical snapshot from mid-session. It is out of date (e.g. C01 and B01 are pushed, PRs #1-#4 exist). Use README.md in this folder for current state.
+
 # Orchestrator state (2026-11-17, Claude) — uncommitted local note
 Repo: VishnuVardhan-719/confidentinal_sc. Worktrees in C:\Users\Yashwanth\SureCureVisit-codex-{I01,I02,C01,B01}.
 PR #1 I01 (task/I01-auth-rls->develop) pushed incl. follow-ups 1efbab0. PR #2 I02 (->task/I01-auth-rls) pushed 34811b8.
