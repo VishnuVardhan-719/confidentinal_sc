@@ -72,8 +72,8 @@ These items are individually tracked so none disappear inside a generic doctor-w
 | ID | Task | Owner | Status | Required evidence |
 |---|---|---|---|---|
 | D-POL | Approve mixed-payment, hybrid-cancellation, shared-support and coverage mechanics | Client/product + finance/operations | PENDING | Signed per-service policy matrix |
-| D-WF | Resolve changed agent/editor workflow (Kiro addition, Antigravity removal, friend handover) | Project owner | PENDING | Dated explicit owner decision |
-| D-CLIN | Define DC01–DC14 November 23 acceptance (staging vs public/clinical enablement) | Client + clinical lead | PENDING | Item-level accepted/deferred list and clinical sign-off owner |
+| D-WF | Resolve changed agent/editor workflow (Kiro addition, Antigravity removal, friend handover) | Project owner | RESOLVED 2026-11-17 (Claude + Codex + Kiro; see DECISIONS) | Dated explicit owner decision |
+| D-CLIN | Define DC01–DC14 November 23 acceptance (staging vs public/clinical enablement) | Client + clinical lead | Order RESOLVED (core first); Nov 23 acceptance list OPEN | Item-level accepted/deferred list and clinical sign-off owner |
 | D-PRIV | Approve health-data notices, retention, consent, minors and vendor roles | Client + legal/privacy reviewer | PENDING | Dated applicability matrix and approved forms |
 | T-NEG | Execute end-to-end negative/security/availability tests per journey | Assigned engineering agent + reviewer | PENDING | `docs/TEST_EVIDENCE.md` references |
 

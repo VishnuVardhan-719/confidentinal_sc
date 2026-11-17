@@ -8,7 +8,7 @@ Update only from inspected repository evidence, commits and executed tests.
 | Master execution README and agent governance | DONE_VERIFIED | Root README and Claude/Codex/Kiro contracts prepared and cross-checked |
 | v1.5 detailed specification recovery | DONE_VERIFIED | Extracted source specs under `docs/specs/`; original 44-entry ZIP preserved under `docs/source/` |
 | Model/effort recommendation guide | DONE_VERIFIED | Official vendor docs checked; actual account/CLI model availability still PENDING until CLI verification |
-| Schema reconciliation crosswalk | DONE_VERIFIED | Candidate name/grouping crosswalk documented; canonical ERD/schema is PENDING |
+| Schema reconciliation crosswalk | IN_PROGRESS | Candidate crosswalk drafted (SCHEMA_RECONCILIATION.md, CANONICAL_SCHEMA_DRAFT.md); canonical ERD PENDING owner approval |
 | Existing application source/repository audit | PENDING | No runnable app source was in the inspected v1.5 spec archive; inspect actual repository and other upload before scaffolding |
 | Application foundation | PENDING | No verified app implementation evidence in this execution pack |
 | Authentication and roles | PENDING | No verified implementation evidence |
