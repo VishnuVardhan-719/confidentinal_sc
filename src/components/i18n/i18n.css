@@ -1,3 +1,7 @@
+/* Declare Tailwind's layer order first: if this file loads before globals.css, a bare @layer components
+   would otherwise be ordered before base, and the preflight reset would override every component rule. */
+@layer theme, base, components, utilities;
+
 /*
  * Language support styles. Co-located so globals.css stays untouched.
  *
