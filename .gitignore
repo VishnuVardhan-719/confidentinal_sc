@@ -9,3 +9,5 @@ test-results/
 coverage/
 *.log
 _archive/
+tsconfig.tsbuildinfo
+next-env.d.ts
