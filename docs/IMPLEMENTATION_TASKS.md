@@ -33,7 +33,7 @@
 | P01 | Pay-after records, payment test mode, webhooks and reconciliation | Owner | Codex implementation/review if assigned | P1 | PENDING | Payment separate from booking; signature/dedupe tests |
 | U01 | Patient/provider/admin dashboards and responsive UI | Owner initially | Claude/Kiro/Codex by ticket | P1 | PENDING | Real APIs; loading/error/empty states; mobile/keyboard tests |
 | Q01 | Security, RLS, E2E, accessibility, performance and backup/restore | Owner | Codex/Kiro independent reviews | P0 | PENDING | Evidence recorded; no critical/high release blockers |
-| H01 | Friend frontend handover package | Owner/Claude | Claude prepares; friend executes later | P2 | PENDING | Branch, setup, contracts, pending UI tickets, tests and next actions |
+| H01 | Friend frontend handover package | Owner/Claude | Claude prepares; friend executes later | P2 | IN_PROGRESS (draft: docs/HANDOFF_FRONTEND.md) | Branch, setup, contracts, pending UI tickets, tests and next actions |
 | R02 | Staging, client acceptance, runbook and release decision | Owner | Claude coordinates | P0 | PENDING | Explicit client approval and all relevant release gates |
 
 ## Doctor consultation subtask ledger — all 14 requested capabilities
