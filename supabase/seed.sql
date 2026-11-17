@@ -1,0 +1,3 @@
+-- I01 synthetic-only local seed. Intentionally empty: no provider listings,
+-- phone numbers, credentials, admin grants, or public claims are seeded.
+-- Rollback-scoped synthetic Auth/patient/organization fixtures live in tests.
