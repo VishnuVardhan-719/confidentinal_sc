@@ -65,3 +65,9 @@ Record date, decision, rationale, approver, source and unresolved questions. Do 
 - **D-CLIN RESOLVED (scope order):** Core booking journeys first, then clinical DC01–DC14. Synthetic data and private staging only; real-patient activation stays gated by D-PRIV and clinical sign-off. Source: owner answer during setup.
 - **Project root:** `C:\SURECUREVISIT`, git repo initialised in place, remote `VishnuVardhan-719/confidentinal_sc`. Old v1.1/v2.2 files are in the git-ignored `_archive/`.
 - Still OPEN: D-POL, D-PRIV, S00 schema/ERD approval, legal entity, merchant/invoice issuer, approver names.
+
+## 2026-11-17 — S00 canonical schema approved with defaults
+- **S00 APPROVED:** Owner replied "Approve all defaults" to `docs/S00_DECISION_SHEET.md`. `docs/CANONICAL_SCHEMA_DRAFT.md` is the canonical schema basis for migrations, with the draft's safe default for each of Q01–Q12.
+- Q01, Q06, Q08, Q11 and Q12 are settled as engineering defaults.
+- Q02, Q03, Q04, Q05, Q07, Q09 and Q10 are approved only as safe defaults. The client, legal or finance answers remain OPEN. They block real payments, real patient data, clinical use and public go-live, not the core booking build.
+- Still OPEN: legal entity, merchant/invoice issuer, D-POL, D-PRIV, approver names, Nov 23 acceptance list.
