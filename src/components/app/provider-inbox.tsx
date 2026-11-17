@@ -3,25 +3,28 @@
 import { useRef, useState } from "react";
 import { ButtonLink } from "@/components/button-link";
 import { Button } from "@/components/ui/button";
-import { providerById } from "@/lib/demo/data";
-import { DEMO_PROVIDER_ID, STATUS_LABEL, allBookings, lookupBooking, type BookingStatus } from "./demo-model";
+import type { DemoProvider } from "@/lib/demo/data";
+import { STATUS_LABEL, allBookings, lookupBooking, type BookingStatus } from "./demo-model";
 import { VisitRow } from "./demo-parts";
 import { dispatchDemo, useDemoState } from "./demo-store";
 import { EmptyPanel } from "./empty-panel";
+import { PROVIDER_WORK } from "./nav-model";
 import { SectionTitle } from "./page-parts";
 
 const byStart = (a: { startsAt: string }, b: { startsAt: string }) => a.startsAt.localeCompare(b.startsAt);
 
 /**
- * Inbox and schedule for the demo doctor. Accept / Decline only change this tab's demo state.
+ * Inbox and schedule for the signed-in demo provider. Wording follows the provider kind (appointments,
+ * sample collections or scheduled transfers). Accept / Decline only change this tab's demo state.
  * A polite live region announces each decision, and focus moves to the inbox heading because the
  * row (and the button that had focus) disappears from the inbox.
  */
-export function ProviderInbox() {
+export function ProviderInbox({ provider }: { provider: DemoProvider }) {
+  const work = PROVIDER_WORK[provider.kind];
   const demo = useDemoState();
   const [announcement, setAnnouncement] = useState("");
   const inboxHeading = useRef<HTMLHeadingElement>(null);
-  const mine = allBookings(demo).filter((b) => b.providerId === DEMO_PROVIDER_ID);
+  const mine = allBookings(demo).filter((b) => b.providerId === provider.id);
   const requests = mine.filter((b) => b.status === "requested").sort(byStart);
   const schedule = mine.filter((b) => b.status === "accepted").sort(byStart);
   const declined = mine.filter((b) => b.status === "declined").sort(byStart);
@@ -89,7 +92,7 @@ export function ProviderInbox() {
 
       <section aria-labelledby="schedule" className="min-w-0">
         <div className="mb-2 border-t border-[var(--ink)] pt-5">
-          <SectionTitle id="schedule">Schedule</SectionTitle>
+          <SectionTitle id="schedule">{`Schedule: ${work.plural.toLowerCase()}`}</SectionTitle>
         </div>
         {schedule.length ? (
           <ul className="m-0 list-none p-0">
@@ -98,7 +101,7 @@ export function ProviderInbox() {
             ))}
           </ul>
         ) : (
-          <p className="mt-4 text-[var(--ink-soft)]">Nothing scheduled. Accepted requests appear here.</p>
+          <p className="mt-4 text-[var(--ink-soft)]">Nothing scheduled yet. Requests you accept appear here.</p>
         )}
       </section>
 
@@ -116,7 +119,7 @@ export function ProviderInbox() {
       ) : null}
 
       <p className="text-[0.9375rem] text-[var(--ink-soft)]">
-        Viewing as {providerById(DEMO_PROVIDER_ID)?.name}. Update your details in{" "}
+        Viewing as {provider.name}, {provider.speciality}. Update your details in{" "}
         <ButtonLink href="/provider/onboarding" variant="quiet" className="min-h-11 px-1">
           Provider profile
         </ButtonLink>

@@ -9,7 +9,7 @@ import { EMPTY_DEMO_STATE, reduceDemo, type DemoAction, type DemoState } from ".
  * No network. Mirrored to sessionStorage so it survives a reload, and cleared when the tab closes.
  * Stored data is re-validated on read because anything in storage can be edited by the user.
  */
-const KEY = "surecure-demo-v1";
+const KEY = "surecure-demo-v2";
 
 const status = z.enum(["requested", "accepted", "completed", "cancelled", "declined"]);
 const storedSchema = z.object({
@@ -31,9 +31,10 @@ const storedSchema = z.object({
   applications: z
     .array(z.object({ id: z.string().max(80), name: z.string().max(140), kind: z.string().max(40), submittedAt: z.iso.datetime() }))
     .max(50),
-  profile: z
-    .object({ name: z.string().max(120), phone: z.string().max(20), email: z.string().max(254), language: z.string().max(5) })
-    .optional(),
+  profiles: z.record(
+    z.string().max(20),
+    z.object({ name: z.string().max(120), phone: z.string().max(20), email: z.string().max(254), language: z.string().max(5) }),
+  ),
 });
 
 let state: DemoState | null = null;
