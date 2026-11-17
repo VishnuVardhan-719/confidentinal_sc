@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { DEMO_USERS, formatInr, providerById, providersByKind } from "@/lib/demo/data";
 import { ChoiceList } from "./choice-list";
 import {
+  DEMO_PROVIDER_ID,
   KIND_FOR_SERVICE,
   PAYMENT_LABEL,
   STATUS_LABEL,
@@ -20,7 +21,7 @@ import {
   takenSlots,
   type ServiceType,
 } from "./demo-model";
-import { DEMO_PROVIDER_ID, DemoBadge } from "./demo-parts";
+import { DemoBadge } from "./demo-parts";
 import { dispatchDemo, useDemoState } from "./demo-store";
 import { Icon } from "./icons";
 import { bookingAreaSchema, bookingChoiceSchema, bookingServiceSchema } from "./schemas";

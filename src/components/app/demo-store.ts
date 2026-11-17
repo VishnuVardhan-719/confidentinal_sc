@@ -29,7 +29,7 @@ const storedSchema = z.object({
   status: z.record(z.string().max(80), status),
   decisions: z.record(z.string().max(80), z.enum(["approved", "rejected"])),
   applications: z
-    .array(z.object({ id: z.string().max(80), name: z.string().max(120), kind: z.string().max(40), submittedAt: z.iso.datetime() }))
+    .array(z.object({ id: z.string().max(80), name: z.string().max(140), kind: z.string().max(40), submittedAt: z.iso.datetime() }))
     .max(50),
   profile: z
     .object({ name: z.string().max(120), phone: z.string().max(20), email: z.string().max(254), language: z.string().max(5) })

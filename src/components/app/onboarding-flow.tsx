@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ButtonLink } from "@/components/button-link";
 import { ChoiceList } from "./choice-list";
+import { DemoBadge } from "./demo-parts";
+import { dispatchDemo } from "./demo-store";
 import { Icon } from "./icons";
 import {
   PROVIDER_STRUCTURES,
@@ -16,7 +19,7 @@ import {
   onboardingTypeSchema,
   parsePinList,
 } from "./schemas";
-import { NotConnected, ReviewList, StepActions, Stepper } from "./stepper";
+import { ReviewList, StepActions, Stepper } from "./stepper";
 import { stepErrors, type StepDef } from "./steps";
 import { focusFirstError, useFlow } from "./use-flow";
 
@@ -54,6 +57,7 @@ export function OnboardingFlow() {
   const flow = useFlow(ONBOARDING_STEPS.length);
   const [values, setValues] = useState<Values>({ name: "", registration: "", phone: "", email: "", pins: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitted, setSubmitted] = useState(false);
   const set = (patch: Partial<Values>) => setValues((v) => ({ ...v, ...patch }));
 
   function submitStep(event: FormEvent<HTMLFormElement>) {
@@ -73,6 +77,26 @@ export function OnboardingFlow() {
     flow.open(index);
   }
 
+  function submitProfile() {
+    // Re-check every step: the stepper lets people jump to Review after editing an earlier answer.
+    const all = [onboardingTypeSchema, onboardingDetailsSchema, onboardingAreaSchema];
+    const bad = all.findIndex((s) => !s.safeParse(values).success);
+    if (bad >= 0) {
+      openStep(bad);
+      return;
+    }
+    dispatchDemo({
+      type: "submitApplication",
+      application: {
+        id: `demo-app-${Date.now().toString(36)}`,
+        name: `${values.name.trim()} (Demo)`,
+        kind: values.kind!,
+        submittedAt: new Date().toISOString(),
+      },
+    });
+    setSubmitted(true);
+  }
+
   const title = ONBOARDING_STEPS[flow.step]!.title;
   const heading = (text: string) => (
     <h2
@@ -84,6 +108,32 @@ export function OnboardingFlow() {
     </h2>
   );
   const org = values.structure === "organisation";
+
+  if (submitted) {
+    return (
+      <section aria-labelledby="profile-sent" className="max-w-[40rem]">
+        <div role="status" className="flex items-start gap-4 rounded-md border border-[var(--forest)] bg-[var(--mist)] p-6">
+          <span aria-hidden="true" className="grid size-11 flex-none place-items-center rounded-full bg-[var(--forest)] text-[var(--paper)]">
+            <Icon name="check" className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <h2 id="profile-sent" className="font-sans text-[1.375rem] leading-snug font-bold tracking-normal">
+              Profile submitted for review
+            </h2>
+            <p className="mt-1 text-[var(--ink-soft)]">You are not listed for patients until an admin approves your profile.</p>
+          </div>
+        </div>
+        <DemoBadge className="mt-6" />
+        <p className="mt-3 text-[0.9375rem] text-[var(--ink-soft)]">This is a demo. Nothing left this browser tab.</p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <ButtonLink href="/admin">See it in the admin queue</ButtonLink>
+          <ButtonLink href="/provider" variant="secondary">
+            Back to requests
+          </ButtonLink>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <div className="max-w-[44rem]">
@@ -216,7 +266,7 @@ export function OnboardingFlow() {
       ) : null}
 
       {flow.step === 4 ? (
-        <Review values={values} heading={heading("Check your profile")} onChange={openStep} onBack={flow.back} />
+        <Review values={values} heading={heading("Check your profile")} onChange={openStep} onBack={flow.back} onSubmit={submitProfile} />
       ) : null}
     </div>
   );
@@ -255,11 +305,13 @@ function Review({
   heading,
   onChange,
   onBack,
+  onSubmit,
 }: {
   values: Values;
   heading: ReactNode;
   onChange: (step: number) => void;
   onBack: () => void;
+  onSubmit: () => void;
 }) {
   const kind = categories.find((c) => c.slug === values.kind)?.name;
   const pins = parsePinList(values.pins);
@@ -276,21 +328,14 @@ function Review({
   return (
     <section aria-label="Review">
       {heading}
+      <DemoBadge className="mb-5" />
       <ReviewList rows={rows} onChange={onChange} />
       <p className="mt-8 max-w-[38rem] text-[0.9375rem] text-[var(--ink-soft)]">
         After you submit, an admin checks your details and documents. You are not listed for patients until that
-        check is complete.
+        check is complete. In this demo, your profile joins the admin verification queue in this browser tab only.
       </p>
       <StepActions onBack={onBack}>
-        <NotConnected id="onboarding-not-connected">Submitting is not connected yet. Nothing has been sent.</NotConnected>
-        <Button
-          aria-disabled="true"
-          aria-describedby="onboarding-not-connected"
-          onClick={(e) => e.preventDefault()}
-          className="cursor-not-allowed opacity-55"
-        >
-          Submit for verification
-        </Button>
+        <Button onClick={onSubmit}>Submit demo profile</Button>
       </StepActions>
     </section>
   );

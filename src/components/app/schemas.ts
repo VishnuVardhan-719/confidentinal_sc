@@ -7,23 +7,6 @@ import { z } from "zod";
 
 export const SERVICE_TYPES = ["doctor", "lab", "scheduled-ambulance", "caretaker"] as const;
 export const PROVIDER_STRUCTURES = ["individual", "organisation"] as const;
-export const TIME_WINDOWS = ["morning", "afternoon", "evening"] as const;
-
-export const TIME_WINDOW_LABEL: Record<(typeof TIME_WINDOWS)[number], string> = {
-  morning: "Morning",
-  afternoon: "Afternoon",
-  evening: "Evening",
-};
-
-/** Today's date in India (IST, UTC+5:30) as YYYY-MM-DD, for date-input limits. */
-export function todayInIndia(now: Date = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Kolkata",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now);
-}
 
 const pinCode = z
   .string()
@@ -56,15 +39,11 @@ export const bookingAreaSchema = z.object({
   locality: z.string().trim().max(120, "Keep the area to 120 characters or fewer.").optional(),
 });
 
-export function bookingWhenSchema(today: string) {
-  return z.object({
-    date: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a date.")
-      .refine((d) => d >= today, "Choose today or a later date."),
-    window: z.enum(TIME_WINDOWS, { error: "Choose a preferred time of day." }),
-  });
-}
+export const bookingChoiceSchema = z.object({
+  providerId: z.string({ error: "Choose a provider." }).min(1, "Choose a provider."),
+  serviceId: z.string({ error: "Choose a service." }).min(1, "Choose a service."),
+  slot: z.string({ error: "Choose a time." }).min(1, "Choose a time."),
+});
 
 // Provider onboarding
 export const onboardingTypeSchema = z.object({
@@ -92,6 +71,13 @@ export const onboardingAreaSchema = z.object({
 });
 
 // Account
+export const accountSchema = z.object({
+  name: z.string().trim().min(2, "Enter your full name.").max(120, "Keep the name to 120 characters or fewer."),
+  phone: indianMobile,
+  email: z.email("Enter an email address, for example name@example.com."),
+  language: z.enum(["en", "te", "hi"]),
+});
+
 export const LANGUAGES = [
   { code: "en", label: "English" },
   { code: "te", label: "తెలుగు (Telugu)" },
