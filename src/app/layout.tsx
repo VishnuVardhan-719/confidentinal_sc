@@ -1,29 +1,47 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Atkinson_Hyperlegible_Next, Newsreader } from "next/font/google";
+import { SiteHeader, SiteFooter } from "@/components/site-shell";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Body: built for low-vision legibility. Display: an optical-size serif for the editorial voice.
+// Telugu and Devanagari web fonts are added with the i18n ticket; system Noto/Nirmala fallbacks cover them until then.
+const body = Atkinson_Hyperlegible_Next({
+  variable: "--font-body",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const editorial = Newsreader({
+  variable: "--font-editorial",
   subsets: ["latin"],
+  style: ["normal", "italic"],
+  axes: ["opsz"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "SureCure Visit",
-  description: "Verified healthcare services marketplace",
+  title: { default: "SureCure Visit", template: "%s | SureCure Visit" },
+  description:
+    "Explore doctor visits, lab services, scheduled ambulance transport and non-clinical caretaker support with SureCure Visit.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export const viewport: Viewport = {
+  themeColor: "#faf8f2",
+};
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="en" className={`${body.variable} ${editorial.variable}`}>
+      <body>
+        <a className="skip-link" href="#main-content">
+          Skip to main content
+        </a>
+        <SiteHeader />
+        <main id="main-content" tabIndex={-1}>
+          {children}
+        </main>
+        <SiteFooter />
+      </body>
     </html>
   );
 }

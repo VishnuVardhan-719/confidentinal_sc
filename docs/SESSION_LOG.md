@@ -42,3 +42,9 @@
 - Claude MCP: Claude Docs, Drive, Gmail, Calendar, context7, playwright, scrapling.
 - Delegation blocker: git worktrees need a base commit and the repo has none. Owner rule: no commits unless asked.
 - Next: R01 source audit and S00 schema crosswalk (design docs only, no migrations).
+
+## 2026-11-17 - U01-a app shell and U01-c static pages (branch task/U01-a-app-shell, uncommitted)
+- Finished shell started earlier: root layout, skip link, header/footer, tokens and focus/reduced-motion CSS in src/app/globals.css, next/font Latin with Telugu/Devanagari fallbacks.
+- Added U01-c pages: /, /how-it-works, /categories, /categories/[slug] (doctor, lab, scheduled-ambulance, caretaker; data in src/app/categories/data.ts). No price, coverage, availability, rating or verification claims. Copy says online booking is not open and gives 112 for emergencies. Copy needs owner review.
+- U01-b (src/components/ui/**) belongs to Claude; not touched.
+- Not done: Telugu/Hindi translation and locale routing (no i18n library yet), Telugu/Devanagari font files, page tests.
