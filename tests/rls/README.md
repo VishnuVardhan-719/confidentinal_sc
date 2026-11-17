@@ -660,3 +660,20 @@ controlling five organizations could direct up to 125 pending invitations at one
 profile. There is no per-invitee cap, decline/block control or platform-wide rate
 limit in this change. Those anti-harassment/product decisions remain open for the
 owner; this task adds no cross-organization recipient quota.
+# B01 execution plan (2026-11-17)
+
+Task B01, Codex, branch `task/B01-booking`, base
+`802a8bdc64414c5f57c88002f2ed069f2c8ba59b`. Dependencies: I01/I02/C01,
+canonical schema v0.1 and the supplied Kiro B01 design. Exclusive scope: migration
+005, booking libraries/validation/API routes, booking tests and this handoff.
+No commits, shared contracts, UI or context-file edits are authorized by this task.
+
+Implementation sequence: (1) failing boundary/SQL tests, (2) migration with private
+snapshots, state machine, RLS and scoped resource scheduling RPCs, (3) HTTP adapters,
+(4) isolated migration/SQL and two-session races, (5) lint/typecheck/unit/build and
+changed-file security review. Acceptance requires authoritative price/coverage,
+fresh patient/provider/assignment authorization, atomic reservations, immutable
+events, stale-version rejection and privacy-preserving queue projections. Expiry,
+rescheduling and post-accept cancellation require explicit published policy; no
+fees, deadline or clinical activation will be invented. P01 owns payment tables.
+
