@@ -51,3 +51,15 @@ New routes under `/api/organizations/invitations`, `/api/providers/**`, `/api/ad
 
 ## Frontend dependency
 Frontend tickets U01-d to U01-g are blocked on these PRs landing (C01, B01, I01, I02).
+
+## How to continue (start here)
+
+1. Clone and fetch everything: `git clone https://github.com/VishnuVardhan-719/confidentinal_sc.git && cd confidentinal_sc && git fetch --all`.
+2. Local DB: Docker Desktop running, then from the C01 or B01 branch `npx supabase start` (project id `surecurevisit`, ports 584xx) and `npx supabase db reset --local` to apply migrations 001 to 005. Do not reuse any other Supabase project on the machine.
+3. Gate before any PR: `npm ci && npm run lint && npm run typecheck && npm test && npm run build`, plus every SQL suite in `tests/rls/` (command above) and `python tests/rls/run_b01_concurrency.py`.
+4. Merge order is I01, I02, C01, B01 (stacked PRs). Retarget each PR to `develop` after its parent merges. Never push straight to `develop` or `main`.
+5. Next backend work, in order: apply the B01 review fixes (H1 to H3 first, see `reviews/B01-review.md` and `wip/B01-fix-round1`), re-run CodeRabbit and Kiro on C01 round 2, then P01 pay-after (design brief in `reviews/B01-P01-design.md`), then Q01 (runner WIP on `wip/Q01a-rls-runner`).
+6. Rules that never change: RLS deny-by-default, no service-role key in app code, secrets only in `.env`, synthetic data only, integer paise, UTC times, no live payments.
+
+## Review notes
+Kiro adversarial review text, design briefs and the PR descriptions are in `docs/handoffs/backend/reviews/`. They are working notes, not decisions; the owner records decisions in `docs/DECISIONS.md`.
