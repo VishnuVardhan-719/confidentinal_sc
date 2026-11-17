@@ -86,7 +86,7 @@ select public.create_self_patient('synthetic-policy-v1');
 select pg_temp.assert_true((select count(*) = 1 from public.patients),'B sees self patient');
 select pg_temp.assert_true((select count(*) = 4 from public.patient_access),'B sees own four scoped grants without recursion');
 select pg_temp.assert_true((select count(*) = 1 from public.consent_events),'identity consent created atomically');
-select pg_temp.assert_true((select array_agg(r order by r) = array['doctor','patient'] from public.identity_roles() r),'trusted individual doctor workspace');
+select pg_temp.assert_true((select array_agg(r order by r) = array['patient'] from public.identity_roles() r),'draft individual provider has no category workspace before approval');
 
 select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal2","user_metadata":{"role":"admin"},"app_metadata":{"role":"admin"}}',true);
 select pg_temp.assert_true((select count(*) = 0 from public.patients),'cross-patient SELECT denied');
@@ -96,7 +96,7 @@ select public.create_self_patient('synthetic-policy-v1');
 select public.create_self_patient('synthetic-policy-v1');
 select pg_temp.assert_true((select count(*) = 1 from public.patients),'self patient creation idempotent');
 select pg_temp.assert_true((select count(*) = 4 from public.patient_access),'no duplicate grants');
-select pg_temp.assert_true((select array_agg(r order by r) = array['ambulance','caretaker','lab','patient'] from public.identity_roles() r),'org categories derive from DB; forged admin metadata ignored');
+select pg_temp.assert_true((select array_agg(r order by r) = array['patient'] from public.identity_roles() r),'draft org providers have no category workspace; forged admin metadata ignored');
 select pg_temp.assert_true((select count(*) = 1 from public.profiles),'cross-profile SELECT denied');
 select pg_temp.assert_true((select count(*) = 1 from public.organizations),'cross-org SELECT denied');
 select pg_temp.assert_true((select count(*) = 0 from public.organization_members where organization_id='20000000-0000-4000-8000-000000000002'),'cross-org member SELECT denied');
