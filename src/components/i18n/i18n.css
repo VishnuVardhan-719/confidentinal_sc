@@ -1,0 +1,51 @@
+/*
+ * Language support styles. Co-located so globals.css stays untouched.
+ *
+ * FE_REVIEW_U01 P1-2: Telugu and Devanagari carry marks above and below the letters. The Latin
+ * display settings (line-height 1.02-1.1, negative tracking) clip those marks and collide lines,
+ * and negative tracking pulls joined clusters apart. These rules are unlayered on purpose so they
+ * win over the base, components and utilities layers wherever Indic text appears.
+ */
+/* :lang() on the element itself resolves the nearest lang attribute, so English blocks marked lang="en" inside a Telugu page keep Latin settings. */
+:is(h1, h2, h3, .brand, .service-name, .mk-evidence dt, .mk-principles dt):lang(te),
+:is(h1, h2, h3, .brand, .service-name, .mk-evidence dt, .mk-principles dt):lang(hi) {
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+/* Body text needs more room too; 1.6 is tight for stacked Telugu consonants. */
+body:lang(te), [lang="te"] { line-height: 1.75; }
+body:lang(hi), [lang="hi"] { line-height: 1.7; }
+body [lang="en"] { line-height: 1.6; }
+
+/* Long Telugu compounds must wrap at 320px rather than overflow. */
+:lang(te), :lang(hi) { overflow-wrap: anywhere; }
+
+/* Italic is a Latin convention; Indic scripts have no true italic and synthesise a slant. */
+em:lang(te), em:lang(hi) { font-style: normal; }
+
+@layer components {
+  .i18n-switcher { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .75rem; }
+  .i18n-label { font-size: .875rem; font-weight: 700; color: var(--ink-soft); }
+  .i18n-options { display: inline-flex; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--paper-raised); }
+  .i18n-option {
+    min-height: 44px; min-width: 44px; padding: 0 .875rem; border: 0; background: transparent; cursor: pointer;
+    font: inherit; font-size: .9375rem; font-weight: 600; line-height: 1.2; color: var(--ink);
+    transition: background-color .15s ease, color .15s ease;
+  }
+  .i18n-option + .i18n-option { border-left: 1px solid var(--line-strong); }
+  .i18n-option:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+  .i18n-option:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+  .i18n-option:hover { background: var(--mist); color: var(--forest); }
+  .i18n-option:focus-visible { position: relative; outline: 3px solid var(--focus); outline-offset: 2px; }
+  .i18n-option[aria-current="true"] { background: var(--forest); color: var(--paper); }
+  .i18n-partial { flex-basis: 100%; font-size: .875rem; color: var(--ink-soft); }
+  @media (min-width: 48rem) {
+    .i18n-switcher { justify-content: flex-end; }
+    .i18n-partial { text-align: right; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .i18n-option { transition: none; }
+}
