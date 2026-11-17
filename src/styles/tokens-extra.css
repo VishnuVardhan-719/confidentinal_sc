@@ -1,0 +1,21 @@
+/*
+ * Extra design tokens for the signed-in app area. Imported from src/app/(app)/layout.tsx only.
+ *
+ * --control-border: boundary colour for text inputs, selects and textareas. The shared ui controls use
+ * --line (#c5d6d1), which is about 1.5:1 on white and fails WCAG 1.4.11 (3:1 for control boundaries).
+ * #6a817d is 4.16:1 on white, 3.92:1 on paper (#faf8f2) and 3.67:1 on mist (#e9f3f0).
+ */
+:root {
+  --control-border: #6a817d;
+}
+
+/*
+ * The ui controls draw their resting border with var(--line). Redefining --line on the control element
+ * itself swaps in the stronger colour without fighting utility specificity, and leaves hover (forest),
+ * invalid (warning) and every decorative hairline untouched. Scoped to the app shell because a stylesheet
+ * loaded by one layout stays in the document after client navigation to public pages.
+ * Follow-up: make --control-border the default inside ui/input, ui/select and ui/textarea themselves.
+ */
+[data-app-shell] :is(input:not([type="radio"], [type="checkbox"], [type="range"], [type="file"]), select, textarea) {
+  --line: var(--control-border);
+}
