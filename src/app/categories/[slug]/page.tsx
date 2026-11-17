@@ -4,9 +4,14 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ButtonLink } from "@/components/button-link";
 import { EmptyState, Loading } from "@/components/ui/states";
+import { DemoBadge } from "../_components/demo-badge";
+import { cardsForCategory } from "../_components/demo-providers";
+import { ProviderBrowser } from "../_components/provider-browser";
 import { categories, getCategory } from "../data";
 
 type Params = Promise<{ slug: string }>;
+
+const NOUN = { doctor: "doctor", lab: "lab", "scheduled-ambulance": "transport provider", caretaker: "caretaker" } as const;
 
 export function generateStaticParams() {
   return categories.map((c) => ({ slug: c.slug }));
@@ -63,6 +68,8 @@ async function CategoryContent({ params }: { params: Params }) {
   const { slug } = await params;
   const category = getCategory(slug);
   if (!category) notFound();
+  const cards = cardsForCategory(category.slug);
+  const noun = NOUN[category.slug];
 
   return (
     <>
@@ -85,18 +92,33 @@ async function CategoryContent({ params }: { params: Params }) {
           ))}
         </ul>
 
-        <div className="mt-12">
+      </article>
+
+      <section className="mt-16 border-t border-[var(--line)] pt-12" aria-labelledby="demo-providers-title">
+        <div className="mb-8 grid max-w-[46rem] gap-3">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <h2 id="demo-providers-title">Demo providers</h2>
+            <DemoBadge />
+          </div>
+          <p className="text-[var(--ink-soft)]">
+            These are made-up providers so you can try the flow. Real booking is not open yet, and no payment is
+            collected.
+          </p>
+        </div>
+        {cards.length === 0 ? (
           <EmptyState
-            title="Booking is not open yet"
-            message="You will be able to choose a provider here once online booking opens."
+            title={`No demo ${noun}s yet`}
+            message="Demo profiles for this service have not been added. You can still read how requests will work."
             action={
               <ButtonLink href="/how-it-works" variant="secondary">
                 See how it will work
               </ButtonLink>
             }
           />
-        </div>
-      </article>
+        ) : (
+          <ProviderBrowser cards={cards} noun={noun} />
+        )}
+      </section>
     </>
   );
 }
