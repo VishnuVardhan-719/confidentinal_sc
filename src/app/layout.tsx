@@ -4,11 +4,15 @@ import { SiteHeader, SiteFooter } from "@/components/site-shell";
 import "./globals.css";
 
 // Body: built for low-vision legibility. Display: an optical-size serif for the editorial voice.
+// next/font has no precalculated fallback metrics for Atkinson Hyperlegible Next, so the metric-matched
+// Arial fallback ("Atkinson Metric Fallback") is declared in globals.css instead, to limit layout shift on swap.
 // Telugu and Devanagari web fonts are added with the i18n ticket; system Noto/Nirmala fallbacks cover them until then.
 const body = Atkinson_Hyperlegible_Next({
   variable: "--font-body",
   subsets: ["latin"],
   display: "swap",
+  adjustFontFallback: false,
+  fallback: ["Atkinson Metric Fallback", "Arial", "sans-serif"],
 });
 
 const editorial = Newsreader({
