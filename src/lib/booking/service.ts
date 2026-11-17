@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { IdentityError } from "@/lib/auth/identity";
 
-type Command = "create_booking_request" | "save_patient_address" | "accept_booking" | "decline_booking" | "cancel_booking" | "advance_visit" | "request_reschedule" | "list_bookings" | "get_booking" | "get_provider_queue" | "list_slots" | "upsert_booking_resource" | "set_booking_availability" | "add_booking_blackout";
+type Command = "mark_no_show" | "create_booking_request" | "save_patient_address" | "accept_booking" | "decline_booking" | "cancel_booking" | "advance_visit" | "request_reschedule" | "list_bookings" | "get_booking" | "get_provider_queue" | "list_slots" | "upsert_booking_resource" | "set_booking_availability" | "add_booking_blackout";
 export async function bookingCommand(db: Pick<SupabaseClient, "rpc">, name: Command, args: Record<string, unknown>) {
   for (let attempt = 0; attempt < 3; attempt++) {
     const { data, error } = await db.rpc(name, args);

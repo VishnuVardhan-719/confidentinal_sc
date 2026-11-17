@@ -147,18 +147,18 @@ def main():
                 raise RuntimeError("B01 suite unexpectedly passed without 005")
             sql(path.read_text())
             print("PASS: fresh migration " + path.name, flush=True)
+        failures = []
         for name in ("i01_identity.sql", "i01_followups.sql", "i02_providers.sql", "c01_catalog.sql", "b01_booking.sql"):
             try:
                 sql((ROOT / "tests/rls" / name).read_text())
             except RuntimeError as error:
-                # c01_catalog.sql fixtures predate I01 migration 003 (invited_membership_expiry);
-                # C01 is corrected in a sibling worktree. Report, never hide.
-                if name != "c01_catalog.sql" or "invited_membership_expiry" not in str(error):
-                    raise
-                print("KNOWN PRE-EXISTING FAIL (C01 suite vs I01 003): " + name, flush=True)
+                failures.append(name)
+                print("FAIL: " + name + ": " + str(error)[-1800:], flush=True)
                 continue
             print("PASS: " + name, flush=True)
         concurrency()
+        if failures:
+            raise RuntimeError("SQL regression suites failed: " + ", ".join(failures))
     finally:
         if created:
             assert re.fullmatch(r"b01_booking_[0-9a-f]{12}", TARGET)

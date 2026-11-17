@@ -27,10 +27,9 @@ create table public.patient_addresses (
  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
 create index b01_address_patient on public.patient_addresses(patient_id);
-create sequence booking_private.public_ref_seq;
 create table public.bookings (
  id uuid primary key default gen_random_uuid(),
- public_ref text not null unique default ('SCV-'||lpad(nextval('booking_private.public_ref_seq')::text,12,'0')),
+ public_ref text not null unique default ('SCV-'||replace(gen_random_uuid()::text,'-','')),
  requester_profile_id uuid not null references public.profiles(id), patient_id uuid not null references public.patients(id),
  provider_id uuid not null, category text not null, service_id uuid not null references public.services(id),
  price_version_id uuid not null references public.service_price_versions(id),
@@ -66,7 +65,7 @@ create table public.booking_events (
  id uuid primary key default gen_random_uuid(),booking_id uuid not null references public.bookings(id),
  actor_profile_id uuid not null references public.profiles(id),from_state text not null,to_state text not null,
  aggregate_version integer not null check(aggregate_version>0),
- reason text not null check(reason in ('requested','accepted','confirmed','patient_request','provider_unavailable','unable_to_service','other','en_route','arrived','service_started','service_completed','reassigned')),
+ reason text not null check(reason in ('requested','accepted','confirmed','patient_request','provider_unavailable','unable_to_service','other','en_route','arrived','service_started','service_completed','reassigned','no_show')),
  request_key uuid,occurred_at timestamptz not null default now(),unique(booking_id,aggregate_version)
 );
 create table public.resources (
@@ -141,7 +140,9 @@ $$;
 create function booking_private.resource_eligible(provider uuid,resource uuid) returns boolean
 language sql volatile security definer set search_path='' as $$
  select exists(select 1 from public.providers p join public.resources r on r.id=resource and r.status='active' where p.id=provider and
- ((r.kind='person' and exists(select 1 from public.profiles a where a.id=r.person_profile_id and a.status='active') and
+ ((r.kind='person' and (p.category<>'doctor' or exists(select 1 from public.providers clinician
+ where clinician.individual_owner_profile_id=r.person_profile_id and clinician.category='doctor'
+ and public.provider_is_publishable(clinician.id))) and exists(select 1 from public.profiles a where a.id=r.person_profile_id and a.status='active') and
  (p.individual_owner_profile_id=r.person_profile_id or exists(select 1 from public.organization_members m join public.organizations o on o.id=m.organization_id
  where m.organization_id=p.organization_id and m.profile_id=r.person_profile_id and m.status='active' and m.accepted_at is not null
  and o.status='active' and 'provider:read'=any(m.scopes)))) or
@@ -153,7 +154,7 @@ language sql volatile security definer set search_path='' as $$
  select identity_private.active_account() and exists(select 1 from public.bookings b join public.booking_assignments a on a.booking_id=b.id
  join public.resources r on r.id=a.resource_id where b.id=p_booking_id and b.state in ('confirmed','in_progress')
  and a.status='active' and a.ended_at is null and a.purpose=p_purpose and r.kind='person' and r.person_profile_id=auth.uid()
- and a.assigned_profile_id=auth.uid() and a.period @> clock_timestamp() is not null
+ and a.assigned_profile_id=auth.uid() and clock_timestamp() between lower(a.period)-interval '60 minutes' and upper(a.period)+interval '12 hours'
  and public.provider_is_publishable(b.provider_id) and booking_private.resource_eligible(b.provider_id,r.id)
  and ((b.category='doctor' and p_purpose='doctor_visit') or (b.category='lab' and p_purpose='lab_collection')
  or (b.category='caretaker' and p_purpose='caretaker') or (b.category='ambulance' and p_purpose='driver')));
@@ -193,7 +194,8 @@ declare who text; begin
    when booking_private.patient(old.patient_id,'booking:create') then 'patient' else 'provider' end;
   if not exists(select 1 from public.booking_transitions t where t.from_state=old.state and t.to_state=new.state and t.actor_kind=who)
    or (who='patient' and not booking_private.patient(old.patient_id,'booking:create'))
-   or (who='provider' and not booking_private.scheduler(old.provider_id))
+   or (who='provider' and not (booking_private.scheduler(old.provider_id) or
+    (new.state in ('cancelled','no_show') and identity_private.is_assigned(old.id,'doctor_visit'))))
    or (who='assigned' and not (identity_private.is_assigned(old.id,'doctor_visit') or identity_private.is_assigned(old.id,'lab_collection')
     or identity_private.is_assigned(old.id,'caretaker') or identity_private.is_assigned(old.id,'driver')))
    or who='system' then raise exception using errcode='55000',message='invalid_transition'; end if;
@@ -242,7 +244,10 @@ create function public.save_patient_address(p_patient_id uuid,p_line1 text,p_loc
 returns uuid language plpgsql security definer set search_path='' as $$
 declare actor uuid:=identity_private.require_actor(); result uuid; begin
  if not booking_private.patient(p_patient_id,'profile:write') then raise exception using errcode='42501',message='forbidden'; end if;
+ perform 1 from public.patients where id=p_patient_id for update;
+ if not booking_private.patient(p_patient_id,'profile:write') then raise exception using errcode='42501',message='forbidden'; end if;
  if p_expected_version=0 and p_address_id is null then
+  if (select count(*) from public.patient_addresses where patient_id=p_patient_id)>=20 then raise exception using errcode='53300',message='address_limit'; end if;
   insert into public.patient_addresses(patient_id,line1,locality,pin_code,contact_name,phone)
    values(p_patient_id,p_line1,p_locality,p_pin,p_contact_name,p_phone) returning id into result;
  else
@@ -265,12 +270,16 @@ begin
  select * into a from public.patient_addresses where id=p_address_id and patient_id=p_patient_id for share;
  if not found then raise exception using errcode='42501',message='forbidden'; end if;
  if p_request_key is null or p_start_at is null or not isfinite(p_start_at) then raise exception using errcode='22023',message='invalid_input'; end if;
+ perform 1 from public.patients where id=p_patient_id for update;
+ if not booking_private.patient(p_patient_id,'booking:create') then raise exception using errcode='42501',message='forbidden'; end if;
  request_hash:=encode(sha256(convert_to(jsonb_build_array(p_patient_id,p_service_id,p_address_id,p_start_at)::text,'UTF8')),'hex');
  select * into prior from public.idempotency_requests where actor_profile_id=actor and action='booking.create' and request_key=p_request_key;
  if found then
   if prior.request_hash<>request_hash then raise exception using errcode='40001',message='idempotency_conflict'; end if;
   return prior.result_id;
  end if;
+ if p_start_at<=clock_timestamp() or p_start_at>clock_timestamp()+interval '90 days' then raise exception using errcode='22023',message='invalid_input'; end if;
+ if (select count(*) from public.bookings where patient_id=p_patient_id and state='requested')>=10 then raise exception using errcode='53300',message='pending_booking_limit'; end if;
  select * into s from public.services where id=p_service_id;
  if not found then raise exception using errcode='42501',message='forbidden'; end if;
  perform booking_private.lock_provider(s.provider_id);
@@ -304,6 +313,7 @@ begin
  perform booking_private.lock_provider(b.provider_id);
  if not booking_private.scheduler(b.provider_id) or not public.provider_is_publishable(b.provider_id) then raise exception using errcode='42501',message='forbidden'; end if;
  if p_expected_version is null or b.version<>p_expected_version then raise exception using errcode='40001',message='stale_version'; end if;
+ if b.category<>'doctor' then raise exception using errcode='55000',message='category_deferred_to_s01'; end if;
  if b.state<>'requested' or b.start_at<=clock_timestamp() then raise exception using errcode='55000',message='invalid_transition'; end if;
  if not booking_private.patient_for_requester(b.patient_id,b.requester_profile_id) then raise exception using errcode='42501',message='forbidden'; end if;
  select * into s from public.services where id=b.service_id for share;
@@ -367,16 +377,20 @@ create function public.cancel_booking(p_booking_id uuid,p_expected_version integ
 language plpgsql security definer set search_path='' as $$
 declare actor uuid:=identity_private.require_actor(); b public.bookings; cutoff integer; begin
  select * into b from public.bookings where id=p_booking_id;
- if not found or not (booking_private.patient(b.patient_id,'booking:create') or booking_private.scheduler(b.provider_id)) then raise exception using errcode='42501',message='forbidden'; end if;
+ if not found or not (booking_private.patient(b.patient_id,'booking:create') or booking_private.scheduler(b.provider_id) or identity_private.is_assigned(b.id,'doctor_visit')) then raise exception using errcode='42501',message='forbidden'; end if;
  select * into b from public.bookings where id=p_booking_id for update;
  perform booking_private.lock_provider(b.provider_id);
- if not (booking_private.patient(b.patient_id,'booking:create') or booking_private.scheduler(b.provider_id)) then raise exception using errcode='42501',message='forbidden'; end if;
+ if not (booking_private.patient(b.patient_id,'booking:create') or booking_private.scheduler(b.provider_id) or identity_private.is_assigned(b.id,'doctor_visit')) then raise exception using errcode='42501',message='forbidden'; end if;
  if p_expected_version is null or b.version<>p_expected_version then raise exception using errcode='40001',message='stale_version'; end if;
  if b.state not in ('draft','requested','accepted','confirmed') then raise exception using errcode='55000',message='invalid_transition'; end if;
  if p_reason is null or p_reason not in ('patient_request','provider_unavailable','unable_to_service','other') then raise exception using errcode='22023',message='invalid_reason'; end if;
- if b.state in ('accepted','confirmed') then
+ if booking_private.patient(b.patient_id,'booking:create') and not booking_private.scheduler(b.provider_id)
+ and not identity_private.is_assigned(b.id,'doctor_visit') and b.start_at<=clock_timestamp() then
+  raise exception using errcode='55000',message='cancellation_window_closed'; end if;
+ if b.state in ('accepted','confirmed') and booking_private.patient(b.patient_id,'booking:create')
+ and not booking_private.scheduler(b.provider_id) and not identity_private.is_assigned(b.id,'doctor_visit') then
   select cancel_window_minutes into cutoff from public.booking_policy_versions where id=b.policy_version_id and status='published';
-  if cutoff is null or clock_timestamp()>b.start_at-make_interval(mins=>cutoff) then raise exception using errcode='55000',message='cancellation_policy_required'; end if;
+  if cutoff is not null and clock_timestamp()>b.start_at-make_interval(mins=>cutoff) then raise exception using errcode='55000',message='cancellation_window_closed'; end if;
  end if;
  perform 1 from public.resources where id in(select resource_id from public.booking_assignments where booking_id=b.id and status='active') order by id for update;
  perform booking_private.release(b.id);
@@ -392,6 +406,8 @@ declare actor uuid:=identity_private.require_actor(); b public.bookings; visit p
  perform 1 from public.resources where id in(select resource_id from public.booking_assignments where booking_id=b.id and status='active') order by id for update;
  if not identity_private.is_assigned(b.id,'doctor_visit') then raise exception using errcode='42501',message='forbidden'; end if;
  if p_expected_version is null or b.version<>p_expected_version then raise exception using errcode='40001',message='stale_version'; end if;
+ if p_substate in ('en_route','service_started') and now()<b.start_at-interval '60 minutes' then
+  raise exception using errcode='55000',message='visit_too_early'; end if;
  select * into visit from public.doctor_visits where booking_id=b.id for update;
  if p_substate is null or not ((visit.substate='scheduled' and p_substate='en_route') or (visit.substate='en_route' and p_substate='arrived')
  or (visit.substate='arrived' and p_substate='service_started') or (visit.substate='service_started' and p_substate='service_completed'))
@@ -402,6 +418,24 @@ declare actor uuid:=identity_private.require_actor(); b public.bookings; visit p
  result:=booking_private.transition(b.id,next_state,p_substate);
  update public.doctor_visits set substate=p_substate where booking_id=b.id;
  if p_substate='service_completed' then perform booking_private.release(b.id); end if;
+ return result;
+end $$;
+create function public.mark_no_show(p_booking_id uuid,p_expected_version integer) returns integer
+language plpgsql security definer set search_path='' as $$
+declare actor uuid:=identity_private.require_actor(); b public.bookings; result integer; begin
+ select * into b from public.bookings where id=p_booking_id;
+ if not found or not (booking_private.scheduler(b.provider_id) or identity_private.is_assigned(b.id,'doctor_visit')) then
+  raise exception using errcode='42501',message='forbidden'; end if;
+ select * into b from public.bookings where id=p_booking_id for update;
+ perform booking_private.lock_provider(b.provider_id);
+ perform 1 from public.resources where id in(select resource_id from public.booking_assignments where booking_id=b.id and status='active') order by id for update;
+ if not (booking_private.scheduler(b.provider_id) or identity_private.is_assigned(b.id,'doctor_visit')) then
+  raise exception using errcode='42501',message='forbidden'; end if;
+ if p_expected_version is null or b.version<>p_expected_version then raise exception using errcode='40001',message='stale_version'; end if;
+ if b.state<>'confirmed' or clock_timestamp()<b.start_at+interval '30 minutes' then
+  raise exception using errcode='55000',message='no_show_too_early'; end if;
+ result:=booking_private.transition(b.id,'no_show','no_show');
+ perform booking_private.release(b.id);
  return result;
 end $$;
 create function public.request_reschedule(p_booking_id uuid,p_expected_version integer,p_start_at timestamptz,p_request_key uuid) returns uuid
@@ -440,9 +474,11 @@ language plpgsql volatile security definer set search_path='' as $$
 begin
  if not identity_private.active_account() then raise exception using errcode='42501',message='forbidden'; end if;
  if p_limit is null or p_limit not between 1 and 50 then raise exception using errcode='22023',message='invalid_input'; end if;
- if p_provider_id is not null and not booking_private.scheduler(p_provider_id) then raise exception using errcode='42501',message='forbidden'; end if;
+ if p_provider_id is not null and not booking_private.scheduler(p_provider_id) and not exists(
+ select 1 from public.bookings b where b.provider_id=p_provider_id and identity_private.is_assigned(b.id,'doctor_visit')) then raise exception using errcode='42501',message='forbidden'; end if;
  return query select public.get_booking(b.id) from public.bookings b where (p_after is null or b.id>p_after)
- and ((p_provider_id is not null and b.provider_id=p_provider_id) or (p_provider_id is null and booking_private.patient(b.patient_id,'booking:read')))
+ and ((p_provider_id is not null and b.provider_id=p_provider_id and (booking_private.scheduler(p_provider_id) or identity_private.is_assigned(b.id,'doctor_visit')))
+ or (p_provider_id is null and (booking_private.patient(b.patient_id,'booking:read') or identity_private.is_assigned(b.id,'doctor_visit'))))
  order by b.id limit p_limit;
 end $$;
 create function public.get_provider_queue(p_provider_id uuid,p_limit integer default 20,p_after uuid default null) returns setof jsonb
@@ -468,7 +504,7 @@ declare actor uuid:=identity_private.require_actor(); p public.providers; r publ
   if p_kind='person' then
    -- Reuse a person's canonical global identity across organizations/categories.
    select id into result from public.resources where person_profile_id=p_person_profile_id;
-   if result is not null then return result; end if;
+   if result is not null then raise exception using errcode='23505',message='resource_conflict'; end if;
   end if;
   insert into public.resources(kind,person_profile_id,vehicle_key,owner_organization_id,owner_profile_id,status)
   values(p_kind,p_person_profile_id,p_vehicle_key,case when p_kind='vehicle' then p.organization_id end,
@@ -578,7 +614,7 @@ grant execute on function booking_private.patient(uuid,text),booking_private.sch
 revoke all on all sequences in schema booking_private from public,anon,authenticated;
 do $$ declare f record; begin
  for f in select p.oid::regprocedure as name from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname in
- ('save_patient_address','create_booking_request','accept_booking','decline_booking','cancel_booking','advance_visit','request_reschedule','get_booking','list_bookings','get_provider_queue','upsert_booking_resource','set_booking_availability','add_booking_blackout','list_slots') loop
+ ('mark_no_show','save_patient_address','create_booking_request','accept_booking','decline_booking','cancel_booking','advance_visit','request_reschedule','get_booking','list_bookings','get_provider_queue','upsert_booking_resource','set_booking_availability','add_booking_blackout','list_slots') loop
   execute format('revoke all on function %s from public,anon,authenticated',f.name);
   execute format('grant execute on function %s to authenticated',f.name);
  end loop;

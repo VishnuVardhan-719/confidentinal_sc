@@ -66,6 +66,7 @@ do $$ declare t text; f record; begin
 end $$;
 set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000001"}',true);
+select pg_temp.expect_state('select public.create_booking_request(''b2000000-0000-4000-8000-000000000001'',''b4100000-0000-4000-8000-000000000001'',''b5000000-0000-4000-8000-000000000001'',now()+interval ''91 days'',gen_random_uuid())','22023','90 day horizon');
 select public.create_booking_request('b2000000-0000-4000-8000-000000000001','b4100000-0000-4000-8000-000000000001','b5000000-0000-4000-8000-000000000001',date_trunc('day',now())+interval '2 days 4 hours','b7000000-0000-4000-8000-000000000001') as booking \gset
 select pg_temp.assert_true((public.get_booking(:'booking')->>'amount_paise')='9999999999','authoritative bigint price');
 select pg_temp.assert_true(public.create_booking_request('b2000000-0000-4000-8000-000000000001','b4100000-0000-4000-8000-000000000001','b5000000-0000-4000-8000-000000000001',date_trunc('day',now())+interval '2 days 4 hours','b7000000-0000-4000-8000-000000000001')=:'booking'::uuid,'identical create replay');
@@ -90,7 +91,16 @@ select pg_temp.expect_state(format('select public.advance_visit(%L,''arrived'',2
 select public.accept_booking(:'booking',2,array['b6000000-0000-4000-8000-000000000001'::uuid]);
 select pg_temp.assert_true(public.get_booking(:'booking')->>'state'='confirmed','atomic confirmation');
 select pg_temp.assert_true(public.get_booking(:'booking') ? 'address_snapshot','assigned confirmed detail visible');
-select pg_temp.assert_true(booking_private.assigned(:'booking','doctor_visit'),'assigned predicate');
+select pg_temp.assert_true(not booking_private.assigned(:'booking','doctor_visit'),'early assigned access denied');
+select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4)',:'booking'),'42501','early start rejected');
+-- Move only synthetic fixtures into the operational window; never bypass in RPCs.
+reset role;
+alter table public.bookings disable trigger b01_booking_guard;
+update public.bookings set start_at=now()+interval '30 minutes',end_at=now()+interval '60 minutes' where id=:'booking';
+alter table public.bookings enable trigger b01_booking_guard;
+update public.booking_assignments set period=tstzrange(now()+interval '30 minutes',now()+interval '60 minutes','[)') where booking_id=:'booking';
+set local role authenticated;
+select pg_temp.assert_true(booking_private.assigned(:'booking','doctor_visit'),'assigned within operational window');
 select pg_temp.expect_state(format('select public.advance_visit(%L,''service_completed'',4)',:'booking'),'55000','substate skip denied');
 select public.advance_visit(:'booking','en_route',4);
 select public.advance_visit(:'booking','arrived',5);
