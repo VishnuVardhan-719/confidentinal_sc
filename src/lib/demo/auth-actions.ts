@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { fieldErrors } from "@/components/ui/form-field";
+import { findDemoAccount } from "./accounts";
 import { cityOf, displayNameOf, signupDetailsSchema } from "@/lib/validation/auth-signup";
 import {
   DEMO_COOKIE,
@@ -39,6 +40,18 @@ export async function startDemoSession(_prev: DemoActionState, formData: FormDat
   store.set(DEMO_COOKIE, role, cookieOptions());
   store.delete(DEMO_PROFILE_COOKIE);
   redirect(destinationFor(role, formData.get("next")));
+}
+
+/** Demo sign-in with a typed email and password from the public demo accounts list (accounts.ts). */
+export async function signInWithDemoPassword(email: string, password: string, next?: string): Promise<DemoActionState> {
+  if (!isDemoMode()) return { error: "Sign-in is not connected yet." };
+  const account = findDemoAccount(String(email), String(password));
+  if (!account) return { error: "That email and password do not match a demo account." };
+
+  const store = await cookies();
+  store.set(DEMO_COOKIE, account.role, cookieOptions());
+  store.set(DEMO_PROFILE_COOKIE, encodeDemoProfile({ role: account.role, name: account.name, city: account.city }), cookieOptions());
+  redirect(destinationFor(account.role, next));
 }
 
 export type DemoSignupResult =
