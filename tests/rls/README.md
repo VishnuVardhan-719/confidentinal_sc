@@ -779,3 +779,28 @@ events, stale-version rejection and privacy-preserving queue projections. Expiry
 rescheduling and post-accept cancellation require explicit published policy; no
 fees, deadline or clinical activation will be invented. P01 owns payment tables.
 
+
+# B01 handoff (2026-11-17, Kiro completing interrupted Codex work)
+
+Delivered: migration `202611170005_b01_booking.sql`, `src/lib/booking/service.ts`,
+`src/lib/validation/booking.ts`, routes under `src/app/api/{bookings,availability,patient/addresses,provider/booking}`,
+`tests/unit/booking.test.ts`, `tests/rls/b01_booking.sql`, `tests/rls/run_b01_concurrency.py`.
+
+Run: `python tests/rls/run_b01_concurrency.py` (scratch DB cloned from local Supabase, migrations 001-005 replayed, then
+the I01/I01-followup/I02/C01/B01 SQL suites and real two-connection races; scratch DB dropped, source DB untouched).
+
+Design notes: client-facing assigned check is `booking_private.assigned()`; `identity_private.is_assigned()` stays
+revoked from `authenticated` (existing ACL suite forbids it). Routes carry no actor, price, status or paid field.
+Reschedule, expiry, post-accept cancellation and fees stay disabled until a published `booking_policy_versions` row exists
+(reschedule always returns 55000 `reschedule_policy_required`).
+
+Proposed contract changes (docs/API_CONTRACTS.md not edited): POST/GET `/api/bookings`; GET `/api/bookings/:id`;
+POST `/api/bookings/:id/{accept,decline,cancel,reschedule,en-route,arrive,start,complete}`; GET `/api/availability`;
+POST `/api/patient/addresses`; POST `/api/provider/booking/{resources,availability,blackouts}`. Create/reschedule need
+`Idempotency-Key`. Not done: `get_provider_queue` has no route (list_bookings with providerId serves it), P01 payments,
+`expire_requested_bookings` worker, UI.
+
+Known gaps: `tests/rls/c01_catalog.sql` fails on I01-003 `invited_membership_expiry` (pre-existing, runner reports it);
+`tests/unit/catalog-http.test.ts` imports C01 routes absent from this branch (typecheck/vitest fail, pre-existing).
+No HTTP-level route tests against a live DB; no reassignment/ex-doctor, suspended-provider or revoked-membership SQL cases yet.
+

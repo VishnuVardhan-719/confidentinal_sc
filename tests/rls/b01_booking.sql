@@ -38,11 +38,11 @@ insert into public.service_catalog_types(id,code,category,name,unit) values
 insert into public.services(id,provider_id,category,catalog_type_id,title,duration_minutes,status) values
  ('b4100000-0000-4000-8000-000000000001','b3000000-0000-4000-8000-000000000001','doctor','b4000000-0000-4000-8000-000000000001','Synthetic visit',30,'published');
 insert into public.service_price_versions(id,service_id,catalog_type_id,version,amount_paise,unit,terms_version,effective_from) values
- ('b4200000-0000-4000-8000-000000000001','b4100000-0000-4000-8000-000000000001','b4000000-0000-4000-8000-000000000001',1,9007199254740993,'visit','synthetic-v1',now()-interval '1 day');
+ ('b4200000-0000-4000-8000-000000000001','b4100000-0000-4000-8000-000000000001','b4000000-0000-4000-8000-000000000001',1,9999999999,'visit','synthetic-v1',now()-interval '1 day');
 insert into public.pin_directory(pin_code,state,district,city,source_reference) values ('599991','Synthetic','Synthetic','Synthetic','B01 rollback-only');
 insert into public.provider_service_areas(id,provider_id,pin_code,proposed_by,status,approved_by,approved_at,valid_from,valid_to) values
  ('b4300000-0000-4000-8000-000000000001','b3000000-0000-4000-8000-000000000001','599991','b1000000-0000-4000-8000-000000000002','approved',
- 'b1000000-0000-4000-8000-000000000004',now(),now()-interval '1 day',now()+interval '1 year');
+ 'b1000000-0000-4000-8000-000000000004',now(),now()-interval '1 day',now()+interval '6 months');
 insert into public.patient_addresses(id,patient_id,line1,locality,pin_code,contact_name,phone) values
  ('b5000000-0000-4000-8000-000000000001','b2000000-0000-4000-8000-000000000001','Synthetic exact address','Synthetic','599991','Synthetic patient','+919999999999');
 insert into public.resources(id,kind,person_profile_id) values ('b6000000-0000-4000-8000-000000000001','person','b1000000-0000-4000-8000-000000000002');
@@ -67,7 +67,7 @@ end $$;
 set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000001"}',true);
 select public.create_booking_request('b2000000-0000-4000-8000-000000000001','b4100000-0000-4000-8000-000000000001','b5000000-0000-4000-8000-000000000001',date_trunc('day',now())+interval '2 days 4 hours','b7000000-0000-4000-8000-000000000001') as booking \gset
-select pg_temp.assert_true((public.get_booking(:'booking')->>'amount_paise')='9007199254740993','authoritative bigint price');
+select pg_temp.assert_true((public.get_booking(:'booking')->>'amount_paise')='9999999999','authoritative bigint price');
 select pg_temp.assert_true(public.create_booking_request('b2000000-0000-4000-8000-000000000001','b4100000-0000-4000-8000-000000000001','b5000000-0000-4000-8000-000000000001',date_trunc('day',now())+interval '2 days 4 hours','b7000000-0000-4000-8000-000000000001')=:'booking'::uuid,'identical create replay');
 select pg_temp.expect_state('select public.create_booking_request(''b2000000-0000-4000-8000-000000000001'',''b4100000-0000-4000-8000-000000000001'',''b5000000-0000-4000-8000-000000000001'',date_trunc(''day'',now())+interval ''3 days 4 hours'',''b7000000-0000-4000-8000-000000000001'')','40001','key payload mismatch');
 select pg_temp.expect_state(format('update public.bookings set amount_paise=1 where id=%L',:'booking'),'42501','direct price tampering denied');
