@@ -21,8 +21,7 @@ body [lang="en"] { line-height: 1.6; }
 /* Long Telugu compounds must wrap at 320px rather than overflow. */
 :lang(te), :lang(hi) { overflow-wrap: anywhere; }
 
-/* Italic is a Latin convention; Indic scripts have no true italic and synthesise a slant. */
-em:lang(te), em:lang(hi) { font-style: normal; }
+/* Note: Indic scripts have no true italic. Translated copy should avoid <em> for emphasis; the Latin brand keeps its italic. */
 
 @layer components {
   .i18n-switcher { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .75rem; }
