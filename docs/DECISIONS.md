@@ -71,3 +71,7 @@ Record date, decision, rationale, approver, source and unresolved questions. Do 
 - Q01, Q06, Q08, Q11 and Q12 are settled as engineering defaults.
 - Q02, Q03, Q04, Q05, Q07, Q09 and Q10 are approved only as safe defaults. The client, legal or finance answers remain OPEN. They block real payments, real patient data, clinical use and public go-live, not the core booking build.
 - Still OPEN: legal entity, merchant/invoice issuer, D-POL, D-PRIV, approver names, Nov 23 acceptance list.
+
+## 2026-11-17 — I01 review decisions (owner delegated to Claude)
+- **Auth user deletion (Kiro F2):** keep `ON DELETE RESTRICT` on identity foreign keys. Account deletion/anonymisation will be a controlled procedure designed after retention rules (Q05) are answered, so audit and legal holds are never silently lost.
+- **Anonymous Auth sign-ins:** stay disabled; `is_active_account()` also rejects anonymous JWTs as defence in depth.
