@@ -100,3 +100,48 @@ Never record credentials, patient data or secret values.
 
 - Synthetic fixtures and test-only DDL rolled back. No build, config/seed/app edits, secrets, real data, commits or pushes. F2 controlled account closure remains deferred pending Q05; Claude's final review/integration remains pending. Local SQL verification does not claim production readiness.
 - Final changed-file review completed; standalone `git diff --check` exited 0 and both SQL files passed explicit trailing-whitespace checks.
+
+## Local Storage enablement for I02 — 2026-11-17 (Kiro, branch task/I02-provider-onboarding, uncommitted)
+
+- `git merge --ff-only develop`: fast-forwarded `8ab977a` to `ce23f63` (Merge I01b server foundation). No merge commit, no conflicts. The untracked `docs/I02_DESIGN.md` was left as is.
+- `supabase/config.toml`: `[storage] enabled = true` was already set. The only edit is `file_size_limit` from `"50MiB"` to `"5MiB"`. The storage container now reports `FILE_SIZE_LIMIT=5242880`. `[storage.s3_protocol] enabled = true` is unchanged (CLI default).
+- The stack was stopped and started again from this worktree. Run every Supabase CLI command from this worktree root. Exact start command:
+
+  ```powershell
+  npx supabase start -x studio,imgproxy,edge-runtime,vector,logflare,realtime,postgres-meta,mailpit
+  ```
+
+  This is the I01 list with `storage-api` removed. Running containers: `supabase_db_surecure-visit`, `supabase_auth_surecure-visit`, `supabase_rest_surecure-visit`, `supabase_kong_surecure-visit`, `supabase_storage_surecure-visit` (storage-api v1.96.0, `STORAGE_BACKEND=file`).
+- Storage API: `http://127.0.0.1:54321/storage/v1`. `GET /storage/v1/status` returned 200. `GET /storage/v1/bucket` without a JWT was refused (`AccessDenied`). After the reset, the `storage` schema has 12 tables, `storage.buckets` has 0 rows and `storage.objects` has RLS on. No buckets are created by config. I02 migrations own bucket creation and policies.
+- `npx supabase db reset`: exit 0. Applied `20261117000100_i01_identity_organizations.sql` and the empty seed, then reported `Finished supabase db reset on branch task/I02-provider-onboarding.`
+- `npx supabase test db`: exit 0. Actual output:
+
+  ```text
+  /SURECUREVISIT/.worktrees/kiro-task-I02-provider-onboarding/supabase/tests/001_identity_rls.test.sql .. ok
+  All tests successful.
+  Files=1, Tests=218,  3 wallclock secs ( 0.17 usr  0.28 sys +  0.14 cusr  0.22 csys =  0.81 CPU)
+  Result: PASS
+  ```
+
+- No migrations, app code, commits or pushes. No keys recorded. Note: the global `UPLOAD_FILE_SIZE_LIMIT` in the container is the CLI default. The 5 MiB cap is enforced through `FILE_SIZE_LIMIT`, and I02 buckets should also set their own `file_size_limit` and `allowed_mime_types`.
+
+## I02 provider onboarding, documents, verification - 2026-11-17 (Kiro, branch task/I02-provider-onboarding, uncommitted)
+
+- Base `ce23f63` (develop, I01 + I01b merged). Instructions: `C:\tmp\scv_logs\kiro_I02_impl.txt`. Design: `docs/I02_DESIGN.md` (OQ-1..OQ-11 defaults approved; section 11 I01 changes done in the I02 forward migration, I01 migration untouched). Local stack only (`127.0.0.1:54322`, storage-api enabled); synthetic data only.
+- Artifacts: `supabase/migrations/20261117000200_i02_provider_onboarding.sql`, `supabase/tests/002_provider_onboarding.test.sql`, `src/lib/contracts/providers.ts`, `tests/unit/providers-contract.test.ts`, `scripts/i02-storage-smoke.mjs`, `scripts/i02-concurrency.ps1`. `npm ci` was run (no package or lockfile change).
+- `npx supabase db reset`: exit 0. Applied `20261117000100_i01_identity_organizations.sql` and `20261117000200_i02_provider_onboarding.sql`, then `Finished supabase db reset on branch task/I02-provider-onboarding.`
+- `npx supabase test db`: exit 0. Per file: `001_identity_rls` 218/218, `002_provider_onboarding` 266/266. Actual output:
+
+  ```text
+  /SURECUREVISIT/.worktrees/kiro-task-I02-provider-onboarding/supabase/tests/001_identity_rls.test.sql ......... ok
+  /SURECUREVISIT/.worktrees/kiro-task-I02-provider-onboarding/supabase/tests/002_provider_onboarding.test.sql .. ok
+  All tests successful.
+  Files=2, Tests=484, 12 wallclock secs ( 0.51 usr  0.23 sys +  0.25 cusr  0.53 csys =  1.52 CPU)
+  Result: PASS
+  ```
+
+- `npx supabase db lint --schema public,private --level warning`: `No schema errors found` (one unused-variable warning fixed before this run).
+- Real Storage API (`node scripts/i02-storage-smoke.mjs`, two synthetic signups): exit 0, `checks=17 failed=0`. Covers upload to reserved path, upsert/overwrite rejected, guessed path, cross-user and anon upload, bucket MIME and 5 MiB limits, confirm against real object metadata, signed URL denied without a ticket, 60 s signed URL with a ticket returning the exact bytes, cross-user/anon sign and download denied, Storage API delete leaves evidence in place.
+- Two-session concurrency (`scripts/i02-concurrency.ps1`): exit 0. Concurrent `create_provider` for one owner+category returned the same id with 1 row; two concurrent `suspend_provider` calls with the same expected version: one committed, the other got `40001 version conflict`, 1 suspended event. The DB was reset afterwards.
+- `npm run lint` exit 0; `npm run typecheck` exit 0; `npm test` exit 0 (4 files, 18 tests, 9 new). `git diff --check` exit 0; no trailing whitespace in new files.
+- Not verified: browser/app flows (no UI or route handlers in I02), real TOTP enrollment for verifiers (pgTAP sets `aal` claims), malware scanning (none approved, OQ-5), scheduling of `expire_due_verifications` (OQ-9), owner-scope backfill on non-empty data (ran on 0 rows). `npm run build` not run. Files uploaded by the smoke script may remain in the local storage container's file backend after reset; their DB rows are gone. No commits, pushes, secrets or real data.
