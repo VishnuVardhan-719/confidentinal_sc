@@ -2,6 +2,24 @@
 
 ## I02 provider onboarding handoff — 2026-11-17
 
+### CodeRabbit submission profile guard — latest follow-up
+
+Base commit `6c31773`; owner explicitly authorized editing the I02 migration in place.
+`submit_provider` now requires provider_profiles after authorization/editable-state
+checks and before credentials/state/version/audit mutations. Missing profile raises
+SQLSTATE23514; the HTTP route returns sanitized private422 invalid_input.
+
+SQL regression first reproduced unexpected successful submission with valid uploaded
+licence evidence but no profile. It now verifies rejection leaves state/version/events/
+submission audit unchanged, followed by success after update_provider creates the profile.
+Added a unit test for the submission handler's private422 response. Independent narrow
+review found no defect. Local DB updated with submit_provider definition only.
+
+Actual verification: both SQL suites passed directly from disk and rolled back fixtures;
+lint and typecheck exited0; npm test reported8 files passed/1 skipped and78 tests passed/
+1 skipped; git diff --check exited0. The opt-in HTTP test was not rerun for this SQL guard.
+Build was not requested or rerun for this follow-up. Changes remain uncommitted.
+
 ### CodeRabbit legacy-profile fix — latest state
 
 Owner additionally authorized the queued missing-profile fix and edits to the two

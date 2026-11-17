@@ -226,6 +226,21 @@ select pg_temp.expect_state('select public.update_provider(''42000000-0000-4000-
 select pg_temp.assert_true((select display_name='Synthetic revised doctor' and description='Updated description' from public.provider_profiles where provider_id='42000000-0000-4000-8000-000000000001'),'stale request leaves legacy profile unchanged');
 select pg_temp.assert_true((select count(*)=1 from public.provider_profiles where provider_id='42000000-0000-4000-8000-000000000001'),'repeated edit updates one profile');
 select pg_temp.expect_state('select public.update_provider(''42000000-0000-4000-8000-000000000001'',''Stale'','''',1)','40001','legacy profile preserves version checks');
+-- Complete uploaded credentials do not substitute for an onboarding profile.
+reset role;
+insert into public.providers(id,individual_owner_profile_id,category)
+  values('42000000-0000-4000-8000-000000000002','12000000-0000-4000-8000-000000000002','lab');
+set local role authenticated;
+select (public.add_provider_document('42000000-0000-4000-8000-000000000002','licence','application/pdf',now()+interval '1 year',1)->'document'->>'id') as legacy_licence \gset
+insert into storage.objects(bucket_id,name) select bucket_id,object_name from public.provider_documents where id=:'legacy_licence';
+select pg_temp.expect_state('select public.submit_provider(''42000000-0000-4000-8000-000000000002'',2)','23514','legacy submission requires profile despite uploaded credential');
+select pg_temp.assert_true((select verification_state='draft' and version=2 from public.providers where id='42000000-0000-4000-8000-000000000002'),'missing profile denial preserves state and version');
+select pg_temp.assert_true((select count(*)=0 from public.provider_verification_events where provider_id='42000000-0000-4000-8000-000000000002'),'missing profile denial emits no transition');
+reset role;
+select pg_temp.assert_true((select count(*)=0 from public.audit_events where target_id='42000000-0000-4000-8000-000000000002' and action='provider.submitted'),'missing profile denial emits no submission audit');
+set local role authenticated;
+select public.update_provider('42000000-0000-4000-8000-000000000002','Synthetic legacy lab','',2);
+select pg_temp.assert_true((public.submit_provider('42000000-0000-4000-8000-000000000002',3)).verification_state='submitted','legacy submission succeeds after profile creation');
 set local role anon;
 select pg_temp.assert_true(not public.provider_is_publishable(:'doctor'),'guest eligibility boolean only');
 select pg_temp.expect_state('select * from public.provider_documents','42501','guest private metadata denied');

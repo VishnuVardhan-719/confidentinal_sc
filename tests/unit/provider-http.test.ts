@@ -34,6 +34,15 @@ describe("provider HTTP commands", () => {
     expect((await submit(request({ expectedVersion: 4 }), context)).status).toBe(200);
     expect(mock.rpc).toHaveBeenCalledWith("submit_provider", { p_provider_id: id, p_expected_version: 4 });
   });
+  it("returns a private validation error when submission has no provider profile", async () => {
+    mock.rpc.mockResolvedValue({ data: null, error: { code: "23514", message: "provider_profile_required" } });
+    const response = await submit(request({ expectedVersion: 2 }), context);
+    expect(response.status).toBe(422);
+    expect(await response.json()).toEqual({ error: { code: "invalid_input" } });
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(mock.rpc).toHaveBeenCalledTimes(1);
+    expect(mock.rpc).toHaveBeenCalledWith("submit_provider", { p_provider_id: id, p_expected_version: 2 });
+  });
   it("reserves metadata without accepting filenames", async () => {
     mock.rpc.mockResolvedValue({ data: { document: { id }, provider_version: 17 }, error: null });
     const result = await document(request({ kind: "registration", contentType: "application/pdf", expiresAt: "2030-01-01T00:00:00Z", expectedVersion: 2 }), context);

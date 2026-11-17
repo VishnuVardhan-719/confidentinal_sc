@@ -210,6 +210,8 @@ begin
   p := providers_private.lock_provider(p_provider_id);
   if not providers_private.access(p.id,'manage') or p.verification_state not in ('draft','rejected') then
     raise exception using errcode='42501',message='forbidden'; end if;
+  if not exists(select 1 from public.provider_profiles where provider_id=p.id) then
+    raise exception using errcode='23514',message='provider_profile_required'; end if;
   if not providers_private.credentials_ready(p.id,false) then raise exception using errcode='23514',message='credentials_required'; end if;
   update public.providers set verification_state='submitted',status='inactive',version=version+1,updated_at=now()
     where id=p.id and version=p_expected_version returning * into result;
