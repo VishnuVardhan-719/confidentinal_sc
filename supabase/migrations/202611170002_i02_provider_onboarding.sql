@@ -109,7 +109,11 @@ language sql stable security definer set search_path = '' as $$
     where d.provider_id=p.id and d.kind=providers_private.required_kind(p.category)
       and d.expires_at > now() and d.status = case when verified_only then 'verified' else 'pending' end
   )) and not exists(select 1 from public.provider_documents d where d.provider_id=provider
-    and d.status = case when verified_only then 'verified' else 'pending' end and (d.expires_at <= now() or not exists (
+    and d.status = case when verified_only then 'verified' else 'pending' end
+    -- Pending reservations without bytes are not submitted evidence. Required-kind
+    -- evidence still needs bytes above; verified evidence must retain its object.
+    and (verified_only or exists(select 1 from storage.objects o where o.bucket_id=d.bucket_id and o.name=d.object_name))
+    and (d.expires_at <= now() or not exists (
       select 1 from storage.objects o where o.bucket_id=d.bucket_id and o.name=d.object_name)));
 $$;
 create function public.provider_is_publishable(p_provider_id uuid) returns boolean
@@ -191,7 +195,7 @@ begin
     or p_content_type is null or p_content_type not in ('application/pdf','image/jpeg','image/png')
     or p_expires_at is null or p_expires_at <= now() or not isfinite(p_expires_at) or p_expires_at > now()+interval '5 years' then
     raise exception using errcode='22023',message='invalid_input'; end if;
-  if (select count(*) from public.provider_documents where provider_id=p.id) >= 50 then
+  if (select count(*) from public.provider_documents where provider_id=p.id and status in ('pending','verified')) >= 50 then
     raise exception using errcode='23514',message='document_limit'; end if;
   update public.providers set version=version+1,updated_at=now() where id=p.id and version=p_expected_version returning version into new_version;
   if not found then raise exception using errcode='40001',message='conflict'; end if;
@@ -210,6 +214,8 @@ begin
   p := providers_private.lock_provider(p_provider_id);
   if not providers_private.access(p.id,'manage') or p.verification_state not in ('draft','rejected') then
     raise exception using errcode='42501',message='forbidden'; end if;
+  if not exists(select 1 from public.provider_profiles where provider_id=p.id) then
+    raise exception using errcode='23514',message='provider_profile_required'; end if;
   if not providers_private.credentials_ready(p.id,false) then raise exception using errcode='23514',message='credentials_required'; end if;
   update public.providers set verification_state='submitted',status='inactive',version=version+1,updated_at=now()
     where id=p.id and version=p_expected_version returning * into result;

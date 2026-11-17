@@ -194,19 +194,57 @@ select pg_temp.assert_true((select status='superseded' from public.provider_docu
 insert into storage.objects(bucket_id,name) select bucket_id,object_name from public.provider_documents where id=:'fresh';
 select public.submit_provider(:'caretaker',3);
 select pg_temp.assert_true((select verification_state='submitted' from public.providers where id=:'caretaker'),'replacement fixes expired draft');
--- Every pending document must have bytes, even if the required credential exists.
+-- Historical rejected/superseded rows do not consume the live-document cap.
+select set_config('request.jwt.claims','{"sub":"12000000-0000-4000-8000-000000000002","aal":"aal1"}',true);
+select public.create_provider('caretaker','Synthetic cap regression','') as cap_provider \gset
+reset role;
+insert into public.provider_documents(id,provider_id,owner_profile_id,kind,object_name,content_type,status,expires_at)
+select id,:'cap_provider','12000000-0000-4000-8000-000000000002','identity',
+  :'cap_provider'||'/'||id::text||'.pdf','application/pdf',
+  case when n <= 25 then 'rejected' else 'superseded' end,now()+interval '1 year'
+from (select gen_random_uuid() as id,n from generate_series(1,50) n) fixtures;
+set local role authenticated;
+select pg_temp.assert_true((public.add_provider_document(:'cap_provider','registration','application/pdf',now()+interval '1 year',1)->>'provider_version')::int=2,'historical rows do not consume document cap');
+reset role;
+insert into public.provider_documents(id,provider_id,owner_profile_id,kind,object_name,content_type,status,expires_at)
+select id,:'cap_provider','12000000-0000-4000-8000-000000000002','identity',
+  :'cap_provider'||'/'||id::text||'.pdf','application/pdf',
+  case when n <= 24 then 'pending' else 'verified' end,now()+interval '1 year'
+from (select gen_random_uuid() as id,n from generate_series(1,49) n) fixtures;
+set local role authenticated;
+select pg_temp.expect_state(format('select public.add_provider_document(%L,''licence'',''application/pdf'',now()+interval ''1 year'',2)',:'cap_provider'),'23514','50 pending and verified documents enforce cap');
+select pg_temp.assert_true((select version=2 from public.providers where id=:'cap_provider'),'cap rejection preserves provider version');
+-- Unuploaded optional reservations must not block submit, approval or re-approval.
+select set_config('request.jwt.claims','{"sub":"12000000-0000-4000-8000-000000000001","aal":"aal2"}',true);
 select public.add_provider_document(:'ambulance','identity','application/pdf',now()+interval '1 year',1) as reserve \gset
 select pg_temp.assert_true((:'reserve'::jsonb->>'provider_version')::int=2,'reservation returns authoritative version');
 select (:'reserve'::jsonb->'document'->>'id') as optional_doc \gset
 select (public.add_provider_document(:'ambulance','vehicle_permit','application/pdf',now()+interval '1 year',2)->'document'->>'id') as permit \gset
+select pg_temp.expect_state(format('select public.submit_provider(%L,3)',:'ambulance'),'23514','required reservation without bytes still blocks submission');
 insert into storage.objects(bucket_id,name) select bucket_id,object_name from public.provider_documents where id=:'permit';
-select pg_temp.expect_state(format('select public.submit_provider(%L,3)',:'ambulance'),'23514','pending optional metadata without bytes blocks submission');
 insert into storage.objects(bucket_id,name) select bucket_id,object_name from public.provider_documents where id=:'optional_doc';
+reset role;
+update public.provider_documents set expires_at=now()-interval '1 second' where id=:'optional_doc';
+set local role authenticated;
+select pg_temp.expect_state(format('select public.submit_provider(%L,3)',:'ambulance'),'23514','expired uploaded optional evidence still blocks submission');
+reset role;
+update storage.objects set name=name||'.missing' where bucket_id='provider-verification' and name=(select object_name from public.provider_documents where id=:'optional_doc');
+set local role authenticated;
 select public.submit_provider(:'ambulance',3);
 select set_config('request.jwt.claims','{"sub":"12000000-0000-4000-8000-000000000003","aal":"aal2"}',true);
 select public.review_provider(:'ambulance','under_review','Synthetic transport review',4);
 select public.review_provider(:'ambulance','approved','Synthetic transport evidence reviewed',5);
-select pg_temp.assert_true((select cardinality(reviewed_document_ids)=2 from public.provider_verification_events where provider_id=:'ambulance' and to_state='approved'),'approval snapshots all uploaded pending evidence');
+select pg_temp.assert_true((select reviewed_document_ids=array[:'permit'::uuid] from public.provider_verification_events where provider_id=:'ambulance' and to_state='approved'),'approval snapshots only uploaded pending evidence');
+reset role;
+select pg_temp.assert_true((select status='pending' from public.provider_documents where id=:'optional_doc'),'unuploaded optional evidence is not verified');
+update storage.objects set name=name||'.missing' where bucket_id='provider-verification' and name=(select object_name from public.provider_documents where id=:'permit');
+select pg_temp.assert_true(not public.provider_is_publishable(:'ambulance'),'verified required evidence must retain its object');
+update storage.objects set name=(select object_name from public.provider_documents where id=:'permit') where bucket_id='provider-verification' and name=(select object_name||'.missing' from public.provider_documents where id=:'permit');
+set local role authenticated;
+select public.review_provider(:'ambulance','suspended','Synthetic suspension',6);
+select public.review_provider(:'ambulance','under_review','Synthetic re-review',7);
+select public.review_provider(:'ambulance','approved','Synthetic re-approval',8);
+select pg_temp.assert_true(public.provider_is_publishable(:'ambulance'),'optional reservation does not block re-approval');
 reset role;
 select pg_temp.assert_true(not exists(select 1 from public.provider_documents d where provider_id=:'ambulance' and status='verified' and not exists(select 1 from storage.objects o where o.bucket_id=d.bucket_id and o.name=d.object_name)),'no verified metadata without bytes');
 set local role authenticated;
@@ -226,6 +264,21 @@ select pg_temp.expect_state('select public.update_provider(''42000000-0000-4000-
 select pg_temp.assert_true((select display_name='Synthetic revised doctor' and description='Updated description' from public.provider_profiles where provider_id='42000000-0000-4000-8000-000000000001'),'stale request leaves legacy profile unchanged');
 select pg_temp.assert_true((select count(*)=1 from public.provider_profiles where provider_id='42000000-0000-4000-8000-000000000001'),'repeated edit updates one profile');
 select pg_temp.expect_state('select public.update_provider(''42000000-0000-4000-8000-000000000001'',''Stale'','''',1)','40001','legacy profile preserves version checks');
+-- Complete uploaded credentials do not substitute for an onboarding profile.
+reset role;
+insert into public.providers(id,individual_owner_profile_id,category)
+  values('42000000-0000-4000-8000-000000000002','12000000-0000-4000-8000-000000000002','lab');
+set local role authenticated;
+select (public.add_provider_document('42000000-0000-4000-8000-000000000002','licence','application/pdf',now()+interval '1 year',1)->'document'->>'id') as legacy_licence \gset
+insert into storage.objects(bucket_id,name) select bucket_id,object_name from public.provider_documents where id=:'legacy_licence';
+select pg_temp.expect_state('select public.submit_provider(''42000000-0000-4000-8000-000000000002'',2)','23514','legacy submission requires profile despite uploaded credential');
+select pg_temp.assert_true((select verification_state='draft' and version=2 from public.providers where id='42000000-0000-4000-8000-000000000002'),'missing profile denial preserves state and version');
+select pg_temp.assert_true((select count(*)=0 from public.provider_verification_events where provider_id='42000000-0000-4000-8000-000000000002'),'missing profile denial emits no transition');
+reset role;
+select pg_temp.assert_true((select count(*)=0 from public.audit_events where target_id='42000000-0000-4000-8000-000000000002' and action='provider.submitted'),'missing profile denial emits no submission audit');
+set local role authenticated;
+select public.update_provider('42000000-0000-4000-8000-000000000002','Synthetic legacy lab','',2);
+select pg_temp.assert_true((public.submit_provider('42000000-0000-4000-8000-000000000002',3)).verification_state='submitted','legacy submission succeeds after profile creation');
 set local role anon;
 select pg_temp.assert_true(not public.provider_is_publishable(:'doctor'),'guest eligibility boolean only');
 select pg_temp.expect_state('select * from public.provider_documents','42501','guest private metadata denied');
