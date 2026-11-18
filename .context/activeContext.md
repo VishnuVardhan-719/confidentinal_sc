@@ -99,3 +99,4 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
 - At f18d7cb: lint exit0, vitest 35 files/617 pass, build exit0 (138 pages). No integration fixes needed.
 
 2026-11-18 (fe-d): patient dashboard built (/[locale]/patient/dashboard, modules/patient-dashboard, patient.json en/te/hi, fe2-c modules vendored byte-identical, REQUESTS R-FE-D-31). CodeRabbit 0f4b8da fixes 1-7 done + coderabbit-0f4b8da.test.ts. Browser e2e deferred (R-FE-D-32). lint/typecheck/build clean, 363/363 tests. Committed on feat/fe2-d at orchestrator request.
+- Merged fe2-d 9b341f5 (00de692) and fe2-e 5a6bcf8 (2276679); conflicts in activeContext/REQUESTS/REVIEW_NEEDED kept both sides; message JSON parses, 0 duplicate keys. At 2276679: typecheck/lint exit0, vitest 58 files/929 pass, build exit0 (326 pages). No integration fixes needed. Pending: fe2-b.
