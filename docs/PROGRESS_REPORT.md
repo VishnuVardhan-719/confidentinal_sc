@@ -21,9 +21,9 @@ Branch `feat/fe2-integration`, written 2026-11-18 by fe-int. States: `NOT_STARTE
 | Check | Result |
 |---|---|
 | `npm run typecheck` (after fe2-d merge, and again after fe2-a 8decfb4 merge + hero swap) | exit 0 |
-| `npm run lint` | not run (orchestrator deferred: RAM cap) |
-| `vitest --maxWorkers=2` | not run (orchestrator deferred: RAM cap) |
-| `npm run build` | not run yet |
+| `npm run lint` (at f18d7cb) | exit 0, zero warnings/errors |
+| `vitest run --maxWorkers=2` (at f18d7cb) | exit 0, 35 files / 617 tests passed |
+| `npm run build` (at f18d7cb) | exit 0, compiled; 138/138 static pages generated |
 | Browser e2e (Playwright) | DEFERRED by user rule; not run (REQUESTS R-INT-1) |
 
 ## Phases
