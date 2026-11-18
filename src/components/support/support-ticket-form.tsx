@@ -43,6 +43,7 @@ export function SupportTicketForm({
 
   const ids = { category: `${id}-category`, bookingId: `${id}-booking`, description: `${id}-description` };
   const bookingIds = bookings.map((b) => b.id);
+  const unknownBooking = draft.bookingId !== "" && !bookingIds.includes(draft.bookingId);
   const length = draft.description.trim().length;
 
   const errorText = (field: keyof TicketErrors): string | undefined => {
@@ -160,19 +161,44 @@ export function SupportTicketForm({
         </div>
       </fieldset>
 
-      {bookings.length > 0 ? (
-        <Field id={ids.bookingId} label={t("booking")} hint={t("bookingHint")} error={errorText("bookingId")}>
-          {(p) => (
-            <select {...p} value={draft.bookingId} onChange={(e) => setDraft((d) => ({ ...d, bookingId: e.target.value }))} className={fieldControlClass}>
-              <option value="">{t("bookingNone")}</option>
-              {bookings.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.label}
-                </option>
-              ))}
-            </select>
-          )}
-        </Field>
+      {bookings.length > 0 || draft.bookingId ? (
+        <div className="grid gap-2">
+          <Field id={ids.bookingId} label={t("booking")} hint={t("bookingHint")} error={errorText("bookingId")}>
+            {(p) => (
+              <select
+                {...p}
+                value={draft.bookingId}
+                onChange={(e) => {
+                  setDraft((d) => ({ ...d, bookingId: e.target.value }));
+                  setErrors((x) => ({ ...x, bookingId: undefined }));
+                }}
+                className={fieldControlClass}
+              >
+                <option value="">{t("bookingNone")}</option>
+                {bookings.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.label}
+                  </option>
+                ))}
+                {/* Keep an unknown preselected booking visible so the user can see and change it. */}
+                {unknownBooking ? <option value={draft.bookingId}>{t("bookingUnknown")}</option> : null}
+              </select>
+            )}
+          </Field>
+          {unknownBooking ? (
+            <div>
+              <Button
+                variant="quiet"
+                onClick={() => {
+                  setDraft((d) => ({ ...d, bookingId: "" }));
+                  setErrors((x) => ({ ...x, bookingId: undefined }));
+                }}
+              >
+                {t("bookingClear")}
+              </Button>
+            </div>
+          ) : null}
+        </div>
       ) : null}
 
       <Field

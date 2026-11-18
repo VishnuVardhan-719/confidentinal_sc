@@ -27,7 +27,8 @@ export type FinderErrors = { pin?: "pinRequired" | "pinInvalid"; service?: "serv
 export type FinderResult = { ok: true; href: string } | { ok: false; errors: FinderErrors };
 
 export function validateFinder(input: { pin?: string | null; service?: string | null }): FinderResult {
-  const pin = normalizePin(input.pin ?? "");
+  // Full digit string, never truncated: "5000019" must be rejected, not shortened to a valid PIN.
+  const pin = toAsciiDigits(input.pin ?? "");
   const errors: FinderErrors = {};
   if (!pin) errors.pin = "pinRequired";
   else if (!isValidPin(pin)) errors.pin = "pinInvalid";
@@ -60,9 +61,11 @@ export function doctorSearchHref(input: { q?: string | null; location?: string |
   const q = cleanDoctorQuery(input.q);
   const loc = (input.location ?? "").trim();
   if (q) params.set("q", q);
-  const pin = normalizePin(loc);
-  if (loc && /^[\s\d०-९౦-౯]+$/.test(loc) && isValidPin(pin)) params.set("pin", pin);
-  else {
+  if (loc && /^[\s\d०-९౦-౯]+$/.test(loc)) {
+    // All-digit location: use it only if it is exactly a valid PIN (no truncation); otherwise omit it.
+    const pin = toAsciiDigits(loc);
+    if (isValidPin(pin)) params.set("pin", pin);
+  } else {
     const city = cleanCity(loc);
     if (city) params.set("city", city);
   }
