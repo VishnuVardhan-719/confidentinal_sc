@@ -9,8 +9,9 @@ export type ProviderScenario = "available" | "pending" | "suspended" | "empty";
 export function createProvidersFixtureApi(options: { env?: FixtureEnvironment; scenario?: ProviderScenario } = {}): ProvidersApi {
   const guard = fixtureGuard(options.env);
   return {
-    async list(input) {
+    async list(input, request) {
       guard();
+      if (request?.signal?.aborted) return fail("unavailable");
       const parsed = filtersSchema.safeParse(input);
       if (!parsed.success) return fail("validation");
       const row = syntheticProvider(parsed.data.category);

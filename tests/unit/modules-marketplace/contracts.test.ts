@@ -61,7 +61,9 @@ describe("verified HTTP contracts", () => {
     const fetch = vi.fn(async () => Response.json({ id }));
     const api = createBookingsHttpApi(createHttpClient({ fetch }));
     const input = { patientId: id, serviceId: id, addressId: id, startAt: "2026-11-20T04:30:00Z" };
-    await api.create(input, id); await api.create(input, id);
+    expect(await api.create(input, id)).toEqual({ ok: true, data: { id } });
+    expect(await api.create(input, id)).toEqual({ ok: true, data: { id } });
+    expect(fetch).toHaveBeenCalledTimes(2);
     for (const call of fetch.mock.calls as unknown as [string, RequestInit][]) {
       expect(call[0]).toBe("/api/bookings");
       expect(new Headers(call[1].headers).get("Idempotency-Key")).toBe(id);
@@ -86,10 +88,14 @@ describe("verified HTTP contracts", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
   it("keeps all unimplemented adapters gated without fetch", async () => {
-    const payments = createPaymentsHttpApi(); const support = createSupportHttpApi(); const notifications = createNotificationsHttpApi();
-    for (const result of [await payments.getSummary(id), await support.list(), await support.get(id), await notifications.list(), await notifications.markRead(id, { expectedVersion: 1 })])
-      expect(result).toEqual({ ok: false, error: { code: "gated" } });
-    expect(collectionRecordSchema.safeParse({ bookingId: id, amountPaise: 500, method: "card", cardNumber: "synthetic", expectedVersion: 1, collectedAt: "2026-11-18T00:00:00Z" }).success).toBe(false);
+    const fetch = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Unexpected fetch"));
+    try {
+      const payments = createPaymentsHttpApi(); const support = createSupportHttpApi(); const notifications = createNotificationsHttpApi();
+      for (const result of [await payments.getSummary(id), await support.list(), await support.get(id), await notifications.list(), await notifications.markRead(id, { expectedVersion: 1 })])
+        expect(result).toEqual({ ok: false, error: { code: "gated" } });
+      expect(fetch).not.toHaveBeenCalled();
+      expect(collectionRecordSchema.safeParse({ bookingId: id, amountPaise: 500, method: "card", cardNumber: "synthetic", expectedVersion: 1, collectedAt: "2026-11-18T00:00:00Z" }).success).toBe(false);
+    } finally { fetch.mockRestore(); }
   });
 });
 

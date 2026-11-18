@@ -14,18 +14,18 @@ function project(row: z.infer<typeof catalogRowSchema>): PublicProvider {
 }
 export function createProvidersHttpApi(http: HttpClient = createHttpClient()): ProvidersApi {
   return {
-    async list(input) {
+    async list(input, options) {
       const parsed = filtersSchema.safeParse(input);
       if (!parsed.success) return fail("validation");
       // Backend has stable price-ascending cursor pagination only. Never sort one page as if global.
       if (parsed.data.sort !== "price_asc") return fail("gated");
       const params = filtersToSearchParams(parsed.data);
       params.delete("sort");
-      const result = await http.request(`/api/catalog?${params}`, z.object({ results: z.array(catalogRowSchema), nextCursor: catalogCursorSchema.nullable() }));
+      const result = await http.request(`/api/catalog?${params}`, z.object({ results: z.array(catalogRowSchema), nextCursor: catalogCursorSchema.nullable() }), { signal: options?.signal });
       return result.ok ? ok({ items: result.data.results.map(project), nextCursor: result.data.nextCursor, synthetic: false }) : result;
     },
     async get(id, scope) {
-      const parsed = z.object({ id: z.uuid(), category: categorySchema, pin: pinSchema }).safeParse({ id, ...scope });
+      const parsed = z.object({ id: z.uuid(), category: categorySchema, pin: pinSchema }).safeParse({ id, category: scope.category, pin: scope.pin });
       if (!parsed.success) return fail("validation");
       const params = new URLSearchParams({ category: parsed.data.category, pin: parsed.data.pin });
       const result = await http.request(`/api/catalog/${parsed.data.id}?${params}`, z.object({ results: z.array(catalogRowSchema) }));

@@ -18,7 +18,10 @@ describe("marketplace modules", () => {
     expect(permittedActions({ status: "UNKNOWN", category: "doctor", serverAllowedActions: ["accept"] }, "doctor").every(a => !a.enabled)).toBe(true);
   });
   it("has a presentation for every booking state and unknown fails safely", () => {
-    for (const status of [...bookingStatusSchema.options, ...doctorStatusSchema.options]) expect(bookingStatusPresentation(status).labelKey).toBeTruthy();
+    for (const status of [...bookingStatusSchema.options, ...doctorStatusSchema.options]) {
+      expect(bookingStatusPresentation(status).labelKey).toBeTruthy();
+      expect(bookingStatusPresentation(status).labelKey).not.toBe("booking.status.unknown");
+    }
     expect(bookingStatusPresentation("future_state")).toEqual({ labelKey: "booking.status.unknown", tone: "neutral" });
   });
   it("refuses fixture creation in production and after environment changes", async () => {

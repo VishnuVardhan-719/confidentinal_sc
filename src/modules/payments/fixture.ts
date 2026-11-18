@@ -11,12 +11,14 @@ export function createPaymentsFixtureApi(options: { env?: FixtureEnvironment; st
   return {
     async getSummary(id) {
       guard(); if (!z.uuid().safeParse(id).success) return fail("validation");
+      id = id.toLowerCase();
       if (!rows.has(id)) rows.set(id, syntheticPayment(id, options.status));
       return ok(structuredClone(rows.get(id)!));
     },
     async recordCollection(input, key) {
       guard(); const parsed = collectionRecordSchema.safeParse(input);
       if (!parsed.success || !z.uuid().safeParse(key).success) return fail("validation");
+      parsed.data.bookingId = parsed.data.bookingId.toLowerCase();
       const body = JSON.stringify(parsed.data); const prior = intents.get(key);
       if (prior) return prior.body === body ? ok({ version: prior.version }) : fail("conflict");
       const row = rows.get(parsed.data.bookingId) ?? syntheticPayment(parsed.data.bookingId, options.status);

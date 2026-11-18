@@ -8,7 +8,7 @@ export const markReadSchema = z.strictObject({ expectedVersion: versionSchema })
 export type NotificationReadChange = { before: Notification; after: Notification };
 export function optimisticMarkRead(before: Notification, readAt: string): NotificationReadChange {
   const safe = notificationSchema.parse(before);
-  return { before: structuredClone(safe), after: { ...safe, readAt: safe.readAt ?? utcSchema.parse(readAt) } };
+  return { before: structuredClone(before), after: { ...safe, readAt: safe.readAt ?? utcSchema.parse(readAt) } };
 }
 export function rollbackMarkRead(current: Notification, change: NotificationReadChange): Notification {
   return current.id === change.after.id && current.version === change.after.version && current.readAt === change.after.readAt

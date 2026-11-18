@@ -124,3 +124,47 @@ FILES CHANGED:
 - src/modules/catalog/FE07-08-HANDOFF.md
 - docs/frontend/REQUESTS.md (append-only new file)
 - .context/activeContext.md
+
+
+## Phase 2 C non-UI checkpoint — 2026-11-18
+
+Base: owner commit 84d36cf, current feat/fe2-c only. No commits/pushes. UI pages intentionally pending owner's fe2-a foundation merge message; shared components, i18n, auth guards, global CSS and package files untouched.
+
+Implemented:
+- bookings/wizard-state.ts: eight-step gating, save/back/downstream invalidation, revision matching, uncertain and changed-offer locks. schedule.ts converts validated IST wall time to UTC explicitly.
+- bookings/submit.ts: per-intent UUID key, same-promise duplicate dedupe, no automatic retry, exact key/body reconciliation after unknown response, known-ID GET reconciliation, full server snapshot comparison, session disposal. review-matching.ts shares the comparison. Missing verified preparation callback fails gated before POST.
+- providers/directory-model.ts: category-bound URL allowlist, PIN entry, draft Apply/Clear/cancel restoration via directoryDraftFromQuery, public card links and localized prices. directory-controller.ts aborts superseded calls and ignores late responses; immutable snapshots support later UI external stores. ProvidersApi.list accepts optional AbortSignal without breaking existing callers.
+- providers/server-loaders.ts: request-scoped directory/profile reads, validated URL scopes and response projection. Distinguishes missing PIN, invalid URL, no results and transport error.
+- bookings/server-loaders.ts and view-model.ts: required per-read patient authorization callback, request-scoped adapters, no private cache, validated booking/timeline/payment ownership and allowlists, separate gated auxiliary panels, action hints denied absent server grants, explicit page scope/cursor and suppressed global next visit when incomplete. No route handlers with invented endpoints or permissive guards.
+
+Integration requirements:
+- Bind private loaders to real request-scoped requireRole after the foundation is merged. Never inject a constant-success authorization function into production.
+- Bind submission prepare only to a verified server offer/policy/eligibility/consent acknowledgment contract. Browser review flags are display state, not authorization. Existing B01 lacks this contract; production creation stays gated.
+- Patient list exposes loaded_page, hasMore, nextCursor, complete and nextVisitState. Render incomplete as unknown; do not render it as no upcoming visit. Reset accumulated pages on session/filters change.
+- Use one submitter per active intent/session. On uncertainty expose explicit reconciliation; do not reset/new-key retry. On review_required show the already-created booking and changed offer for server-authorized review; never create another booking.
+- Controllers and wizard drafts live only in memory. Dispose controllers/discard drafts on logout, identity or organization change. Loading directory pages may retain old cards as stale; disable their booking actions until current request resolves.
+
+Evidence: test-first failures reproduced for new boundaries and regressions. Final npm test: 10 files, 106 tests passed (32 added). npm run typecheck: exit0. npm run build: exit0, compiled and generated existing / and /_not-found routes. No UI/E2E claims at this checkpoint. Final lint evidence recorded in activeContext. Independent read-only marketplace_review found two loader issues (payment validation/ownership and next-visit pagination); both fixed with failing-then-passing regressions, targeted re-review found no remaining important issues. Reviewer did not run tests.
+
+
+## CodeRabbit Phase 1 follow-up — 2026-11-18
+
+Read CR-fixes-C.md: all 13 findings verified as valid. Eight implementation regressions reproduced before fixes; five existing assertions strengthened. Minimal fixes only, no commit/push.
+
+| Finding | Change / evidence |
+| --- | --- |
+| HTTP-date Retry-After dropped | Parse date/delta forms, clamp past to zero and upper bound to 99,999,999 seconds; invalid values omitted. foundations.test verifies future/past/numeric/bounded/invalid hints. |
+| Unread HTTP error stream | Cancel body without waiting on indefinitely open cancellation; swallow cancellation rejection, preserve safe HTTP error. Two foundations regressions. |
+| Resource UUID duplicates | Compare lowercase UUIDs for resource count; case-only duplicates rejected, distinct IDs accepted. review-fixes.test. |
+| Booking fixture lookup casing | Canonical get/timeline/decision lookup keys; uppercase reads and acceptance see same lowercase booking. review-fixes.test. |
+| Lab UUID duplicates | Compare lowercase UUIDs for selected-test uniqueness; duplicate and distinct regressions. review-fixes.test. |
+| Notification prior snapshot stripped | Capture detached original caller snapshot, keeping safe parsed optimistic after value; rollback restores UI fields and nested isolation, does not overwrite newer versions. review-fixes.test. |
+| Payment fixture duplicate UUID rows | Canonical summary and claim booking IDs, including idempotency comparison body; same booking version across spellings and stale rejection. review-fixes.test. |
+| Provider scope can override ID | Validate explicit id plus only category/pin from scope; regression verifies requested ID and invalid explicit ID rejection. review-fixes.test. |
+| Notification readback vacuity | Require successful list and matching notification ID with the captured non-null readAt. |
+| Gated adapters zero-fetch claim | Spy before adapter construction; assert zero fetch calls; restore spy in finally. |
+| IST clock substring | Anchored complete 05:30 or 5:30 AM clock rejects 15:30 and PM. All three locales verified. |
+| Create-attempt count vacuity | Require two successful results and exactly two fetch calls before inspecting headers/body. |
+| Known status unknown fallback | Every known status must have a nonempty label different from unknown; retain exact unknown fallback assertion. |
+
+Verification: npm test 11 files/115 tests passed (9 new regressions in this follow-up); npm run typecheck exit0 after explicitly typing the new fetch mock; npm run lint exit0; git diff --check exit0. Existing Phase 2 work remains uncommitted and pages still await foundation merge notification. Independent targeted follow-up review confirmed all requested fixes, no remaining important issues; reviewer made no edits and did not independently rerun tests.

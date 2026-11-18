@@ -11,6 +11,17 @@ export interface HttpClient {
   request<T>(path: string, schema: z.ZodType<T>, options?: HttpRequest): Promise<ApiResult<T>>;
 }
 
+function retryAfterSeconds(header: string | null): number | undefined {
+  if (header === null) return undefined;
+  const value = header.trim();
+  const maximum = 99_999_999;
+  if (/^[0-9]+$/.test(value)) return Math.min(Number(value), maximum);
+  // HTTP dates begin with a weekday; avoid Date.parse coercing invalid numeric hints.
+  if (!/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)[a-z]*[ ,]/i.test(value)) return undefined;
+  const date = Date.parse(value);
+  return Number.isFinite(date) ? Math.min(maximum, Math.max(0, Math.ceil((date - Date.now()) / 1000))) : undefined;
+}
+
 /** Same-origin JSON only. No automatic mutation retries or raw error-body parsing. */
 export function createHttpClient(config: { fetch?: typeof fetch; timeoutMs?: number } = {}): HttpClient {
   const fetcher = config.fetch ?? globalThis.fetch;
@@ -35,8 +46,9 @@ export function createHttpClient(config: { fetch?: typeof fetch; timeoutMs?: num
           ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
         });
         if (!response.ok) {
-          const retry = response.headers.get("Retry-After");
-          const seconds = retry !== null && /^\d{1,8}$/.test(retry) ? Number(retry) : undefined;
+          // Release an unconsumed error stream without delaying the safe error response.
+          void response.body?.cancel().catch(() => {});
+          const seconds = retryAfterSeconds(response.headers.get("Retry-After"));
           return fail(codeFromStatus(response.status), response.status === 429 && seconds !== undefined ? { retryAfterSeconds: seconds } : {});
         }
         const parsed = schema.safeParse(await response.json());

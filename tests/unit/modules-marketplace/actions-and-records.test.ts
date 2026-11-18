@@ -45,9 +45,13 @@ describe("independent operational and financial records", () => {
     expect(read.ok && read.data).toEqual(expect.objectContaining({ version: 2, synthetic: true }));
     expect(await api.markRead(syntheticNotification.id, { expectedVersion: 1 })).toEqual({ ok: false, error: { code: "conflict" } });
     if (!read.ok) throw new Error("Expected synthetic notification");
+    const readAt = read.data.readAt;
+    expect(readAt).not.toBeNull();
     read.data.readAt = null;
     const list = await api.list();
-    expect(list.ok && list.data.items[0].readAt).not.toBe(null);
+    expect(list.ok).toBe(true);
+    if (!list.ok) throw new Error("Expected notification readback");
+    expect(list.data.items.find(item => item.id === syntheticNotification.id)?.readAt).toBe(readAt);
   });
   it("rejects malformed cursor components before transport", () => {
     for (const cursor of ["1,---,---", "10000000001," + id + "," + id, "1,not-id," + id]) {

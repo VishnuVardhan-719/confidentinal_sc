@@ -7,7 +7,7 @@ export const locationStepSchema = z.strictObject({ addressId: z.uuid(), pin: pin
 export const scheduleStepSchema = z.strictObject({ startAt: utcSchema, endAt: utcSchema }).refine(value => Date.parse(value.endAt) > Date.parse(value.startAt), { path: ["endAt"], message: "end_after_start" });
 export const detailsStepSchema = z.discriminatedUnion("category", [
   z.strictObject({ category: z.literal("doctor"), visitReason: z.string().trim().max(240).optional() }),
-  z.strictObject({ category: z.literal("lab"), testServiceIds: z.array(z.uuid()).min(1).max(30).refine(ids => new Set(ids).size === ids.length), collection: z.enum(["home", "branch"]) }),
+  z.strictObject({ category: z.literal("lab"), testServiceIds: z.array(z.uuid()).min(1).max(30).refine(ids => new Set(ids.map(id => id.toLowerCase())).size === ids.length), collection: z.enum(["home", "branch"]) }),
   z.strictObject({ category: z.literal("ambulance"), mode: z.literal("scheduled"), destinationAddressId: z.uuid(), passengers: z.number().int().min(1).max(4) }),
   z.strictObject({ category: z.literal("caretaker"), scope: z.literal("nonclinical"), tasks: z.array(z.enum(["companionship", "mobility_assistance", "daily_living_assistance"])).min(1).max(3), units: z.number().int().min(1).max(24), unit: z.enum(["hour", "day"]) }),
 ]);

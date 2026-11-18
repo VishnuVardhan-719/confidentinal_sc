@@ -11,6 +11,33 @@ describe("marketplace boundaries", () => {
     const codes = { 401: "unauthenticated", 403: "forbidden", 404: "not_found", 409: "conflict", 422: "validation", 429: "rate_limited", 500: "unavailable" };
     expect(await http.request("/api/catalog", z.object({ id: z.string() }))).toEqual({ ok: false, error: { code: codes[status as keyof typeof codes] } });
   });
+  it("preserves bounded delta-seconds and HTTP-date retry hints", async () => {
+    const now = Date.UTC(2026, 10, 18, 0, 0, 0);
+    const clock = vi.spyOn(Date, "now").mockReturnValue(now);
+    try {
+      for (const [retry, seconds] of [["60", 60], [new Date(now + 60_000).toUTCString(), 60], [new Date(now - 60_000).toUTCString(), 0], ["999999999999999999", 99_999_999]] as const) {
+        const http = createHttpClient({ fetch: async () => new Response(null, { status: 429, headers: { "Retry-After": retry } }) });
+        expect(await http.request("/api/catalog", z.unknown())).toEqual({ ok: false, error: { code: "rate_limited", retryAfterSeconds: seconds } });
+      }
+      for (const retry of ["invalid", "-1", "1.5"]) {
+        const http = createHttpClient({ fetch: async () => new Response(null, { status: 429, headers: { "Retry-After": retry } }) });
+        expect(await http.request("/api/catalog", z.unknown())).toEqual({ ok: false, error: { code: "rate_limited" } });
+      }
+    } finally { clock.mockRestore(); }
+  });
+  it("cancels unread HTTP error bodies without waiting for an open stream", async () => {
+    const cancel = vi.fn(() => new Promise<void>(() => {}));
+    const body = new ReadableStream({ cancel });
+    const http = createHttpClient({ fetch: async () => new Response(body, { status: 503 }) });
+    expect(await http.request("/api/catalog", z.unknown())).toEqual({ ok: false, error: { code: "unavailable" } });
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
+  it("keeps the safe HTTP error if body cancellation rejects", async () => {
+    const cancel = vi.fn(async () => { throw new Error("private cancellation detail"); });
+    const http = createHttpClient({ fetch: async () => new Response(new ReadableStream({ cancel }), { status: 403 }) });
+    expect(await http.request("/api/catalog", z.unknown())).toEqual({ ok: false, error: { code: "forbidden" } });
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
   it("validates and strips responses and uses private same-origin requests", async () => {
     const fetch = vi.fn(async () => Response.json({ id: "safe", secret: "strip" }));
     const http = createHttpClient({ fetch });
@@ -39,7 +66,7 @@ describe("marketplace boundaries", () => {
   });
   it.each(["en", "te", "hi"] as const)("formats integer paise and IST for %s", locale => {
     expect(formatPaise(12345, locale)).toContain("123.45");
-    expect(formatDateTime("2026-11-18T00:00:00Z", locale)).toMatch(/5:30|05:30/);
+    expect(formatDateTime("2026-11-18T00:00:00Z", locale)).toMatch(/(?:^|[^0-9])(?:05:30|5:30\s*am)$/i);
   });
   it("preserves the paise remainder throughout the safe-integer range", () => {
     expect(formatPaise(0)).toBe("₹0.00");

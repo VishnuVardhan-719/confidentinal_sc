@@ -14,3 +14,11 @@ Inspected read-only: origin/task/B01-booking e8a71ede046ec88cde71cf243adc54b1e64
 - Future locale owner: add/review keys booking.status.*, booking.action.*, payment.status.* when Phase 2 UI consumes the status maps. No translations or UI files changed in this task.
 
 Lead action: integrate reviewed data layer, update shared task/status/evidence ledgers from src/modules/catalog/FE07-08-HANDOFF.md, assign backend contract deltas, then authorize Phase 2 UI. Fixture-only coverage is not real integration/RLS/concurrency proof.
+
+
+## 2026-11-18 — Phase 2 C non-UI integration boundaries
+
+- Owner instructed non-UI work first until fe2-a foundation merge notification. Wizard/controllers/view-models/request-scoped loaders are implemented; route pages and binding to real patient guard remain pending that notification. No fake authorization fallback or new speculative API route was added.
+- Submission prepare callback deliberately gates without the missing server offer/policy/consent acknowledgment contract noted above. Later denials after unknown POST outcomes do not authorize a fresh key/intent; reconciliation retains the original key/body or known booking ID.
+- B01 list is a cursor page, not a complete upcoming-bookings query. Patient loader exposes explicit page completeness and withholds global nextVisit if truncated or cursor-scoped. Backend should supply a bounded upcoming/next-visit query or a reviewed ordering/filter contract before dashboard can claim a complete next visit without fetching all pages.
+- Lead can transfer non-UI verification evidence and file map from the Phase 2 section of src/modules/catalog/FE07-08-HANDOFF.md into shared task/status ledgers. Remaining Phase 1 backend capability gaps and UI integration gates still apply.

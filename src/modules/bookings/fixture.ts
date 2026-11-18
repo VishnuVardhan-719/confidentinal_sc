@@ -24,7 +24,7 @@ export function createBookingsFixtureApi(options: { env?: FixtureEnvironment; sc
     guard();
     const parsed = (action === "accept" ? acceptSchema : decisionSchema).safeParse(input);
     if (!z.uuid().safeParse(id).success || !parsed.success) return fail("validation");
-    const row = records.get(id);
+    const row = records.get(id.toLowerCase());
     if (!row) return fail("not_found");
     if (parsed.data.expectedVersion !== row.version || (action === "cancel" ? !["DRAFT", "REQUESTED", "ACCEPTED", "CONFIRMED"].includes(row.status) : row.status !== "REQUESTED")) return fail("conflict");
     if (action === "accept") {
@@ -67,10 +67,10 @@ export function createBookingsFixtureApi(options: { env?: FixtureEnvironment; sc
       return ok({ items: structuredClone([...records.values()].filter(row => (!parsed.data.providerId || row.providerId === parsed.data.providerId)
         && (!parsed.data.cursor || row.id > parsed.data.cursor)).sort((a, b) => a.id.localeCompare(b.id)).slice(0, parsed.data.limit)) });
     },
-    async get(id) { guard(); if (!z.uuid().safeParse(id).success) return fail("validation"); const row = records.get(id); return row ? ok(structuredClone(row)) : fail("not_found"); },
+    async get(id) { guard(); if (!z.uuid().safeParse(id).success) return fail("validation"); const row = records.get(id.toLowerCase()); return row ? ok(structuredClone(row)) : fail("not_found"); },
     async accept(id, input) { return change(id, input, "accept"); },
     async decline(id, input) { return change(id, input, "decline"); },
     async cancel(id, input) { return change(id, input, "cancel"); },
-    async timeline(id) { guard(); if (!z.uuid().safeParse(id).success) return fail("validation"); return records.has(id) ? ok({ items: structuredClone(events.get(id) ?? []) }) : fail("not_found"); },
+    async timeline(id) { guard(); if (!z.uuid().safeParse(id).success) return fail("validation"); return records.has(id.toLowerCase()) ? ok({ items: structuredClone(events.get(id.toLowerCase()) ?? []) }) : fail("not_found"); },
   };
 }

@@ -24,7 +24,7 @@ export const createBookingSchema = z.strictObject({ patientId: z.uuid(), service
 export type CreateBooking = z.infer<typeof createBookingSchema>;
 export const decisionReasonSchema = z.enum(["patient_request", "provider_unavailable", "unable_to_service", "other"]);
 export const decisionSchema = z.strictObject({ expectedVersion: versionSchema, reason: decisionReasonSchema });
-export const acceptSchema = z.strictObject({ expectedVersion: versionSchema, resourceIds: z.array(z.uuid()).min(1).max(2).refine(ids => new Set(ids).size === ids.length) });
+export const acceptSchema = z.strictObject({ expectedVersion: versionSchema, resourceIds: z.array(z.uuid()).min(1).max(2).refine(ids => new Set(ids.map(id => id.toLowerCase())).size === ids.length) });
 export const bookingListSchema = z.strictObject({ providerId: z.uuid().optional(), limit: z.number().int().min(1).max(50).default(20), cursor: z.uuid().optional() });
 export type BookingList = z.input<typeof bookingListSchema>;
 export type BookingDecision = z.infer<typeof decisionSchema>;
