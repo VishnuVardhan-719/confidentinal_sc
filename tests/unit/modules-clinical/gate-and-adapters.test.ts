@@ -62,6 +62,17 @@ describe("fixture adapter refused in production", () => {
 });
 
 describe("http adapters", () => {
+  it("rejects signed histories whose last version is not currentVersion (CR)", async () => {
+    const content = emptyDraftContent();
+    const signer = { clinicianId: "d", displayName: "Dr. Fixture", registrationLabel: null };
+    const v = (version: number) => ({ version, signedAt: "2026-11-20T04:30:00.000Z", signedBy: signer, content });
+    const base = { consultationId: ID, bookingId: ID, bookingReference: "SYN-BKG-1", status: "final", amendments: [] };
+    const api = (body: unknown) => createClinicalHttpApi({ fetchImpl: async () => jsonResponse(200, body) });
+    expect(await api({ ...base, currentVersion: 2, versions: [v(2), v(1)] }).getConsultation(ID)).toEqual({ ok: false, error: { code: "unavailable" } });
+    expect(await api({ ...base, currentVersion: 3, versions: [v(1), v(2)] }).getConsultation(ID)).toEqual({ ok: false, error: { code: "unavailable" } });
+    const good = await api({ ...base, currentVersion: 2, versions: [v(1), v(2)] }).getConsultation(ID);
+    expect(good.ok && good.data.status === "final" && good.data.currentVersion).toBe(2);
+  });
   it("doctor accept posts the B01 body and parses { version }", async () => {
     const fetchImpl = vi.fn(async () => jsonResponse(200, { version: 4 }));
     const api = createDoctorHttpApi({ fetchImpl });

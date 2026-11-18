@@ -63,6 +63,13 @@ export const signedConsultationSchema = z.strictObject({
   currentVersion: z.number().int().positive(),
   versions: z.array(signedVersionSchema).min(1),
   amendments: z.array(amendmentRecordSchema),
+}).superRefine((c, ctx) => {
+  // Versions must be strictly ascending and end at currentVersion, so latestSigned() is current.
+  const ascending = c.versions.every((v, i) => i === 0 || v.version > c.versions[i - 1].version);
+  if (!ascending) ctx.addIssue({ code: "custom", path: ["versions"], message: "versions_not_ascending" });
+  if (c.versions[c.versions.length - 1]?.version !== c.currentVersion) {
+    ctx.addIssue({ code: "custom", path: ["currentVersion"], message: "current_version_mismatch" });
+  }
 });
 export type SignedConsultation = z.infer<typeof signedConsultationSchema>;
 

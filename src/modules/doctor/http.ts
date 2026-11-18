@@ -1,7 +1,7 @@
 import { fail, type ApiResult } from "@/lib/api/result";
 import { createHttp, idSegment, type HttpOptions } from "@/modules/clinical/http-util";
 import type { DoctorApi } from "./api";
-import { acceptInputSchema, advanceInputSchema, otpCodeSchema, versionResponseSchema, type VersionResponse } from "./types";
+import { acceptInputSchema, advanceInputSchema, declineInputSchema, otpCodeSchema, versionResponseSchema, type VersionResponse } from "./types";
 
 /**
  * HTTP adapter.
@@ -12,7 +12,7 @@ import { acceptInputSchema, advanceInputSchema, otpCodeSchema, versionResponseSc
 export function createDoctorHttpApi(options: HttpOptions = {}): DoctorApi {
   const request = createHttp(options);
 
-  const command = async (bookingId: string, action: "accept" | "en-route" | "arrive" | "start", body: unknown): Promise<ApiResult<VersionResponse>> => {
+  const command = async (bookingId: string, action: "accept" | "decline" | "en-route" | "arrive" | "start", body: unknown): Promise<ApiResult<VersionResponse>> => {
     const id = idSegment(bookingId);
     if (!id) return fail("not_found");
     return request({ method: "POST", path: `/api/bookings/${id}/${action}`, body, schema: versionResponseSchema });
@@ -27,6 +27,13 @@ export function createDoctorHttpApi(options: HttpOptions = {}): DoctorApi {
       if (!parsed.success) return fail("validation");
       return command(bookingId, "accept", parsed.data);
     },
+    decline: async (bookingId, input) => {
+      const parsed = declineInputSchema.safeParse(input);
+      if (!parsed.success) return fail("validation");
+      return command(bookingId, "decline", parsed.data);
+    },
+    // B01 only has POST /api/provider/booking/resources (upsert); no list route yet.
+    listAcceptResources: async () => fail("gated"),
     enRoute: async (bookingId, input) => {
       const parsed = advanceInputSchema.safeParse(input);
       if (!parsed.success) return fail("validation");

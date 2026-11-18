@@ -154,8 +154,26 @@ describe("DC02 arrival challenge and doctor OTP form", () => {
   });
 });
 
+describe("fixture consultation IDs (CR: tail collision)", () => {
+  it("bookings sharing the last four characters get distinct consultations", async () => {
+    const world = createClinicalWorld(T0);
+    const a = "00000000-0000-4000-8000-00000000aaaa";
+    const b = "11111111-0000-4000-8000-00000000aaaa";
+    const src = world.bookings.get(I.bookingToday)!;
+    for (const id of [a, b]) world.bookings.set(id, { ...src, bookingId: id, state: "confirmed", phase: "arrival_verified", consultationId: null, version: 5 });
+    const api = createDoctorFixtureApi({ world, now: () => T0 });
+    expect((await api.startConsultation(a, { expectedVersion: 5 })).ok).toBe(true);
+    expect((await api.startConsultation(b, { expectedVersion: 5 })).ok).toBe(true);
+    const ca = world.bookings.get(a)!.consultationId;
+    const cb = world.bookings.get(b)!.consultationId;
+    expect(ca).not.toBe(cb);
+    expect(world.consultations.get(ca!)?.bookingId).toBe(a);
+    expect(world.consultations.get(cb!)?.bookingId).toBe(b);
+  });
+});
+
 describe("DC03 visit timeline freshness", () => {
-  const base: TimelineState = { bookingId: "b1", version: 5, state: "confirmed", phase: "scheduled", events: [], lastUpdatedAt: T0.toISOString(), connection: "live", needsRefetch: false };
+  const base: TimelineState = { bookingId: "b1", version: 5, state: "confirmed", phase: "scheduled", events: [], lastUpdatedAt: T0.toISOString(), connection: "live", needsRefetch: false, observedVersion: 5 };
   const ev = (version: number, phase: VisitEvent["phase"], bookingId = "b1"): VisitEvent => ({ eventId: `e${version}`, bookingId, version, occurredAt: T0.toISOString(), state: "confirmed", phase });
 
   it("ignores stale, duplicate and other-booking events", () => {
@@ -168,6 +186,28 @@ describe("DC03 visit timeline freshness", () => {
     const s = timelineReducer(base, { type: "event", event: ev(8, "arrived") });
     expect(s.needsRefetch).toBe(true);
     expect(s.phase).toBe("scheduled");
+  });
+
+  it("an older snapshot after reconnect does not clear recovery (CR: delayed snapshot)", () => {
+    // Snapshot request captured v4; event 5 applied; socket drops and misses v6; reconnect.
+    let s = timelineReducer({ ...base, version: 4, observedVersion: 4 }, { type: "event", event: ev(5, "en_route") });
+    s = timelineReducer(timelineReducer(s, { type: "disconnected" }), { type: "reconnected" });
+    expect(s.needsRefetch).toBe(true);
+    const late = timelineReducer(s, { type: "snapshot", version: 4, state: "confirmed", phase: "scheduled", events: [], fetchedAt: T0.toISOString() });
+    expect(late).toBe(s);
+    expect(late.needsRefetch).toBe(true);
+    expect(late.phase).toBe("en_route");
+  });
+
+  it("gap stays pending until a snapshot reaches the observed version (CR: gap cleared early)", () => {
+    let s = timelineReducer({ ...base, version: 4, observedVersion: 4 }, { type: "event", event: ev(6, "arrived") });
+    expect(s).toMatchObject({ needsRefetch: true, observedVersion: 6, version: 4 });
+    s = timelineReducer(s, { type: "snapshot", version: 4, state: "confirmed", phase: "scheduled", events: [], fetchedAt: T0.toISOString() });
+    expect(s.needsRefetch).toBe(true);
+    s = timelineReducer(s, { type: "snapshot", version: 5, state: "confirmed", phase: "en_route", events: [ev(5, "en_route")], fetchedAt: T0.toISOString() });
+    expect(s).toMatchObject({ version: 5, needsRefetch: true });
+    s = timelineReducer(s, { type: "snapshot", version: 6, state: "confirmed", phase: "arrived", events: [ev(5, "en_route"), ev(6, "arrived")], fetchedAt: T0.toISOString() });
+    expect(s).toMatchObject({ version: 6, phase: "arrived", needsRefetch: false });
   });
 
   it("reconnect requires refetch; snapshot restores authority", () => {

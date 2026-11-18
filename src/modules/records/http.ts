@@ -45,6 +45,7 @@ export function createRecordsHttpApi(options: HttpOptions = {}): RecordsApi {
     },
     listHealthFacts: async () => fail("gated"),
     confirmHealthFacts: async () => fail("gated"),
+    correctHealthFact: async () => fail("gated"),
     issueProof: async (bookingId, idempotencyKey) => {
       const id = idSegment(bookingId);
       if (!id) return fail("not_found");

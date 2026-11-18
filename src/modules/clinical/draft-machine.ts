@@ -20,7 +20,8 @@ export type DraftStatus = (typeof DRAFT_STATUSES)[number];
 
 export const MAX_AUTOSAVE_FAILURES = 3;
 
-export type InFlightSave = { requestId: number; baseVersion: number; editSeq: number };
+/** A save in flight carries the exact content snapshot it sends, so batched edits cannot be mislabelled. */
+export type InFlightSave = { requestId: number; baseVersion: number; editSeq: number; content: ClinicalDraftContent };
 
 export type DraftState = {
   consultationId: string;
@@ -54,6 +55,11 @@ export type DraftAction =
       /** take_server: discard local edits; keep_local: rebase local edits on the server version. */
       resolution: "take_server" | "keep_local";
       server: { version: number; savedAt: string | null; content: ClinicalDraftContent };
+      /**
+       * editSeq of the local draft the clinician compared against the server version.
+       * take_server is ignored if newer local edits exist, so unreviewed text is never discarded.
+       */
+      reviewedEditSeq: number;
     }
   | { type: "finalized" };
 
@@ -110,7 +116,7 @@ export function draftReducer(state: DraftState, action: DraftAction): DraftState
       return {
         ...state,
         status: "saving",
-        inFlight: { requestId: state.nextRequestId, baseVersion: state.serverVersion, editSeq: state.editSeq },
+        inFlight: { requestId: state.nextRequestId, baseVersion: state.serverVersion, editSeq: state.editSeq, content: state.content },
         nextRequestId: state.nextRequestId + 1,
       };
     }
@@ -166,6 +172,8 @@ export function draftReducer(state: DraftState, action: DraftAction): DraftState
       if (!state.conflict || state.inFlight) return state;
       const { server } = action;
       if (action.resolution === "take_server") {
+        // Edits made after the clinician's review must be re-reviewed, not silently dropped.
+        if (action.reviewedEditSeq !== state.editSeq) return state;
         const next: DraftState = {
           ...state,
           content: server.content,

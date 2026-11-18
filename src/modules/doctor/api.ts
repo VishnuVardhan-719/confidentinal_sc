@@ -1,9 +1,11 @@
 import type { ApiResult } from "@/lib/api/result";
 import type {
   AcceptInput,
+  AcceptResource,
   AdvanceInput,
   ArrivalChallenge,
   AssignedVisitView,
+  DeclineInput,
   DoctorRequestView,
   VerifyArrivalOutcome,
   VersionResponse,
@@ -23,6 +25,10 @@ export type DoctorApi = {
   getVisit: (bookingId: string) => Promise<ApiResult<AssignedVisitView>>;
   /** Accept via the bookings contract (manual provider acceptance). */
   accept: (bookingId: string, input: AcceptInput) => Promise<ApiResult<VersionResponse>>;
+  /** Decline via the bookings contract with a B01 reason. */
+  decline: (bookingId: string, input: DeclineInput) => Promise<ApiResult<VersionResponse>>;
+  /** Resources this doctor may attach when accepting (normally their own person resource). */
+  listAcceptResources: () => Promise<ApiResult<AcceptResource[]>>;
   enRoute: (bookingId: string, input: AdvanceInput) => Promise<ApiResult<VersionResponse>>;
   /** Report arrival; the server starts a booking + doctor bound challenge. */
   arrive: (bookingId: string, input: AdvanceInput) => Promise<ApiResult<VersionResponse>>;

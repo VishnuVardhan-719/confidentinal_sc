@@ -9,6 +9,8 @@ export * from "./status";
 export * from "./otp";
 export * from "./visit";
 export * from "./timeline";
+export * from "./routing";
+export * from "./loaders";
 
 /** Adapter chosen by FRONTEND_ADAPTER; fixture throws when APP_ENV=production. */
 export function getDoctorApi(env: Record<string, string | undefined> = process.env): DoctorApi {

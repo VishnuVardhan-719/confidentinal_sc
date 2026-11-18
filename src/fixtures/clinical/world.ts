@@ -85,6 +85,7 @@ export type FixtureHealthFactVersion = {
   recordedAt: string;
   verifier: { clinicianId: string; displayName: string } | null;
   evidenceNote: string | null;
+  correctionReason?: string | null;
 };
 
 export type FixtureHealthFact = {

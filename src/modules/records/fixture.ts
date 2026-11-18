@@ -16,6 +16,7 @@ import { proofState } from "./logic";
 import {
   collectionInputSchema,
   confirmFactsInputSchema,
+  correctFactInputSchema,
   photoConsentInputSchema,
   photoUploadInputSchema,
   proofTokenSchema,
@@ -182,6 +183,29 @@ export function createRecordsFixtureApi(options: RecordsFixtureOptions = {}): Re
         f!.versions.push({ version: latest.version + 1, value: latest.value, source: "doctor_verified", recordedAt: at, verifier: { clinicianId: doctorId ?? "", displayName: doctor?.displayName ?? "" }, evidenceNote: parsed.data.evidenceNote });
       }
       return ok(targets.map(({ f }) => factView(f!)));
+    },
+
+    correctHealthFact: async (bookingId, input) => {
+      const b = assignedBooking(bookingId);
+      if (!b) return fail("forbidden");
+      if (b.state !== "in_progress") return fail("conflict");
+      const parsed = correctFactInputSchema.safeParse(input);
+      if (!parsed.success) return fail("validation");
+      const f = world.facts.get(parsed.data.factId);
+      if (!f || f.patientId !== b.patientId) return fail("forbidden");
+      const latest = f.versions.reduce((a, v) => (v.version > a.version ? v : a));
+      if (latest.version !== parsed.data.expectedVersion) return fail("conflict");
+      const doctor = world.doctors.get(doctorId ?? "");
+      f.versions.push({
+        version: latest.version + 1,
+        value: parsed.data.newValue,
+        source: "doctor_verified",
+        recordedAt: now().toISOString(),
+        verifier: { clinicianId: doctorId ?? "", displayName: doctor?.displayName ?? "" },
+        evidenceNote: parsed.data.evidenceNote,
+        correctionReason: parsed.data.reason,
+      });
+      return ok(factView(f));
     },
 
     issueProof: async (bookingId, key) => {

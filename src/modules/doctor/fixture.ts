@@ -1,6 +1,7 @@
 import { fail, ok, type ApiResult } from "@/lib/api/result";
 import {
   DEFAULT_DOCTOR_ACTOR,
+  FIXTURE_IDS,
   fixtureHash,
   sharedClinicalWorld,
   type ClinicalWorld,
@@ -13,6 +14,8 @@ import type { DoctorApi } from "./api";
 import {
   acceptInputSchema,
   advanceInputSchema,
+  declineInputSchema,
+  DOCTOR_DECLINE_REASONS,
   otpCodeSchema,
   type ArrivalChallenge,
   type AssignedVisitView,
@@ -178,6 +181,21 @@ export function createDoctorFixtureApi(options: DoctorFixtureOptions = {}): Doct
       b.version += 1;
       return ok({ version: b.version });
     },
+    decline: async (bookingId, raw) => {
+      const parsed = declineInputSchema.safeParse(raw);
+      if (!parsed.success || !(DOCTOR_DECLINE_REASONS as readonly string[]).includes(parsed.data.reason)) return fail("validation");
+      const b = world.bookings.get(bookingId);
+      if (!b || !doctorId || b.requestedDoctorId !== doctorId) return fail("forbidden");
+      if (b.state !== "requested" || parsed.data.expectedVersion !== b.version) return fail("conflict");
+      b.state = "declined";
+      b.version += 1;
+      return ok({ version: b.version });
+    },
+    listAcceptResources: async () => {
+      if (!doctorId) return fail("forbidden");
+      const doctor = world.doctors.get(doctorId);
+      return ok(doctorId === FIXTURE_IDS.doctorAssigned ? [{ resourceId: FIXTURE_IDS.resourceDoctor, displayName: doctor?.displayName ?? "" }] : []);
+    },
     enRoute: async (bookingId, input) => advance(bookingId, input, "scheduled", "en_route"),
     arrive: async (bookingId, input) => {
       const r = advance(bookingId, input, "en_route", "arrived");
@@ -245,7 +263,8 @@ export function createDoctorFixtureApi(options: DoctorFixtureOptions = {}): Doct
       b.phase = "service_started";
       b.version += 1;
       if (!b.consultationId) {
-        const consultationId = `syn-c-${b.bookingId.slice(-4)}`;
+        // Full booking ID keeps fixture consultation IDs unique per booking.
+        const consultationId = `syn-c-${b.bookingId}`;
         world.consultations.set(consultationId, {
           consultationId,
           bookingId: b.bookingId,

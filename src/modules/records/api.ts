@@ -4,6 +4,7 @@ import type {
   CollectionInput,
   CollectionView,
   ConfirmFactsInput,
+  CorrectFactInput,
   HealthFactView,
   PatientRecordDetail,
   PatientRecordSummary,
@@ -29,6 +30,8 @@ export type RecordsApi = {
   // DC11 health facts (assigned clinician for this booking)
   listHealthFacts: (bookingId: string) => Promise<ApiResult<HealthFactView[]>>;
   confirmHealthFacts: (bookingId: string, input: ConfirmFactsInput) => Promise<ApiResult<HealthFactView[]>>;
+  /** Attributed correction; previous value preserved in history. */
+  correctHealthFact: (bookingId: string, input: CorrectFactInput) => Promise<ApiResult<HealthFactView>>;
   // DC12 proof of visit
   issueProof: (bookingId: string, idempotencyKey: string) => Promise<ApiResult<ProofOfVisit>>;
   revokeProof: (bookingId: string, token: string) => Promise<ApiResult<ProofOfVisit>>;

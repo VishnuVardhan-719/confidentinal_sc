@@ -25,6 +25,11 @@ export type TimelineState = {
   lastUpdatedAt: string;
   connection: "live" | "disconnected";
   needsRefetch: boolean;
+  /**
+   * Highest version seen in any event, including ones discarded because of a gap.
+   * A refetch is complete only once the timeline reaches this version.
+   */
+  observedVersion: number;
 };
 
 export type TimelineAction =
@@ -39,16 +44,19 @@ export function timelineReducer(s: TimelineState, a: TimelineAction): TimelineSt
       const e = a.event;
       if (e.bookingId !== s.bookingId) return s; // scoped: ignore other bookings
       if (e.version <= s.version) return s; // stale or duplicate
-      if (e.version > s.version + 1) return { ...s, needsRefetch: true }; // gap: do not guess
-      return { ...s, version: e.version, state: e.state, phase: e.phase, events: [...s.events, e], lastUpdatedAt: e.occurredAt };
+      const observedVersion = Math.max(s.observedVersion, e.version);
+      if (e.version > s.version + 1) return { ...s, needsRefetch: true, observedVersion }; // gap: do not guess
+      return { ...s, version: e.version, state: e.state, phase: e.phase, events: [...s.events, e], lastUpdatedAt: e.occurredAt, observedVersion };
     }
     case "disconnected":
       return { ...s, connection: "disconnected" };
     case "reconnected":
       // Never trust the socket alone after a reconnect.
       return { ...s, connection: "live", needsRefetch: true };
-    case "snapshot":
-      if (a.version < s.version) return { ...s, needsRefetch: false }; // older snapshot than events seen
+    case "snapshot": {
+      // A snapshot older than what we already show is stale: ignore it and keep any pending recovery.
+      if (a.version < s.version) return s;
+      const observedVersion = Math.max(s.observedVersion, a.version);
       return {
         ...s,
         version: a.version,
@@ -56,7 +64,10 @@ export function timelineReducer(s: TimelineState, a: TimelineAction): TimelineSt
         phase: a.phase,
         events: [...a.events].sort((x, y) => x.version - y.version),
         lastUpdatedAt: a.fetchedAt,
-        needsRefetch: false,
+        observedVersion,
+        // Still behind a version we saw announced (gap): keep refetching until we reach it.
+        needsRefetch: a.version < s.observedVersion,
       };
+    }
   }
 }

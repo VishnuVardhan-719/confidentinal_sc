@@ -122,5 +122,14 @@ export const acceptInputSchema = z.strictObject({
 export type AcceptInput = z.infer<typeof acceptInputSchema>;
 export const advanceInputSchema = z.strictObject({ expectedVersion: versionSchema });
 export type AdvanceInput = z.infer<typeof advanceInputSchema>;
+/** B01 `reasonSchema` values. Label keys in DECLINE_REASON_LABEL_KEYS (status.ts). */
+export const DECLINE_REASONS = ["patient_request", "provider_unavailable", "unable_to_service", "other"] as const;
+export type DeclineReason = (typeof DECLINE_REASONS)[number];
+/** Reasons a doctor may choose when declining a request (patient_request is the patient's own cancel reason). */
+export const DOCTOR_DECLINE_REASONS = ["provider_unavailable", "unable_to_service", "other"] as const satisfies readonly DeclineReason[];
+export const declineInputSchema = z.strictObject({ expectedVersion: versionSchema, reason: z.enum(DECLINE_REASONS) });
+export type DeclineInput = z.infer<typeof declineInputSchema>;
+/** A bookable resource the doctor can attach on accept (B01 resources, kind=person). */
+export type AcceptResource = { resourceId: string; displayName: string };
 export const versionResponseSchema = z.strictObject({ version: versionSchema });
 export type VersionResponse = z.infer<typeof versionResponseSchema>;

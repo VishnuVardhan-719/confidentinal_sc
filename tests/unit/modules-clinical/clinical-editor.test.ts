@@ -63,7 +63,7 @@ describe("DC05 draft autosave state machine", () => {
     expect(shouldAutosave(s)).toBe(true);
     s = draftReducer(s, { type: "save_requested" });
     expect(s.status).toBe("saving");
-    expect(s.inFlight).toEqual({ requestId: 1, baseVersion: 4, editSeq: 1 });
+    expect(s.inFlight).toEqual({ requestId: 1, baseVersion: 4, editSeq: 1, content: s.content });
     s = draftReducer(s, { type: "save_succeeded", requestId: 1, version: 5, savedAt: T0.toISOString() });
     expect(s).toMatchObject({ status: "saved", serverVersion: 5, inFlight: null });
     expect(canFinalize(s)).toBe(true);
@@ -97,10 +97,12 @@ describe("DC05 draft autosave state machine", () => {
     expect(s.status).toBe("conflict");
     expect(canFinalize(s)).toBe(false);
     const server = { version: 6, savedAt: T0.toISOString(), content: { ...emptyDraftContent(), assessment: { chiefComplaint: "theirs" } } };
-    const kept = draftReducer(s, { type: "conflict_resolved", resolution: "keep_local", server });
+    const kept = draftReducer(s, { type: "conflict_resolved", resolution: "keep_local", server, reviewedEditSeq: s.editSeq });
     expect(kept).toMatchObject({ status: "unsaved", serverVersion: 6, conflict: null });
     expect(kept.content.assessment.chiefComplaint).toBe("mine 2");
-    const taken = draftReducer(s, { type: "conflict_resolved", resolution: "take_server", server });
+    // take_server against an older review is ignored: the newer local edit was never reviewed.
+    expect(draftReducer(s, { type: "conflict_resolved", resolution: "take_server", server, reviewedEditSeq: s.editSeq - 1 })).toBe(s);
+    const taken = draftReducer(s, { type: "conflict_resolved", resolution: "take_server", server, reviewedEditSeq: s.editSeq });
     expect(taken).toMatchObject({ status: "saved", serverVersion: 6 });
     expect(taken.content.assessment.chiefComplaint).toBe("theirs");
   });

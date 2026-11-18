@@ -1,5 +1,5 @@
 import { describeStatus, type StatusDescriptor } from "@/modules/clinical/status-core";
-import type { BookingState, ChallengeStatus, VisitPhase } from "./types";
+import type { BookingState, ChallengeStatus, DeclineReason, VisitPhase } from "./types";
 import type { ChallengePhase } from "./otp";
 
 /** Booking status badge (doctor view). Separate from clinical and payment badges. */
@@ -46,3 +46,10 @@ export const describeBookingState = (s: string | null | undefined) => describeSt
 export const describeVisitPhase = (s: string | null | undefined) => describeStatus(VISIT_PHASE_MAP, s);
 export const describeChallengeStatus = (s: string | null | undefined) => describeStatus(CHALLENGE_STATUS_MAP, s);
 export const describeChallengePhase = (s: string | null | undefined) => describeStatus(CHALLENGE_PHASE_MAP, s);
+
+export const DECLINE_REASON_LABEL_KEYS: Readonly<Record<DeclineReason, string>> = {
+  patient_request: "doctor.requests.decline.reason.patientRequest",
+  provider_unavailable: "doctor.requests.decline.reason.providerUnavailable",
+  unable_to_service: "doctor.requests.decline.reason.unableToService",
+  other: "doctor.requests.decline.reason.other",
+};

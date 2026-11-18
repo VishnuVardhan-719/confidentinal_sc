@@ -75,6 +75,8 @@ export type HealthFactVersion = {
   recordedAt: string;
   verifier: { clinicianId: string; displayName: string } | null;
   evidenceNote: string | null;
+  /** Present on clinician corrections: why the value changed. */
+  correctionReason?: string | null;
 };
 
 export type HealthFactView = {
@@ -92,6 +94,20 @@ export const confirmFactsInputSchema = z.strictObject({
   reviewAcknowledged: z.literal(true),
 });
 export type ConfirmFactsInput = z.infer<typeof confirmFactsInputSchema>;
+
+/**
+ * DC11 correction: the clinician records a different value. Appends a new attributed version;
+ * the previous value stays in history. Reason and evidence are mandatory.
+ */
+export const correctFactInputSchema = z.strictObject({
+  factId: z.string().min(1),
+  expectedVersion: z.number().int().positive(),
+  newValue: z.string().trim().min(1).max(500),
+  reason: z.string().trim().min(10).max(1000),
+  evidenceNote: z.string().trim().min(3).max(1000),
+  reviewAcknowledged: z.literal(true),
+});
+export type CorrectFactInput = z.infer<typeof correctFactInputSchema>;
 
 // ---- DC12 proof of visit -------------------------------------------------------------------
 /** Opaque token only. Never encodes patient ID, OTP, diagnosis or chart. */

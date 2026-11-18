@@ -205,3 +205,23 @@ describe("doctor fixture + records share one synthetic world", () => {
     expect((await asDoctor(world, now).issueProof(I.bookingToday, "k")).ok).toBe(true);
   });
 });
+
+describe("DC11 attributed corrections (gap review)", () => {
+  it("a correction appends an attributed version with reason; prior value stays in history", async () => {
+    const { world, now } = worldWithClock();
+    const api = asDoctor(world, now);
+    const r = await api.correctHealthFact(I.bookingActive, { factId: "fact-a-blood", expectedVersion: 1, newValue: "Synthetic A+", reason: "Synthetic lab card shows a different group", evidenceNote: "Synthetic card reviewed", reviewAcknowledged: true });
+    if (!r.ok) throw new Error(r.error.code);
+    expect(r.data.current).toMatchObject({ version: 2, value: "Synthetic A+", source: "doctor_verified", correctionReason: "Synthetic lab card shows a different group" });
+    expect(r.data.current.verifier?.clinicianId).toBe(I.doctorAssigned);
+    expect(r.data.history).toEqual([expect.objectContaining({ version: 1, value: "Synthetic B+", source: "patient_entered" })]);
+  });
+
+  it("missing reason, stale version and unassigned doctor are rejected", async () => {
+    const { world, now } = worldWithClock();
+    const input = { factId: "fact-a-blood", expectedVersion: 1, newValue: "Synthetic A+", reason: "Synthetic reason text", evidenceNote: "Synthetic", reviewAcknowledged: true as const };
+    expect(await asDoctor(world, now).correctHealthFact(I.bookingActive, { ...input, reason: "short" })).toEqual({ ok: false, error: { code: "validation" } });
+    expect(await asDoctor(world, now).correctHealthFact(I.bookingActive, { ...input, expectedVersion: 3 })).toEqual({ ok: false, error: { code: "conflict" } });
+    expect(await asDoctor(world, now, I.doctorOther).correctHealthFact(I.bookingActive, input)).toEqual({ ok: false, error: { code: "forbidden" } });
+  });
+});
