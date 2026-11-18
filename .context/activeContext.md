@@ -59,3 +59,10 @@ Main repo `C:\SURECUREVISIT` (main, develop). Worktrees (siblings in C:\):
 - `SureCureVisit-kiro-R01` task/R01-source-audit: Kiro writing docs/SOURCE_AUDIT_R01.md. Prompt: TASK_R01.md. Run by owner in a visible Kiro tab.
 Next: check each worktree (`git status`, `git diff`), review output, Kiro challenges the S00 draft, owner approves ERD, then migrations (I01). Supabase deferred: use local Supabase CLI later (not installed).
 Owner rules: no commit/push unless asked (initial commit was approved). Codex headless `exec` was blocked; use visible tabs. Kiro login account should be checked.
+
+## Cross-review and route inventory — 2026-11-18
+- Active owner request: read-only review fe2-b identity and fe2-d clinical vs FRONTEND_MASTER/API_CONTRACTS; write exact scratch XREVIEW-c.md; draft docs/frontend/ROUTES.md. No commit/push. Current HEAD 4c95a00.
+- Requested fe2-b/src/modules/identity absent; actual identity code is auth/onboarding/organizations/verification. Sibling files are read-only. Current C app only root scaffold, no locale/private pages.
+- Investigating reconnect authorization retry, stale keep-local conflict review, amendment recovery identity/content and missing session refresh. Reproduction probes will run from current directory, never sibling worktrees.
+- Completed: four findings (amendment-content/intent recovery P1; reconnect retry authorization P2; stale keep-local review P2; missing refresh flow P2). Three clinical source probes reproduced; identity source-search backed. Exact requested scratch report written/byte-verified. ROUTES.md has 121 unique catalogue routes + six root aliases, locale/role/org/resource/feature gates, and readiness promotion rules. All pages pending rather than falsely FIXTURE-ready.
+- Validation: typecheck exit0; Vitest14files/175tests pass; probe ESM conversion fixes lint require-import violations; final lint rerun completed exit0, zero warnings/errors. Sibling source untouched. No commits/pushes.

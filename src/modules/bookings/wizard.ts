@@ -11,7 +11,7 @@ export const detailsStepSchema = z.discriminatedUnion("category", [
   z.strictObject({ category: z.literal("ambulance"), mode: z.literal("scheduled"), destinationAddressId: z.uuid(), passengers: z.number().int().min(1).max(4) }),
   z.strictObject({ category: z.literal("caretaker"), scope: z.literal("nonclinical"), tasks: z.array(z.enum(["companionship", "mobility_assistance", "daily_living_assistance"])).min(1).max(3), units: z.number().int().min(1).max(24), unit: z.enum(["hour", "day"]) }),
 ]);
-export const paymentPolicyStepSchema = z.strictObject({ method: z.enum(["pay_after", "online_test"]), priceSnapshot: priceSnapshotSchema,
+export const paymentPolicyStepSchema = z.strictObject({ method: z.enum(["pay_after", "online_test"]), priceSnapshot: priceSnapshotSchema.extend({ policyVersionId: z.uuid() }),
   approvedPolicyVersionId: z.uuid(), accepted: z.literal(true), noticeVersion: z.string().min(1) })
   .refine(value => value.approvedPolicyVersionId === value.priceSnapshot.policyVersionId, { path: ["approvedPolicyVersionId"], message: "policy_mismatch" });
 export const reviewStepSchema = z.strictObject({ service: serviceStepSchema, patient: patientStepSchema, location: locationStepSchema, schedule: scheduleStepSchema,

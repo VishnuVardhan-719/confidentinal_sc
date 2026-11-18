@@ -1,4 +1,4 @@
-import type { BookingStatus, DoctorStatus } from "./schemas";
+import type { BookingStatus, DoctorStatus, DoctorOperationalStatus } from "./schemas";
 export type StatusTone = "neutral" | "info" | "success" | "warning" | "danger";
 export type StatusPresentation = { labelKey: string; tone: StatusTone };
 export const BOOKING_STATUS_PRESENTATION = {
@@ -17,7 +17,10 @@ export const BOOKING_STATUS_PRESENTATION = {
   ARRIVED: { labelKey: "booking.status.arrived", tone: "info" },
   ARRIVAL_VERIFIED: { labelKey: "booking.status.arrivalVerified", tone: "success" },
   IN_CONSULTATION: { labelKey: "booking.status.inConsultation", tone: "info" },
-} satisfies Record<BookingStatus | DoctorStatus, StatusPresentation>;
+  SCHEDULED: { labelKey: "booking.status.scheduled", tone: "neutral" },
+  SERVICE_STARTED: { labelKey: "booking.status.serviceStarted", tone: "info" },
+  SERVICE_COMPLETED: { labelKey: "booking.status.serviceCompleted", tone: "success" },
+} satisfies Record<BookingStatus | DoctorStatus | DoctorOperationalStatus, StatusPresentation>;
 export function bookingStatusPresentation(status: string): StatusPresentation {
   return Object.prototype.hasOwnProperty.call(BOOKING_STATUS_PRESENTATION, status)
     ? BOOKING_STATUS_PRESENTATION[status as keyof typeof BOOKING_STATUS_PRESENTATION]

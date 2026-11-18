@@ -7,9 +7,11 @@ export const clinicalStatusSchema = z.enum(["NOT_STARTED", "DRAFT", "FINALIZED",
 export const doctorOperationalStatusSchema = z.enum(["SCHEDULED", "EN_ROUTE", "ARRIVED", "SERVICE_STARTED", "SERVICE_COMPLETED"]);
 export type BookingStatus = z.infer<typeof bookingStatusSchema>;
 export type DoctorStatus = z.infer<typeof doctorStatusSchema>;
+export type DoctorOperationalStatus = z.infer<typeof doctorOperationalStatusSchema>;
 export type ClinicalStatus = z.infer<typeof clinicalStatusSchema>;
 
-export const priceSnapshotSchema = z.object({ amountPaise: paiseSchema, currency: z.literal("INR"), termsVersion: z.string().min(1), policyVersionId: z.uuid() });
+/** Existing B01 bookings may predate a published policy; reads must preserve that absence. */
+export const priceSnapshotSchema = z.object({ amountPaise: paiseSchema, currency: z.literal("INR"), termsVersion: z.string().min(1), policyVersionId: z.uuid().nullable() });
 export const policySchema = z.object({ id: z.uuid(), version: z.string().min(1), approved: z.literal(true), cancellationText: z.string().min(1), validUntil: utcSchema });
 export type PriceSnapshot = z.infer<typeof priceSnapshotSchema>;
 export type BookingPolicy = z.infer<typeof policySchema>;
@@ -41,7 +43,7 @@ const operationalWire = z.enum(["scheduled", "en_route", "arrived", "service_sta
 export const bookingWireSchema = z.object({
   id: z.uuid(), public_ref: z.string().nullable(), provider_id: z.uuid(), service_id: z.uuid(), category: categorySchema,
   pin_code: pinSchema, start_at: utcSchema, end_at: utcSchema, state: statusWire, version: versionSchema,
-  amount_paise: wirePaiseSchema, currency: z.literal("INR"), terms_version: z.string().min(1), policy_version_id: z.uuid(),
+  amount_paise: wirePaiseSchema, currency: z.literal("INR"), terms_version: z.string().min(1), policy_version_id: z.uuid().nullable(),
   substate: operationalWire.nullable().optional(),
 }).transform(row => bookingSchema.parse({ id: row.id, publicReference: row.public_ref, providerId: row.provider_id, serviceId: row.service_id,
   category: row.category, pin: row.pin_code, startAt: row.start_at, endAt: row.end_at, status: row.state, version: row.version,

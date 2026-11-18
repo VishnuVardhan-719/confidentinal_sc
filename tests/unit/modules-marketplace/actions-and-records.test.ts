@@ -14,7 +14,7 @@ describe("independent operational and financial records", () => {
     expect(action).toEqual({ action: "complete", enabled: true });
   });
   it("keeps arrival verification/consultation gated without authorization", () => {
-    const actions = permittedActions({ category: "doctor", status: "CONFIRMED", doctorStatus: "ARRIVED", serverAllowedActions: ["verify_arrival"] }, "doctor");
+    const actions = permittedActions({ category: "doctor", status: "CONFIRMED", doctorOperationalStatus: "ARRIVED", serverAllowedActions: ["verify_arrival"] }, "doctor");
     expect(actions.find(item => item.action === "verify_arrival")).toEqual({ action: "verify_arrival", enabled: false, disabledReasonKey: "booking.action.clinicalGated" });
   });
   it("does not mark provider collection claims as gateway paid and deduplicates claims", async () => {
