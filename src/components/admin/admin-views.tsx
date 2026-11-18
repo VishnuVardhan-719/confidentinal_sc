@@ -1,4 +1,5 @@
 import { useLocale, useTranslations } from "next-intl";
+import { CursorPager } from "@/components/admin/ops/cursor-pager";
 import { formatDateTime, formatPaise } from "@/components/admin/ops/format";
 import { MetricTile } from "@/components/admin/ops/metric-tile";
 import { OpsAction } from "@/components/admin/ops/ops-action";
@@ -291,7 +292,17 @@ export function SupportQueueView({ result }: { result: LoaderResult<SupportRowVM
 export const AUDIT_CATEGORIES = ["verification", "coverage", "booking", "membership", "content", "payment", "support", "security", "settings"] as const;
 export const AUDIT_OUTCOMES = ["success", "denied", "conflict"] as const;
 
-export function AuditView({ result, category, outcome }: { result: LoaderResult<{ rows: AuditRowVM[]; nextCursor: string | null }>; category?: string; outcome?: string }) {
+export function AuditView({
+  result,
+  category,
+  outcome,
+  cursor,
+}: {
+  result: LoaderResult<{ rows: AuditRowVM[]; nextCursor: string | null }>;
+  category?: string;
+  outcome?: string;
+  cursor?: string;
+}) {
   const t = useTranslations("admin.audit");
   const tk = useKeyTranslator();
   const locale = useAppLocale();
@@ -328,20 +339,23 @@ export function AuditView({ result, category, outcome }: { result: LoaderResult<
       </form>
       <LoaderState result={result} empty={{ title: t("emptyTitle"), description: t("emptyBody") }}>
         {(d) => (
-          <RecordList
-            label={t("title")}
-            rows={d.rows}
-            rowKey={(r) => r.id}
-            columns={[
-              { key: "time", header: t("columns.time"), primary: true, cell: (r) => formatDateTime(r.occurredAt, locale) },
-              { key: "actor", header: t("columns.actor"), cell: (r) => tk(r.actorKindKey) },
-              { key: "action", header: t("columns.action"), cell: (r) => <code className="text-sm">{r.action}</code> },
-              { key: "category", header: t("columns.category"), cell: (r) => <OpsStatus status={r.category} /> },
-              { key: "target", header: t("columns.target"), cell: (r) => <code className="text-sm">{r.target}</code> },
-              { key: "outcome", header: t("columns.outcome"), cell: (r) => <OpsStatus status={r.outcome} /> },
-              { key: "reason", header: t("columns.reason"), cell: (r) => r.reason ?? r.reasonCode ?? "—" },
-            ]}
-          />
+          <>
+            <RecordList
+              label={t("title")}
+              rows={d.rows}
+              rowKey={(r) => r.id}
+              columns={[
+                { key: "time", header: t("columns.time"), primary: true, cell: (r) => formatDateTime(r.occurredAt, locale) },
+                { key: "actor", header: t("columns.actor"), cell: (r) => tk(r.actorKindKey) },
+                { key: "action", header: t("columns.action"), cell: (r) => <code className="text-sm">{r.action}</code> },
+                { key: "category", header: t("columns.category"), cell: (r) => <OpsStatus status={r.category} /> },
+                { key: "target", header: t("columns.target"), cell: (r) => <code className="text-sm">{r.target}</code> },
+                { key: "outcome", header: t("columns.outcome"), cell: (r) => <OpsStatus status={r.outcome} /> },
+                { key: "reason", header: t("columns.reason"), cell: (r) => r.reason ?? r.reasonCode ?? "—" },
+              ]}
+            />
+            <CursorPager pathname="/admin/audit" query={{ category, outcome }} nextCursor={d.nextCursor} cursor={cursor} />
+          </>
         )}
       </LoaderState>
     </div>

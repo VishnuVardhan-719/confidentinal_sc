@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useRef, useState, useTransition, type FormEvent } from "react";
+import { useTrackedRun } from "@/components/admin/ops/use-tracked-run";
 import { ErrorSummary, type SummaryError } from "@/components/shared/error-summary";
 import { Field } from "@/components/shared/field";
 import { InlineError } from "@/components/shared/inline-error";
@@ -56,13 +57,16 @@ export function CmsEditorForm({
   const [errors, setErrors] = useState<Partial<Record<EditorField, ErrorCode>>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const [pending, startTransition] = useTransition();
+  const { running, track } = useTrackedRun();
+  const [refreshing, startTransition] = useTransition();
+  const pending = running || refreshing;
   const fid = (f: EditorField) => `${id}-${f}`;
   const set = (patch: Partial<EditorForm>) => setForm((f) => ({ ...f, ...patch }));
   const err = (f: EditorField) => (errors[f] ? labels.errors[errors[f] as ErrorCode] : undefined);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (pending) return;
     setServerError(null);
     setAttempt((n) => n + 1);
     const local = validateEditorForm(form);
@@ -71,17 +75,20 @@ export function CmsEditorForm({
       return;
     }
     setErrors({});
-    const result = await run({ draft: draftFromForm(form), idempotencyKey: key.current });
-    if (!result.ok) {
-      setServerError(result.code);
-      return;
-    }
-    key.current = newKey();
-    toast({ title: labels.saved, tone: "success" });
-    startTransition(() => {
-      if (!slugLocked && result.entryId) router.push(`/admin/cms/${encodeURIComponent(result.entryId)}?locale=${form.locale}`);
-      else router.refresh();
+    // Saving is tracked from before the action starts until navigation/refetch begins.
+    const result = await track(async () => {
+      const r = await run({ draft: draftFromForm(form), idempotencyKey: key.current });
+      if (r.ok) {
+        key.current = newKey();
+        toast({ title: labels.saved, tone: "success" });
+        startTransition(() => {
+          if (!slugLocked && r.entryId) router.push(`/admin/cms/${encodeURIComponent(r.entryId)}?locale=${form.locale}`);
+          else router.refresh();
+        });
+      }
+      return r;
     });
+    if (result && !result.ok) setServerError(result.code);
   }
 
   const order: EditorField[] = ["slug", "title", "summary", "bodyText", "question", "answerText", "order", "consentEvidenceId", "noIdentifiablePerson", "form"];

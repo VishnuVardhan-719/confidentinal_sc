@@ -96,10 +96,11 @@ export type AssignOption = { resourceId: string; label: string };
 /** Requests plus the vehicles/drivers that may be assigned now (accept form options). Unknown capacity = no options. */
 export async function loadRequests(
   ctx: WorkspaceLoaderContext,
+  cursor?: string,
 ): Promise<LoaderResult<{ rows: RequestRowVM[]; nextCursor: string | null; vehicles: AssignOption[]; drivers: AssignOption[] }>> {
   const amb = api(ctx);
   const now = clock(ctx);
-  const [requests, fleet, crew] = await Promise.all([amb.listRequests(), amb.listFleet(), amb.listCrew()]);
+  const [requests, fleet, crew] = await Promise.all([amb.listRequests(cursor ? { cursor } : undefined), amb.listFleet(), amb.listCrew()]);
   if (!requests.ok) return toLoaderResult(requests, amb.mode);
   if (!belongsToWorkspace(requests.data.items, ctx.workspace, (r) => r.providerId)) return toLoaderResult(fail("unavailable"), amb.mode);
   const rows = requests.data.items.map((r) => toRequestRow(r, fleet.ok ? fleet.data : null, crew.ok ? crew.data : null, now));
@@ -108,9 +109,9 @@ export async function loadRequests(
   return toLoaderResult(ok({ rows, nextCursor: requests.data.nextCursor, vehicles, drivers }), amb.mode, (d) => d.rows.length === 0);
 }
 
-export async function loadTrips(ctx: WorkspaceLoaderContext, queue: TripQueue): Promise<LoaderResult<{ rows: TripRowVM[]; nextCursor: string | null }>> {
+export async function loadTrips(ctx: WorkspaceLoaderContext, queue: TripQueue, cursor?: string): Promise<LoaderResult<{ rows: TripRowVM[]; nextCursor: string | null }>> {
   const amb = api(ctx);
-  const result = await amb.listTrips({ queue });
+  const result = await amb.listTrips({ queue, ...(cursor ? { cursor } : {}) });
   if (!result.ok) return toLoaderResult(result, amb.mode);
   if (!belongsToWorkspace(result.data.items, ctx.workspace, (t) => t.providerId)) return toLoaderResult(fail("unavailable"), amb.mode);
   return toLoaderResult(ok({ rows: result.data.items.map(toTripRow), nextCursor: result.data.nextCursor }), amb.mode, (d) => d.rows.length === 0);

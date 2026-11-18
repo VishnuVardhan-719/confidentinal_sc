@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useRef, useState, useTransition, type FormEvent } from "react";
+import { useTrackedRun } from "@/components/admin/ops/use-tracked-run";
 import { ErrorSummary, type SummaryError } from "@/components/shared/error-summary";
 import { Field } from "@/components/shared/field";
 import { InlineError } from "@/components/shared/inline-error";
@@ -49,7 +50,9 @@ export function CatalogEditForm({ initial, run, labels }: { initial: FormState; 
   const [errors, setErrors] = useState<{ price?: string; preparation?: string }>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const [pending, startTransition] = useTransition();
+  const { running, track } = useTrackedRun();
+  const [refreshing, startTransition] = useTransition();
+  const pending = running || refreshing;
 
   const priceId = `${id}-price`;
   const prepId = `${id}-prep`;
@@ -61,21 +64,27 @@ export function CatalogEditForm({ initial, run, labels }: { initial: FormState; 
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (pending) return;
     setServerError(null);
     const local = validateCatalogForm(form);
     setErrors(local);
     setAttempt((n) => n + 1);
     if (local.price || local.preparation) return;
-    const result = await run({ ...form, idempotencyKey: key.current });
-    if (!result.ok) {
-      if (result.fields) setErrors({ price: result.fields.price, preparation: result.fields.preparation });
+    // Save is pending (dialog locked, button busy) from before the action starts until the refetch begins.
+    const result = await track(async () => {
+      const r = await run({ ...form, idempotencyKey: key.current });
+      if (r.ok) {
+        key.current = newKey();
+        setOpen(false);
+        toast({ title: labels.saved, tone: "success" });
+        startTransition(() => router.refresh());
+      }
+      return r;
+    });
+    if (result && !result.ok) {
+      if ("fields" in result && result.fields) setErrors({ price: result.fields.price, preparation: result.fields.preparation });
       setServerError(result.code);
-      return;
     }
-    key.current = newKey();
-    setOpen(false);
-    toast({ title: labels.saved, tone: "success" });
-    startTransition(() => router.refresh());
   }
 
   return (

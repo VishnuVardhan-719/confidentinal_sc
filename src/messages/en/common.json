@@ -100,5 +100,10 @@
       "current": "current step",
       "upcoming": "not started"
     }
+  },
+  "pagination": {
+    "label": "More results",
+    "next": "Show more",
+    "first": "Back to the first page"
   }
 }

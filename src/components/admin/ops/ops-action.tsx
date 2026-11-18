@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useRef, useState, useTransition } from "react";
+import { useTrackedRun } from "@/components/admin/ops/use-tracked-run";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { InlineError } from "@/components/shared/inline-error";
 import { Button } from "@/components/ui/button";
@@ -44,20 +45,27 @@ export function OpsAction({
   const [reason, setReason] = useState("");
   const [missingReason, setMissingReason] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const { running, track } = useTrackedRun();
+  const [refreshing, startTransition] = useTransition();
+  const pending = running || refreshing;
 
-  async function execute(): Promise<ActionResult> {
+  /** Returns null when a request for this intent is already in flight (duplicate submit dropped). */
+  async function execute(): Promise<ActionResult | null> {
     if (labels.reason && reason === "") {
       setMissingReason(true);
       return { ok: false, code: "validation" };
     }
     setMissingReason(false);
-    const result = await run({ idempotencyKey: key.current, ...(labels.reason ? { reason } : {}) });
-    if (result.ok) {
-      key.current = newKey();
-      toast({ title: labels.done, tone: "success" });
-      startTransition(() => router.refresh());
-    }
+    // A rejected action becomes "unavailable" and keeps the key, so a retry stays idempotent.
+    const result = await track(async () => {
+      const r = await run({ idempotencyKey: key.current, ...(labels.reason ? { reason } : {}) });
+      if (r.ok) {
+        key.current = newKey();
+        toast({ title: labels.done, tone: "success" });
+        startTransition(() => router.refresh());
+      }
+      return r;
+    });
     return result;
   }
 
@@ -69,9 +77,10 @@ export function OpsAction({
           disabled={pending}
           aria-busy={pending}
           onClick={async () => {
+            if (pending) return;
             setError(null);
             const result = await execute();
-            if (!result.ok) setError(result.code);
+            if (result && !result.ok) setError(result.code);
           }}
         >
           {labels.label}
@@ -87,7 +96,7 @@ export function OpsAction({
       title={labels.confirm.title}
       confirmLabel={labels.confirm.confirmLabel}
       tone={tone}
-      onConfirm={execute}
+      onConfirm={async () => (await execute()) ?? { ok: false, code: "conflict" }}
       description={
         <div className="grid gap-4">
           <p>{labels.confirm.description}</p>
