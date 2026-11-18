@@ -1,5 +1,8 @@
-# Active context (2026-11-18, FE v2 restart)
-Owner rejected the old demo frontend (preserved on wip/frontend-pause-2026-11-18). Fresh build from develop per docs/FRONTEND_MASTER.md. Conventions: docs/frontend/CONVENTIONS.md.
-Team (herdr terminals): t2d fe-a Kiro (worktree fe2-a, feat/fe2-a: FE01+FE02 foundation+public), t2f fe-b Kiro (fe2-b: identity/onboarding data layer), t2g fe-c Codex (fe2-c: marketplace data layer). Lead = Claude (commits, integration, review). Task files: C:/Users/Yashwanth/.claude-scratch-tasks/FE-{A,B,C}.md. Approval loop: .claude-scratch-approve.sh t2d t2f t2g.
-Base commit 3174196 (feat/fe2-a). Backend PRs #1-#5 unmerged; adapters: http (real contracts) + fixture (labelled, blocked when APP_ENV=production).
-Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash (C), doctor/lab/ambulance/caretaker/admin dashboards, clinical editor, payments/support, i18n/a11y/e2e, adversarial review.
+# Active context (2026-11-19, FE v2 Phase 4)
+Owner rejected the old demo frontend (preserved on wip/frontend-pause-2026-11-18). Fresh build per docs/FRONTEND_MASTER.md. Conventions: docs/frontend/CONVENTIONS.md.
+Lead = Claude (commits/push, integration, review). Task files: C:/Users/Yashwanth/.claude-scratch-tasks/PHASE4-common.md + PHASE4-E2.md.
+
+## fe-e2 Phase 4 (feat/fe2-e, base 05ba88a, port 3350)
+Task: merge feat/fe2-b (64b916f) -> replace getOperationsSession/interim guards with requireRole -> un-fixme e2e admin-ops/ambulance/caretaker/lab/cms -> role-isolation browser test -> axe on each workspace -> tsc/lint/vitest/build/playwright -> commit.
+Progress:
+- [ ] merge fe2-b
