@@ -1,7 +1,7 @@
 {
   "shell": {
     "workspace": "मरीज़",
-    "nav": { "dashboard": "सारांश", "findDoctor": "डॉक्टर खोजें", "bookings": "बुकिंग", "profile": "प्रोफ़ाइल" }
+    "nav": { "dashboard": "सारांश", "findDoctor": "डॉक्टर खोजें", "bookings": "बुकिंग", "profile": "प्रोफ़ाइल", "healthProfile": "Health profile" }
   },
   "dashboard": {
     "title": "आपका सारांश",
@@ -86,6 +86,136 @@
       "denied": "आपको इन बुकिंग तक पहुँच नहीं है।",
       "unavailable": "बुकिंग अभी उपलब्ध नहीं हैं।",
       "gated": "बुकिंग अभी जुड़ी नहीं हैं।"
+    }
+  },
+  "bookings": {
+    "title": "Your bookings",
+    "description": "Every visit you have requested, with booking, payment and record status shown separately.",
+    "filter": {
+      "label": "Filter bookings",
+      "all": "All",
+      "upcoming": "Upcoming",
+      "past": "Past",
+      "cancelled": "Cancelled or declined",
+      "scope": "Filters sort the bookings on this page. Use Next page to see more."
+    },
+    "empty": {
+      "title": "No bookings yet",
+      "body": "When you request a visit, it appears here with its status.",
+      "action": "Find a doctor",
+      "filterTitle": "No bookings under {filter} on this page",
+      "filterBody": "Other bookings on this page are under a different filter.",
+      "showAll": "Show all on this page",
+      "endTitle": "No more bookings",
+      "endBody": "You have reached the end of your bookings."
+    },
+    "pager": {
+      "label": "Booking pages",
+      "next": "Next page",
+      "first": "Back to first page",
+      "end": "End of your bookings"
+    },
+    "state": {
+      "denied": "You do not have access to these bookings.",
+      "gated": "Bookings are not connected yet."
+    }
+  },
+  "booking": {
+    "title": "Booking details",
+    "crumbBookings": "Bookings",
+    "backToList": "Back to your bookings",
+    "asideLabel": "Fee and booking actions",
+    "state": {
+      "notFound": "This booking is not available. It may not exist, or it is not on your account.",
+      "gated": "Booking details are not connected yet."
+    },
+    "status": {
+      "title": "Status",
+      "body": "Booking, visit, payment and clinical record are tracked separately. One does not imply another."
+    },
+    "decision": {
+      "label": "Provider decision",
+      "readOnly": "Only the provider can accept or decline.",
+      "notSent": "Not sent yet",
+      "waiting": "Waiting for the provider",
+      "accepted": "Accepted by the provider",
+      "declined": "Declined by the provider",
+      "expired": "Expired without a reply",
+      "cancelled": "Booking cancelled",
+      "unknown": "Decision not available"
+    },
+    "visit": {
+      "title": "Visit",
+      "when": "Date and time",
+      "range": "{start} to {end}",
+      "timeZone": "India time (IST)",
+      "provider": "Provider",
+      "providerUnavailable": "Provider details are not available right now.",
+      "category": "Service",
+      "pin": "Service PIN code"
+    },
+    "timeline": {
+      "title": "Timeline",
+      "empty": "No updates yet.",
+      "unavailable": "The timeline is not available right now.",
+      "actor": {
+        "you": "You",
+        "provider": "Provider",
+        "assigned": "Assigned staff",
+        "system": "SureCure Visit"
+      }
+    },
+    "fee": {
+      "title": "Fee",
+      "snapshot": "Price fixed by the provider when you booked. It does not change later."
+    },
+    "payment": {
+      "unavailable": "Payment details are not available right now.",
+      "due": "Amount due",
+      "collected": "Collected",
+      "refunded": "Refunded",
+      "method": {
+        "pay_after": "Pay after the visit",
+        "online_test": "Online payment (test)"
+      },
+      "separate": "Payment is tracked separately from the booking."
+    },
+    "manage": {
+      "title": "Manage booking"
+    },
+    "cancel": {
+      "title": "Cancel",
+      "body": "You can cancel while the provider has not started the visit.",
+      "policyBody": "The provider has accepted. The cancellation policy you agreed to decides if you can still cancel.",
+      "serverDecides": "We send your request and the booking system checks it. It may say no if the booking has changed.",
+      "closed": "This booking can no longer be cancelled here.",
+      "trigger": "Cancel this booking",
+      "confirmTitle": "Cancel this booking?",
+      "confirmBody": "The provider will be told. To visit later you will need to book again.",
+      "ack": "I understand this cannot be undone.",
+      "confirm": "Yes, cancel booking",
+      "keep": "Keep booking",
+      "doneTitle": "Cancellation sent",
+      "doneBody": "The booking status will update shortly."
+    },
+    "reschedule": {
+      "title": "Reschedule",
+      "closed": "This booking can no longer be rescheduled.",
+      "gateTitle": "Rescheduling is not available yet",
+      "gateBody": "You can pick a time, but the request cannot be sent until rescheduling is connected. To change the time now, cancel and book again.",
+      "date": "Preferred date",
+      "dateHint": "India time (IST)",
+      "time": "Preferred time",
+      "timeHint": "Provider confirms the final time.",
+      "submit": "Request new time",
+      "sending": "Sending…",
+      "notSentTitle": "Not sent",
+      "notSentBody": "Rescheduling is not connected yet. Your booking has not changed.",
+      "error": {
+        "date": "Enter a valid date.",
+        "time": "Enter a valid time.",
+        "past": "Choose a time in the future."
+      }
     }
   }
 }

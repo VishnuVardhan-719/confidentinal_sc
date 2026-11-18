@@ -60,6 +60,7 @@ export default async function PatientDashboardPage({ params }: PageProps<"/[loca
     { href: "/doctors", label: tShell("nav.findDoctor"), icon: "stethoscope", primary: true },
     { href: "/patient/bookings", label: tShell("nav.bookings"), icon: "calendar", primary: true },
     { href: "/patient/profile", label: tShell("nav.profile"), icon: "user", primary: true },
+    { href: "/patient/health-profile", label: tShell("nav.healthProfile"), icon: "clipboard" },
   ];
 
   return (
