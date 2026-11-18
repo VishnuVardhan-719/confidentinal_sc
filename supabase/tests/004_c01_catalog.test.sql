@@ -47,6 +47,7 @@ do $$ declare t text; f record; begin
 end $$;
 select pg_temp.assert_true((select proargnames[9:22]=array['provider_reference','category','display_name','public_profile','service_id','service_title','duration_minutes','amount_paise','currency','unit','terms_version','pin_code','city','advisory_availability'] from pg_proc where oid='public.search_providers(text,text,text,integer,text,text,uuid,text)'::regprocedure),'exact public column allowlist');
 select public_reference as ref1 from public.providers where id='33000000-0000-4000-8000-000000000001' \gset
+select pg_temp.assert_true(:'ref1' ~ '^SCV-DOC-[0-9]{6,19}$' and (select public_reference ~ '^SCV-LAB-[0-9]{6,19}$' from public.providers where id='33000000-0000-4000-8000-000000000002'),'fixture providers get category-prefixed public references');
 
 set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"13000000-0000-4000-8000-000000000001","aal":"aal2"}',true);
@@ -93,6 +94,12 @@ select pg_temp.assert_true((select count(*)=0 from public.search_providers('doct
 select pg_temp.assert_true((select count(*)=0 from public.search_providers('lab','500001')),'other category not matched');
 select pg_temp.assert_true((select count(*)=0 from public.search_providers('doctor','500001','100')),'price filter exact');
 select pg_temp.assert_true((select count(*)=0 from public.search_providers('doctor','500001',null,20,'10000000000',:'ref1',:'service')),'cursor does not repeat final row');
+select pg_temp.assert_true((select count(*)=1 from public.search_providers('doctor','500001',null,20,'10000000000','SCV-DOC-000000',:'service')),'cursor before the final row continues to it');
+select pg_temp.assert_true((select count(*)=1 and bool_and(provider_reference=:'ref1') from public.get_public_provider(:'ref1','doctor','500001')),'detail resolves by public reference');
+select pg_temp.assert_true((select bool_and(to_jsonb(r)::text not like '%33000000-0000-4000-8000-000000000001%') from public.search_providers('doctor','500001') r),'public rows never carry the internal provider UUID');
+select pg_temp.expect_state('select * from public.get_public_provider(''33000000-0000-4000-8000-000000000001'',''doctor'',''500001'')','22023','internal provider UUID is not a public detail key');
+select pg_temp.expect_state(format('select * from public.search_providers(''doctor'',''500001'',null,20,''10000000000'',''33000000-0000-4000-8000-000000000001'',%L)',:'service'),'22023','UUID cursor rejected');
+select pg_temp.expect_state(format('select * from public.search_providers(''doctor'',''500001'',null,20,''10000000000'',''SCV-LAB'',%L)',:'service'),'22023','malformed reference cursor rejected');
 select pg_temp.expect_state('select * from public.search_providers(''doctor'',''50001%'')','22023','SQL wildcard PIN denied');
 select pg_temp.expect_state('select * from public.search_providers(''doctor'',''050001'')','22023','SQL leading zero PIN denied');
 select pg_temp.expect_state('select * from public.search_providers(''doctor'',''500001'',null,1000)','22023','SQL oversized page denied');
@@ -108,6 +115,14 @@ do $$ declare state text; begin
  end loop;
 end $$;
 update public.providers set status='active',verification_state='approved' where id='33000000-0000-4000-8000-000000000001';
+-- 20261117000640: public rows show the allowlisted snapshot frozen at approval.
+select pg_temp.assert_true((select count(*)=1 and bool_and(provider_reference=:'ref1' and display_name='Synthetic C01 provider'
+ and public_profile='{"category":"doctor","display_name":"Synthetic C01 provider"}'::jsonb) from public.search_providers('doctor','500001')),'search returns reference and exact allowlisted snapshot');
+update public.provider_profiles set display_name='Synthetic edited after approval' where provider_id='33000000-0000-4000-8000-000000000001';
+select pg_temp.assert_true((select bool_and(display_name='Synthetic C01 provider' and public_profile->>'display_name'='Synthetic C01 provider') from public.search_providers('doctor','500001')),'profile edits after approval never reach the public projection');
+update public.providers set published_profile='{"display_name":"Forged"}' where id='33000000-0000-4000-8000-000000000001';
+select pg_temp.assert_true((select bool_and(display_name='Synthetic C01 provider') from public.search_providers('doctor','500001')),'direct snapshot writes are overridden');
+update public.provider_profiles set display_name='Synthetic C01 provider' where provider_id='33000000-0000-4000-8000-000000000001';
 update public.provider_documents set expires_at=now() where id='53000000-0000-4000-8000-000000000001';
 select pg_temp.assert_true((select count(*)=0 from public.search_providers('doctor','500001')),'credential expires exactly at UTC boundary');
 select pg_temp.assert_true((select count(*)=0 from public.get_public_provider(:'ref1','doctor','500001')),'expired detail identical to unknown');
@@ -117,6 +132,11 @@ select pg_temp.assert_true((select count(*)=0 from public.search_providers('doct
 update public.profiles set status='active' where id='13000000-0000-4000-8000-000000000001';
 update public.provider_service_areas set valid_from=now()-interval '1 day',valid_to=now() where id=:'area';
 select pg_temp.assert_true((select count(*)=0 from public.search_providers('doctor','500001')),'coverage expires at boundary');
+-- 20261117000670 finding 3: coverage uses statement time like prices. now() is fixed at
+-- transaction start, so a window closing at this statement's time is still open by now().
+update public.provider_service_areas set valid_to=statement_timestamp() where id=:'area';
+select pg_temp.assert_true((select valid_to>now() from public.provider_service_areas where id=:'area'),'window closes after transaction start');
+select pg_temp.assert_true((select count(*)=0 from public.search_providers('doctor','500001')),'coverage window uses statement time');
 update public.provider_service_areas set valid_to=now()+interval '1 month' where id=:'area';
 select pg_temp.expect_state(format('update public.provider_service_areas set valid_to=valid_from+interval ''12 months 1 second'' where id=%L',:'area'),'23514','coverage horizon enforced by DB CHECK');
 do $$ declare state text; begin

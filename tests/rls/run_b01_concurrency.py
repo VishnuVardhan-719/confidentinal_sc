@@ -95,7 +95,7 @@ def race(first_actor, first, second_actor, second, expected_state):
 
 
 def concurrency():
-    suite = (ROOT / "tests/rls/b01_booking.sql").read_text()
+    suite = base.suite_text("005_b01_booking.test.sql")
     fixtures = suite.split("-- B01 FIXTURES START:", 1)[1].split("\n", 1)[1].split("-- B01 FIXTURES END", 1)[0]
     sql("begin;" + fixtures + "commit;")
     a, b = create_request(5), create_request(5)
@@ -136,9 +136,9 @@ def main():
         reset += "do $$ declare p record;begin for p in select schemaname,tablename,policyname from pg_policies where schemaname='storage' and tablename in ('objects','buckets') loop execute format('drop policy %I on %I.%I',p.policyname,p.schemaname,p.tablename);end loop;end $$;"
         sql(reset, user="supabase_admin")
         for path in sorted((ROOT / "supabase/migrations").glob("*.sql")):
-            if "005" in path.name and "--red" in sys.argv:
+            if path.name.startswith("202611170005_") and "--red" in sys.argv:
                 try:
-                    sql((ROOT / "tests/rls/b01_booking.sql").read_text())
+                    sql(base.suite_text("005_b01_booking.test.sql"))
                 except RuntimeError as error:
                     if "B01 schema exists" not in str(error):
                         raise
@@ -147,13 +147,13 @@ def main():
                 raise RuntimeError("B01 suite unexpectedly passed without 005")
             sql(path.read_text())
             print("PASS: fresh migration " + path.name, flush=True)
-        for name in ("i01_identity.sql", "i01_followups.sql", "i02_providers.sql", "c01_catalog.sql", "b01_booking.sql"):
+        for name in ("001_i01_identity.test.sql", "002_i01_followups.test.sql", "003_i02_providers.test.sql", "004_c01_catalog.test.sql", "005_b01_booking.test.sql"):
             try:
-                sql((ROOT / "tests/rls" / name).read_text())
+                sql(base.suite_text(name))
             except RuntimeError as error:
                 # c01_catalog.sql fixtures predate I01 migration 003 (invited_membership_expiry);
                 # C01 is corrected in a sibling worktree. Report, never hide.
-                if name != "c01_catalog.sql" or "invited_membership_expiry" not in str(error):
+                if name != "004_c01_catalog.test.sql" or "invited_membership_expiry" not in str(error):
                     raise
                 print("KNOWN PRE-EXISTING FAIL (C01 suite vs I01 003): " + name, flush=True)
                 continue

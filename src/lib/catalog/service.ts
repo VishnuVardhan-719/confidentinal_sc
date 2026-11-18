@@ -19,8 +19,16 @@ export async function catalogCommand(db: Pick<Client, "rpc">, name: Command, arg
 }
 // Parse with strip semantics: even an accidental upstream column addition cannot
 // expand the HTTP public projection. Paise remains a decimal string throughout.
+// public_profile mirrors the providers_private.build_public_snapshot allowlist; any
+// other key (for example a private registration or phone field) is dropped here too.
+const labels = z.array(z.string()).max(10).optional();
+const publicProfile = z.object({ category: categorySchema, display_name: z.string(), description: z.string().optional(),
+  specialty: z.string().optional(), qualification: z.string().optional(), languages: labels,
+  years_experience: z.number().int().min(0).max(70).optional(), accreditation_label: z.string().optional(),
+  home_collection: z.boolean().optional(), fleet_types: labels, scheduled_only: z.literal(true).optional(), skills: labels,
+});
 const publicRow = z.object({ provider_reference: providerReferenceSchema, category: categorySchema, display_name: z.string(),
-  public_profile: z.record(z.string(), z.unknown()),
+  public_profile: publicProfile,
   service_id: z.uuid(), service_title: z.string(), duration_minutes: z.number().int().positive(),
   amount_paise: paiseSchema, currency: z.literal("INR"), unit: z.enum(["visit", "test", "trip", "hour", "day"]),
   terms_version: z.string(), pin_code: pinSchema, city: z.string(), advisory_availability: z.null(),

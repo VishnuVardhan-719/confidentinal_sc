@@ -19,7 +19,7 @@ const get = (query: string) => new Request(`http://localhost/api/catalog?${query
 const post = (body: unknown, key: string | null = other) => new Request("http://localhost/api/provider/services", {
   method: "POST", body: JSON.stringify(body), headers: key ? { "Idempotency-Key": key } : {},
 });
-const row = { provider_reference: ref, public_profile: { display_name: "Synthetic" }, category: "doctor", display_name: "Synthetic", service_id: other,
+const row = { provider_reference: ref, public_profile: { category: "doctor", display_name: "Synthetic", languages: ["English"] }, category: "doctor", display_name: "Synthetic", service_id: other,
   service_title: "Synthetic visit", duration_minutes: 30, amount_paise: "10000000000", currency: "INR", unit: "visit",
   terms_version: "synthetic-v1", pin_code: "500001", city: "Synthetic", advisory_availability: null };
 beforeEach(() => { vi.resetAllMocks(); mock.rpc.mockResolvedValue({ data: [], error: null }); mock.session.mockResolvedValue({ db: { rpc: mock.rpc } }); });
@@ -30,15 +30,31 @@ it("rejects invalid, duplicate, unknown and missing search parameters before RPC
   expect(mock.rpc).not.toHaveBeenCalled();
 });
 it("projects only public fields, preserves paise and emits a stable cursor", async () => {
-  mock.rpc.mockResolvedValue({ data: [{ ...row, owner_profile_id: id, storage_path: "private", version: 4 }], error: null });
+  mock.rpc.mockResolvedValue({ data: [{ ...row, provider_id: id, owner_profile_id: id, storage_path: "private", version: 4,
+    public_profile: { ...row.public_profile, registration_number: "SYN-REG-0001", private_phone: "+919000000001" } }], error: null });
   const result = await search(get("category=doctor&pin=500001&limit=1"));
   expect(result.status).toBe(200);
-  expect(await result.json()).toEqual({ results: [row], nextCursor: `${row.amount_paise},${ref},${other}` });
+  const body = await result.json();
+  expect(body).toEqual({ results: [row], nextCursor: `${row.amount_paise},${ref},${other}` });
+  expect(JSON.stringify(body)).not.toContain(id);
   expect(result.headers.get("cache-control")).toBe("private, no-store");
 });
 it("passes cursor tuple and price filter as parameters", async () => {
   await search(get(`category=doctor&pin=500001&priceMax=100&cursor=1,${ref},${other}`));
   expect(mock.rpc).toHaveBeenCalledWith("search_providers", expect.objectContaining({ p_after_amount: "1", p_after_provider: ref, p_after_service: other, p_price_max: "100" }));
+});
+it("rejects internal provider UUIDs in the public cursor and detail path before RPC", async () => {
+  expect((await search(get(`category=doctor&pin=500001&cursor=1,${id},${other}`))).status).toBe(422);
+  expect((await search(get(`category=doctor&pin=500001&cursor=1,scv-doc-100001,${other}`))).status).toBe(422);
+  expect((await detail(get("category=doctor&pin=500001"), context)).status).toBe(422);
+  expect(mock.rpc).not.toHaveBeenCalled();
+});
+it("looks up detail by public reference", async () => {
+  mock.rpc.mockResolvedValue({ data: [row], error: null });
+  const result = await detail(get("category=doctor&pin=500001"), detailContext);
+  expect(result.status).toBe(200);
+  expect(await result.json()).toEqual({ results: [row] });
+  expect(mock.rpc).toHaveBeenCalledWith("get_public_provider", { p_provider_reference: ref, p_category: "doctor", p_pin: "500001" });
 });
 it("returns identical not-found responses for invisible and unknown providers", async () => {
   const a = await detail(get("category=doctor&pin=500001"), detailContext);

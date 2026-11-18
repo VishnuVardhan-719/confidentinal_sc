@@ -1,5 +1,55 @@
 # I01 identity and follow-up verification handoff
 
+## I02 hardening port onto the friend stack (integ/friend-backend, 18 November 2026)
+
+Migration numbering. The five original files keep their 12-digit versions
+(`202611170001` .. `202611170005`). Everything after them uses 14-digit versions:
+I02 hardening is `20261117000600` .. `20261117000670` (anonymous rejection, audit
+hardening, provider reference, bucket limit, category profiles, expired state,
+document read and suspend), plus `20261117000670` for the CodeRabbit triage fixes
+(hourly pg_cron sweep `i02h-expire-due-providers`, advisory-locked sweep, keyed
+replay returns the current version and refuses replaced reservations, approval
+snapshot skips expired evidence, coverage window on statement time); Codex's Q06/B01 work starts at `20261117001000`. These
+are forward migrations only; no earlier file is edited.
+
+Ordering note (12-digit vs 14-digit). Mixed widths are safe here only because every
+14-digit version starts with a 12-digit prefix greater than `202611170005`. With that
+rule, filename (ordinal) sort, version-string sort and numeric sort all give the same
+order: the five 12-digit files first, then `..000600` onward. Checked on this tree:
+`sorted(names) == sorted(names, key=int(version))`. Never add a 14-digit version whose
+first 12 digits are `<= 202611170005` (for example `20261117000100`): numerically it
+sorts after `..0005`, but by filename it sorts before `202611170001_` (`0` < `_`), which is
+the ambiguity described in `docs/LINEAGE_COMPARISON.md` s7 (merge risk 1). New
+12-digit versions must not be added either.
+
+SQL suites moved from `tests/rls/*.sql` to `supabase/tests/00N_*.test.sql` so
+`supabase test db` runs them (001 identity, 002 identity follow-ups, 003 providers plus
+I02 hardening, 004 catalog, 005 booking). Each suite includes `_tap_helpers.inc` with
+`\ir` and prints one TAP result; any failed assertion aborts the file. Run against the
+local stack: `npx supabase test db supabase/tests/001_i01_identity.test.sql ...`.
+`tests/rls/run_i01_followups.py` and `run_b01_concurrency.py` read the new paths and
+inline the include, because they pipe the suite to psql on stdin.
+
+Hardening coverage in 003/004: anonymous Auth users rejected with and without the JWT
+flag; service_role has no write/trigger/references on the audit ledgers; only aal2
+global `security:audit` reads audit rows; references are category-prefixed, unique,
+immutable, ignore caller input and keep every digit above 999999; category details
+and private details are allowlisted and the public snapshot never carries private
+values; the snapshot is frozen at approval and direct writes are overridden; keyed
+document reservations conflict on any changed argument; `provider:verify`,
+`provider:document_read` and `provider:suspend` are separate; file reads need a live
+60 s ticket, are audited, and stop when the case leaves review; the service-role
+expiry job moves approved providers with expired verified evidence to `expired`
+with a NULL-actor event and audit row, is idempotent, and lets the owner edit again.
+
+Public contract change: `GET /api/catalog` rows and cursor carry `provider_reference`
+instead of the provider UUID, and `GET /api/catalog/:id` takes the reference.
+Known gap, not fixed here because it needs a B01 function change: `GET
+/api/availability` (`list_slots(p_provider_id uuid, ...)`) still requires the provider
+UUID, which public search no longer returns. A patient can book by `serviceId`, but
+cannot list slots from search results until B01 accepts the reference or derives the
+provider from the service.
+
 ## C01 Kiro review fixes — current handoff, 17 November 2026
 
 Uncommitted changes to `202611170004_c01_catalog.sql` are authorized in place.
@@ -648,7 +698,7 @@ not returned. Creation routes require a UUID `Idempotency-Key` header.
 | Route | Proposed request/result |
 |---|---|
 | GET `/api/catalog` | Required `category`, exact `pin`; optional `priceMax` paise string, `limit` 1–50 (default 20), `cursor`; returns `{results,nextCursor}` |
-| GET `/api/catalog/:id` | Required `category`, `pin`; returns up to 50 eligible service offers or 404 |
+| GET `/api/catalog/:id` | `:id` is the public provider reference `SCV-(DOC\|LAB\|AMB\|CARE)-NNNNNN` (since `20261117000640`; a UUID returns 422). Required `category`, `pin`; returns up to 50 eligible service offers or 404 |
 | GET `/api/provider/services` | Required `providerId`; authorized private services/price history/coverage, first 100 services and 100 areas, and current provider version |
 | POST `/api/provider/services` | `providerId,catalogTypeId,title,description,durationMinutes,status:draft,expectedVersion:0`; creates/replays a draft service |
 | PATCH `/api/provider/services/:id` | Same service fields and positive `expectedVersion`; catalog type immutable; publishing requires a current price |
@@ -658,12 +708,15 @@ not returned. Creation routes require a UUID `Idempotency-Key` header.
 | GET `/api/catalog/admin/coverage` | MFA coverage reviewer; bounded `limit` and UUID `cursor`; scoped queue with limited provider summary |
 | POST `/api/catalog/admin/coverage/:id/review` | `decision` approved/rejected/revoked, `reason`, area `expectedVersion`; approval also requires future finite `validUntil` |
 
-Public row allowlist: provider ID, category, public display name, service ID/title,
+Public row allowlist (as amended by `20261117000640`): public provider reference
+(never the provider UUID), category, display name, `public_profile` (the allowlisted
+snapshot frozen at approval), service ID/title,
 duration, amount as a decimal string, INR, unit, terms version, matched PIN, city,
 nullable advisory availability. No owner/org IDs, contacts, addresses, documents,
 reviewer identity/notes, storage paths or internal workflow versions are public.
-The HTTP layer also strips unexpected upstream public fields. Cursor format is
-`amount_paise,provider_uuid,service_uuid`; it conveys only public sort keys and
+The HTTP layer also strips unexpected upstream public fields, including unknown
+`public_profile` keys. Cursor format is
+`amount_paise,provider_reference,service_uuid`; it conveys only public sort keys and
 is validated, never used as authority. It represents continuation, not a snapshot:
 offers can change between pages. A full final page can yield an empty next page.
 

@@ -38,6 +38,13 @@ def sql(statement, db=TARGET, user="postgres"):
     return call(psql_args(db,user), statement)
 
 
+def suite_text(name):
+    """Read a supabase/tests suite with its \\ir includes inlined.
+    psql reads the script from stdin inside the container, where \\ir has no directory."""
+    path = ROOT / "supabase/tests" / name
+    return re.sub(r"^\\ir\s+(\S+)\s*$", lambda m: (path.parent / m.group(1)).read_text(), path.read_text(), flags=re.M)
+
+
 def assert_local_target():
     allowed = {"default", "desktop-linux"}
     def local_endpoint(value):
@@ -193,9 +200,9 @@ def main():
             sql(reset.replace("@D@",chr(36)*2),user="supabase_admin")
             sql((ROOT/"supabase/migrations/202611170001_i01_identity.sql").read_text())
             print("PASS: isolated Supabase infrastructure plus this branch's migration 001", flush=True)
-            sql((ROOT/"tests/rls/i01_identity.sql").read_text())
+            sql(suite_text("001_i01_identity.test.sql"))
             print("PASS: existing I01 SQL authorization suite before migration 003", flush=True)
-        suite = (ROOT/"tests/rls/i01_followups.sql").read_text()
+        suite = suite_text("002_i01_followups.test.sql")
         if "--red" in sys.argv:
             try:
                 sql(suite)
@@ -208,7 +215,7 @@ def main():
         sql((ROOT/"supabase/migrations/202611170003_i01_followups.sql").read_text())
         print("PASS: migration 003 applied on isolated database", flush=True)
         if not current:
-            sql((ROOT/"tests/rls/i01_identity.sql").read_text())
+            sql(suite_text("001_i01_identity.test.sql"))
             print("PASS: existing I01 SQL authorization suite after migration 003", flush=True)
         sql(suite)
         print("PASS: follow-up pagination/expiry/cap/ACL SQL suite", flush=True)
