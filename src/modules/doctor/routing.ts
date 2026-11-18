@@ -5,8 +5,9 @@ import type { ApiErrorCode, ApiResult } from "@/lib/api/result";
  * guard decisions. ADVISORY ONLY: the server and DB enforce authorization independently.
  *
  * TEMPORARY: once src/modules/auth (requireRole, loginPath, safeRedirect) is merged into this
- * branch the guard adapter in the doctor layout should call it; this file keeps the decision
- * logic pure so it can be tested without the auth module.
+ * branch the doctor layout must call requireRole and GuardResult/decideDoctorAccess/loginRedirect
+ * are deleted (XREVIEW-b D4). Until then the decision mirrors requireRole: login with safe next
+ * (+ reason=session_expired), onboarding redirect, restricted allow-list, denied page.
  */
 export const DOCTOR_LOCALES = ["en", "te", "hi"] as const;
 export type DoctorLocale = (typeof DOCTOR_LOCALES)[number];
@@ -74,7 +75,9 @@ export function toPageState<T>(result: ApiResult<T>, isEmpty?: (data: T) => bool
 // ---- Guard decision -------------------------------------------------------------------------
 export type GuardResult =
   | { status: "ok" }
-  | { status: "unauthenticated" }
+  | { status: "unauthenticated"; sessionExpired?: boolean }
+  /** Doctor onboarding draft/submitted/changes-requested: setup pages only (section 8). */
+  | { status: "onboarding_required" }
   /** Signed in but not a doctor (or no active doctor workspace). */
   | { status: "forbidden" }
   /** Doctor workspace suspended/restricted: only dashboard/profile/settings/support. */
@@ -82,19 +85,30 @@ export type GuardResult =
 
 export type GuardDecision = { action: "render" } | { action: "redirect"; to: string } | { action: "denied"; reason: "forbidden" | "restricted" };
 
-const RESTRICTED_ALLOWED = new Set(["dashboard", "profile", "settings", "support"]);
+/** Mirrors fe2-b RESTRICTED_SEGMENTS (src/modules/auth/routes.ts) so the lists do not drift. */
+const RESTRICTED_ALLOWED = new Set(["dashboard", "profile", "settings", "support", "notifications"]);
+/** Setup pages an incomplete doctor workspace may open (fe2-b SETUP_SEGMENTS minus onboarding itself). */
+const SETUP_ALLOWED = new Set(["dashboard", "onboarding", "profile", "settings", "support", "notifications"]);
 const SAFE_PATH = /^\/(en|te|hi)\/doctor(\/[A-Za-z0-9_-]+)*$/;
 
 /** `next` is kept only if it is a plain internal doctor path (no query, no fragment, no PHI). */
-export function loginRedirect(locale: DoctorLocale, currentPath: string): string {
+export function loginRedirect(locale: DoctorLocale, currentPath: string, sessionExpired = false): string {
   const next = SAFE_PATH.test(currentPath) ? currentPath : doctorPaths(locale).dashboard;
-  return `/${locale}/login?next=${encodeURIComponent(next)}`;
+  return `/${locale}/login?next=${encodeURIComponent(next)}${sessionExpired ? "&reason=session_expired" : ""}`;
+}
+
+/** Section after /{locale}/doctor/, or null when the path is not a plain doctor path (fails closed). */
+function doctorSection(currentPath: string): string | null {
+  return SAFE_PATH.test(currentPath) ? (currentPath.split("/")[3] ?? "dashboard") : null;
 }
 
 export function decideDoctorAccess(guard: GuardResult, locale: DoctorLocale, currentPath: string): GuardDecision {
   if (guard.status === "ok") return { action: "render" };
-  if (guard.status === "unauthenticated") return { action: "redirect", to: loginRedirect(locale, currentPath) };
+  if (guard.status === "unauthenticated") return { action: "redirect", to: loginRedirect(locale, currentPath, guard.sessionExpired) };
   if (guard.status === "forbidden") return { action: "denied", reason: "forbidden" };
-  const section = currentPath.split("/")[3] ?? "";
-  return RESTRICTED_ALLOWED.has(section) ? { action: "render" } : { action: "denied", reason: "restricted" };
+  const section = doctorSection(currentPath);
+  if (guard.status === "onboarding_required") {
+    return section !== null && SETUP_ALLOWED.has(section) ? { action: "render" } : { action: "redirect", to: `/${locale}/doctor/onboarding` };
+  }
+  return section !== null && RESTRICTED_ALLOWED.has(section) ? { action: "render" } : { action: "denied", reason: "restricted" };
 }

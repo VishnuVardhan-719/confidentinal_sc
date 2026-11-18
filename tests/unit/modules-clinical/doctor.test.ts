@@ -161,7 +161,7 @@ describe("fixture consultation IDs (CR: tail collision)", () => {
     const b = "11111111-0000-4000-8000-00000000aaaa";
     const src = world.bookings.get(I.bookingToday)!;
     for (const id of [a, b]) world.bookings.set(id, { ...src, bookingId: id, state: "confirmed", phase: "arrival_verified", consultationId: null, version: 5 });
-    const api = createDoctorFixtureApi({ world, now: () => T0 });
+    const api = createDoctorFixtureApi({ world, now: () => T0, actor: { role: "doctor", doctorId: I.doctorAssigned } });
     expect((await api.startConsultation(a, { expectedVersion: 5 })).ok).toBe(true);
     expect((await api.startConsultation(b, { expectedVersion: 5 })).ok).toBe(true);
     const ca = world.bookings.get(a)!.consultationId;

@@ -39,7 +39,8 @@ export const amendmentRecordSchema = z.strictObject({
   version: z.number().int().positive(),
   previousVersion: z.number().int().positive(),
   reason: z.enum(AMENDMENT_REASONS),
-  reasonText: z.string(),
+  /** Same bounds as amendmentRequestSchema.reasonText (schemas.ts). */
+  reasonText: z.string().trim().min(10).max(2000),
   amendedAt: isoTime,
   amendedBy: signerSchema,
 });

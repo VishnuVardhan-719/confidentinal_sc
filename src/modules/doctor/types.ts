@@ -25,6 +25,15 @@ export type BookingState = (typeof BOOKING_STATES)[number];
 export const VISIT_PHASES = ["scheduled", "en_route", "arrived", "arrival_verified", "service_started", "service_completed"] as const;
 export type VisitPhase = (typeof VISIT_PHASES)[number];
 
+/**
+ * A status value the client does not recognise (newer server). Rendered as the neutral
+ * "unknown" badge, never treated as active/terminal, and offers no actions.
+ */
+export type UnknownStatus = "unknown";
+/** Parse a known enum value, mapping anything else to "unknown" instead of rejecting the DTO. */
+const tolerantEnum = <const T extends readonly string[]>(values: T) =>
+  z.string().transform((v): T[number] | UnknownStatus => ((values as readonly string[]).includes(v) ? (v as T[number]) : "unknown"));
+
 /** Payment state is a separate badge; canonical map belongs to the payments module. */
 export type PaymentStateRef = "NOT_INITIATED" | "DUE" | "PROCESSING" | "PAID" | "PARTIALLY_PAID" | "DISPUTED" | "REFUNDED";
 
@@ -37,7 +46,7 @@ export type DoctorRequestView = {
   bookingId: string;
   /** Server-issued reference if any; never derived client-side. */
   publicReference: string | null;
-  state: BookingState;
+  state: BookingState | UnknownStatus;
   serviceName: string;
   scheduledStartAt: string;
   /** Coarse area only (locality + PIN). */
@@ -54,8 +63,8 @@ export type AssignedVisitView = {
   kind: "assigned";
   bookingId: string;
   publicReference: string;
-  state: BookingState;
-  phase: VisitPhase;
+  state: BookingState | UnknownStatus;
+  phase: VisitPhase | UnknownStatus;
   serviceName: string;
   scheduledStartAt: string;
   patient: { displayName: string; ageYears: number | null };
@@ -71,6 +80,43 @@ export type AssignedVisitView = {
 };
 
 export type DoctorVisitLists = { today: AssignedVisitView[]; upcoming: AssignedVisitView[] };
+
+// ---- Proposed response schemas (used by the http adapter once the doctor-view contract lands) --
+const isoTime = z.iso.datetime({ offset: true });
+const paise = z.number().int().nonnegative().max(100_000_000);
+const PAYMENT_STATE_REFS = ["NOT_INITIATED", "DUE", "PROCESSING", "PAID", "PARTIALLY_PAID", "DISPUTED", "REFUNDED"] as const;
+
+export const doctorRequestViewSchema: z.ZodType<DoctorRequestView> = z.strictObject({
+  kind: z.literal("request"),
+  bookingId: z.string().min(1).max(64),
+  publicReference: z.string().min(1).max(64).nullable(),
+  state: tolerantEnum(BOOKING_STATES),
+  serviceName: z.string().min(1).max(200),
+  scheduledStartAt: isoTime,
+  area: z.strictObject({ locality: z.string().min(1).max(120), pin: z.string().regex(/^[1-9][0-9]{5}$/) }),
+  quotedAmountPaise: paise,
+  respondBy: isoTime.nullable(),
+  version: z.number().int().positive(),
+});
+
+export const assignedVisitViewSchema: z.ZodType<AssignedVisitView> = z.strictObject({
+  kind: z.literal("assigned"),
+  bookingId: z.string().min(1).max(64),
+  publicReference: z.string().min(1).max(64),
+  state: tolerantEnum(BOOKING_STATES),
+  phase: tolerantEnum(VISIT_PHASES),
+  serviceName: z.string().min(1).max(200),
+  scheduledStartAt: isoTime,
+  patient: z.strictObject({ displayName: z.string().min(1).max(120), ageYears: z.number().int().nonnegative().max(130).nullable() }),
+  contactPhone: z.string().regex(/^\+91[0-9]{10}$/).nullable(),
+  address: z.strictObject({ line1: z.string().min(1).max(240), locality: z.string().min(1).max(120), pin: z.string().regex(/^[1-9][0-9]{5}$/) }),
+  amountPaise: paise,
+  /** Payment state is display-only here; unknown values fail the DTO (payments module owns the map). */
+  paymentState: z.enum(PAYMENT_STATE_REFS),
+  hasKnownAllergies: z.boolean().nullable(),
+  consultationId: z.string().min(1).max(64).nullable(),
+  version: z.number().int().positive(),
+});
 
 // ---- Arrival OTP challenge -----------------------------------------------------------------
 

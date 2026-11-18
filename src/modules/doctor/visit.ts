@@ -8,7 +8,8 @@ export type VisitAction = "en_route" | "arrive" | "verify_arrival" | "start_cons
  */
 export function allowedVisitActions(v: Pick<AssignedVisitView, "state" | "phase" | "consultationId">): VisitAction[] {
   if (v.state === "confirmed") {
-    const byPhase: Partial<Record<VisitPhase, VisitAction[]>> = {
+    // Keyed by string so an unknown phase simply has no actions.
+    const byPhase: Partial<Record<VisitPhase | (string & {}), VisitAction[]>> = {
       scheduled: ["en_route"],
       en_route: ["arrive"],
       arrived: ["verify_arrival"],

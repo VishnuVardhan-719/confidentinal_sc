@@ -45,7 +45,7 @@ describe("DC10 collection state independent of record finalization", () => {
     const { world, now } = worldWithClock();
     const col = await asDoctor(world, now).getCollection(I.bookingActive);
     expect(col.ok && col.data).toMatchObject({ status: "not_recorded", paymentState: "DUE" });
-    const clinical = createClinicalFixtureApi({ world, now });
+    const clinical = createClinicalFixtureApi({ world, now, actor: { role: "doctor", doctorId: I.doctorAssigned } });
     const saved = await clinical.saveDraft(I.consultationActive, { expectedVersion: 1, content });
     expect(saved.ok).toBe(true);
     expect((await clinical.finalize(I.consultationActive, { expectedVersion: 2, acknowledged: true }, "f1")).ok).toBe(true);
@@ -140,7 +140,7 @@ describe("DC13 optional photo consent and private upload", () => {
     const api = asDoctor(world, now);
     expect((await api.recordPhotoConsent(I.consultationActive, { decision: "decline" })).ok).toBe(true);
     expect(await api.registerPhotoUpload(I.consultationActive, { contentType: "image/jpeg", sizeBytes: 1000 })).toEqual({ ok: false, error: { code: "forbidden" } });
-    const clinical = createClinicalFixtureApi({ world, now });
+    const clinical = createClinicalFixtureApi({ world, now, actor: { role: "doctor", doctorId: I.doctorAssigned } });
     await clinical.saveDraft(I.consultationActive, { expectedVersion: 1, content: { vitals: {}, assessment: { chiefComplaint: "S", assessmentType: "provisional" }, prescription: { prescription: { mode: "none" } }, care: { followUp: { mode: "not_required" } } } });
     expect((await clinical.finalize(I.consultationActive, { expectedVersion: 2, acknowledged: true }, "f")).ok).toBe(true);
   });
@@ -173,7 +173,7 @@ describe("DC14 signed-version PDF link", () => {
     expect(l.ok && l.data.version).toBe(1);
     expect(await patient.requestMyRecordPdfLink(I.consultationActive)).toEqual({ ok: false, error: { code: "not_found" } });
     expect(await asPatient(world, now, I.patientB).requestMyRecordPdfLink(I.consultationPastFinal)).toEqual({ ok: false, error: { code: "forbidden" } });
-    expect(await createClinicalFixtureApi({ world, now }).requestPdfLink(I.consultationActive)).toEqual({ ok: false, error: { code: "not_found" } });
+    expect(await createClinicalFixtureApi({ world, now, actor: { role: "doctor", doctorId: I.doctorAssigned } }).requestPdfLink(I.consultationActive)).toEqual({ ok: false, error: { code: "not_found" } });
   });
 
   it("expired link moves to a recovery state and a new link can be requested", async () => {
@@ -194,7 +194,7 @@ describe("doctor fixture + records share one synthetic world", () => {
   it("proof becomes issuable after real arrival verification through the doctor API", async () => {
     const { world, now } = worldWithClock();
     const codes: string[] = [];
-    const doctor = createDoctorFixtureApi({ world, now, generateCode: () => "424242", deliverToPatient: (_b, c) => codes.push(c) });
+    const doctor = createDoctorFixtureApi({ world, now, actor: { role: "doctor", doctorId: I.doctorAssigned }, generateCode: () => "424242", deliverToPatient: (_b, c) => codes.push(c) });
     const v = await doctor.getVisit(I.bookingToday);
     if (!v.ok) throw new Error("visit");
     const e = await doctor.enRoute(I.bookingToday, { expectedVersion: v.data.version });

@@ -12,6 +12,8 @@ import { describeDraftStatus } from "@/modules/clinical/status";
 const PROD_FIXTURE = { FRONTEND_ADAPTER: "fixture", APP_ENV: "production", FEATURE_CLINICAL: "true" };
 const FIXTURE_ON = { FRONTEND_ADAPTER: "fixture", FEATURE_CLINICAL: "true" };
 const ID = "00000000-0000-4000-8000-000000000201";
+const TOKEN = { getAccessToken: () => "test-token" };
+const DOCTOR_CTX = { fixtureActor: { role: "doctor" as const, doctorId: "00000000-0000-4000-8000-0000000000d1" } };
 
 const jsonResponse = (status: number, body: unknown, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...headers } });
@@ -34,7 +36,7 @@ describe("clinical gate", () => {
   });
 
   it("records: clinical methods gated, pay-after collection is not", async () => {
-    const api = getRecordsApi({ FRONTEND_ADAPTER: "fixture" }, "doctor");
+    const api = getRecordsApi({ FRONTEND_ADAPTER: "fixture" }, DOCTOR_CTX);
     expect(await api.listMyRecords()).toEqual({ ok: false, error: { code: "gated" } });
     expect(await api.verifyProof("a".repeat(32))).toEqual({ ok: false, error: { code: "gated" } });
     expect(await api.registerPhotoUpload(ID, { contentType: "image/png", sizeBytes: 1 })).toEqual({ ok: false, error: { code: "gated" } });
@@ -43,8 +45,10 @@ describe("clinical gate", () => {
   });
 
   it("enabled fixture getter works end to end", async () => {
-    const r = await getClinicalApi(FIXTURE_ON).getDraft(ID);
+    const r = await getClinicalApi(FIXTURE_ON, DOCTOR_CTX).getDraft(ID);
     expect(r.ok).toBe(true);
+    // No fixture session mapped => deny everything (no default doctor/patient).
+    expect(await getClinicalApi(FIXTURE_ON).getDraft(ID)).toEqual({ ok: false, error: { code: "forbidden" } });
   });
 });
 
@@ -67,7 +71,7 @@ describe("http adapters", () => {
     const signer = { clinicianId: "d", displayName: "Dr. Fixture", registrationLabel: null };
     const v = (version: number) => ({ version, signedAt: "2026-11-20T04:30:00.000Z", signedBy: signer, content });
     const base = { consultationId: ID, bookingId: ID, bookingReference: "SYN-BKG-1", status: "final", amendments: [] };
-    const api = (body: unknown) => createClinicalHttpApi({ fetchImpl: async () => jsonResponse(200, body) });
+    const api = (body: unknown) => createClinicalHttpApi({ ...TOKEN, fetchImpl: async () => jsonResponse(200, body) });
     expect(await api({ ...base, currentVersion: 2, versions: [v(2), v(1)] }).getConsultation(ID)).toEqual({ ok: false, error: { code: "unavailable" } });
     expect(await api({ ...base, currentVersion: 3, versions: [v(1), v(2)] }).getConsultation(ID)).toEqual({ ok: false, error: { code: "unavailable" } });
     const good = await api({ ...base, currentVersion: 2, versions: [v(1), v(2)] }).getConsultation(ID);
@@ -75,7 +79,7 @@ describe("http adapters", () => {
   });
   it("doctor accept posts the B01 body and parses { version }", async () => {
     const fetchImpl = vi.fn(async () => jsonResponse(200, { version: 4 }));
-    const api = createDoctorHttpApi({ fetchImpl });
+    const api = createDoctorHttpApi({ ...TOKEN, fetchImpl });
     const r = await api.accept(ID, { expectedVersion: 3, resourceIds: ["00000000-0000-4000-8000-0000000000e1"] });
     expect(r).toEqual({ ok: true, data: { version: 4 } });
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
@@ -86,34 +90,34 @@ describe("http adapters", () => {
   });
 
   it("maps HTTP errors to stable codes and never trusts unexpected bodies", async () => {
-    const conflict = createDoctorHttpApi({ fetchImpl: async () => jsonResponse(409, { error: { code: "conflict" } }) });
+    const conflict = createDoctorHttpApi({ ...TOKEN, fetchImpl: async () => jsonResponse(409, { error: { code: "conflict" } }) });
     expect(await conflict.enRoute(ID, { expectedVersion: 1 })).toEqual({ ok: false, error: { code: "conflict" } });
-    const limited = createDoctorHttpApi({ fetchImpl: async () => jsonResponse(429, {}, { "Retry-After": "12" }) });
+    const limited = createDoctorHttpApi({ ...TOKEN, fetchImpl: async () => jsonResponse(429, {}, { "Retry-After": "12" }) });
     expect(await limited.arrive(ID, { expectedVersion: 1 })).toEqual({ ok: false, error: { code: "rate_limited", retryAfterSeconds: 12 } });
-    const weird = createDoctorHttpApi({ fetchImpl: async () => jsonResponse(200, { version: "4", extra: true }) });
+    const weird = createDoctorHttpApi({ ...TOKEN, fetchImpl: async () => jsonResponse(200, { version: "4", extra: true }) });
     expect(await weird.arrive(ID, { expectedVersion: 1 })).toEqual({ ok: false, error: { code: "unavailable" } });
-    const down = createDoctorHttpApi({ fetchImpl: async () => { throw new Error("offline"); } });
+    const down = createDoctorHttpApi({ ...TOKEN, fetchImpl: async () => { throw new Error("offline"); } });
     expect(await down.arrive(ID, { expectedVersion: 1 })).toEqual({ ok: false, error: { code: "unavailable" } });
   });
 
   it("refuses non-ID path input and uncontracted endpoints are gated", async () => {
     const fetchImpl = vi.fn(async () => jsonResponse(200, {}));
-    const doctor = createDoctorHttpApi({ fetchImpl });
+    const doctor = createDoctorHttpApi({ ...TOKEN, fetchImpl });
     expect(await doctor.enRoute("../admin", { expectedVersion: 1 })).toEqual({ ok: false, error: { code: "not_found" } });
     expect(await doctor.verifyArrival(ID, { challengeId: "c", code: "123456" })).toEqual({ ok: false, error: { code: "gated" } });
-    expect(await createClinicalHttpApi({ fetchImpl }).amend(ID, { baseVersion: 1, reason: "other", reasonText: "Synthetic reason", content: emptyDraftContent(), acknowledged: true }, "k")).toEqual({ ok: false, error: { code: "gated" } });
+    expect(await createClinicalHttpApi({ ...TOKEN, fetchImpl }).amend(ID, { baseVersion: 1, reason: "other", reasonText: "Synthetic reason", content: emptyDraftContent(), acknowledged: true }, "k")).toEqual({ ok: false, error: { code: "gated" } });
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
   it("patient record http view hides drafts even if the server returned one", async () => {
     const draft = { consultationId: ID, bookingId: ID, status: "draft", version: 2, savedAt: null, content: emptyDraftContent() };
-    const api = createRecordsHttpApi({ fetchImpl: async () => jsonResponse(200, draft) });
+    const api = createRecordsHttpApi({ ...TOKEN, fetchImpl: async () => jsonResponse(200, draft) });
     expect(await api.getMyRecord(ID)).toEqual({ ok: false, error: { code: "not_found" } });
   });
 
   it("clinical saveDraft sends expectedVersion and parses the response", async () => {
     const fetchImpl = vi.fn(async () => jsonResponse(200, { version: 3, savedAt: "2026-11-20T04:30:00.000Z" }));
-    const r = await createClinicalHttpApi({ fetchImpl }).saveDraft(ID, { expectedVersion: 2, content: emptyDraftContent() });
+    const r = await createClinicalHttpApi({ ...TOKEN, fetchImpl }).saveDraft(ID, { expectedVersion: 2, content: emptyDraftContent() });
     expect(r).toEqual({ ok: true, data: { version: 3, savedAt: "2026-11-20T04:30:00.000Z" } });
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe(`/api/consultations/${ID}/draft`);

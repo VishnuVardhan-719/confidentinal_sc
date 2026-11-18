@@ -2,7 +2,8 @@ import { fail, ok } from "@/lib/api/result";
 import {
   clone,
   deepFreeze,
-  DEFAULT_DOCTOR_ACTOR,
+  assertFixtureAllowed,
+  NO_ACTOR,
   sharedClinicalWorld,
   type ClinicalWorld,
   type FixtureActor,
@@ -13,6 +14,8 @@ import { amendmentRequestSchema, missingForFinalize, saveDraftRequestSchema, sig
 import { latestSigned, type DraftSnapshot, type SignedConsultation } from "./types";
 
 export type ClinicalFixtureOptions = {
+  /** Env checked for APP_ENV=production (the real process env is always checked too). */
+  env?: Record<string, string | undefined>;
   world?: ClinicalWorld;
   actor?: FixtureActor;
   now?: () => Date;
@@ -26,8 +29,10 @@ export type ClinicalFixtureOptions = {
  * deliberately never consulted (DC10). Not a security boundary.
  */
 export function createClinicalFixtureApi(options: ClinicalFixtureOptions = {}): ClinicalApi {
+  assertFixtureAllowed(options.env);
   const world = options.world ?? sharedClinicalWorld();
-  const actor = options.actor ?? DEFAULT_DOCTOR_ACTOR;
+  // Deny-by-default: callers pass the actor derived from the fixture session.
+  const actor = options.actor ?? NO_ACTOR;
   const now = options.now ?? (() => new Date());
   const pdfSeconds = options.pdfLinkSeconds ?? 300;
   const doctorId = actor.role === "doctor" ? actor.doctorId : null;

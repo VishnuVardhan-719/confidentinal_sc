@@ -1,6 +1,7 @@
 import { fail, ok, type ApiResult } from "@/lib/api/result";
 import {
-  DEFAULT_DOCTOR_ACTOR,
+  assertFixtureAllowed,
+  NO_ACTOR,
   FIXTURE_IDS,
   fixtureHash,
   sharedClinicalWorld,
@@ -24,6 +25,8 @@ import {
 } from "./types";
 
 export type DoctorFixtureOptions = {
+  /** Env checked for APP_ENV=production (the real process env is always checked too). */
+  env?: Record<string, string | undefined>;
   world?: ClinicalWorld;
   actor?: FixtureActor;
   now?: () => Date;
@@ -91,8 +94,10 @@ const toChallengeView = (c: FixtureChallenge): ArrivalChallenge => ({
  * can exercise denial/expiry/conflict paths. It is NOT a security boundary.
  */
 export function createDoctorFixtureApi(options: DoctorFixtureOptions = {}): DoctorApi {
+  assertFixtureAllowed(options.env);
   const world = options.world ?? sharedClinicalWorld();
-  const actor = options.actor ?? DEFAULT_DOCTOR_ACTOR;
+  // Deny-by-default: callers pass the actor derived from the fixture session.
+  const actor = options.actor ?? NO_ACTOR;
   const now = options.now ?? (() => new Date());
   const generateCode = options.generateCode ?? randomCode;
   const deliver = options.deliverToPatient ?? (() => undefined);

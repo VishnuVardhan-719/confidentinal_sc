@@ -2,7 +2,8 @@ import { fail, ok } from "@/lib/api/result";
 import {
   clone,
   deepFreeze,
-  DEFAULT_PATIENT_ACTOR,
+  assertFixtureAllowed,
+  NO_ACTOR,
   sharedClinicalWorld,
   type ClinicalWorld,
   type FixtureActor,
@@ -27,6 +28,8 @@ import {
 } from "./types";
 
 export type RecordsFixtureOptions = {
+  /** Env checked for APP_ENV=production (the real process env is always checked too). */
+  env?: Record<string, string | undefined>;
   world?: ClinicalWorld;
   actor?: FixtureActor;
   now?: () => Date;
@@ -42,8 +45,10 @@ const hexToken = (bytes: number) => Array.from(globalThis.crypto.getRandomValues
  * records, assigned-doctor-only facts/collection/photos, consent before upload. Not a security boundary.
  */
 export function createRecordsFixtureApi(options: RecordsFixtureOptions = {}): RecordsApi {
+  assertFixtureAllowed(options.env);
   const world = options.world ?? sharedClinicalWorld();
-  const actor = options.actor ?? DEFAULT_PATIENT_ACTOR;
+  // Deny-by-default: callers pass the actor derived from the fixture session.
+  const actor = options.actor ?? NO_ACTOR;
   const now = options.now ?? (() => new Date());
   const proofMinutes = options.proofValidityMinutes ?? 24 * 60;
   const linkSeconds = options.linkSeconds ?? 300;

@@ -258,8 +258,21 @@ export function sharedClinicalWorld(): ClinicalWorld {
   return shared;
 }
 
-/** Fixture actor (who the fixture "server" thinks is signed in). */
-export type FixtureActor = { role: "doctor"; doctorId: string } | { role: "patient"; patientId: string };
+/**
+ * Fixture actor (who the fixture "server" thinks is signed in). Must be derived from the signed-in
+ * fixture session by the caller; `none` (no session / unmapped user) is denied everything.
+ */
+export type FixtureActor = { role: "doctor"; doctorId: string } | { role: "patient"; patientId: string } | { role: "none" };
+export const NO_ACTOR: FixtureActor = { role: "none" };
+
+/**
+ * Refuse fixtures in production even when a constructor is imported directly. The real process
+ * env is authoritative: an injected env can add the production flag but never remove it.
+ */
+export function assertFixtureAllowed(env?: Record<string, string | undefined>): void {
+  const realEnv = typeof process !== "undefined" ? process.env.APP_ENV : undefined;
+  if (realEnv === "production" || env?.APP_ENV === "production") throw new Error("Synthetic fixtures are disabled in production");
+}
 export const DEFAULT_DOCTOR_ACTOR: FixtureActor = { role: "doctor", doctorId: FIXTURE_IDS.doctorAssigned };
 export const DEFAULT_PATIENT_ACTOR: FixtureActor = { role: "patient", patientId: FIXTURE_IDS.patientA };
 

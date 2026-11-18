@@ -9,7 +9,7 @@ import { acceptInputSchema, advanceInputSchema, declineInputSchema, otpCodeSchem
  * Returns fail("gated") where no agreed contract exists yet (see docs/frontend/REQUESTS.md):
  * doctor-view list/detail DTOs, arrival challenge read/resend, verify-arrival body/response.
  */
-export function createDoctorHttpApi(options: HttpOptions = {}): DoctorApi {
+export function createDoctorHttpApi(options: HttpOptions): DoctorApi {
   const request = createHttp(options);
 
   const command = async (bookingId: string, action: "accept" | "decline" | "en-route" | "arrive" | "start", body: unknown): Promise<ApiResult<VersionResponse>> => {

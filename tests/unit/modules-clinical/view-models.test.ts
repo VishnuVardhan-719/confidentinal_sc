@@ -120,7 +120,7 @@ describe("visit actions across phases", () => {
 
 describe("doctor loaders: failure isolation and visits", () => {
   it("visits outage marks visit sections errored but keeps requests", async () => {
-    const real = createDoctorFixtureApi({ world: createClinicalWorld(T0), now: () => T0 });
+    const real = createDoctorFixtureApi({ world: createClinicalWorld(T0), now: () => T0, actor: { role: "doctor", doctorId: I.doctorAssigned } });
     const broken: DoctorApi = { ...real, listVisits: async () => ({ ok: false, error: { code: "unavailable" } }) };
     const d = await loadDoctorDashboard(broken, T0);
     expect(d.requests.kind).toBe("ready");
@@ -130,11 +130,11 @@ describe("doctor loaders: failure isolation and visits", () => {
 
   it("loadVisits returns split lists, empty for other doctor, gated over http", async () => {
     const world = createClinicalWorld(T0);
-    const mine = await loadVisits(createDoctorFixtureApi({ world, now: () => T0 }), T0);
+    const mine = await loadVisits(createDoctorFixtureApi({ world, now: () => T0, actor: { role: "doctor", doctorId: I.doctorAssigned } }), T0);
     expect(mine.kind === "ready" && [mine.data.today.length, mine.data.upcoming.length]).toEqual([2, 1]);
     const other = await loadVisits(createDoctorFixtureApi({ world, now: () => T0, actor: { role: "doctor", doctorId: I.doctorOther } }), T0);
     expect(other.kind).toBe("empty");
-    const gated: DoctorApi = { ...createDoctorFixtureApi({ world }), listVisits: async () => ({ ok: false, error: { code: "gated" } }) };
+    const gated: DoctorApi = { ...createDoctorFixtureApi({ world, actor: { role: "doctor", doctorId: I.doctorAssigned } }), listVisits: async () => ({ ok: false, error: { code: "gated" } }) };
     expect(await loadVisits(gated, T0)).toEqual({ kind: "gated" });
   });
 
@@ -155,7 +155,7 @@ describe("doctor loaders: failure isolation and visits", () => {
 describe("consultation workspace loader edge cases", () => {
   const deps = (world = createClinicalWorld(T0)) => {
     const now = () => T0;
-    return { world, doctor: createDoctorFixtureApi({ world, now }), clinical: createClinicalFixtureApi({ world, now }), records: createRecordsFixtureApi({ world, now, actor: { role: "doctor", doctorId: I.doctorAssigned } }) };
+    return { world, doctor: createDoctorFixtureApi({ world, now, actor: { role: "doctor", doctorId: I.doctorAssigned } }), clinical: createClinicalFixtureApi({ world, now, actor: { role: "doctor", doctorId: I.doctorAssigned } }), records: createRecordsFixtureApi({ world, now, actor: { role: "doctor", doctorId: I.doctorAssigned } }) };
   };
 
   it("facts outage leaves the editor usable with an 'unknown' allergy banner", async () => {

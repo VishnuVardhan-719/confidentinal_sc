@@ -21,7 +21,7 @@ const collectionViewSchema: z.ZodType<CollectionView> = z.strictObject({
  *   POST /api/bookings/:id/proof        -> issueProof
  * Everything else returns fail("gated") until a contract exists (docs/frontend/REQUESTS.md).
  */
-export function createRecordsHttpApi(options: HttpOptions = {}): RecordsApi {
+export function createRecordsHttpApi(options: HttpOptions): RecordsApi {
   const request = createHttp(options);
 
   return {

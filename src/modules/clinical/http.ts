@@ -14,7 +14,7 @@ import { consultationSchema, finalizeResponseSchema, saveDraftResponseSchema } f
  *   link-issuing DTO not specified).
  * None of these routes exist on any backend branch yet.
  */
-export function createClinicalHttpApi(options: HttpOptions = {}): ClinicalApi {
+export function createClinicalHttpApi(options: HttpOptions): ClinicalApi {
   const request = createHttp(options);
 
   return {
