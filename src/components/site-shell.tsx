@@ -1,54 +1,161 @@
 import Link from "next/link";
-import { NavLinks, type NavItem } from "./nav-links";
+import { Suspense } from "react";
+import { ButtonLink } from "./button-link";
+import { HeaderNav } from "./nav-links";
+import { SIGN_IN_HREF, SIGN_UP_HREF, footerGroups, headerLinks } from "./site-links";
+import { Button } from "./ui/button";
+import { getMessages, splitAt, type Locale, type Messages } from "./i18n/config";
+import { LanguageSwitcher } from "./i18n/language-switcher";
+import { getLocale } from "./i18n/server";
+import { endDemoSession } from "@/lib/demo/auth-actions";
+import { getDemoSession, type DemoSession } from "@/lib/demo/auth";
+import "./site-shell.css";
 
-const mainNav: readonly NavItem[] = [
-  { href: "/", label: "Home" },
-  { href: "/how-it-works", label: "How it works" },
-  { href: "/categories", label: "Explore services" },
-];
+/*
+ * Site header and footer. Both read cookies (language, demo session), so under cacheComponents each
+ * renders a static English guest version first (the Suspense fallback, part of the prerendered shell)
+ * and streams the personalised one in the same response.
+ *
+ * Translated chrome carries its own lang attribute. <html lang> stays "en" because page bodies are
+ * still English; marking the whole document Telugu or Hindi would make screen readers read English
+ * content with the wrong voice.
+ */
 
-const footerNav: readonly NavItem[] = mainNav.slice(1);
+const EN = getMessages("en");
 
-function Brand() {
+function Brand({ as: Tag = "span" }: { as?: "span" | "p" }) {
+  return (
+    <Tag className="brand" lang="en">
+      SureCure <em>Visit</em>
+    </Tag>
+  );
+}
+
+function EmergencyCall({ m }: { m: Messages }) {
+  const [before, after] = splitAt(m.footer.emergencyCall, "phone");
   return (
     <>
-      SureCure <em>Visit</em>
+      {before}
+      <a className="sh-tel" href="tel:112">
+        112
+      </a>
+      {after}
     </>
   );
 }
 
-export function SiteHeader() {
+/** Exported for tests. */
+export function AccountActions({ m, session }: { m: Messages; session: DemoSession | null }) {
+  const n = m.nav;
+  if (!session) {
+    return (
+      <div className="sh-actions">
+        <Link className="sh-signin" href={SIGN_IN_HREF}>
+          {n.signIn}
+        </Link>
+        <ButtonLink href={SIGN_UP_HREF}>{n.createAccount}</ButtonLink>
+      </div>
+    );
+  }
+  const [before, after] = splitAt(m.demo.signedInAs, "role");
   return (
-    <header className="site-header">
-      <div className="frame header-inner">
-        <Link className="brand" href="/" aria-label="SureCure Visit home">
+    <div className="sh-actions">
+      <span className="sh-demo">
+        {before}
+        {m.roles[session.role]}
+        {after}
+      </span>
+      <ButtonLink href={session.home}>{n.dashboard}</ButtonLink>
+      <form action={endDemoSession}>
+        <Button type="submit" variant="secondary" className="w-full">
+          {n.signOut}
+        </Button>
+      </form>
+    </div>
+  );
+}
+
+function HeaderBody({ locale, session }: { locale: Locale | null; session: DemoSession | null }) {
+  const m = getMessages(locale ?? "en");
+  return (
+    <header className="site-header" lang={locale ?? "en"}>
+      <div className="sh-utility">
+        <div className="frame sh-utility-inner">
+          <p className="sh-emergency">
+            <EmergencyCall m={m} />
+          </p>
+          <LanguageSwitcher current={locale} variant="compact" />
+        </div>
+      </div>
+      <div className="frame sh-row">
+        <Link className="sh-brand-link" href="/" aria-label="SureCure Visit home">
           <Brand />
         </Link>
-        <NavLinks items={mainNav} label="Main" />
+        <HeaderNav items={headerLinks(m.nav)} label={m.nav.main} menuLabel={m.nav.menu}>
+          <AccountActions m={m} session={session} />
+        </HeaderNav>
       </div>
     </header>
   );
 }
 
-export function SiteFooter() {
+async function LiveHeader() {
+  const [locale, session] = await Promise.all([getLocale(), getDemoSession()]);
+  return <HeaderBody locale={locale} session={session} />;
+}
+
+export function SiteHeader() {
   return (
-    <footer className="site-footer">
-      <div className="frame footer-inner">
-        <div>
-          <p className="brand">
-            <Brand />
-          </p>
+    <Suspense fallback={<HeaderBody locale={null} session={null} />}>
+      <LiveHeader />
+    </Suspense>
+  );
+}
+
+function FooterBody({ locale }: { locale: Locale | null }) {
+  const m = locale ? getMessages(locale) : EN;
+  return (
+    <footer className="site-footer" lang={locale ?? "en"}>
+      <div className="frame sh-foot">
+        <div className="sh-foot-brand">
+          <Brand as="p" />
           <p className="footer-note">
-            Doctor visits, lab services, scheduled ambulance transport and non-clinical caretaker support. Online
-            booking is not open yet.
+            {m.footer.tagline} {m.footer.bookingNotOpen}
           </p>
+          <LanguageSwitcher current={locale} />
         </div>
-        <NavLinks items={footerNav} label="Footer" />
+        <nav className="sh-foot-nav" aria-label={m.nav.footer}>
+          {footerGroups(m).map((g) => (
+            <div key={g.id}>
+              <h2 className="sh-foot-title" id={`footer-${g.id}`}>
+                {g.title}
+              </h2>
+              <ul aria-labelledby={`footer-${g.id}`}>
+                {g.links.map((l) => (
+                  <li key={l.href}>
+                    <Link href={l.href}>{l.label}</Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
         <p className="emergency-note">
-          For emergencies in India, call <a href="tel:112">112</a>. SureCure Visit is not an emergency response
-          service. Scheduled ambulance transport is for planned journeys.
+          <EmergencyCall m={m} /> {m.footer.emergencyNote}
         </p>
       </div>
     </footer>
+  );
+}
+
+async function LiveFooter() {
+  return <FooterBody locale={await getLocale()} />;
+}
+
+export function SiteFooter() {
+  return (
+    <Suspense fallback={<FooterBody locale={null} />}>
+      <LiveFooter />
+    </Suspense>
   );
 }

@@ -17,6 +17,8 @@
   /* Form control edge: 3.94:1 on white, 3.71:1 on paper (WCAG 1.4.11 needs 3:1). --line is for decorative rules only. */
   --input-border: #6a8680;
   --placeholder: #5d6f72;
+  /* ErrorState background; --ink-soft on it is about 6.9:1. */
+  --warning-surface: #fbf4ea;
   --on-forest-soft: #c9e4de;
   --space-1: .5rem;
   --space-2: 1rem;
@@ -85,13 +87,44 @@
 
   /* Shell */
   .site-header { border-bottom: 1px solid var(--line); background: var(--paper); }
-  .header-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .25rem 2rem; padding-block: 1rem; }
+  .header-inner { display: flex; align-items: center; flex-wrap: wrap; gap: .25rem 1rem; padding-block: .75rem; }
   .brand { display: inline-flex; min-height: 44px; align-items: center; font-family: var(--font-editorial), serif; font-size: 1.5rem; font-weight: 500; letter-spacing: -.02em; color: var(--ink); text-decoration: none; }
   .brand em { color: var(--forest); font-weight: 400; }
   .site-nav { display: flex; flex-wrap: wrap; gap: 0 1.5rem; }
   .site-nav a { display: inline-flex; min-height: 44px; align-items: center; font-size: .9375rem; font-weight: 600; color: var(--ink); text-decoration: none; }
   .site-nav a:hover { color: var(--forest); text-decoration: underline; }
   .site-nav a[aria-current] { color: var(--forest); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .4em; }
+
+  /* Header nav, mobile first: below 48rem the links sit in a disclosure panel that pushes content down. */
+  .menu-toggle { display: inline-flex; align-items: center; gap: .625rem; min-width: 44px; min-height: 44px; margin-left: auto; padding: 0 .875rem; border: 1px solid var(--line-strong); border-radius: var(--radius); background: transparent; color: var(--ink); font: inherit; font-size: .9375rem; font-weight: 600; cursor: pointer; touch-action: manipulation; }
+  .menu-toggle:hover { border-color: var(--forest); color: var(--forest); }
+  .menu-toggle[aria-expanded="true"] { border-color: var(--forest); background: var(--mist); color: var(--forest); }
+  /* Bars are drawn with borders so they survive forced-colors mode. */
+  .menu-icon { position: relative; flex: none; width: 1.125rem; height: .75rem; }
+  .menu-icon::before, .menu-icon::after, .menu-icon > span { content: ""; position: absolute; left: 0; width: 100%; border-top: 2px solid currentColor; }
+  .menu-icon::before { top: 0; }
+  .menu-icon > span { top: calc(50% - 1px); }
+  .menu-icon::after { bottom: 0; }
+  .menu-toggle[aria-expanded="true"] .menu-icon::before { top: calc(50% - 1px); transform: rotate(45deg); }
+  .menu-toggle[aria-expanded="true"] .menu-icon::after { bottom: calc(50% - 1px); transform: rotate(-45deg); }
+  .menu-toggle[aria-expanded="true"] .menu-icon > span { opacity: 0; }
+  .nav-panel { display: none; flex-basis: 100%; min-width: 0; }
+  .nav-panel[data-open="true"] { display: block; }
+  .site-header .site-nav { flex-direction: column; flex-wrap: nowrap; gap: 0; padding-block: .25rem .5rem; }
+  .site-header .site-nav a { min-height: 48px; padding-inline: .25rem; border-top: 1px solid var(--line); font-size: 1rem; }
+  @media (prefers-reduced-motion: no-preference) {
+    .menu-icon::before, .menu-icon::after, .menu-icon > span { transition: transform .2s var(--ease-out), top .2s var(--ease-out), bottom .2s var(--ease-out), opacity .15s linear; }
+  }
+  @media (max-width: 47.99rem) and (prefers-reduced-motion: no-preference) {
+    .nav-panel[data-open="true"] { animation: nav-reveal .2s var(--ease-out); }
+  }
+  @media (min-width: 48rem) {
+    .header-inner { flex-wrap: nowrap; justify-content: space-between; gap: 2rem; padding-block: 1rem; }
+    .menu-toggle { display: none; }
+    .nav-panel { display: block; flex-basis: auto; }
+    .site-header .site-nav { flex-direction: row; flex-wrap: wrap; gap: 0 1.5rem; padding-block: 0; }
+    .site-header .site-nav a { min-height: 44px; padding-inline: 0; border-top: 0; font-size: .9375rem; }
+  }
   .site-footer { padding-block: 3rem 2.5rem; border-top: 1px solid var(--line); background: var(--mist); }
   .footer-inner { display: grid; gap: 2rem; }
   .footer-note { max-width: 36rem; margin-top: .5rem; color: var(--ink-soft); font-size: .9375rem; }
@@ -185,6 +218,7 @@
 }
 
 @keyframes underline-draw { from { background-size: 0 .06em; } }
+@keyframes nav-reveal { from { opacity: 0; transform: translateY(-.25rem); } }
 
 @media (min-width: 48rem) {
   .page { padding-block: 5rem 6rem; }

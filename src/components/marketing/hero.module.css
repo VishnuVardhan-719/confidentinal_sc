@@ -1,0 +1,76 @@
+/* Hero layout additions. Base hero, grid and status styles live in globals.css (not owned here). */
+
+.side {
+  display: grid;
+  align-self: end;
+}
+
+/* From 768px the status panel overlaps the faded lower edge of the visual, keeping the hero compact. */
+@media (min-width: 48rem) {
+  .side > :last-child {
+    position: relative;
+    margin-top: -4.5rem;
+  }
+}
+
+/* The visual is decorative and only shown from 768px, where the scene may run. Below that the hero stays text-first. */
+.visual {
+  display: none;
+  position: relative;
+  aspect-ratio: 4 / 3;
+  -webkit-mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 58%, transparent 100%);
+  mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 58%, transparent 100%);
+}
+
+@media (min-width: 48rem) {
+  .visual {
+    display: block;
+  }
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.layer > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hidden {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layer {
+    transition: none;
+  }
+}
+
+.ctas {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.signin {
+  min-height: 44px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.35em;
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+
+.signin a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  font-weight: 600;
+}
