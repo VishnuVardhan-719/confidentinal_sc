@@ -140,4 +140,10 @@ export type CareActionInput = {
   reason?: CareInterruptReason;
 };
 
+export type CareDeclineReason = "patient_request" | "provider_unavailable" | "unable_to_service" | "other";
+
+export type CareRequestDecision =
+  | { requestId: string; decision: "accept"; caregiverResourceId: string; expectedVersion: number; idempotencyKey: string }
+  | { requestId: string; decision: "decline"; reason: CareDeclineReason; expectedVersion: number; idempotencyKey: string };
+
 export type ShiftActionInput = { shiftId: string; expectedVersion: number; idempotencyKey: string };

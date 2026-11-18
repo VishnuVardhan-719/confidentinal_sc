@@ -36,8 +36,8 @@ export function caretakerRoutePermits(route: CaretakerRoute, ws: Workspace): boo
   }
 }
 
-export const caretakerPath = (locale: AppLocale, route: CaretakerRoute): string =>
-  route === "dashboard" ? `/${locale}/caretaker` : `/${locale}/caretaker/${route}`;
+/** Locale-prefixed path. Dashboard is `/{locale}/caretaker/dashboard` (auth module ROLE_HOME_PATH). */
+export const caretakerPath = (locale: AppLocale, route: CaretakerRoute): string => `/${locale}/caretaker/${route}`;
 
 export function decideCaretakerRoute(session: GuardSession, route: CaretakerRoute, locale: AppLocale, path: string, workspaceKey: unknown): AreaAccess {
   return decideWorkspaceAccess({ session, area: "caretaker", requestedWorkspaceKey: workspaceKey, locale, path, permits: (ws) => caretakerRoutePermits(route, ws) });

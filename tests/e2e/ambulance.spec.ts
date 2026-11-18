@@ -28,7 +28,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe.fixme("ambulance operator", () => {
   test("dashboard shows real counts, credential expiry and no ETA language", async ({ page }) => {
-    await signInAs(page, "ambulanceOperator", A);
+    await signInAs(page, "ambulanceOperator", `${A}/dashboard`);
     await expectFixtureNotice(page);
     await expect(page.getByTestId("metric-pending-requests")).toHaveText(/2/);
     await expect(page.getByText("Fixture Van 2")).toBeVisible(); // expiring evidence warning
@@ -84,7 +84,8 @@ test.describe.fixme("emergency dispatch placeholder", () => {
   test("dispatch is unavailable and Call 112 is always visible as a tel: link", async ({ page }) => {
     await signInAs(page, "ambulanceOperator", `${A}/emergency`);
     await expect(page.getByText(COPY.dispatchUnavailable)).toBeVisible();
-    const call = page.getByRole("link", { name: COPY.call112 });
+    // The top bar also carries a Call 112 link; check the one in the page body.
+    const call = page.getByRole("main").getByRole("link", { name: COPY.call112 }).last();
     await expect(call).toBeVisible();
     await expect(call).toHaveAttribute("href", "tel:112");
     await expect(page.getByRole("button", { name: /dispatch|request ambulance now|book emergency/i })).toHaveCount(0);
@@ -104,7 +105,7 @@ test.describe.fixme("emergency dispatch placeholder", () => {
     // Requires a server started with FEATURE_EMERGENCY_DISPATCH=true FEATURE_GPS=true (S01 A2).
     await signInAs(page, "ambulanceOperator", `${A}/emergency`);
     await expect(page.getByText(COPY.dispatchUnavailable)).toBeVisible();
-    await expect(page.getByRole("link", { name: COPY.call112 })).toBeVisible();
+    await expect(page.getByRole("link", { name: COPY.call112 }).first()).toBeVisible();
     await expect(page.locator("main")).not.toContainText(ETA_PATTERN);
   });
 });

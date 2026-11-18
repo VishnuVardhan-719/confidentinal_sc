@@ -7,6 +7,7 @@ import type {
   DriverTripView,
   FleetVehicle,
   Page,
+  RequestDecisionInput,
   ScheduledTransportRequest,
   Trip,
   TripActionInput,
@@ -21,6 +22,11 @@ export interface AmbulanceApi {
   listCrew(): Promise<ApiResult<CrewMember[]>>;
   listRequests(input?: { cursor?: string }): Promise<ApiResult<Page<ScheduledTransportRequest>>>;
   getRequest(requestId: string): Promise<ApiResult<ScheduledTransportRequest>>;
+  /**
+   * Manual accept (with one assignable vehicle AND driver, fresh consistent quote) or decline with a
+   * reason. Never automatic. http: owned by the bookings contract (POST /api/bookings/:id/accept|decline).
+   */
+  decideRequest(input: RequestDecisionInput): Promise<ApiResult<ScheduledTransportRequest>>;
   listTrips(input: { queue: TripQueue; cursor?: string }): Promise<ApiResult<Page<Trip>>>;
   getTrip(tripId: string): Promise<ApiResult<Trip>>;
   /** Driver: the single current assigned trip (or none) plus a count of later assignments. */

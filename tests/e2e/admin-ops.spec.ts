@@ -23,7 +23,7 @@ const AD = `/${LOCALE}/admin`;
 
 test.describe.fixme("admin dashboard and navigation", () => {
   test("lead admin sees only real queue counts and every assigned area", async ({ page }) => {
-    await signInAs(page, "adminLead", AD);
+    await signInAs(page, "adminLead", `${AD}/dashboard`);
     await expectFixtureNotice(page);
     await expect(page.getByTestId("queue-providerReviews")).toHaveText(/1/);
     for (const name of [/bookings/i, /payments/i, /support/i, /content/i, /audit/i, /settings/i]) {
@@ -33,14 +33,14 @@ test.describe.fixme("admin dashboard and navigation", () => {
   });
 
   test("an admin with no grants gets the empty state and denied pages", async ({ page }) => {
-    await signInAs(page, "adminNoGrants", AD);
+    await signInAs(page, "adminNoGrants", `${AD}/dashboard`);
     await expectDenied(page);
     await page.goto(`${AD}/payments`);
     await expectDenied(page);
   });
 
   test("an org-scoped auditor sees audit only", async ({ page }) => {
-    await signInAs(page, "adminOrgAuditor", AD);
+    await signInAs(page, "adminOrgAuditor", `${AD}/dashboard`);
     await expect(page.getByRole("navigation").getByRole("link", { name: /audit/i })).toBeVisible();
     await expect(page.getByRole("navigation").getByRole("link", { name: /payments/i })).toHaveCount(0);
   });

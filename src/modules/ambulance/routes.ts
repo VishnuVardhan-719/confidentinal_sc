@@ -30,8 +30,8 @@ export function ambulanceRoutePermits(route: AmbulanceRoute, ws: Workspace): boo
   return roles.includes(rule);
 }
 
-export const ambulancePath = (locale: AppLocale, route: AmbulanceRoute): string =>
-  route === "dashboard" ? `/${locale}/ambulance` : `/${locale}/ambulance/${route}`;
+/** Locale-prefixed path. Dashboard is `/{locale}/ambulance/dashboard` (auth module ROLE_HOME_PATH). */
+export const ambulancePath = (locale: AppLocale, route: AmbulanceRoute): string => `/${locale}/ambulance/${route}`;
 
 export function decideAmbulanceRoute(session: GuardSession, route: AmbulanceRoute, locale: AppLocale, path: string, workspaceKey: unknown): AreaAccess {
   return decideWorkspaceAccess({ session, area: "ambulance", requestedWorkspaceKey: workspaceKey, locale, path, permits: (ws) => ambulanceRoutePermits(route, ws) });

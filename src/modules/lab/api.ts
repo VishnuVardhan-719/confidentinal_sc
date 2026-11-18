@@ -1,5 +1,6 @@
 import type { AdapterMode } from "@/lib/api/mode";
 import type { ApiResult } from "@/lib/api/result";
+import type { CatalogUpdateInput } from "./rules";
 import type {
   CollectionActionInput,
   LabBranch,
@@ -24,6 +25,10 @@ export interface LabApi {
   listBranches(): Promise<ApiResult<LabBranch[]>>;
   listCatalog(input?: { branchId?: string }): Promise<ApiResult<LabCatalogItem[]>>;
   listStaff(input?: { branchId?: string }): Promise<ApiResult<LabStaffMember[]>>;
+  /** Manager only. Activation requires a verified branch; deactivation never cancels accepted work. */
+  setBranchActive(input: { branchId: string; active: boolean; expectedVersion: number; idempotencyKey: string }): Promise<ApiResult<LabBranch>>;
+  /** Manager only. Server validates price (integer paise), plain-text preparation and the active flag. */
+  updateCatalogItem(input: CatalogUpdateInput & { itemId: string; expectedVersion: number; idempotencyKey: string }): Promise<ApiResult<LabCatalogItem>>;
   listOrders(input: { queue: LabOrderQueue; cursor?: string }): Promise<ApiResult<Page<LabOrder>>>;
   getOrder(orderId: string): Promise<ApiResult<LabOrder>>;
   /** Collector view: only orders assigned to the signed-in collector. */

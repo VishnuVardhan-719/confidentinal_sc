@@ -3,6 +3,7 @@ import type {
   CareActor,
   CareAssignment,
   CaregiverProfile,
+  CareDeclineReason,
   CareInterruptReason,
   CareShift,
   CareSubstate,
@@ -42,6 +43,8 @@ export const careRequestSchema = z.strictObject({
 
 /** Shift check-in/out bodies carry no time: the server stamps check-in and check-out. */
 export const shiftActionSchema = z.strictObject({ expectedVersion: z.number().int().positive() });
+
+export const CARE_DECLINE_REASONS = ["patient_request", "provider_unavailable", "unable_to_service", "other"] as const satisfies readonly CareDeclineReason[];
 
 export const CARE_INTERRUPT_REASONS = [
   "patient_unavailable",

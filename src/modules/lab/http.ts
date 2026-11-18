@@ -18,6 +18,8 @@ export function createLabHttpApi(): LabApi {
     listBranches: gated,
     listCatalog: gated,
     listStaff: gated,
+    setBranchActive: gated,
+    updateCatalogItem: gated,
     listOrders: gated,
     getOrder: gated,
     listAssignedCollections: gated,

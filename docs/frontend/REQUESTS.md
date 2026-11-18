@@ -149,3 +149,18 @@ Necessary for FE01; please review in the diff:
 - `PaymentRecordView` now expects `outstandingPaise` from the server.
 - The UI no longer derives or clamps it. Instead it sets `reconciliationMismatch` when collected exceeds due, when any value is negative or not an integer, or when outstanding is not equal to due minus collected.
 - Backend request: include `outstanding_paise` in the payment read contract when it is defined.
+
+---
+
+## 2026-11-18 · FE13-17 pages (Kiro E, branch feat/fe2-e)
+
+### R-E17 Session port for private areas (owner: src/modules/auth)
+- `src/modules/admin/session.ts#getOperationsSession()` is the single place the lab, ambulance, caretaker and admin areas get identity from. Until the auth module is merged it returns no session, so every private page redirects to `/{locale}/login?next=...`. There are no demo accounts or role cookies.
+- To integrate, map auth `getServerSession()` to `GuardSession` and `AdminPrincipal` (fields in R-E11). Pages, loaders and server actions do not need to change.
+- Fixture-mode visual and e2e checks of these pages are blocked until then. The view components are covered by jsdom tests that use fixture loaders.
+
+### R-E18 Shared component gaps (owner: fe2-a shared)
+- No shared `AccessDenied`, record-list/table-with-mobile-cards, metric tile or confirm-with-select component exists. Local versions are in `src/components/admin/ops/*`. Request shared ones if other areas need them.
+- Admin booking ops shows the raw booking state until the bookings module exports its status map (R-E13).
+- Lab, ambulance and caretaker billing and support pages, and caretaker availability, render a "not connected" notice. There is no contract for them yet.
+- Browser e2e for these areas is deferred by user rule: `tests/e2e/{lab,ambulance,caretaker,admin-ops,cms}.spec.ts` stay `test.describe.fixme` and are not run. Verification uses lint, typecheck, unit/jsdom tests and build only.

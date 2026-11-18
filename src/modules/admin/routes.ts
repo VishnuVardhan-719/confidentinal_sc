@@ -24,8 +24,8 @@ export const ADMIN_ROUTE_CAPABILITIES: Record<AdminRoute, readonly AdminCapabili
 /** Routes that accept organization-scoped grants (the data is then filtered by scope). */
 const ORG_SCOPED_OK: ReadonlySet<AdminRoute> = new Set(["dashboard", "audit"]);
 
-export const adminPath = (locale: AppLocale, route: AdminRoute): string =>
-  route === "dashboard" ? `/${locale}/admin` : `/${locale}/admin/${route}`;
+/** Locale-prefixed path. Dashboard is `/{locale}/admin/dashboard` (auth module ROLE_HOME_PATH). */
+export const adminPath = (locale: AppLocale, route: AdminRoute): string => `/${locale}/admin/${route}`;
 
 export function decideAdminRoute(principal: AdminPrincipal | null, route: AdminRoute, locale: AppLocale, path: string, now?: Date): AdminAccess {
   return decideAdminAccess({ principal, anyOf: ADMIN_ROUTE_CAPABILITIES[route], locale, path, now, orgScopedOk: ORG_SCOPED_OK.has(route) });

@@ -4,7 +4,9 @@ import { assertFixtureAllowed, cloneFixture, createReplayCache } from "@/fixture
 import { labActors, labFixtures } from "@/fixtures/operations/lab";
 import type { LabApi, LabOrderQueue } from "./api";
 import {
+  branchToggleAllowed,
   canRequestRecollection,
+  catalogUpdateSchema,
   collectionActionDenial,
   isTerminalSubstate,
   nextCollectionSubstate,
@@ -12,13 +14,21 @@ import {
   reportReviewDenial,
   type ReportDenial,
 } from "./rules";
-import type { LabActor, LabOrder, LabReport } from "./types";
+import type { LabActor, LabBranch, LabCatalogItem, LabOrder, LabReport } from "./types";
+
+/** Mutable synthetic state. Shared per process in fixture mode so changes survive a page refresh. */
+export type LabFixtureStore = ReturnType<typeof createLabFixtureStore>;
+
+export function createLabFixtureStore() {
+  return { ...cloneFixture(labFixtures), nextReference: 900200 };
+}
 
 export type LabFixtureOptions = {
   env?: Record<string, string | undefined>;
   /** Synthetic signed-in staff member the fixture "server" authorizes. */
   actor?: LabActor;
   now?: () => Date;
+  store?: LabFixtureStore;
 };
 
 const kolkataDay = (date: Date): string =>
@@ -36,9 +46,8 @@ export function createLabFixtureApi(options: LabFixtureOptions = {}): LabApi {
   assertFixtureAllowed(env);
   const actor: LabActor = options.actor ?? labActors.manager;
   const now = options.now ?? (() => new Date());
-  const data = cloneFixture(labFixtures);
+  const data = options.store ?? createLabFixtureStore();
   const once = createReplayCache();
-  let referenceSeq = 900200;
 
   const isMember = () => actor.membershipStatus === "active" && actor.providerId === data.providerId;
   const isManager = () => isMember() && actor.roles.includes("manager");
@@ -79,6 +88,36 @@ export function createLabFixtureApi(options: LabFixtureOptions = {}): LabApi {
     async listStaff(input = {}) {
       if (!isManager()) return fail("forbidden");
       return ok(data.staff.filter((m) => input.branchId === undefined || m.branchIds.includes(input.branchId)));
+    },
+
+    async setBranchActive(input) {
+      return once("branch", input.idempotencyKey, (): ApiResult<LabBranch> => {
+        if (!isManager()) return fail("forbidden");
+        const branch = data.branches.find((b) => b.id === input.branchId);
+        if (!branch) return fail("not_found");
+        if (branch.version !== input.expectedVersion) return fail("conflict");
+        if (!branchToggleAllowed(branch.verification, input.active)) return fail("conflict");
+        branch.active = input.active;
+        branch.version += 1;
+        return ok(cloneFixture(branch));
+      });
+    },
+
+    async updateCatalogItem(input) {
+      return once("catalog", input.idempotencyKey, (): ApiResult<LabCatalogItem> => {
+        if (!isManager()) return fail("forbidden");
+        const item = data.catalog.find((i) => i.id === input.itemId);
+        if (!item) return fail("not_found");
+        const parsed = catalogUpdateSchema.safeParse({ pricePaise: input.pricePaise, preparation: input.preparation, active: input.active });
+        if (!parsed.success) {
+          const fields: Record<string, string> = {};
+          for (const issue of parsed.error.issues) fields[String(issue.path[0] ?? "body")] = issue.message === "html_forbidden" ? "html_forbidden" : "invalid";
+          return fail("validation", { fields });
+        }
+        if (item.version !== input.expectedVersion) return fail("conflict");
+        Object.assign(item, parsed.data, { version: item.version + 1 });
+        return ok(cloneFixture(item));
+      });
     },
 
     async listOrders({ queue }) {
@@ -129,7 +168,8 @@ export function createLabFixtureApi(options: LabFixtureOptions = {}): LabApi {
         const order = data.orders.find((o) => o.id === input.orderId);
         if (!order) return fail("not_found");
         if (!canRequestRecollection(order)) return fail("conflict");
-        referenceSeq += 1;
+        data.nextReference += 1;
+        const referenceSeq = data.nextReference;
         const at = now().toISOString();
         const created: LabOrder = {
           ...cloneFixture(order),

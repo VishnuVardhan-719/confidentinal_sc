@@ -9,7 +9,7 @@ import { toLoaderResult } from "@/modules/admin/access";
 import { createAdminHttpApi, issueFields } from "@/modules/admin/http";
 import { paymentAmountsMismatch, toPaymentRow } from "@/modules/admin/view-models";
 import { listWorkspaces, toCareActor, type WorkspaceMembership } from "@/modules/admin/workspace";
-import { createAmbulanceFixtureApi } from "@/modules/ambulance/fixture";
+import { createAmbulanceFixtureApi, createAmbulanceFixtureStore } from "@/modules/ambulance/fixture";
 import { DRIVER_VIEW_LEAD_MINUTES, selectDriverQueue, tripActionDenial, tripInDriverWindow } from "@/modules/ambulance/rules";
 import type { Trip } from "@/modules/ambulance/types";
 import { countOverlappingToday, istDayBounds } from "@/modules/caretaker/loaders";
@@ -75,7 +75,35 @@ describe("E2 driver sees the current trip only", () => {
     const api = createAmbulanceFixtureApi({ env: {}, actor: ambulanceActors.driverA, now: () => new Date("2026-11-19T00:00:00Z") });
     expect(await api.getDriverQueue()).toEqual({ ok: true, data: { current: null, laterCount: 1 } });
     expect(await api.getDriverTrip("fx-trip-1")).toEqual({ ok: false, error: { code: "not_found" } });
-    expect(await api.performTripAction({ tripId: "fx-trip-1", action: "en_route", expectedVersion: 2, idempotencyKey: "w" })).toEqual({ ok: false, error: { code: "conflict" } });
+    expect(await api.performTripAction({ tripId: "fx-trip-1", action: "en_route", expectedVersion: 2, idempotencyKey: "w" })).toEqual({ ok: false, error: { code: "not_found" } });
+  });
+
+  it("only the queue's current trip can be progressed, even when a later trip is also inside its window", async () => {
+    const store = createAmbulanceFixtureStore();
+    const current = store.trips.find((t) => t.id === "fx-trip-1")!; // 04:00Z
+    const later: Trip = { ...structuredClone(current), id: "fx-trip-1b", reference: "#SCV-BKG-900398", window: { start: "2026-11-20T05:00:00Z", end: "2026-11-20T06:00:00Z" }, version: 1 };
+    store.trips.push(later);
+    const at = new Date("2026-11-20T03:30:00Z"); // both trips are inside the 120-minute lead
+    expect(tripInDriverWindow(later, at)).toBe(true);
+    const api = createAmbulanceFixtureApi({ env: {}, actor: ambulanceActors.driverA, now: () => at, store });
+
+    const denied = await api.performTripAction({ tripId: later.id, action: "en_route", expectedVersion: 1, idempotencyKey: "l1" });
+    expect(denied).toEqual({ ok: false, error: { code: "not_found" } });
+    expect(JSON.stringify(denied)).not.toContain("Fixture Nagar");
+    expect(store.trips.find((t) => t.id === later.id)).toMatchObject({ state: "assigned", version: 1 });
+    expect(store.trips.find((t) => t.id === later.id)?.history).toHaveLength(1);
+
+    // The current trip runs to its final milestone; that last step is accepted although it ends the trip.
+    let v = current.version;
+    for (const action of ["en_route", "arrived", "picked_up", "destination_reached"] as const) {
+      const r = await api.performTripAction({ tripId: current.id, action, expectedVersion: v, idempotencyKey: `c-${action}` });
+      expect(r.ok && r.data.state).toBe(action);
+      v += 1;
+    }
+    // Now the later trip becomes current and can be progressed.
+    expect((await api.getDriverQueue())).toMatchObject({ ok: true, data: { current: { tripId: later.id }, laterCount: 0 } });
+    const next = await api.performTripAction({ tripId: later.id, action: "en_route", expectedVersion: 1, idempotencyKey: "l2" });
+    expect(next.ok && next.data.state).toBe("en_route");
   });
 });
 

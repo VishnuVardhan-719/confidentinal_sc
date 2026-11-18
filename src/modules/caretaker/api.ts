@@ -6,6 +6,7 @@ import type {
   CareAssignment,
   CaregiverProfile,
   CareRequest,
+  CareRequestDecision,
   CareService,
   CareShift,
   Page,
@@ -20,6 +21,8 @@ export interface CaretakerApi {
   /** Agency manager only. Independent caregivers receive `forbidden`. */
   listStaff(): Promise<ApiResult<CaregiverProfile[]>>;
   listRequests(input?: { cursor?: string }): Promise<ApiResult<Page<CareRequest>>>;
+  /** Manual accept with one verified caregiver who covers every requested task, or decline with a reason. */
+  decideRequest(input: CareRequestDecision): Promise<ApiResult<CareRequest>>;
   listAssignments(): Promise<ApiResult<CareAssignment[]>>;
   getAssignment(assignmentId: string): Promise<ApiResult<CareAssignment>>;
   performCareAction(input: CareActionInput): Promise<ApiResult<CareAssignment>>;

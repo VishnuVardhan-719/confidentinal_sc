@@ -91,14 +91,21 @@ export async function loadAvailability(ctx: WorkspaceLoaderContext): Promise<Loa
   );
 }
 
-export async function loadRequests(ctx: WorkspaceLoaderContext): Promise<LoaderResult<{ rows: RequestRowVM[]; nextCursor: string | null }>> {
+export type AssignOption = { resourceId: string; label: string };
+
+/** Requests plus the vehicles/drivers that may be assigned now (accept form options). Unknown capacity = no options. */
+export async function loadRequests(
+  ctx: WorkspaceLoaderContext,
+): Promise<LoaderResult<{ rows: RequestRowVM[]; nextCursor: string | null; vehicles: AssignOption[]; drivers: AssignOption[] }>> {
   const amb = api(ctx);
   const now = clock(ctx);
   const [requests, fleet, crew] = await Promise.all([amb.listRequests(), amb.listFleet(), amb.listCrew()]);
   if (!requests.ok) return toLoaderResult(requests, amb.mode);
   if (!belongsToWorkspace(requests.data.items, ctx.workspace, (r) => r.providerId)) return toLoaderResult(fail("unavailable"), amb.mode);
   const rows = requests.data.items.map((r) => toRequestRow(r, fleet.ok ? fleet.data : null, crew.ok ? crew.data : null, now));
-  return toLoaderResult(ok({ rows, nextCursor: requests.data.nextCursor }), amb.mode, (d) => d.rows.length === 0);
+  const vehicles = fleet.ok ? fleet.data.filter((v) => vehicleAssignable(v, now)).map((v) => ({ resourceId: v.resourceId, label: v.label })) : [];
+  const drivers = crew.ok ? crew.data.filter((d) => driverAssignable(d, now)).map((d) => ({ resourceId: d.resourceId, label: d.displayName })) : [];
+  return toLoaderResult(ok({ rows, nextCursor: requests.data.nextCursor, vehicles, drivers }), amb.mode, (d) => d.rows.length === 0);
 }
 
 export async function loadTrips(ctx: WorkspaceLoaderContext, queue: TripQueue): Promise<LoaderResult<{ rows: TripRowVM[]; nextCursor: string | null }>> {

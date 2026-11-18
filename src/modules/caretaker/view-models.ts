@@ -1,7 +1,7 @@
 import type { Metric } from "@/modules/admin/access";
 import { careActionDenial, nextShiftAttendance, RECURRING_CARE_GATE } from "./rules";
 import { describeCare, describeCredential, describeRatePeriod, describeShift, describeTask, type StatusDescriptor } from "./status";
-import type { CareActor, CareAssignment, CaregiverProfile, CareRequest, CareService, CareShift } from "./types";
+import type { CareActor, CareAssignment, CaregiverProfile, CareRequest, CareService, CareShift, CareTaskCode } from "./types";
 
 export type CaretakerDashboardVM = {
   kind: CareActor["kind"];
@@ -53,6 +53,7 @@ export const toCaregiverRow = (c: CaregiverProfile): CaregiverRowVM => ({
 export type CareRequestRowVM = {
   id: string;
   reference: string;
+  taskCodes: CareTaskCode[];
   tasks: StatusDescriptor[];
   start: string;
   end: string;
@@ -65,6 +66,7 @@ export type CareRequestRowVM = {
 export const toCareRequestRow = (r: CareRequest): CareRequestRowVM => ({
   id: r.id,
   reference: r.reference,
+  taskCodes: r.taskCodes,
   tasks: r.taskCodes.map(describeTask),
   start: r.requestedInterval.start,
   end: r.requestedInterval.end,

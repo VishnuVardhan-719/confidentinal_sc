@@ -1,1 +1,349 @@
-{}
+{
+  "ops": {
+    "denied": {
+      "title": "You do not have access to this page",
+      "body": "Your role or organization does not include this area. If you think you should have access, ask your organization manager or contact support."
+    },
+    "notFound": {
+      "title": "We could not find that record",
+      "body": "It may have been removed, or it belongs to another organization."
+    },
+    "gated": {
+      "title": "This screen is not connected yet",
+      "body": "There is no live connection for this screen yet, so nothing is shown here. No data has been changed."
+    },
+    "unauthenticated": {
+      "title": "Your session has ended",
+      "body": "Sign in again to continue."
+    },
+    "metric": {
+      "lowerBound": "{count}+",
+      "gated": "Not connected yet",
+      "denied": "No access",
+      "error": "Could not load"
+    },
+    "workspace": {
+      "switch": "Switch organization",
+      "heading": "Your organizations",
+      "chooseTitle": "Choose an organization",
+      "chooseBody": "You work with more than one organization. Choose one to continue. Records from different organizations are never shown together.",
+      "open": "Open"
+    }
+  },
+  "workspaceLabel": "Administration",
+  "nav": {
+    "dashboard": "Overview",
+    "providers": "Provider review",
+    "coverage": "Coverage",
+    "bookings": "Bookings",
+    "users": "Admins and invites",
+    "payments": "Payments and refunds",
+    "support": "Support queue",
+    "cms": "Content",
+    "audit": "Audit log",
+    "settings": "Settings"
+  },
+  "status": {
+    "unknown": "Status not recognised",
+    "verification": {
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "underReview": "Under review",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "suspended": "Suspended"
+    },
+    "coverage": {
+      "proposed": "Proposed",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "revoked": "Revoked"
+    },
+    "payment": {
+      "notInitiated": "Not started",
+      "due": "Due",
+      "processing": "Processing",
+      "paid": "Paid",
+      "partiallyPaid": "Partly paid",
+      "disputed": "Disputed",
+      "refunded": "Refunded"
+    },
+    "refund": {
+      "requested": "Requested",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "processed": "Processed"
+    },
+    "support": {
+      "open": "Open",
+      "providerFirstLine": "With the provider",
+      "escalated": "Escalated to platform",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "admin": {
+      "invited": "Invited",
+      "active": "Active",
+      "suspended": "Suspended",
+      "revoked": "Revoked"
+    },
+    "invite": {
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    }
+  },
+  "priority": {
+    "low": "Low",
+    "normal": "Normal",
+    "high": "High",
+    "safety": "Patient safety"
+  },
+  "capability": {
+    "provider": { "verify": "Review providers" },
+    "coverage": { "verify": "Review coverage" },
+    "security": { "audit": "Read the audit log" },
+    "membership": { "admin": "Manage admins" },
+    "booking": { "operate": "Booking operations" },
+    "payment": { "read": "View payments" },
+    "refund": { "approve": "Approve refunds" },
+    "support": { "operate": "Support queue" },
+    "settings": { "read": "View settings" },
+    "content": { "edit": "Edit content", "publish": "Publish content" }
+  },
+  "scope": {
+    "global": "All organizations",
+    "organization": "One organization"
+  },
+  "category": {
+    "doctor": "Doctor",
+    "lab": "Lab",
+    "ambulance": "Scheduled ambulance",
+    "caretaker": "Caretaker"
+  },
+  "bookingException": {
+    "handoff_failed": "Sample handover failed",
+    "eligibility_blocked": "Credentials expired before the visit",
+    "provider_no_show": "Provider did not arrive",
+    "trip_interrupted": "Trip interrupted",
+    "care_interrupted": "Care visit interrupted",
+    "other": "Other exception"
+  },
+  "paymentMethod": {
+    "gateway": "Online payment",
+    "pay_after_cash": "Paid to provider in cash",
+    "pay_after_upi": "Paid to provider by UPI"
+  },
+  "reconciliation": {
+    "unreconciled": "Not reconciled",
+    "reconciled": "Reconciled",
+    "disputed": "Disputed"
+  },
+  "supportOwner": {
+    "provider": "Provider",
+    "platform": "Platform",
+    "unassigned": "Not assigned"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Feature gates as the server sees them. They change only through the approved release process, never from this screen.",
+    "gateOn": "On",
+    "gateOff": "Off",
+    "columns": { "gate": "Feature", "state": "State" },
+    "gate": {
+      "clinical": "Clinical records and lab report release",
+      "livePayments": "Live online payments",
+      "emergencyDispatch": "Emergency dispatch",
+      "pharmacy": "Pharmacy",
+      "subscriptions": "Paid memberships",
+      "gps": "Live location tracking",
+      "automatedPayouts": "Automatic payouts"
+    }
+  },
+  "dashboard": {
+    "title": "Admin overview",
+    "description": "Work waiting for you. Only areas you are assigned are shown, with counts from current records.",
+    "providerReviews": "Providers waiting for review",
+    "coverageProposals": "Coverage proposals",
+    "bookingExceptions": "Open booking exceptions",
+    "supportEscalations": "Escalated support tickets",
+    "refundRequests": "Refund requests",
+    "deniedAuditEvents": "Denied actions (last 24 hours)",
+    "allClear": "Nothing needs your action right now.",
+    "noAreasTitle": "No admin areas assigned",
+    "noAreasBody": "Your account has no admin capabilities yet. Ask an admin lead to assign them."
+  },
+  "bookings": {
+    "title": "Booking operations",
+    "description": "Look up a booking by its reference. This view is read-only: you cannot accept, edit or change a booking's status here.",
+    "searchLabel": "Booking reference",
+    "searchHint": "For example #SCV-BKG-000142",
+    "search": "Search",
+    "invalid": "Enter a valid booking reference, for example #SCV-BKG-000142.",
+    "resultTitle": "Booking {reference}",
+    "fields": {
+      "category": "Service",
+      "provider": "Provider",
+      "booking": "Booking status",
+      "payment": "Payment status",
+      "created": "Created",
+      "scheduled": "Scheduled for"
+    },
+    "exceptionsTitle": "Open exceptions",
+    "exceptionsEmptyTitle": "No open exceptions",
+    "exceptionsEmptyBody": "Booking exceptions such as failed handovers or interrupted trips appear here.",
+    "columns": { "reference": "Reference", "category": "Service", "provider": "Provider", "exception": "Exception", "raised": "Raised" }
+  },
+  "users": {
+    "title": "Admins and invites",
+    "description": "Admin access is by invitation only. You cannot change your own access.",
+    "columns": { "name": "Name", "status": "Status", "mfa": "Two-step sign-in", "grants": "Access", "actions": "Actions" },
+    "mfaOn": "On",
+    "mfaOff": "Not set up",
+    "self": "This is you",
+    "suspend": "Suspend",
+    "suspendTitle": "Suspend {name}?",
+    "suspendBody": "They lose admin access at once. Choose the reason; it is kept in the audit log.",
+    "suspendReasons": {
+      "left_organization": "Left the organization",
+      "security_concern": "Security concern",
+      "role_change": "Role changed"
+    },
+    "reasonLabel": "Reason",
+    "reasonPlaceholder": "Select a reason",
+    "reasonRequired": "Select a reason to continue.",
+    "done": "Saved. The list has been updated.",
+    "invitesTitle": "Invitations",
+    "invitesUnavailable": "Invitations could not be loaded.",
+    "inviteColumns": { "email": "Email", "access": "Access", "status": "Status", "sent": "Sent" },
+    "inviteTitle": "Invite an admin",
+    "emailLabel": "Work email",
+    "emailInvalid": "Enter a valid email address.",
+    "capabilityLabel": "Access to grant",
+    "capabilityRequired": "Choose the access to grant.",
+    "invite": "Send invitation",
+    "invited": "Invitation sent.",
+    "emptyTitle": "No admins yet",
+    "emptyBody": "Admins appear here after they accept an invitation."
+  },
+  "payments": {
+    "title": "Payments and refunds",
+    "description": "Payment records, kept separate from booking status. Amounts come from the server.",
+    "liveOff": "Live online payments are switched off. No card or UPI payment can be taken online.",
+    "refundGated": "Refund approval is not available yet. It needs an approved refund policy and a live payment account.",
+    "columns": { "reference": "Booking", "status": "Status", "due": "Due", "collected": "Collected", "outstanding": "Outstanding", "method": "Method", "reconciliation": "Reconciliation" },
+    "noMethod": "Not paid yet",
+    "testMode": "Test mode",
+    "mismatch": "Amounts do not reconcile",
+    "refundsTitle": "Refunds",
+    "refundsUnavailable": "Refunds could not be loaded.",
+    "refundColumns": { "reference": "Booking", "status": "Status", "requested": "Requested", "approved": "Approved", "policy": "Policy", "date": "Requested on" },
+    "notApproved": "Not approved",
+    "emptyTitle": "No payment records",
+    "emptyBody": "Payment records appear here once bookings have amounts due."
+  },
+  "support": {
+    "title": "Support queue",
+    "description": "Tickets by owner and status. The provider answers first; unresolved tickets are escalated to the platform.",
+    "columns": { "reference": "Ticket", "priority": "Priority", "status": "Status", "owner": "Owner", "booking": "Booking", "opened": "Opened", "lastResponse": "Last response" },
+    "none": "None",
+    "emptyTitle": "No tickets",
+    "emptyBody": "Support tickets appear here."
+  },
+  "audit": {
+    "unknown": "Not recognised",
+    "title": "Audit log",
+    "description": "Who did what and when. Secrets, contact details and health information are never shown.",
+    "filtersLabel": "Filters",
+    "categoryLabel": "Area",
+    "outcomeLabel": "Outcome",
+    "all": "All",
+    "apply": "Apply",
+    "columns": { "time": "Time", "actor": "Actor", "action": "Action", "category": "Area", "target": "Record", "outcome": "Outcome", "reason": "Reason" },
+    "outcome": { "success": "Succeeded", "denied": "Denied", "conflict": "Conflict" },
+    "category": {
+      "verification": "Verification",
+      "coverage": "Coverage",
+      "booking": "Bookings",
+      "membership": "Membership",
+      "content": "Content",
+      "payment": "Payments",
+      "support": "Support",
+      "security": "Security",
+      "settings": "Settings"
+    },
+    "actor": { "admin": "Admin", "provider_staff": "Provider staff", "patient": "Patient", "system": "System" },
+    "emptyTitle": "No events match",
+    "emptyBody": "Try a different filter."
+  },
+  "cms": {
+    "status": {
+      "unknown": "Status not recognised",
+      "draft": "Draft",
+      "inPreview": "In preview",
+      "published": "Published",
+      "archived": "Archived"
+    },
+    "publishBlocked": {
+      "consentRequired": "A story can be published only with consent evidence, or after confirming it shows no identifiable person."
+    },
+    "title": "Content",
+    "description": "Stories, FAQs and pages for the public site. Drafts go to preview, and only a publisher can publish.",
+    "newStory": "New story",
+    "newFaq": "New FAQ",
+    "newPage": "New page",
+    "columns": { "slug": "Entry", "kind": "Type", "locales": "Languages" },
+    "kind": { "story": "Story", "faq": "FAQ", "page": "Page" },
+    "missing": "Not written",
+    "unpublishedChanges": "Unpublished changes",
+    "emptyTitle": "No content yet",
+    "emptyBody": "Create a story, FAQ or page to start.",
+    "editorTitle": "Edit {slug}",
+    "newTitle": "New {kind}",
+    "back": "Back to content",
+    "localeNav": "Language versions",
+    "fields": {
+      "slug": "Address name",
+      "slugHint": "Lower-case letters, numbers and hyphens, for example how-booking-works",
+      "title": "Title",
+      "summary": "Summary",
+      "body": "Body",
+      "bodyHint": "Plain text. Use ## for a heading, - for a list, **bold**, *italic* and [text](/en/page) for links. HTML is not allowed.",
+      "question": "Question",
+      "answer": "Answer",
+      "order": "Order",
+      "consentEvidence": "Consent evidence reference",
+      "consentHint": "The ID of the signed consent record for the person in this story.",
+      "noIdentifiablePerson": "This story shows no identifiable person"
+    },
+    "errors": {
+      "required": "This is required.",
+      "too_long": "This is too long.",
+      "html_forbidden": "HTML and markup are not allowed. Use plain text.",
+      "unsafe_link": "That link is not allowed. Use a path like /en/faq or an https address.",
+      "invalid": "Check this value."
+    },
+    "save": "Save draft",
+    "saved": "Draft saved.",
+    "actions": {
+      "submit_preview": "Send to preview",
+      "return_to_draft": "Back to draft",
+      "publish": "Publish",
+      "archive": "Archive"
+    },
+    "confirm": {
+      "publishTitle": "Publish this version?",
+      "publishBody": "It replaces what the public site shows for this language.",
+      "archiveTitle": "Archive this entry?",
+      "archiveBody": "It is removed from the public site for this language."
+    },
+    "actionDone": "Saved. The page has been updated.",
+    "previewTitle": "Preview",
+    "previewLive": "This is the version the public site shows.",
+    "previewNotLive": "Not live yet. The public site shows the last published version, if any.",
+    "revisionsTitle": "Revision history",
+    "revisionLine": "Revision {revision}",
+    "noVersion": "This language has no version yet. Save a draft to create one."
+  }
+}

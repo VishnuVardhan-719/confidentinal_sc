@@ -17,6 +17,7 @@ export function createCaretakerHttpApi(): CaretakerApi {
     listServices: gated,
     listStaff: gated,
     listRequests: gated,
+    decideRequest: gated,
     listAssignments: gated,
     getAssignment: gated,
     performCareAction: gated,

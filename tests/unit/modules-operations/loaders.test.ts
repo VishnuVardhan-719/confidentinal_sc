@@ -117,12 +117,12 @@ describe("caretaker loaders", () => {
   it("shift view offers check-in only to the caregiver and replacement only to the manager", async () => {
     const cg = await loadShifts(ctx(W.caregiverA));
     if (cg.status !== "ok") throw new Error(cg.status);
-    const rows = cg.data.flatMap((g) => g.shifts);
+    const rows = cg.data.groups.flatMap((g) => g.shifts);
     expect(rows.find((s) => s.id === "fx-shift-1")?.actions).toEqual(["check_in", "absent"]);
     expect(rows.find((s) => s.id === "fx-shift-3")?.actions).toEqual([]);
     const mgr = await loadShifts(ctx(W.agencyManager));
     if (mgr.status !== "ok") throw new Error(mgr.status);
-    expect(mgr.data.flatMap((g) => g.shifts).find((s) => s.id === "fx-shift-3")?.actions).toEqual(["replace"]);
+    expect(mgr.data.groups.flatMap((g) => g.shifts).find((s) => s.id === "fx-shift-3")?.actions).toEqual(["replace"]);
   });
 });
 

@@ -19,6 +19,7 @@ export function createAmbulanceHttpApi(env: Record<string, string | undefined> =
     listCrew: gated,
     listRequests: gated,
     getRequest: gated,
+    decideRequest: gated,
     listTrips: gated,
     getTrip: gated,
     getDriverQueue: gated,

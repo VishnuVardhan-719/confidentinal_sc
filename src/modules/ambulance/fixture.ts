@@ -3,13 +3,32 @@ import { ambulanceActors, ambulanceFixtures } from "@/fixtures/operations/ambula
 import { assertFixtureAllowed, cloneFixture, createReplayCache } from "@/fixtures/operations/guard";
 import type { AmbulanceApi, TripQueue } from "./api";
 import { getEmergencyGuidance } from "./emergency";
-import { nextTripState, selectDriverQueue, TERMINAL_TRIP_STATES, toDriverTripView, tripActionDenial } from "./rules";
-import type { AmbulanceActor, DriverTripView, Trip } from "./types";
+import {
+  DECLINE_REASONS,
+  driverAssignable,
+  isQuoteStale,
+  nextTripState,
+  quoteConsistent,
+  selectDriverQueue,
+  TERMINAL_TRIP_STATES,
+  toDriverTripView,
+  tripActionDenial,
+  vehicleAssignable,
+} from "./rules";
+import type { AmbulanceActor, DriverTripView, ScheduledTransportRequest, Trip } from "./types";
+
+export type AmbulanceFixtureStore = ReturnType<typeof createAmbulanceFixtureStore>;
+
+/** Mutable synthetic state. Shared per process in fixture mode so changes survive a page refresh. */
+export function createAmbulanceFixtureStore() {
+  return cloneFixture(ambulanceFixtures);
+}
 
 export type AmbulanceFixtureOptions = {
   env?: Record<string, string | undefined>;
   actor?: AmbulanceActor;
   now?: () => Date;
+  store?: AmbulanceFixtureStore;
 };
 
 const kolkataDay = (date: Date): string =>
@@ -21,7 +40,7 @@ export function createAmbulanceFixtureApi(options: AmbulanceFixtureOptions = {})
   assertFixtureAllowed(env);
   const actor: AmbulanceActor = options.actor ?? ambulanceActors.operator;
   const now = options.now ?? (() => new Date());
-  const data = cloneFixture(ambulanceFixtures);
+  const data = options.store ?? createAmbulanceFixtureStore();
   const once = createReplayCache();
 
   const isOperator = () =>
@@ -55,6 +74,45 @@ export function createAmbulanceFixtureApi(options: AmbulanceFixtureOptions = {})
       const found = data.requests.find((r) => r.id === requestId);
       return isOperator() && found ? ok(found) : fail("not_found");
     },
+    async decideRequest(input) {
+      return once("decide", input.idempotencyKey, (): ApiResult<ScheduledTransportRequest> => {
+        if (!isOperator()) return fail("forbidden");
+        const request = data.requests.find((r) => r.id === input.requestId);
+        if (!request) return fail("not_found");
+        if (request.version !== input.expectedVersion || request.bookingState !== "requested") return fail("conflict");
+        const instant = now();
+        if (input.decision === "decline") {
+          if (!DECLINE_REASONS.includes(input.reason)) return fail("validation", { fields: { reason: "required" } });
+          request.bookingState = "declined";
+          request.version += 1;
+          return ok(cloneFixture(request));
+        }
+        if (isQuoteStale(request.quote, instant) || !request.quote || !quoteConsistent(request.quote)) return fail("conflict");
+        const vehicle = data.fleet.find((v) => v.resourceId === input.vehicleResourceId);
+        const driver = data.crew.find((c) => c.resourceId === input.driverResourceId);
+        if (!vehicle || !vehicleAssignable(vehicle, instant)) return fail("validation", { fields: { vehicleResourceId: "not_eligible" } });
+        if (!driver || !driverAssignable(driver, instant)) return fail("validation", { fields: { driverResourceId: "not_eligible" } });
+        request.bookingState = "confirmed";
+        request.version += 1;
+        data.trips.push({
+          id: `fx-trip-${request.id}`,
+          bookingId: request.id,
+          reference: request.reference,
+          providerId: request.providerId,
+          state: "assigned",
+          vehicle: { resourceId: vehicle.resourceId, label: vehicle.label, verifiedType: vehicle.verifiedType },
+          driver: { resourceId: driver.resourceId, displayName: driver.displayName },
+          pickup: request.pickup,
+          destination: request.destination,
+          window: request.window,
+          requirement: request.requirement,
+          interruption: null,
+          history: [{ state: "assigned", at: instant.toISOString() }],
+          version: 1,
+        });
+        return ok(cloneFixture(request));
+      });
+    },
     async listTrips({ queue }) {
       return isOperator() ? ok({ items: data.trips.filter((t) => inQueue(t, queue)), nextCursor: null }) : fail("forbidden");
     },
@@ -73,9 +131,16 @@ export function createAmbulanceFixtureApi(options: AmbulanceFixtureOptions = {})
     },
     async performTripAction(input) {
       return once("trip", input.idempotencyKey, (): ApiResult<DriverTripView> => {
+        // One clock reading for selection, denial and the recorded timestamp.
+        const instant = now();
         const trip = assignedTrip(input.tripId);
         if (!trip) return fail("not_found");
-        const denial = tripActionDenial(actor, trip, input.action, input.reason, now());
+        // Only the driver's CURRENT trip may be progressed (FE spec 13). Another assigned trip, even
+        // one already inside its window, is indistinguishable from a missing one and is never mutated.
+        // The check runs before the mutation, so a final milestone (destination_reached) on the
+        // current trip is still accepted even though it makes the trip terminal.
+        if (selectDriverQueue(data.trips, actor, instant).current?.tripId !== trip.id) return fail("not_found");
+        const denial = tripActionDenial(actor, trip, input.action, input.reason, instant);
         if (denial === "membership_inactive") return fail("forbidden");
         if (denial === "outside_window") return fail("conflict");
         if (denial === "not_assigned") return fail("not_found");
@@ -84,7 +149,7 @@ export function createAmbulanceFixtureApi(options: AmbulanceFixtureOptions = {})
         if (trip.version !== input.expectedVersion) return fail("conflict");
         const next = nextTripState(trip.state, input.action);
         if (next === null) return fail("conflict");
-        const at = now().toISOString();
+        const at = instant.toISOString();
         trip.state = next;
         if (input.action === "interrupt" && input.reason) trip.interruption = { reason: input.reason, recordedAt: at };
         trip.history.push({ state: next, at });

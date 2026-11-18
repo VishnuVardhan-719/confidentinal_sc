@@ -29,7 +29,8 @@ export function labRoutePermits(route: LabRoute, ws: Workspace): boolean {
   return rule.some((r) => roles.includes(r));
 }
 
-export const labPath = (locale: AppLocale, route: LabRoute): string => (route === "dashboard" ? `/${locale}/lab` : `/${locale}/lab/${route}`);
+/** Locale-prefixed path. Dashboard is `/{locale}/lab/dashboard` (matches the auth module ROLE_HOME_PATH). */
+export const labPath = (locale: AppLocale, route: LabRoute): string => `/${locale}/lab/${route}`;
 
 export function decideLabRoute(session: GuardSession, route: LabRoute, locale: AppLocale, path: string, workspaceKey: unknown): AreaAccess {
   return decideWorkspaceAccess({ session, area: "lab", requestedWorkspaceKey: workspaceKey, locale, path, permits: (ws) => labRoutePermits(route, ws) });

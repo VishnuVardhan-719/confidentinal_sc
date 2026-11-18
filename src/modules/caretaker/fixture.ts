@@ -2,13 +2,21 @@ import { fail, ok, type ApiResult } from "@/lib/api/result";
 import { careActors, caretakerFixtures } from "@/fixtures/operations/caretaker";
 import { assertFixtureAllowed, cloneFixture, createReplayCache } from "@/fixtures/operations/guard";
 import type { CaretakerApi } from "./api";
-import { careActionDenial, nextCareSubstate, nextShiftAttendance, replacementAllowed, visibleAssignments } from "./rules";
-import type { CareActor, CareAssignment, CareShift } from "./types";
+import { CARE_DECLINE_REASONS, careActionDenial, caregiverAssignable, nextCareSubstate, nextShiftAttendance, replacementAllowed, visibleAssignments } from "./rules";
+import type { CareActor, CareAssignment, CareRequest, CareShift } from "./types";
+
+export type CaretakerFixtureStore = ReturnType<typeof createCaretakerFixtureStore>;
+
+/** Mutable synthetic state. Shared per process in fixture mode so changes survive a page refresh. */
+export function createCaretakerFixtureStore() {
+  return cloneFixture(caretakerFixtures);
+}
 
 export type CaretakerFixtureOptions = {
   env?: Record<string, string | undefined>;
   actor?: CareActor;
   now?: () => Date;
+  store?: CaretakerFixtureStore;
 };
 
 /**
@@ -21,7 +29,7 @@ export function createCaretakerFixtureApi(options: CaretakerFixtureOptions = {})
   assertFixtureAllowed(env);
   const actor: CareActor = options.actor ?? careActors.agencyManager;
   const now = options.now ?? (() => new Date());
-  const data = cloneFixture(caretakerFixtures);
+  const data = options.store ?? createCaretakerFixtureStore();
   const once = createReplayCache();
 
   const active = () => actor.membershipStatus === "active";
@@ -69,6 +77,44 @@ export function createCaretakerFixtureApi(options: CaretakerFixtureOptions = {})
       return canSeeRequests()
         ? ok({ items: cloneFixture(data.requests.filter((r) => r.providerId === actor.providerId)), nextCursor: null })
         : fail("forbidden");
+    },
+    async decideRequest(input) {
+      return once("decide", input.idempotencyKey, (): ApiResult<CareRequest> => {
+        if (!canSeeRequests()) return fail("forbidden");
+        const request = data.requests.find((r) => r.id === input.requestId && r.providerId === actor.providerId);
+        if (!request) return fail("not_found");
+        if (request.version !== input.expectedVersion || request.bookingState !== "requested") return fail("conflict");
+        if (input.decision === "decline") {
+          if (!CARE_DECLINE_REASONS.includes(input.reason)) return fail("validation", { fields: { reason: "required" } });
+          request.bookingState = "declined";
+          request.version += 1;
+          return ok(cloneFixture(request));
+        }
+        const caregiver = data.staff.find(
+          (s) =>
+            s.resourceId === input.caregiverResourceId &&
+            s.agencyId === actor.agencyId &&
+            // An independent caregiver can only assign themselves.
+            (actor.kind !== "independent" || s.resourceId === actor.resourceId),
+        );
+        if (!caregiver || !caregiverAssignable(caregiver, request.taskCodes)) return fail("validation", { fields: { caregiverResourceId: "not_eligible" } });
+        request.bookingState = "confirmed";
+        request.version += 1;
+        data.assignments.push({
+          id: `fx-care-asg-${request.id}`,
+          requestId: request.id,
+          reference: request.reference,
+          providerId: request.providerId,
+          agencyId: actor.agencyId,
+          caregiver: { resourceId: caregiver.resourceId, displayName: caregiver.displayName },
+          substate: "assigned",
+          taskCodes: [...request.taskCodes],
+          interval: { ...request.requestedInterval },
+          interruption: null,
+          version: 1,
+        });
+        return ok(cloneFixture(request));
+      });
     },
     async listAssignments() {
       return active() ? ok(cloneFixture(visibleAssignments(actor, data.assignments))) : fail("forbidden");

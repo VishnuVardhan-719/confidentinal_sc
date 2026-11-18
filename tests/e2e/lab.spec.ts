@@ -26,7 +26,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe.fixme("lab manager", () => {
   test("dashboard shows real queue counts, branch status and the synthetic notice", async ({ page }) => {
-    await signInAs(page, "labManager", L);
+    await signInAs(page, "labManager", `${L}/dashboard`);
     await expectFixtureNotice(page);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.getByTestId("metric-pending")).toHaveText(/1/);

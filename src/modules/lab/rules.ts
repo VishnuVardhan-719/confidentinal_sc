@@ -1,3 +1,5 @@
+import { z } from "zod";
+import { containsMarkup, sanitizeText } from "@/modules/content/schema";
 import type {
   LabActor,
   LabCollectionAction,
@@ -168,3 +170,32 @@ export function applyReportEvent(
 }
 
 export const REPORT_STATES: readonly LabReportState[] = ["uploaded", "reviewed", "released"];
+
+// ---------------------------------------------------------------------------
+// Catalog and branch edits (manager)
+// ---------------------------------------------------------------------------
+
+/** 1 crore rupees, in paise. Proposed ceiling matching C01's interim limit order of magnitude. */
+export const MAX_CATALOG_PRICE_PAISE = 1_000_000_000;
+
+export const catalogUpdateSchema = z.strictObject({
+  pricePaise: z.number().int().min(0).max(MAX_CATALOG_PRICE_PAISE),
+  preparation: z
+    .string()
+    .transform(sanitizeText)
+    .pipe(z.string().min(1).max(500))
+    .refine((v) => !containsMarkup(v), { message: "html_forbidden" }),
+  active: z.boolean(),
+});
+export type CatalogUpdateInput = z.input<typeof catalogUpdateSchema>;
+
+/** "450", "450.5", "450.50" rupees -> integer paise without floating point. Null when invalid. */
+export function rupeesToPaise(text: string): number | null {
+  const m = /^(\d{1,8})(?:\.(\d{1,2}))?$/.exec(text.trim());
+  if (!m) return null;
+  const paise = Number(m[1]) * 100 + Number((m[2] ?? "").padEnd(2, "0"));
+  return paise <= MAX_CATALOG_PRICE_PAISE ? paise : null;
+}
+
+/** Activation needs a verified branch; deactivation is always allowed. */
+export const branchToggleAllowed = (verification: string, nextActive: boolean): boolean => !nextActive || verification === "verified";

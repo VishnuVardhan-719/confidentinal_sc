@@ -2,6 +2,7 @@ import { fail, ok } from "@/lib/api/result";
 import { metricFrom, toLoaderResult, type LoaderResult, type WorkspaceLoaderContext } from "@/modules/admin/access";
 import { belongsToWorkspace, toCareActor } from "@/modules/admin/workspace";
 import { getCaretakerApi } from "./index";
+import type { CareTaskCode } from "./types";
 import {
   toAssignmentRow,
   toCaregiverRow,
@@ -82,12 +83,34 @@ export async function loadCareStaff(ctx: WorkspaceLoaderContext): Promise<Loader
   return toLoaderResult(result.ok ? ok(result.data.map(toCaregiverRow)) : result, care.mode, (rows) => rows.length === 0);
 }
 
-export async function loadCareRequests(ctx: WorkspaceLoaderContext): Promise<LoaderResult<{ rows: CareRequestRowVM[]; nextCursor: string | null }>> {
+export type CaregiverOption = { resourceId: string; label: string; skills: CareTaskCode[] | null };
+
+/**
+ * Requests plus caregivers who may be assigned. Agency managers get verified, active staff
+ * (filtered per request by skills in the view); an independent caregiver can only assign
+ * themselves (skills checked by the server).
+ */
+export async function loadCareRequests(
+  ctx: WorkspaceLoaderContext,
+): Promise<LoaderResult<{ rows: CareRequestRowVM[]; nextCursor: string | null; caregivers: CaregiverOption[] }>> {
   const care = api(ctx);
-  const result = await care.listRequests();
+  const actor = toCareActor(ctx.workspace);
+  const [result, staff] = await Promise.all([care.listRequests(), actor.kind === "agency_manager" ? care.listStaff() : null]);
   if (!result.ok) return toLoaderResult(result, care.mode);
   if (!belongsToWorkspace(result.data.items, ctx.workspace, (r) => r.providerId)) return toLoaderResult(fail("unavailable"), care.mode);
-  return toLoaderResult(ok({ rows: result.data.items.map(toCareRequestRow), nextCursor: result.data.nextCursor }), care.mode, (d) => d.rows.length === 0);
+  const caregivers: CaregiverOption[] =
+    actor.kind === "independent" && actor.resourceId
+      ? [{ resourceId: actor.resourceId, label: ctx.workspace.displayName, skills: null }]
+      : staff && staff.ok
+        ? staff.data
+            .filter((s) => s.membershipStatus === "active" && s.credentialStatus === "verified")
+            .map((s) => ({ resourceId: s.resourceId, label: s.displayName, skills: s.skills }))
+        : [];
+  return toLoaderResult(
+    ok({ rows: result.data.items.map(toCareRequestRow), nextCursor: result.data.nextCursor, caregivers }),
+    care.mode,
+    (d) => d.rows.length === 0,
+  );
 }
 
 export async function loadAssignments(ctx: WorkspaceLoaderContext): Promise<LoaderResult<AssignmentRowVM[]>> {
@@ -111,18 +134,27 @@ export async function loadAssignmentDetail(ctx: WorkspaceLoaderContext, assignme
   );
 }
 
-/** Shift view: shifts for every assignment visible to the actor, grouped by assignment. */
-export async function loadShifts(ctx: WorkspaceLoaderContext): Promise<LoaderResult<{ assignmentId: string; reference: string; shifts: ShiftRowVM[] }[]>> {
+export type ShiftGroup = { assignmentId: string; reference: string; shifts: ShiftRowVM[] };
+
+/**
+ * Shift view: shifts for every assignment visible to the actor, grouped by assignment,
+ * plus verified active caregivers a manager may assign as replacements (server re-checks skills).
+ */
+export async function loadShifts(ctx: WorkspaceLoaderContext): Promise<LoaderResult<{ groups: ShiftGroup[]; replacements: { resourceId: string; label: string }[] }>> {
   const care = api(ctx);
   const actor = toCareActor(ctx.workspace);
-  const assignments = await care.listAssignments();
+  const [assignments, staff] = await Promise.all([care.listAssignments(), actor.kind === "agency_manager" ? care.listStaff() : null]);
   if (!assignments.ok) return toLoaderResult(assignments, care.mode);
   if (!belongsToWorkspace(assignments.data, ctx.workspace, (a) => a.providerId)) return toLoaderResult(fail("unavailable"), care.mode);
-  const groups = [];
+  const groups: ShiftGroup[] = [];
   for (const a of assignments.data) {
     const shifts = await care.listShifts({ assignmentId: a.id });
     if (!shifts.ok) return toLoaderResult(shifts, care.mode);
     if (shifts.data.length > 0) groups.push({ assignmentId: a.id, reference: a.reference, shifts: shifts.data.map((s) => toShiftRow(s, actor)) });
   }
-  return toLoaderResult(ok(groups), care.mode, (g) => g.length === 0);
+  const replacements =
+    staff && staff.ok
+      ? staff.data.filter((s) => s.membershipStatus === "active" && s.credentialStatus === "verified").map((s) => ({ resourceId: s.resourceId, label: s.displayName }))
+      : [];
+  return toLoaderResult(ok({ groups, replacements }), care.mode, (d) => d.groups.length === 0);
 }

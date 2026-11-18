@@ -194,3 +194,26 @@ describe("ambulance view models and loaders", () => {
     expect(await loadFleet({ ...ctx, env: {} })).toEqual({ status: "gated" });
   });
 });
+
+describe("ambulance manual accept/decline (fixture)", () => {
+  const AT = new Date("2026-11-20T00:00:00Z");
+  it("accepts only with a fresh quote and assignable vehicle and driver, then schedules a trip", async () => {
+    const op = createAmbulanceFixtureApi({ env: {}, actor: ambulanceActors.operator, now: () => AT });
+    const base = { decision: "accept" as const, vehicleResourceId: "fx-veh-1", driverResourceId: "fx-res-driver-a", expectedVersion: 1 };
+    expect(code(await op.decideRequest({ ...base, requestId: "fx-amb-req-1", idempotencyKey: "s" }))).toBe("conflict"); // stale quote
+    expect(code(await op.decideRequest({ ...base, requestId: "fx-amb-req-2", vehicleResourceId: "fx-veh-3", idempotencyKey: "v" }))).toBe("validation");
+    expect(code(await op.decideRequest({ ...base, requestId: "fx-amb-req-2", driverResourceId: "fx-res-driver-c", idempotencyKey: "d" }))).toBe("validation");
+    expect(data(await op.decideRequest({ ...base, requestId: "fx-amb-req-2", idempotencyKey: "ok" })).bookingState).toBe("confirmed");
+    expect(data(await op.getTrip("fx-trip-fx-amb-req-2"))).toMatchObject({ state: "assigned", vehicle: { resourceId: "fx-veh-1" }, driver: { resourceId: "fx-res-driver-a" } });
+    expect(code(await op.decideRequest({ ...base, requestId: "fx-amb-req-2", idempotencyKey: "again" }))).toBe("conflict");
+  });
+
+  it("decline needs a valid reason; drivers cannot decide requests", async () => {
+    const op = createAmbulanceFixtureApi({ env: {}, actor: ambulanceActors.operator, now: () => AT });
+    expect(code(await op.decideRequest({ requestId: "fx-amb-req-1", decision: "decline", reason: "made_up" as never, expectedVersion: 1, idempotencyKey: "x" }))).toBe("validation");
+    expect(data(await op.decideRequest({ requestId: "fx-amb-req-1", decision: "decline", reason: "provider_unavailable", expectedVersion: 1, idempotencyKey: "y" })).bookingState).toBe("declined");
+    const drv = createAmbulanceFixtureApi({ env: {}, actor: ambulanceActors.driverA, now: () => AT });
+    expect(code(await drv.decideRequest({ requestId: "fx-amb-req-2", decision: "decline", reason: "other", expectedVersion: 1, idempotencyKey: "z" }))).toBe("forbidden");
+    expect(code(await createAmbulanceHttpApi({}).decideRequest({ requestId: "r", decision: "decline", reason: "other", expectedVersion: 1, idempotencyKey: "h" }))).toBe("gated");
+  });
+});

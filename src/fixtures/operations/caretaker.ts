@@ -39,6 +39,7 @@ const staff: CaregiverProfile[] = [
   { resourceId: "fx-res-care-a", profileId: "fx-prof-care-a", displayName: "Fixture Caregiver A", agencyId: AGENCY, skills: ["companionship", "mobility_assistance", "meal_assistance"], languages: ["en", "te"], credentialStatus: "verified", membershipStatus: "active" },
   { resourceId: "fx-res-care-b", profileId: "fx-prof-care-b", displayName: "Fixture Caregiver B", agencyId: AGENCY, skills: ["companionship", "mobility_assistance", "meal_assistance", "escort_to_appointment"], languages: ["en", "hi"], credentialStatus: "verified", membershipStatus: "active" },
   { resourceId: "fx-res-care-c", profileId: "fx-prof-care-c", displayName: "Fixture Caregiver C", agencyId: AGENCY, skills: ["companionship"], languages: ["te"], credentialStatus: "pending", membershipStatus: "invited" },
+  { resourceId: "fx-res-care-indep", profileId: "fx-prof-care-indep", displayName: "Fixture Independent Caregiver", agencyId: null, skills: ["companionship", "meal_assistance"], languages: ["hi"], credentialStatus: "verified", membershipStatus: "active" },
 ];
 
 const requests: CareRequest[] = [

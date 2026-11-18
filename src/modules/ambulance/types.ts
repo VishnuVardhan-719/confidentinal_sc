@@ -147,6 +147,13 @@ export type AmbulanceActor = {
   membershipStatus: "invited" | "active" | "disabled";
 };
 
+/** B01 decline reasons (`decisionSchema.reason`). */
+export type DeclineReason = "patient_request" | "provider_unavailable" | "unable_to_service" | "other";
+
+export type RequestDecisionInput =
+  | { requestId: string; decision: "accept"; vehicleResourceId: string; driverResourceId: string; expectedVersion: number; idempotencyKey: string }
+  | { requestId: string; decision: "decline"; reason: DeclineReason; expectedVersion: number; idempotencyKey: string };
+
 export type TripActionInput = {
   tripId: string;
   action: TripAction;

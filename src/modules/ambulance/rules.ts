@@ -3,6 +3,7 @@ import type {
   AmbulanceActor,
   BookingState,
   CrewMember,
+  DeclineReason,
   DriverQueueView,
   DriverTripView,
   FleetVehicle,
@@ -114,6 +115,8 @@ export const tripCommandSchema = z.strictObject({
   expectedVersion: z.number().int().positive(),
   reason: z.enum(TRIP_INTERRUPT_REASONS).optional(),
 }).refine((v) => (v.action === "interrupt") === (v.reason !== undefined), { path: ["reason"] });
+
+export const DECLINE_REASONS = ["patient_request", "provider_unavailable", "unable_to_service", "other"] as const satisfies readonly DeclineReason[];
 
 export type TripDenial = "membership_inactive" | "not_assigned" | "invalid_transition" | "reason_required" | "outside_window";
 

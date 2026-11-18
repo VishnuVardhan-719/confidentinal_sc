@@ -15,11 +15,19 @@ import {
 } from "./rules";
 import type { AdminInvite, AdminUserSummary, CoverageArea } from "./types";
 
+export type AdminFixtureStore = ReturnType<typeof createAdminFixtureStore>;
+
+/** Mutable synthetic state. Shared per process in fixture mode so changes survive a page refresh. */
+export function createAdminFixtureStore() {
+  return { ...cloneFixture(adminFixtures), nextInvite: 1 };
+}
+
 export type AdminFixtureOptions = {
   env?: Record<string, string | undefined>;
   /** Synthetic signed-in admin the fixture "server" authorizes. */
   principal?: AdminPrincipal | null;
   now?: () => Date;
+  store?: AdminFixtureStore;
 };
 
 const maskEmail = (email: string): string => {
@@ -33,9 +41,8 @@ export function createAdminFixtureApi(options: AdminFixtureOptions = {}): AdminA
   assertFixtureAllowed(env);
   const principal = options.principal === undefined ? adminPrincipals.verifier : options.principal;
   const now = options.now ?? (() => new Date());
-  const data = cloneFixture(adminFixtures);
+  const data = options.store ?? createAdminFixtureStore();
   const once = createReplayCache();
-  let inviteSeq = 1;
 
   const allowed = (capability: AdminCapability) => can(principal, capability, { now: now() });
   const guard = <T>(capability: AdminCapability, run: () => ApiResult<T>): ApiResult<T> =>
@@ -146,7 +153,7 @@ export function createAdminFixtureApi(options: AdminFixtureOptions = {}): AdminA
         const parsed = adminInviteSchema.safeParse({ email: input.email, capabilities: input.capabilities, scope: input.scope });
         if (!parsed.success) return fail("validation");
         const invite: AdminInvite = {
-          id: `fx-inv-new-${inviteSeq++}`,
+          id: `fx-inv-new-${data.nextInvite++}`,
           maskedEmail: maskEmail(parsed.data.email),
           capabilities: parsed.data.capabilities,
           scope: parsed.data.scope,
