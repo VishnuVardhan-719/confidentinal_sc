@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { ReactElement } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
@@ -18,6 +18,7 @@ import type { PublicAccount } from "./session-seam";
  */
 export function AccountActions({ account, variant }: { account: PublicAccount | null | undefined; variant: "desktop" | "mobile" }) {
   const t = useTranslations("common");
+  const locale = useLocale();
   const pathname = usePathname();
   const mobile = variant === "mobile";
   const wrap = (node: ReactElement) => (mobile ? <SheetClose asChild>{node}</SheetClose> : node);
@@ -48,7 +49,8 @@ export function AccountActions({ account, variant }: { account: PublicAccount | 
 
   const [primary, ...others] = account.workspaces;
   const signOut = (
-    <form action={account.signOutAction} method="post">
+    <form action={account.signOutAction} method={typeof account.signOutAction === "string" ? "post" : undefined}>
+      <input type="hidden" name="locale" value={locale} />
       <Button type="submit" variant={mobile ? "secondary" : "quiet"} size={mobile ? "lg" : "md"} className={mobile ? "w-full" : undefined}>
         <LogOut aria-hidden />
         {t("account.signOut")}

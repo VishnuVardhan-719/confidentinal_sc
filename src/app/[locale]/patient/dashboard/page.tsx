@@ -1,6 +1,5 @@
 import { ArrowRight, CalendarDays, LifeBuoy, Search, UserRound } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -17,9 +16,16 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { asTk, badgeFor } from "@/components/clinical/kit";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/lib/format";
+import { AccessDenied } from "@/components/auth/access-denied";
+import { ReadinessBanner } from "@/components/onboarding/profile-glance";
+import { DEFAULT_PATIENT_ACTOR } from "@/fixtures/clinical/world";
+import { ok, fail } from "@/lib/api/result";
+import { authorizeRole, getRequestApis, isFixtureAdapter, requireRole } from "@/modules/auth/server";
+import { loadPatientProfile } from "@/modules/onboarding/loaders";
+import { decideProfileGate } from "@/modules/onboarding/profile-gate";
 import { createPatientApi } from "@/modules/patient/api";
-import { loadPatientDashboard, type DashboardBooking, type ProfilePrompt } from "@/modules/patient-dashboard/loader";
-import { authorizerFor, dashboardBookingsApi, getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { loadPatientDashboard, type DashboardBooking } from "@/modules/patient-dashboard/loader";
+import { dashboardBookingsApi } from "@/modules/patient-dashboard/session";
 import { createPaymentsApi } from "@/modules/payments/api";
 import { getRecordsApi } from "@/modules/records";
 
@@ -36,24 +42,40 @@ export default async function PatientDashboardPage({ params }: PageProps<"/[loca
   const { locale: raw } = await params;
   await connection();
   const locale = toLocale(raw);
-  const session = getPatientSession();
-  // Advisory UI guard; the module adapters and backend authorize every read independently.
-  if (session.status !== "ok") redirect(patientLoginRedirect(locale, `/${locale}/patient/dashboard`));
+  const path = `/${locale}/patient/dashboard`;
+  // fe-b guard: anonymous -> login?next, onboarding incomplete -> onboarding. Advisory UI guard;
+  // the module adapters and backend authorize every read independently.
+  const access = await requireRole("patient", { locale, path });
+  if (access.kind === "denied") return <AccessDenied reason={access.reason} />;
+  const synthetic = isFixtureAdapter();
+  // Fixture records world has one synthetic patient (REQUESTS R-FE-D-26); http uses the bearer token.
+  const fixtureActor = synthetic ? DEFAULT_PATIENT_ACTOR : undefined;
 
-  const [t, tShell, tAll] = await Promise.all([getTranslations("patient.dashboard"), getTranslations("patient.shell"), getTranslations()]);
+  const [t, tShell, tAll, { onboarding }] = await Promise.all([
+    getTranslations("patient.dashboard"),
+    getTranslations("patient.shell"),
+    getTranslations(),
+    getRequestApis(),
+  ]);
   const tk = asTk(tAll);
   const env = process.env;
-  const d = await loadPatientDashboard(
-    {
-      authorizePatient: authorizerFor(env),
-      bookings: dashboardBookingsApi(env),
-      payments: createPaymentsApi(env),
-      patient: createPatientApi(env),
-      records: getRecordsApi(env, { fixtureActor: session.fixtureActor ?? undefined }),
-    },
-    locale,
-    new Date(),
-  );
+  const now = new Date();
+  const [d, profilePage] = await Promise.all([
+    loadPatientDashboard(
+      {
+        // Re-checked per operation by the loaders.
+        authorizePatient: async () => ((await authorizeRole("patient", { locale, path })).kind === "allowed" ? ok(null) : fail("unauthenticated")),
+        bookings: dashboardBookingsApi(env),
+        payments: createPaymentsApi(env),
+        patient: createPatientApi(env),
+        records: getRecordsApi(env, { fixtureActor }),
+      },
+      locale,
+      now,
+    ),
+    loadPatientProfile(onboarding, now),
+  ]);
+  const gate = decideProfileGate(profilePage, locale);
 
   const nav: ShellNavItem[] = [
     { href: "/patient/dashboard", label: tShell("nav.dashboard"), icon: "home", primary: true },
@@ -65,11 +87,16 @@ export default async function PatientDashboardPage({ params }: PageProps<"/[loca
   return (
     <AppShell workspaceLabel={tShell("workspace")} nav={nav}>
       <div className="mx-auto grid w-full max-w-content gap-10">
-        {session.synthetic ? <FixtureNotice /> : null}
+        {synthetic ? <FixtureNotice /> : null}
         <OfflineBanner className="empty:hidden" />
         <PageHeader title={t("title")} description={t("description")} />
 
-        <ProfileSection prompt={d.profile} />
+        {/* fe-b profile gate (13 items). Load failures are never shown as complete. */}
+        {gate.kind === "complete" ? null : profilePage.kind === "ready" ? (
+          <ReadinessBanner completeness={profilePage.completeness} />
+        ) : (
+          <ProfileUnknown />
+        )}
 
         <section aria-labelledby="upcoming-bookings" className="grid gap-4">
           <div className="flex items-end justify-between gap-4">
@@ -153,50 +180,18 @@ async function BookingCard({ booking: b, tk }: { booking: DashboardBooking; tk: 
   );
 }
 
-async function ProfileSection({ prompt }: { prompt: ProfilePrompt }) {
+async function ProfileUnknown() {
   const t = await getTranslations("patient.dashboard.profile");
-  if (prompt.kind === "complete") return null;
-  if (prompt.kind === "unknown") {
-    return (
-      <Notice
-        tone="neutral"
-        title={t("unknown")}
-        action={
-          <Button asChild variant="secondary">
-            <Link href="/patient/profile">{t("open")}</Link>
-          </Button>
-        }
-      />
-    );
-  }
   return (
-    <section aria-labelledby="profile-prompt" className="grid gap-3 rounded-lg border border-border bg-surface p-5">
-      <h2 id="profile-prompt" className="text-lg font-semibold">
-        {t("title")}
-      </h2>
-      <p className="tabular">{t("progress", { done: prompt.done, total: prompt.total })}</p>
-      <progress className="h-2 w-full accent-forest" max={prompt.total} value={prompt.done} aria-label={t("progress", { done: prompt.done, total: prompt.total })} />
-      <p className="text-sm text-muted">{t("body")}</p>
-      {prompt.missing.length > 0 ? (
-        <div className="grid gap-2">
-          <h3 className="text-sm font-semibold">{t("missing")}</h3>
-          <ul className="flex flex-wrap gap-2">
-            {prompt.missing.map((m) => (
-              <li key={m.key}>
-                <Link href={m.href} className="inline-flex min-h-target items-center rounded-md border border-border px-3 text-sm underline-offset-4 hover:underline">
-                  {t(`item.${m.key}`)}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-      <div>
-        <Button asChild>
-          <Link href="/patient/profile">{t("action")}</Link>
+    <Notice
+      tone="neutral"
+      title={t("unknown")}
+      action={
+        <Button asChild variant="secondary">
+          <Link href="/patient/profile">{t("open")}</Link>
         </Button>
-      </div>
-    </section>
+      }
+    />
   );
 }
 
