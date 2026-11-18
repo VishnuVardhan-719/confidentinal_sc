@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck -- TEMPORARY: @playwright/test arrives with the fe2-a foundation merge (R-FE05-01). Remove this line then.
 import { defineConfig, devices } from "@playwright/test";
 
 /**
@@ -12,7 +10,7 @@ const PORT = Number(process.env.E2E_PORT ?? 3100);
 
 export default defineConfig({
   testDir: ".",
-  testMatch: ["auth.spec.ts", "onboarding.spec.ts", "admin-verification.spec.ts"],
+  testMatch: ["auth.spec.ts", "onboarding.spec.ts", "admin-verification.spec.ts", "profile.spec.ts", "navigation.spec.ts"],
   fullyParallel: false,
   workers: 1,
   retries: process.env.CI ? 1 : 0,
@@ -29,10 +27,11 @@ export default defineConfig({
     { name: "desktop-1280", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } } },
   ],
   webServer: {
-    command: `npx next dev --port ${PORT}`,
+    // Production build so Cache Components behave as deployed. Reuses a server already on E2E_PORT.
+    command: `npx next build && npx next start --port ${PORT}`,
     url: `http://localhost:${PORT}/en`,
     reuseExistingServer: !process.env.CI,
-    timeout: 180_000,
+    timeout: 600_000,
     env: { FRONTEND_ADAPTER: "fixture", APP_ENV: "development" },
   },
 });

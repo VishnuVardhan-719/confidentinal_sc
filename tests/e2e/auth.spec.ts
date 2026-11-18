@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck -- TEMPORARY: @playwright/test arrives with the fe2-a foundation merge (R-FE05-01). Remove this line then.
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { ACCOUNTS, COPY, FIXTURE_OTP, expectCleanUrl, expectNoPrivateBrowserStorage, signIn, signOut } from "./support/identity";
+import { ACCOUNTS, COPY, FIXTURE_OTP, emailInput, expectCleanUrl, passwordInput, expectNoPrivateBrowserStorage, signIn, signOut } from "./support/identity";
 
 /**
  * FE03/FE04 auth journeys against the SYNTHETIC fixture adapter.
@@ -38,16 +36,16 @@ test.describe.fixme("sign in", () => {
 
   test("wrong credentials show one generic message and keep the email, not the password", async ({ page }) => {
     await page.goto("/en/login");
-    await page.getByLabel(COPY.emailLabel).fill("nobody@example.invalid");
-    await page.getByLabel(COPY.passwordLabel).fill("wrong-password");
+    await emailInput(page).fill("nobody@example.invalid");
+    await passwordInput(page).fill("wrong-password");
     await page.getByRole("button", { name: COPY.signIn }).click();
     await expect(page.getByRole("alert")).toContainText(COPY.invalidCredentials);
-    await expect(page.getByLabel(COPY.emailLabel)).toHaveValue("nobody@example.invalid");
-    await expect(page.getByLabel(COPY.passwordLabel)).toHaveValue("");
+    await expect(emailInput(page)).toHaveValue("nobody@example.invalid");
+    await expect(passwordInput(page)).toHaveValue("");
   });
 
   test("restricted account cannot sign in", async ({ page }) => {
-    await signIn(page, ACCOUNTS.disabled);
+    await signIn(page, ACCOUNTS.disabled, undefined, { expectSuccess: false });
     await expect(page.getByRole("alert")).toContainText(COPY.accountRestricted);
     await expect(page).toHaveURL(/\/en\/login/);
   });
@@ -107,8 +105,8 @@ test.describe.fixme("sign up", () => {
   test("missing consent shows an error summary and focuses the first invalid field", async ({ page }) => {
     await page.goto("/en/signup");
     await page.getByRole("radio", { name: /patient/i }).check();
-    await page.getByLabel(COPY.emailLabel).fill("new.person@example.invalid");
-    await page.getByLabel(COPY.passwordLabel).fill("a-long-enough-password");
+    await emailInput(page).fill("new.person@example.invalid");
+    await passwordInput(page).fill("a-long-enough-password");
     await page.getByRole("button", { name: COPY.createAccount }).click();
     await expect(page.getByRole("alert")).toBeVisible();
     await expect(page.getByLabel(COPY.acceptTerms)).toBeFocused();
@@ -118,8 +116,8 @@ test.describe.fixme("sign up", () => {
     for (const email of [ACCOUNTS.patientComplete, "brand.new@example.invalid"]) {
       await page.goto("/en/signup");
       await page.getByRole("radio", { name: /patient/i }).check();
-      await page.getByLabel(COPY.emailLabel).fill(email);
-      await page.getByLabel(COPY.passwordLabel).fill("a-long-enough-password");
+      await emailInput(page).fill(email);
+      await passwordInput(page).fill("a-long-enough-password");
       await page.getByLabel(COPY.acceptTerms).check();
       await page.getByRole("button", { name: COPY.createAccount }).click();
       await expect(page.getByText(COPY.checkEmail)).toBeVisible();

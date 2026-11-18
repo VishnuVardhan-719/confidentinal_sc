@@ -88,11 +88,11 @@ export const DECISION_IDLE: DecisionState = { status: "idle" };
 const decisionFailure = (error: ApiError): DecisionState => {
   switch (error.code) {
     case "validation":
-      return { status: "invalid", errorKey: "admin.review.errors.checkFields", fieldErrors: fieldMessageKeys(error.fields) };
+      return { status: "invalid", errorKey: "onboarding.adminReview.errors.checkFields", fieldErrors: fieldMessageKeys(error.fields) };
     case "conflict":
-      return { status: "conflict", errorKey: "admin.review.errors.staleVersion" };
+      return { status: "conflict", errorKey: "onboarding.adminReview.errors.staleVersion" };
     case "gated":
-      return { status: "gated", errorKey: "admin.review.errors.unavailable" };
+      return { status: "gated", errorKey: "onboarding.adminReview.errors.unavailable" };
     default:
       return { status: "error", errorKey: errorKey(error) };
   }
@@ -101,7 +101,7 @@ const decisionFailure = (error: ApiError): DecisionState => {
 const needsConfirmation = (fd: FormData): DecisionState | null =>
   formChecked(fd, "confirm")
     ? null
-    : { status: "invalid", errorKey: "admin.review.errors.confirmRequired", fieldErrors: { confirm: "errors.fields.confirm_required" } };
+    : { status: "invalid", errorKey: "onboarding.adminReview.errors.confirmRequired", fieldErrors: { confirm: "errors.fields.confirm_required" } };
 
 /** Form fields: providerId, decision, reason, expectedVersion, confirm. */
 export async function runReviewDecision(api: VerificationApi, fd: FormData): Promise<DecisionState> {

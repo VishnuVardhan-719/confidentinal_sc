@@ -63,3 +63,23 @@ export async function resendOtpAction(prev: AuthFormState, fd: FormData): Promis
 export async function logoutAction(fd: FormData): Promise<void> {
   finish(await runLogout(await deps(), fd));
 }
+
+/**
+ * Single entry point for the auth forms so one `useActionState` drives the whole flow
+ * (credentials -> OTP -> verify/resend) and still works as a plain form post without JS.
+ * The `intent` field only selects the step; every step re-validates its own input.
+ */
+export async function authStepAction(prev: AuthFormState, fd: FormData): Promise<AuthFormState> {
+  switch (fd.get("intent")) {
+    case "login":
+      return loginAction(prev, fd);
+    case "signup":
+      return signupAction(prev, fd);
+    case "verify":
+      return verifyOtpAction(prev, fd);
+    case "resend":
+      return resendOtpAction(prev, fd);
+    default:
+      return prev;
+  }
+}

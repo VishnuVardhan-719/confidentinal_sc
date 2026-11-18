@@ -47,13 +47,13 @@ describe("wizard model", () => {
   it("resumes at the first missing required step and honours valid requested steps only", () => {
     const completion = patientCompletion(FIXTURE_PATIENT_DRAFT_NEW.sections);
     const resumed = buildWizard(PATIENT_STEPS, completion, "/en/patient/onboarding");
-    expect(resumed.current).toBe("medicines");
-    expect(resumed.previous).toBe("allergies");
-    expect(resumed.next).toBe("surgeries");
-    expect(resumed.position).toBe(5);
+    expect(resumed.current).toBe("measurements");
+    expect(resumed.previous).toBe("bloodGroup");
+    expect(resumed.next).toBe("allergies");
+    expect(resumed.position).toBe(4);
     expect(resumed.steps.find((s) => s.id === "allergies")?.href).toBe("/en/patient/onboarding?step=allergies");
     expect(buildWizard(PATIENT_STEPS, completion, "/en/patient/onboarding", "family").current).toBe("family");
-    expect(buildWizard(PATIENT_STEPS, completion, "/en/patient/onboarding", "<script>").current).toBe("medicines");
+    expect(buildWizard(PATIENT_STEPS, completion, "/en/patient/onboarding", "<script>").current).toBe("measurements");
   });
 
   it("maps save results to UI states", () => {
@@ -74,7 +74,7 @@ describe("patient onboarding flow", () => {
     const api = createFixtureOnboardingApi({ env: DEV, store: createFixtureOnboardingStore({ actor: "new" }), actorId: "actor" });
     const view = await loadPatientOnboarding(api, "en");
     if (view.kind !== "ready") throw new Error("expected ready");
-    expect(view.wizard.current).toBe("medicines");
+    expect(view.wizard.current).toBe("measurements");
 
     let version = view.draft.version;
     const save = async (section: string, value: unknown) => {
@@ -88,6 +88,7 @@ describe("patient onboarding flow", () => {
     expect((await runSavePatientSection(api, { section: "bogus", value: {}, expectedVersion: version, advance: false }, "en")).status).toBe("invalid");
 
     expect(await runSubmitPatientQuestionnaire(api, "en")).toMatchObject({ status: "incomplete" });
+    await save("measurements", { heightCm: 170, weightKg: 70 });
     await save("surgeries", { state: "none" });
     await save("medicalHistory", { state: "none" });
     await save("family", { state: "none" });

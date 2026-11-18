@@ -11,8 +11,8 @@ export type WorkspaceChoice = {
   key: string;
   role: Role;
   state: WorkspaceState;
-  labelKey: `common.roles.${Role}`;
-  stateLabelKey: `common.workspaceState.${WorkspaceState}`;
+  labelKey: `auth.roles.${Role}`;
+  stateLabelKey: `auth.workspaceState.${WorkspaceState}`;
   organizationName: string | null;
   providerStatus: StatusPresentation | null;
   href: string;
@@ -30,8 +30,8 @@ export function workspaceChoices(identity: Identity, locale: Locale): WorkspaceC
       key: `${w.role}:${w.providerId ?? w.membership?.organizationId ?? i}`,
       role: w.role,
       state: w.state,
-      labelKey: `common.roles.${w.role}`,
-      stateLabelKey: `common.workspaceState.${w.state}`,
+      labelKey: `auth.roles.${w.role}`,
+      stateLabelKey: `auth.workspaceState.${w.state}`,
       organizationName: w.membership?.organizationName ?? null,
       providerStatus: w.providerStatus ? presentProviderStatus(w.providerStatus) : null,
       href,

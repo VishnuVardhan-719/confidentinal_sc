@@ -25,7 +25,11 @@ function listedSection<T extends z.ZodType>(item: T, max: number) {
 }
 
 /* ---------- Account (server-derived) ---------- */
-export const accountSectionSchema = z.strictObject({ contactVerified: z.literal(true, { message: "contact_unverified" }) });
+export const accountSectionSchema = z.strictObject({
+  contactVerified: z.literal(true, { message: "contact_unverified" }),
+  /** Server says the mobile number was OTP-verified. Absent means "not verified". */
+  phoneVerified: z.boolean().optional(),
+});
 
 /* ---------- Personal ---------- */
 export const MINIMUM_SELF_ONBOARDING_AGE = 18;
@@ -59,11 +63,32 @@ export const birthSchema = z.discriminatedUnion("kind", [
   }),
 ]);
 
+export const GENDERS = ["female", "male", "other", "prefer_not_to_say"] as const;
+
+/**
+ * Pinned location, saved only when the patient explicitly confirms it. Never put in URLs,
+ * logs or analytics. `accuracyM` is the browser-reported radius (or 0 for a manual pin).
+ */
+export const pinnedLocationSchema = z.strictObject({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  accuracyM: z.number().nonnegative().max(100_000),
+  source: z.enum(["device", "manual_pin"]),
+  capturedAt: z.iso.datetime({ offset: true }),
+});
+export type PinnedLocation = z.infer<typeof pinnedLocationSchema>;
+
 export const personalSectionSchema = z.strictObject({
   fullName: shortText(120),
   birth: birthSchema,
+  /** Optional in the questionnaire; required for "Ready to book" (profile completeness). */
+  gender: z.enum(GENDERS).optional(),
+  email: z.email({ message: "email_invalid" }).max(254).optional(),
+  /** Flat / house / street. */
   addressLine1: shortText(160),
   addressLine2: optionalText(160),
+  landmark: optionalText(120),
+  location: pinnedLocationSchema.optional(),
   city: shortText(80),
   state: shortText(80),
   pinCode: pinCodeSchema,
@@ -80,6 +105,16 @@ export const bloodGroupSectionSchema = z.discriminatedUnion("state", [
   z.strictObject({ state: z.literal("known"), value: z.enum(BLOOD_GROUPS) }),
   z.strictObject({ state: z.literal("unknown") }),
 ]);
+
+/* ---------- Body measurements (health record, patient-reported) ---------- */
+export const measurementsSectionSchema = z.strictObject({
+  heightCm: z.int({ message: "height_invalid" }).min(30, { message: "height_invalid" }).max(250, { message: "height_invalid" }),
+  weightKg: z
+    .number({ message: "weight_invalid" })
+    .min(1, { message: "weight_invalid" })
+    .max(300, { message: "weight_invalid" })
+    .refine((w) => Number.isInteger(w * 10), { message: "weight_invalid" }),
+});
 
 /* ---------- Listed / None / Unknown sections ---------- */
 export const allergiesSectionSchema = listedSection(
@@ -152,6 +187,7 @@ export const patientSectionSchemas = {
   account: accountSectionSchema,
   personal: personalSectionSchema,
   bloodGroup: bloodGroupSectionSchema,
+  measurements: measurementsSectionSchema,
   allergies: allergiesSectionSchema,
   medicines: medicinesSectionSchema,
   surgeries: surgeriesSectionSchema,
@@ -179,6 +215,7 @@ export const PATIENT_STEPS: readonly StepDefinition<PatientStepId>[] = [
   { id: "account", requiredForActivation: true, labelKey: "onboarding.patient.steps.account" },
   { id: "personal", requiredForActivation: true, labelKey: "onboarding.patient.steps.personal" },
   { id: "bloodGroup", requiredForActivation: true, labelKey: "onboarding.patient.steps.bloodGroup" },
+  { id: "measurements", requiredForActivation: true, labelKey: "onboarding.patient.steps.measurements" },
   { id: "allergies", requiredForActivation: true, labelKey: "onboarding.patient.steps.allergies" },
   { id: "medicines", requiredForActivation: true, labelKey: "onboarding.patient.steps.medicines" },
   { id: "surgeries", requiredForActivation: true, labelKey: "onboarding.patient.steps.surgeries" },
@@ -192,6 +229,7 @@ export const PATIENT_STEPS: readonly StepDefinition<PatientStepId>[] = [
 export const patientQuestionnaireSchema = z.strictObject({
   personal: personalSectionSchema,
   bloodGroup: bloodGroupSectionSchema,
+  measurements: measurementsSectionSchema,
   allergies: allergiesSectionSchema,
   medicines: medicinesSectionSchema,
   surgeries: surgeriesSectionSchema,
@@ -210,6 +248,7 @@ export const patientDraftSchema = z.strictObject({
     account: accountSectionSchema.optional(),
     personal: personalSectionSchema.optional(),
     bloodGroup: bloodGroupSectionSchema.optional(),
+    measurements: measurementsSectionSchema.optional(),
     allergies: allergiesSectionSchema.optional(),
     medicines: medicinesSectionSchema.optional(),
     surgeries: surgeriesSectionSchema.optional(),
@@ -230,6 +269,7 @@ export function questionnaireFromDraft(draft: PatientDraft): PatientQuestionnair
   const parsed = patientQuestionnaireSchema.safeParse({
     personal: s.personal,
     bloodGroup: s.bloodGroup,
+    measurements: s.measurements,
     allergies: s.allergies,
     medicines: s.medicines,
     surgeries: s.surgeries,

@@ -8,6 +8,7 @@ import { expectedVersionSchema } from "@/modules/verification/schemas";
 import type { DocumentUploadTicket, OnboardingApi } from "./api";
 import { PATIENT_STEPS, patientSectionSchemas, questionnaireFromDraft, type PatientStepId } from "./patient";
 import { PROVIDER_STEPS } from "./provider";
+import { PROFILE_FORM_SECTIONS } from "./profile";
 import { patientOnboardingBase, providerIdFor, providerOnboardingBase } from "./loaders";
 import { saveStateFrom, stepHref, type SaveState } from "./wizard";
 
@@ -72,6 +73,42 @@ export async function runSubmitPatientQuestionnaire(api: OnboardingApi, locale: 
   const submitted = await api.submitPatientQuestionnaire(payload);
   if (!submitted.ok) return submitFailure(submitted);
   return { status: "redirect", to: homePath("patient", locale) };
+}
+
+/* ---------------- patient profile (health-profile form) ---------------- */
+
+const profileSaveSchema = z.strictObject({
+  sections: z.record(z.enum(PROFILE_FORM_SECTIONS), z.unknown()),
+  expectedVersion: z.int().nonnegative(),
+});
+
+/**
+ * Save the identity + health record form. Sections are saved in a fixed order with the draft
+ * version chained from each response. On the first failure it stops and reports the error with
+ * field paths prefixed by the section ("personal.fullName"), plus the latest saved version so the
+ * client can retry without a false conflict. `null` sections (unanswered) are skipped.
+ */
+export async function runSaveProfile(api: OnboardingApi, payload: unknown, locale: Locale): Promise<SaveState> {
+  const parsed = profileSaveSchema.safeParse(payload);
+  if (!parsed.success) return saveStateFrom(fail("validation", { fields: { sections: "invalid" } }), null);
+  let version = parsed.data.expectedVersion;
+  let savedAny = false;
+  for (const section of PROFILE_FORM_SECTIONS) {
+    const value = parsed.data.sections[section];
+    if (value === undefined || value === null) continue;
+    const result = await api.savePatientSection(section, value as never, version);
+    if (!result.ok) {
+      const state = saveStateFrom(result, null);
+      if (state.status === "invalid") {
+        const fieldErrors = Object.fromEntries(Object.entries(state.fieldErrors).map(([k, v]) => [`${section}.${k}`, v]));
+        return savedAny ? { ...state, fieldErrors, version } : { ...state, fieldErrors };
+      }
+      return state;
+    }
+    version = result.data.version;
+    savedAny = true;
+  }
+  return { status: "redirect", to: `/${locale}/patient/profile` };
 }
 
 /* ---------------- providers ---------------- */

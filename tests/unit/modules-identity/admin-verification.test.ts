@@ -58,7 +58,7 @@ describe("review decisions", () => {
   it("require explicit confirmation and a reason", async () => {
     const api = fresh();
     const base = { providerId: FIXTURE_IDS.labProvider, decision: "approve", reason: "Evidence checked", expectedVersion: "7" };
-    expect(await runReviewDecision(api, form(base))).toMatchObject({ status: "invalid", errorKey: "admin.review.errors.confirmRequired" });
+    expect(await runReviewDecision(api, form(base))).toMatchObject({ status: "invalid", errorKey: "onboarding.adminReview.errors.confirmRequired" });
     expect(await runReviewDecision(api, form({ ...base, confirm: "on", reason: "  " }))).toMatchObject({ status: "invalid" });
     expect(await runReviewDecision(api, form({ ...base, confirm: "on", expectedVersion: "6" }))).toMatchObject({ status: "conflict" });
     expect(await runReviewDecision(api, form({ ...base, confirm: "on" }))).toEqual({ status: "done", resultStatus: "active", version: 8 });

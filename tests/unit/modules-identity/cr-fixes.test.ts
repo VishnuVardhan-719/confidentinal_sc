@@ -129,7 +129,7 @@ describe("onboarding fixture", () => {
     if (!draft.ok) throw new Error("draft");
     const s = draft.data.sections;
     const payload = {
-      personal: s.personal!, bloodGroup: s.bloodGroup!, allergies: s.allergies!, medicines: s.medicines!,
+      personal: s.personal!, bloodGroup: s.bloodGroup!, measurements: s.measurements!, allergies: s.allergies!, medicines: s.medicines!,
       surgeries: s.surgeries!, medicalHistory: s.medicalHistory!, family: s.family!, documents: s.documents!, consent: s.review!,
     };
     expect(await api.submitPatientQuestionnaire(payload)).toEqual({ ok: false, error: { code: "validation", fields: { account: "contact_unverified" } } });

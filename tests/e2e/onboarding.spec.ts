@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck -- TEMPORARY: @playwright/test arrives with the fe2-a foundation merge (R-FE05-01). Remove this line then.
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { ACCOUNTS, COPY, expectNoPrivateBrowserStorage, signIn } from "./support/identity";

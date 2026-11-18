@@ -7,6 +7,7 @@ import {
   runCreateProvider,
   runRegisterDocument,
   runSavePatientSection,
+  runSaveProfile,
   runSaveProviderSection,
   runSubmitPatientQuestionnaire,
   runSubmitProvider,
@@ -57,6 +58,14 @@ export async function savePatientSectionAction(_prev: SaveState, payload: unknow
   if (!(await authorized("patient", locale))) return { status: "error", errorKey: "errors.forbidden" };
   const { onboarding } = await getRequestApis();
   return go(await runSavePatientSection(onboarding, body(payload), locale));
+}
+
+export async function saveProfileAction(_prev: SaveState, payload: unknown): Promise<SaveState> {
+  const locale = localeOf(payload);
+  const outcome = await authorizeRole("patient", { locale, path: `/${locale}/patient/health-profile` });
+  if (outcome.kind !== "allowed") return { status: "error", errorKey: "errors.forbidden" };
+  const { onboarding } = await getRequestApis();
+  return go(await runSaveProfile(onboarding, body(payload), locale));
 }
 
 export async function submitPatientQuestionnaireAction(_prev: SubmitState, payload: unknown): Promise<SubmitState> {

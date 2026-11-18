@@ -81,7 +81,8 @@ export function buildWizard<Id extends string>(
 export type SaveState =
   | { status: "idle" }
   | { status: "saved"; version: number }
-  | { status: "invalid"; errorKey: string; fieldErrors: Record<string, string> }
+  /** `version` is set when earlier parts of a multi-section save succeeded (use it to retry). */
+  | { status: "invalid"; errorKey: string; fieldErrors: Record<string, string>; version?: number }
   /** Draft changed elsewhere (another tab/device): reload before saving again. */
   | { status: "conflict"; errorKey: string }
   /** No backend contract yet; input stays on screen, nothing is persisted. */

@@ -113,10 +113,10 @@ describe("questionnaire completion", () => {
   it("derives completion from required sections, not a percentage", () => {
     const partial = patientCompletion(FIXTURE_PATIENT_DRAFT_NEW.sections);
     expect(partial.readyToSubmit).toBe(false);
-    expect(partial.requiredTotal).toBe(10);
+    expect(partial.requiredTotal).toBe(11);
     expect(partial.requiredComplete).toBe(4);
-    expect(partial.missingRequired).toEqual(["medicines", "surgeries", "medicalHistory", "family", "documents", "review"]);
-    expect(partial.nextStep).toBe("medicines");
+    expect(partial.missingRequired).toEqual(["measurements", "medicines", "surgeries", "medicalHistory", "family", "documents", "review"]);
+    expect(partial.nextStep).toBe("measurements");
     expect(partial).not.toHaveProperty("percent");
   });
 

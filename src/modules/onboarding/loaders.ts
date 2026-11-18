@@ -16,6 +16,7 @@ import { PROVIDER_STEPS, providerCompletion, type ProviderOnboardingDraft } from
 import type { OnboardingCompletion, StepDefinition } from "./steps";
 import { buildWizard, type WizardView } from "./wizard";
 import { providerReadiness, type ProviderReadiness } from "./readiness";
+import { profileCompleteness, profileFromDraft, type PatientProfileView, type ProfileCompleteness } from "./profile";
 
 /**
  * Server loaders for onboarding pages. Take the request-bound API and the guard's
@@ -64,6 +65,19 @@ export async function loadPatientOnboarding(
     completion,
     wizard: buildWizard(PATIENT_STEPS, completion, patientOnboardingBase(locale), requestedStep),
   };
+}
+
+/* ---------------- patient profile at a glance ---------------- */
+
+export type PatientProfilePage =
+  | { kind: "ready"; draft: PatientDraft; view: PatientProfileView; completeness: ProfileCompleteness }
+  | LoadFailure;
+
+export async function loadPatientProfile(api: OnboardingApi, now: Date = new Date()): Promise<PatientProfilePage> {
+  const result = await api.getPatientDraft();
+  if (!result.ok) return failure(result.error);
+  const view = profileFromDraft(result.data, now);
+  return { kind: "ready", draft: result.data, view, completeness: profileCompleteness(view) };
 }
 
 /* ---------------- providers ---------------- */

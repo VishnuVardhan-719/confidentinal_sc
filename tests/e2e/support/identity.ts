@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck -- TEMPORARY: @playwright/test arrives with the fe2-a foundation merge (R-FE05-01). Remove this line then.
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 /**
  * Shared helpers for identity e2e specs. Accounts are the SYNTHETIC fixture accounts in
@@ -31,6 +29,9 @@ export const COPY = {
   phoneLabel: /mobile number/i,
   otpLabel: /verification code/i,
   signIn: /^sign in$/i,
+  myWorkspace: /my workspace/i,
+  editProfile: /edit profile/i,
+  saveProfile: /save profile/i,
   signOut: /sign out/i,
   createAccount: /create account/i,
   sendCode: /send code/i,
@@ -62,16 +63,34 @@ export const COPY = {
   documentViewerGated: /document viewing is not available yet/i,
 } as const;
 
-export async function signIn(page: Page, email: string, next?: string): Promise<void> {
+/**
+ * Next keeps previously visited routes mounted but hidden (Activity), so a label or role
+ * can match more than once. Always act on the first visible match.
+ */
+export const visible = (locator: Locator): Locator => locator.filter({ visible: true }).first();
+
+/** The "Email and password" tab panel shares the label text, so target the inputs only. */
+export const emailInput = (page: Page): Locator => visible(page.getByRole("textbox", { name: COPY.emailLabel }));
+export const passwordInput = (page: Page): Locator =>
+  visible(page.getByLabel(COPY.passwordLabel).and(page.locator("input")));
+
+export async function signIn(
+  page: Page,
+  email: string,
+  next?: string,
+  { expectSuccess = true }: { expectSuccess?: boolean } = {},
+): Promise<void> {
   const url = next ? `/en/login?next=${encodeURIComponent(next)}` : "/en/login";
-  await page.goto(url);
-  await page.getByLabel(COPY.emailLabel).fill(email);
-  await page.getByLabel(COPY.passwordLabel).fill("fixture-password");
-  await page.getByRole("button", { name: COPY.signIn }).click();
+  await page.goto(url, { waitUntil: "domcontentloaded" });
+  await emailInput(page).fill(email);
+  await passwordInput(page).fill("fixture-password");
+  await visible(page.getByRole("button", { name: COPY.signIn })).click();
+  // Wait for the server action to set the session cookie and redirect before navigating on.
+  if (expectSuccess) await page.waitForURL((u) => !u.pathname.endsWith("/login"));
 }
 
 export async function signOut(page: Page): Promise<void> {
-  await page.getByRole("button", { name: COPY.signOut }).click();
+  await visible(page.getByRole("button", { name: COPY.signOut })).click();
   await expect(page).toHaveURL(/\/en\/login\?reason=signed_out/);
 }
 
