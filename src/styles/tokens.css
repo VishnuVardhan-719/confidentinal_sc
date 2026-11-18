@@ -1,0 +1,85 @@
+/*
+ * SureCure Visit design tokens.
+ * Base palette from DESIGN.md (pending client sign-off). Derived tokens are tints/shades of that palette.
+ * Contrast pairs are asserted in tests/unit/ui-contrast.test.ts — update both together.
+ * Light theme only (FRONTEND_MASTER section 4).
+ */
+:root {
+  /* DESIGN.md base palette */
+  --scv-forest: #0f5f59;
+  --scv-teal: #0a857c;
+  --scv-ink: #17282b;
+  --scv-paper: #faf8f2;
+  --scv-mist: #e9f3f0;
+  --scv-warning: #b36d20;
+
+  /* Derived semantic tokens */
+  --scv-surface: #ffffff;
+  --scv-paper-deep: #f1ede2;
+  --scv-forest-strong: #0b4743;
+  --scv-forest-soft: #d5e8e3;
+  --scv-text-muted: #4a5b5e;
+  --scv-text-on-forest: #ffffff;
+  --scv-text-on-forest-muted: #cfe4df;
+  --scv-border: #ddd8ca;
+  --scv-border-strong: #7c8a8b;
+  --scv-focus: #0a857c;
+  --scv-warning-text: #85500f;
+  --scv-warning-surface: #fbf1e3;
+  --scv-danger: #a3302a;
+  --scv-danger-strong: #86251f;
+  --scv-danger-surface: #fbeceb;
+  --scv-success: #2b6a3d;
+  --scv-success-surface: #e8f3ea;
+  --scv-info: #1d5876;
+  --scv-info-surface: #e7f0f5;
+  --scv-disabled-surface: #ebe8df;
+  --scv-disabled-text: #5f6b6c;
+  --scv-selection: #cfe6e1;
+
+  /* Type scale (rem; 16px base). Display sizes are clamped for 360–1440px viewports. */
+  --scv-text-xs: 0.8125rem; /* 13 */
+  --scv-text-sm: 0.875rem; /* 14 */
+  --scv-text-base: 1rem; /* 16 */
+  --scv-text-lg: 1.125rem; /* 18 */
+  --scv-text-xl: 1.375rem; /* 22 */
+  --scv-text-2xl: clamp(1.625rem, 1.3rem + 1.2vw, 2rem);
+  --scv-text-3xl: clamp(1.75rem, 1.2rem + 2vw, 2.5rem);
+  --scv-text-display: clamp(2.25rem, 1.2rem + 4.2vw, 4.25rem);
+
+  /* Spacing (4/8 system) */
+  --scv-space-1: 0.25rem;
+  --scv-space-2: 0.5rem;
+  --scv-space-3: 0.75rem;
+  --scv-space-4: 1rem;
+  --scv-space-6: 1.5rem;
+  --scv-space-8: 2rem;
+  --scv-space-12: 3rem;
+  --scv-space-16: 4rem;
+  --scv-space-24: 6rem;
+
+  /* Radius, elevation, layout */
+  --scv-radius-sm: 0.5rem;
+  --scv-radius-md: 0.75rem;
+  --scv-radius-lg: 1rem;
+  --scv-shadow-raised: 0 1px 2px rgb(23 40 43 / 0.06), 0 6px 20px -6px rgb(23 40 43 / 0.14);
+  --scv-shadow-overlay: 0 4px 8px rgb(23 40 43 / 0.08), 0 24px 48px -12px rgb(23 40 43 / 0.28);
+  --scv-content-max: 78rem; /* 1248px */
+  --scv-form-max: 46rem;
+  --scv-sidebar: 16rem;
+  --scv-target: 2.75rem; /* 44px touch target */
+
+  /* Motion */
+  --scv-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --scv-duration-fast: 140ms;
+  --scv-duration: 240ms;
+  --scv-duration-slow: 600ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --scv-duration-fast: 0ms;
+    --scv-duration: 0ms;
+    --scv-duration-slow: 0ms;
+  }
+}

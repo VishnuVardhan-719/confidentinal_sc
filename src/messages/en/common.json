@@ -1,0 +1,104 @@
+{
+  "brand": "SureCure Visit",
+  "homeLink": "Home",
+  "meta": {
+    "defaultTitle": "SureCure Visit: verified healthcare at home",
+    "titleTemplate": "%s · SureCure Visit",
+    "defaultDescription": "Find verified doctors, lab sample collection, scheduled ambulance transport and caretakers who serve your PIN code. You choose the provider; they confirm your request."
+  },
+  "nav": {
+    "services": "Services",
+    "howItWorks": "How it works",
+    "about": "About",
+    "stories": "Stories",
+    "emergency": "Emergency",
+    "emergencyLong": "Emergency? Call 112",
+    "location": "Find care by PIN",
+    "menu": "Menu"
+  },
+  "services": {
+    "doctors": { "label": "Doctor home visits", "short": "A doctor consults at your home" },
+    "labTests": { "label": "Lab tests", "short": "Samples collected at home" },
+    "ambulances": { "label": "Scheduled ambulance", "short": "Planned patient transport" },
+    "caretakers": { "label": "Caretakers", "short": "Support with daily care" }
+  },
+  "actions": {
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "retry": "Try again",
+    "retrying": "Trying again…",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "working": "Please wait…",
+    "goHome": "Go to the home page"
+  },
+  "locales": {
+    "en": "English",
+    "te": "తెలుగు",
+    "hi": "हिन्दी"
+  },
+  "footer": {
+    "tagline": "A marketplace for home healthcare. You choose a verified provider who serves your area, and they confirm your request.",
+    "emergency": "Emergency? Call 112",
+    "identity": "SureCure Visit · surecurevisit.in. Company details will be published here once confirmed.",
+    "columns": {
+      "services": "Services",
+      "company": "SureCure Visit",
+      "help": "Help",
+      "legal": "Legal (drafts)"
+    },
+    "links": {
+      "about": "About us",
+      "ourStory": "Our story",
+      "stories": "Stories",
+      "howItWorks": "How it works",
+      "memberships": "Memberships",
+      "faq": "FAQ",
+      "contact": "Contact",
+      "emergencyGuidance": "Emergency guidance",
+      "becomeProvider": "Become a provider",
+      "privacy": "Privacy notice (draft)",
+      "terms": "Terms of use (draft)",
+      "refunds": "Cancellations and refunds (draft)"
+    }
+  },
+  "gate": {
+    "title": "{feature} is not available yet",
+    "body": "This part of SureCure Visit is switched off until its safety, legal and operational checks are complete. Nothing on this page will start it.",
+    "features": {
+      "clinical": "Clinical records",
+      "livePayments": "Online payment",
+      "emergencyDispatch": "Emergency dispatch",
+      "pharmacy": "Pharmacy",
+      "subscriptions": "Paid memberships",
+      "gps": "Live location tracking",
+      "automatedPayouts": "Automatic payouts"
+    }
+  },
+  "fixture": {
+    "title": "Synthetic data, not live",
+    "body": "Everything on this screen is sample data for testing. No real people, providers, bookings or payments are shown."
+  },
+  "offline": {
+    "title": "You are offline",
+    "body": "Pages you already opened may be out of date. Nothing you do will be sent until you are back online, so check again after reconnecting."
+  },
+  "errorSummary": {
+    "title": "{count, plural, one {Fix 1 problem to continue} other {Fix # problems to continue}}"
+  },
+  "field": {
+    "optional": "(optional)"
+  },
+  "phone": {
+    "format": "10-digit Indian mobile number"
+  },
+  "stepper": {
+    "label": "Progress",
+    "progress": "Step {current} of {total}",
+    "state": {
+      "complete": "completed",
+      "current": "current step",
+      "upcoming": "not started"
+    }
+  }
+}

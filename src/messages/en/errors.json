@@ -1,0 +1,28 @@
+{
+  "inlineTitle": "Something went wrong",
+  "api": {
+    "unauthenticated": "Your session has ended. Sign in again to continue.",
+    "forbidden": "You do not have access to this. If you think you should, contact support.",
+    "not_found": "We could not find what you were looking for.",
+    "conflict": "This changed while you were working on it. Reload to see the latest version, then try again.",
+    "validation": "Some details need correcting. Check the highlighted fields.",
+    "rate_limited": "Too many attempts. Wait a little and try again.",
+    "unavailable": "We could not reach SureCure Visit. Check your connection and try again.",
+    "gated": "This feature is not available yet.",
+    "generic": "Something went wrong on our side. Try again in a moment."
+  },
+  "notFound": {
+    "metaTitle": "Page not found",
+    "title": "We could not find that page",
+    "body": "The link may be out of date, or the page may not be published yet.",
+    "home": "Go to the home page",
+    "help": "Read the FAQ"
+  },
+  "boundary": {
+    "title": "This page did not load",
+    "body": "Something went wrong while loading this page. Your information has not been changed.",
+    "retry": "Try again",
+    "home": "Go to the home page",
+    "reference": "Reference: {digest}"
+  }
+}

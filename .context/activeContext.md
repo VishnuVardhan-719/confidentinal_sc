@@ -66,3 +66,9 @@ Owner rules: no commit/push unless asked (initial commit was approved). Codex he
 - Investigating reconnect authorization retry, stale keep-local conflict review, amendment recovery identity/content and missing session refresh. Reproduction probes will run from current directory, never sibling worktrees.
 - Completed: four findings (amendment-content/intent recovery P1; reconnect retry authorization P2; stale keep-local review P2; missing refresh flow P2). Three clinical source probes reproduced; identity source-search backed. Exact requested scratch report written/byte-verified. ROUTES.md has 121 unique catalogue routes + six root aliases, locale/role/org/resource/feature gates, and readiness promotion rules. All pages pending rather than falsely FIXTURE-ready.
 - Validation: typecheck exit0; Vitest14files/175tests pass; probe ESM conversion fixes lint require-import violations; final lint rerun completed exit0, zero warnings/errors. Sibling source untouched. No commits/pushes.
+
+# Active context (2026-11-18, FE v2 restart)
+Owner rejected the old demo frontend (preserved on wip/frontend-pause-2026-11-18). Fresh build from develop per docs/FRONTEND_MASTER.md. Conventions: docs/frontend/CONVENTIONS.md.
+Team (herdr terminals): t2d fe-a Kiro (worktree fe2-a, feat/fe2-a: FE01+FE02 foundation+public), t2f fe-b Kiro (fe2-b: identity/onboarding data layer), t2g fe-c Codex (fe2-c: marketplace data layer). Lead = Claude (commits, integration, review). Task files: C:/Users/Yashwanth/.claude-scratch-tasks/FE-{A,B,C}.md. Approval loop: .claude-scratch-approve.sh t2d t2f t2g.
+Base commit 3174196 (feat/fe2-a). Backend PRs #1-#5 unmerged; adapters: http (real contracts) + fixture (labelled, blocked when APP_ENV=production).
+Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash (C), doctor/lab/ambulance/caretaker/admin dashboards, clinical editor, payments/support, i18n/a11y/e2e, adversarial review.
