@@ -30,6 +30,7 @@ import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle, SheetTri
 import { Link, usePathname } from "@/i18n/navigation";
 import { BrandLogo } from "./brand-logo";
 import { LocaleSwitcher } from "./locale-switcher";
+import { isActivePath } from "./nav-match";
 import { MAIN_CONTENT_ID } from "./skip-link";
 
 const ICONS = {
@@ -66,11 +67,6 @@ export type ShellNavItem = {
   /** Server-derived count only (e.g. unread). Never fabricated. */
   count?: number;
 };
-
-export function isActivePath(pathname: string, href: string, exact = false): boolean {
-  if (exact) return pathname === href;
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
 
 /**
  * Authenticated workspace shell. Role pages supply nav config; authorization is enforced on the
