@@ -44,3 +44,15 @@ Change the table row to `reviewed by <name/role>, <date>` and list any strings c
 
 ## `booking` namespace (fe-c2, 2026-11-18): te unreviewed, hi unreviewed
 Doctor search, filters, LocationPicker, booking gate. Review first: `booking.search.symptoms.*` + `symptomHint` (clinical wording), `booking.gate.consentLabel/consentHint/healthUnverified` (consent), `booking.location.consent`, `booking.card.manualAcceptance`, `booking.profile.feeNote`.
+
+## Operations namespaces (Kiro E, FE13-FE17)
+
+| Namespace | te | hi | Priority notes |
+|---|---|---|---|
+| `lab` | unreviewed | unreviewed | Collection/report status wording, failure reasons, report release confirmations |
+| `admin` (ops kit; admin/CMS pages to follow) | unreviewed | unreviewed | Access denied, not-connected, organization switcher |
+
+Review first: `lab.status.collection.processingHandoff` must never read as "report ready" (S01-Q08); `lab.reports.*` release wording; `lab.failure.*` must not blame the patient.
+| `ambulance` | unreviewed | unreviewed | Emergency/112 wording (`ambulance.emergency.*`) needs fluent and safety review; no ETA wording allowed |
+| `caretaker` | unreviewed | unreviewed | Non-clinical scope note (`caretaker.scopeNote`), task names, recurring-plan gate |
+| `admin` (all pages incl. CMS) | unreviewed | unreviewed | Payments/refund gating wording, consent-gate wording (`admin.cms.publishBlocked.*`) |

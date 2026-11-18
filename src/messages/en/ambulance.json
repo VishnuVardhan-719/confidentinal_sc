@@ -1,1 +1,246 @@
-{}
+{
+  "workspaceLabel": "Scheduled transport",
+  "nav": {
+    "dashboard": "Overview",
+    "fleet": "Fleet",
+    "crew": "Crew",
+    "availability": "Availability",
+    "requests": "Requests",
+    "trips": "Trips",
+    "driver": "My trip",
+    "billing": "Billing",
+    "support": "Support",
+    "emergency": "Emergency"
+  },
+  "status": {
+    "unknown": "Status not recognised",
+    "trip": {
+      "assigned": "Trip scheduled",
+      "enRoute": "Driver has set off",
+      "arrived": "Driver is at the pickup address",
+      "pickedUp": "Trip in progress",
+      "destinationReached": "Reached destination",
+      "interrupted": "Trip could not be completed",
+      "cancelled": "Cancelled",
+      "noShow": "Marked as no-show after review"
+    },
+    "credential": {
+      "pending": "Verification pending",
+      "verified": "Verified",
+      "rejected": "Not accepted",
+      "expired": "Expired"
+    },
+    "availability": {
+      "available": "Available",
+      "unavailable": "Unavailable"
+    },
+    "quote": {
+      "current": "Quote valid",
+      "stale": "Quote expired, re-quote needed"
+    }
+  },
+  "vehicleType": {
+    "basicTransport": "Basic patient transport",
+    "wheelchairAccessible": "Wheelchair accessible",
+    "stretcherCapable": "Stretcher capable",
+    "notVerified": "Type not verified"
+  },
+  "requirement": {
+    "seated": "Seated",
+    "wheelchair": "Wheelchair",
+    "stretcher": "Stretcher"
+  },
+  "interrupt": {
+    "patient_not_present": "Patient not present",
+    "vehicle_breakdown": "Vehicle breakdown",
+    "unsafe_conditions": "Unsafe conditions",
+    "requirement_mismatch": "Vehicle does not suit the patient's needs",
+    "medical_emergency_redirected": "Medical emergency: 112 called",
+    "driver_unable": "Driver unable to continue"
+  },
+  "decline": {
+    "patient_request": "Patient asked to cancel",
+    "provider_unavailable": "No vehicle or driver available",
+    "unable_to_service": "Cannot serve this trip",
+    "other": "Other reason"
+  },
+  "emergency": {
+    "call112": "In an emergency, call 112 now. Do not wait for a booking.",
+    "title": "Emergency",
+    "dispatchUnavailable": "Emergency dispatch is not available on SureCure Visit.",
+    "body": "This service only handles planned, non-emergency transport. Nobody on the platform watches for emergencies or sends ambulances. If someone may be in danger, call 112 immediately.",
+    "callButton": "Call 112"
+  },
+  "dashboard": {
+    "title": "Transport overview",
+    "description": "Scheduled, non-emergency trips for {name}. Every number comes from current records.",
+    "operatorSection": "Operations",
+    "metrics": {
+      "pendingRequests": "Requests to decide",
+      "todayTrips": "Trips today",
+      "assignableVehicles": "Vehicles ready to assign",
+      "assignableDrivers": "Drivers ready to assign",
+      "laterTrips": "Later assigned trips"
+    },
+    "expiringTitle": "Credentials expiring within 30 days",
+    "expiringNone": "No vehicle or driver credentials expire in the next 30 days.",
+    "expiringUnavailable": "Credential expiry could not be checked.",
+    "expiredDays": "Expired",
+    "daysLeft": "{count, plural, one {1 day left} other {# days left}}",
+    "driverSection": "Your trip",
+    "noCurrentTrip": "You have no trip right now."
+  },
+  "fleet": {
+    "title": "Fleet",
+    "description": "Vehicles, their verified type and when their permits expire. Only verified, unexpired vehicles can be assigned.",
+    "columns": {
+      "label": "Vehicle",
+      "registration": "Registration",
+      "type": "Verified type",
+      "verification": "Verification",
+      "expiry": "Evidence expires",
+      "availability": "Availability",
+      "base": "Base"
+    },
+    "emptyTitle": "No vehicles yet",
+    "emptyBody": "Vehicles added during onboarding appear here after review."
+  },
+  "crew": {
+    "title": "Crew",
+    "description": "Drivers, their licence status and expiry. Only verified, unexpired, available drivers can be assigned.",
+    "columns": {
+      "name": "Driver",
+      "licence": "Licence",
+      "expiry": "Licence expires",
+      "availability": "Availability",
+      "assignable": "Can be assigned"
+    },
+    "yes": "Yes",
+    "no": "No",
+    "emptyTitle": "No drivers yet",
+    "emptyBody": "Drivers appear here once they accept your organization's invitation."
+  },
+  "availability": {
+    "title": "Availability",
+    "description": "Which vehicles and drivers can take a trip now. This comes from verification and availability records only.",
+    "vehiclesTitle": "Vehicles",
+    "crewTitle": "Drivers",
+    "ready": "Ready to assign",
+    "notReady": "Not assignable",
+    "emptyTitle": "No vehicles or drivers yet",
+    "emptyBody": "Add vehicles and invite drivers during onboarding."
+  },
+  "requests": {
+    "title": "Requests",
+    "description": "Scheduled transport requests. Accept only with a fresh quote and an assignable vehicle and driver; nothing is accepted automatically.",
+    "columns": {
+      "reference": "Reference",
+      "pickup": "Pickup",
+      "destination": "Destination",
+      "window": "Pickup window",
+      "requirement": "Needs",
+      "quote": "Quote",
+      "actions": "Decision"
+    },
+    "quoteBreakdown": "Base {base} + distance {distance} ({km} km)",
+    "quoteFees": "+ fees {fees}",
+    "noQuote": "No quote",
+    "blocked": {
+      "not_requested": "Already decided",
+      "quote_missing": "No quote yet",
+      "quote_stale": "Quote expired: re-quote before accepting",
+      "quote_inconsistent": "Quote does not add up: contact support",
+      "no_vehicle": "No assignable vehicle",
+      "no_driver": "No assignable driver"
+    },
+    "accept": "Accept",
+    "acceptTitle": "Accept {reference}",
+    "acceptBody": "Choose the vehicle and driver for this trip. Both are reserved for the pickup window.",
+    "vehicleLabel": "Vehicle",
+    "driverLabel": "Driver",
+    "selectPlaceholder": "Select",
+    "vehicleRequired": "Choose a vehicle.",
+    "driverRequired": "Choose a driver.",
+    "confirmAccept": "Accept and assign",
+    "accepted": "Accepted. The trip has been scheduled.",
+    "decline": "Decline",
+    "declineTitle": "Decline {reference}?",
+    "declineBody": "The patient is told the request was declined. Choose the reason.",
+    "declined": "Declined. The list has been updated.",
+    "reasonLabel": "Reason",
+    "reasonPlaceholder": "Select a reason",
+    "reasonRequired": "Select a reason to continue.",
+    "emptyTitle": "No requests",
+    "emptyBody": "New scheduled transport requests appear here."
+  },
+  "trips": {
+    "title": "Trips",
+    "description": "Accepted trips. Only the assigned driver records progress; there is no location tracking or arrival estimate.",
+    "queues": {
+      "today": "Today",
+      "upcoming": "Upcoming",
+      "exceptions": "Exceptions"
+    },
+    "queueNav": "Trip queues",
+    "columns": {
+      "reference": "Reference",
+      "window": "Pickup window",
+      "vehicle": "Vehicle",
+      "driver": "Driver",
+      "status": "Status"
+    },
+    "emptyTitle": "No trips in this queue",
+    "emptyBody": "Trips appear here after you accept a request."
+  },
+  "tripDetail": {
+    "back": "Back to trips",
+    "title": "Trip {reference}",
+    "fields": {
+      "status": "Status",
+      "window": "Pickup window",
+      "pickup": "Pickup",
+      "destination": "Destination",
+      "requirement": "Needs",
+      "vehicle": "Vehicle",
+      "vehicleType": "Verified type",
+      "driver": "Driver",
+      "interruption": "Reason recorded"
+    },
+    "driverOnly": "Trip progress is recorded by the assigned driver only.",
+    "historyTitle": "Status history"
+  },
+  "driver": {
+    "title": "My trip",
+    "description": "Your current assigned trip. Later trips appear here when they are due.",
+    "laterCount": "{count, plural, =0 {No later trips assigned.} one {1 later trip assigned.} other {# later trips assigned.}}",
+    "noTripTitle": "No trip right now",
+    "noTripBody": "When an assigned trip is due, its pickup and destination appear here.",
+    "fields": {
+      "window": "Pickup window",
+      "pickup": "Pickup",
+      "destination": "Destination",
+      "requirement": "Needs",
+      "vehicle": "Vehicle"
+    },
+    "actions": {
+      "en_route": "I have set off",
+      "arrived": "Arrived at pickup",
+      "picked_up": "Patient on board",
+      "destination_reached": "Reached destination"
+    },
+    "confirmTitle": "{action}?",
+    "confirmBody": "This updates the trip status for the patient and your operator.",
+    "interrupt": "Report a problem",
+    "interruptTitle": "End this trip because of a problem?",
+    "interruptBody": "The trip ends and your operator is told. If anyone is in danger, call 112 first.",
+    "done": "Saved. Your trip has been updated."
+  },
+  "billing": {
+    "title": "Billing",
+    "body": "Trip payments and settlements are not connected yet. Pay-after collections will be recorded here once the payment contract is approved."
+  },
+  "support": {
+    "title": "Support",
+    "body": "Support tickets for your trips are not connected yet. In an emergency, call 112."
+  }
+}

@@ -1,1 +1,285 @@
-{}
+{
+  "workspaceLabel": "Laboratory",
+  "nav": {
+    "dashboard": "Overview",
+    "branches": "Branches",
+    "catalog": "Tests and packages",
+    "staff": "Staff",
+    "orders": "Orders",
+    "collections": "My collections",
+    "reports": "Reports",
+    "billing": "Billing",
+    "support": "Support"
+  },
+  "status": {
+    "unknown": "Status not recognised",
+    "collection": {
+      "scheduled": "Collection scheduled",
+      "collecting": "Collection in progress",
+      "collected": "Sample collected",
+      "processingHandoff": "Collection/processing done",
+      "collectionFailed": "Collection could not be completed",
+      "handoffFailed": "Sample could not be handed over"
+    },
+    "order": {
+      "requested": "Waiting for your decision",
+      "accepted": "Accepted",
+      "declined": "Declined",
+      "expired": "Request expired",
+      "cancelled": "Cancelled",
+      "noShow": "Marked as no-show"
+    },
+    "report": {
+      "uploaded": "Uploaded, not reviewed",
+      "reviewed": "Reviewed, not released",
+      "released": "Released to patient"
+    },
+    "credential": {
+      "pending": "Verification pending",
+      "verified": "Verified",
+      "rejected": "Not accepted",
+      "expired": "Expired"
+    },
+    "membership": {
+      "invited": "Invited",
+      "active": "Active",
+      "disabled": "Disabled"
+    },
+    "catalog": {
+      "active": "Offered",
+      "inactive": "Not offered"
+    }
+  },
+  "role": {
+    "manager": "Manager",
+    "collector": "Sample collector",
+    "reviewer": "Report reviewer"
+  },
+  "specimen": {
+    "blood": "Blood",
+    "urine": "Urine",
+    "stool": "Stool",
+    "swab": "Swab",
+    "other": "Other"
+  },
+  "collectionType": {
+    "home": "Home collection",
+    "branch": "At the branch"
+  },
+  "failure": {
+    "patient_unavailable": "Patient not available",
+    "preparation_not_followed": "Preparation not followed (for example fasting)",
+    "address_not_found": "Address could not be found",
+    "sample_unusable": "Sample could not be used",
+    "technician_unable": "Collector unable to attend"
+  },
+  "reports": {
+    "title": "Reports",
+    "description": "Review and release lab reports. Only an authorized reviewer can release, and never the person who uploaded the file.",
+    "privateNote": "Report files are private. Patients get a notice without medical details only after release. Payment never releases a report.",
+    "columns": {
+      "order": "Order",
+      "version": "File",
+      "uploaded": "Uploaded",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "version": "Version {n}",
+    "review": "Mark reviewed",
+    "reviewConfirmTitle": "Mark this report as reviewed?",
+    "reviewConfirmBody": "Confirm you have checked report version {n} for order {reference}. It will not be visible to the patient until it is released.",
+    "release": "Release report",
+    "releaseConfirmTitle": "Release this report to the patient?",
+    "releaseConfirmBody": "Report version {n} for order {reference} will become visible to the patient. This cannot be undone from this screen.",
+    "done": "Saved. The list has been updated.",
+    "emptyTitle": "No reports waiting",
+    "emptyBody": "Reports appear here after a file is uploaded for a completed collection.",
+    "blocked": {
+      "gate_off": "Report release is not switched on yet.",
+      "membership_inactive": "Your membership is not active.",
+      "wrong_provider": "This report belongs to another organization.",
+      "not_reviewer": "Only a report reviewer can do this.",
+      "self_review": "The person who uploaded the file cannot review it.",
+      "invalid_state": "Review the report before releasing it."
+    }
+  },
+  "dashboard": {
+    "title": "Lab overview",
+    "description": "Work for {name}. Every number comes from current records.",
+    "metrics": {
+      "today": "Collections today",
+      "pending": "Requests to decide",
+      "processing": "In processing",
+      "exceptions": "Exceptions",
+      "assigned": "Your assigned collections",
+      "awaitingReview": "Reports to review",
+      "awaitingRelease": "Reports to release"
+    },
+    "branchesTitle": "Branches",
+    "branchesUnavailable": "Branch details could not be loaded.",
+    "managerSection": "Orders",
+    "collectorSection": "Collections",
+    "reviewerSection": "Reports"
+  },
+  "branches": {
+    "title": "Branches",
+    "description": "Branch addresses, opening hours, home collection PIN codes and verification.",
+    "columns": {
+      "name": "Branch",
+      "address": "Area",
+      "coverage": "Home collection PINs",
+      "verification": "Verification",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "noCoverage": "No home collection",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "activateConfirmTitle": "Activate {name}?",
+    "activateConfirmBody": "Patients may be able to request collections from this branch once it is active.",
+    "deactivateConfirmTitle": "Deactivate {name}?",
+    "deactivateConfirmBody": "New requests stop for this branch. Accepted work is not cancelled.",
+    "activationNote": "Only verified branches can be activated.",
+    "done": "Saved. The list has been updated.",
+    "emptyTitle": "No branches yet",
+    "emptyBody": "Branches added during onboarding appear here after they are saved."
+  },
+  "catalog": {
+    "title": "Tests and packages",
+    "description": "What you offer, the preparation patients must follow and your price. Prices are checked by the server.",
+    "columns": {
+      "name": "Test or package",
+      "kind": "Type",
+      "specimen": "Sample",
+      "preparation": "Preparation",
+      "price": "Price",
+      "collection": "Collection",
+      "turnaround": "Turnaround",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "kind": {
+      "test": "Test",
+      "package": "Package of {count}"
+    },
+    "turnaroundHidden": "Not shown to patients",
+    "turnaroundHours": "{hours} hours",
+    "edit": "Edit",
+    "editTitle": "Edit {name}",
+    "priceLabel": "Price in rupees",
+    "priceHint": "Whole rupees and paise, for example 450.00",
+    "preparationLabel": "Preparation instructions",
+    "preparationHint": "Plain text only. Patients see this before booking.",
+    "activeLabel": "Offer this to patients",
+    "save": "Save changes",
+    "saved": "Saved. The catalog has been updated.",
+    "priceInvalid": "Enter a price between 0 and 1,00,00,000 rupees with up to 2 decimals.",
+    "preparationInvalid": "Enter preparation instructions as plain text, up to 500 characters.",
+    "emptyTitle": "No tests or packages yet",
+    "emptyBody": "Add tests during onboarding. They appear here once saved."
+  },
+  "staff": {
+    "title": "Staff",
+    "description": "People in your organization, their roles and branches. Collectors only see the jobs assigned to them.",
+    "columns": {
+      "name": "Name",
+      "roles": "Roles",
+      "branches": "Branches",
+      "membership": "Membership",
+      "credential": "Credentials"
+    },
+    "inviteNotConnected": "Inviting staff is not connected yet. It will use your organization's membership invitations.",
+    "emptyTitle": "No staff yet",
+    "emptyBody": "Invited staff appear here."
+  },
+  "orders": {
+    "title": "Orders",
+    "description": "Requests and collections for this lab. Decide requests manually; nothing is accepted automatically.",
+    "queues": {
+      "pending": "To decide",
+      "today": "Today",
+      "processing": "Processing",
+      "exceptions": "Exceptions"
+    },
+    "queueNav": "Order queues",
+    "columns": {
+      "reference": "Reference",
+      "window": "Collection window",
+      "pin": "PIN",
+      "tests": "Tests",
+      "total": "Total",
+      "collector": "Collector",
+      "status": "Status"
+    },
+    "testCount": "{count, plural, one {1 test} other {# tests}}",
+    "unassigned": "Not assigned",
+    "totalsMismatch": "Price check failed",
+    "emptyTitle": "Nothing in this queue",
+    "emptyBody": "Orders move here when their status changes."
+  },
+  "orderDetail": {
+    "title": "Order {reference}",
+    "back": "Back to orders",
+    "testsTitle": "Tests",
+    "lineColumns": {
+      "name": "Test or package",
+      "quantity": "Quantity",
+      "unitPrice": "Price",
+      "lineTotal": "Line total"
+    },
+    "total": "Total",
+    "totalsMismatch": "The prices sent by the server do not add up. Do not quote this total; contact support.",
+    "detailsTitle": "Collection",
+    "fields": {
+      "status": "Status",
+      "window": "Collection window",
+      "pin": "Service PIN",
+      "collector": "Collector",
+      "policy": "Policy version",
+      "priceSnapshot": "Price fixed at",
+      "failure": "Reason recorded",
+      "recollection": "Recollection"
+    },
+    "isRecollection": "This order is a recollection request.",
+    "paymentNote": "Payment is tracked separately and does not change the collection status.",
+    "historyTitle": "Status history",
+    "recollect": "Request recollection",
+    "recollectConfirmTitle": "Request a recollection?",
+    "recollectConfirmBody": "This creates a new request for the same tests. The failed order stays as it is. No fee is added automatically.",
+    "recollectDone": "Recollection request created."
+  },
+  "collections": {
+    "title": "My collections",
+    "description": "Collections assigned to you. Contact details and the full address are shown only inside your collection window.",
+    "columns": {
+      "reference": "Reference",
+      "window": "Window",
+      "pin": "PIN",
+      "status": "Status",
+      "actions": "Next step"
+    },
+    "actions": {
+      "start_collection": "Start collection",
+      "mark_collected": "Sample collected",
+      "record_handoff": "Record handoff at branch",
+      "record_collection_failed": "Could not collect",
+      "record_handoff_failed": "Handoff failed"
+    },
+    "confirmTitle": "{action} for {reference}?",
+    "confirmBody": "This updates the collection status for the patient and your lab.",
+    "reasonLabel": "Reason",
+    "reasonPlaceholder": "Select a reason",
+    "reasonRequired": "Select a reason to continue.",
+    "done": "Saved. Your list has been updated.",
+    "emptyTitle": "No collections assigned to you",
+    "emptyBody": "When your manager assigns a collection to you, it appears here."
+  },
+  "billing": {
+    "title": "Billing",
+    "body": "Collection payments and settlements are not connected yet. Pay-after collections will be recorded here once the payment contract is approved."
+  },
+  "support": {
+    "title": "Support",
+    "body": "Support tickets for your lab are not connected yet. For anything urgent about a patient's safety, call 112."
+  }
+}

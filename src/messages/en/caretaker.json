@@ -1,1 +1,221 @@
-{}
+{
+  "workspaceLabel": "Care",
+  "nav": {
+    "dashboard": "Overview",
+    "services": "Services and rates",
+    "staff": "Caregivers",
+    "availability": "Availability",
+    "requests": "Requests",
+    "assignments": "Assignments",
+    "shifts": "Shifts",
+    "plans": "Recurring plans",
+    "billing": "Billing",
+    "support": "Support"
+  },
+  "status": {
+    "unknown": "Status not recognised",
+    "care": {
+      "assigned": "Care scheduled",
+      "started": "Care in progress",
+      "ended": "Care visit ended",
+      "interrupted": "Care visit could not be completed"
+    },
+    "shift": {
+      "scheduled": "Scheduled",
+      "checkedIn": "Checked in",
+      "checkedOut": "Checked out",
+      "absent": "Caregiver absent",
+      "replaced": "Replacement assigned"
+    },
+    "credential": {
+      "pending": "Verification pending",
+      "verified": "Verified",
+      "rejected": "Not accepted",
+      "expired": "Expired"
+    }
+  },
+  "task": {
+    "companionship": "Companionship",
+    "mobilityAssistance": "Help with walking and moving",
+    "mealAssistance": "Help with meals",
+    "personalHygieneAssistance": "Help with bathing and hygiene",
+    "lightHouseholdHelp": "Light household help",
+    "escortToAppointment": "Going along to appointments"
+  },
+  "rate": {
+    "perHour": "per hour",
+    "perDay": "per day",
+    "perWeek": "per week",
+    "perMonth": "per month"
+  },
+  "membership": {
+    "invited": "Invited",
+    "active": "Active",
+    "disabled": "Disabled"
+  },
+  "interrupt": {
+    "patient_unavailable": "Person receiving care not available",
+    "caregiver_unavailable": "Caregiver unable to continue",
+    "unsafe_conditions": "Unsafe conditions",
+    "scope_mismatch": "Help asked for is outside the agreed tasks",
+    "medical_concern_escalated": "Medical concern: 112 or a doctor contacted"
+  },
+  "absence": {
+    "caregiver_unwell": "Caregiver unwell",
+    "caregiver_emergency": "Caregiver emergency",
+    "transport_issue": "Transport problem",
+    "other": "Other reason"
+  },
+  "decline": {
+    "patient_request": "Family asked to cancel",
+    "provider_unavailable": "No caregiver available",
+    "unable_to_service": "Cannot provide this care",
+    "other": "Other reason"
+  },
+  "plans": {
+    "title": "Recurring plans",
+    "body": "Recurring care plans (repeating days, shift series and renewals) are not available yet. They stay switched off until scheduling and the care policy are approved. Each care booking covers one agreed time only, and nothing renews automatically.",
+    "gated": {
+      "scheduler_and_policy_not_approved": "Waiting for scheduling and care policy approval."
+    }
+  },
+  "scopeNote": "Caregivers provide non-clinical help only. They do not give medicines, injections, wound care or any medical treatment.",
+  "dashboard": {
+    "title": "Care overview",
+    "description": "Work for {name}. Every number comes from current records.",
+    "metrics": {
+      "pendingRequests": "Requests to decide",
+      "todayAssignments": "Care visits today",
+      "activeCare": "Care in progress"
+    }
+  },
+  "services": {
+    "title": "Services and rates",
+    "description": "The help you offer and your prices. Prices are fixed when a request is made.",
+    "columns": {
+      "title": "Service",
+      "tasks": "Tasks",
+      "rates": "Rates",
+      "coverage": "PIN codes",
+      "status": "Status"
+    },
+    "offered": "Offered",
+    "notOffered": "Not offered",
+    "periodPending": "pending approval",
+    "emptyTitle": "No services yet",
+    "emptyBody": "Services added during onboarding appear here after they are saved."
+  },
+  "staff": {
+    "title": "Caregivers",
+    "description": "Caregivers in your agency, their skills and verification. Each caregiver only sees their own assignments.",
+    "columns": {
+      "name": "Name",
+      "skills": "Skills",
+      "languages": "Languages",
+      "credential": "Verification",
+      "membership": "Membership"
+    },
+    "emptyTitle": "No caregivers yet",
+    "emptyBody": "Invited caregivers appear here."
+  },
+  "availability": {
+    "title": "Availability",
+    "body": "Caregiver availability is not connected yet. It will come from availability rules and existing reservations once scheduling is approved."
+  },
+  "requests": {
+    "title": "Requests",
+    "description": "Care requests for your agency. Accept only with a verified caregiver who covers every requested task; nothing is accepted automatically.",
+    "columns": {
+      "reference": "Reference",
+      "tasks": "Tasks",
+      "time": "Requested time",
+      "rate": "Rate",
+      "pin": "PIN",
+      "actions": "Decision"
+    },
+    "rateLine": "{amount} {period} × {units} = {total}",
+    "accept": "Accept",
+    "acceptTitle": "Accept {reference}",
+    "acceptBody": "Choose a verified caregiver whose skills cover every requested task.",
+    "caregiverLabel": "Caregiver",
+    "selectPlaceholder": "Select",
+    "caregiverRequired": "Choose a caregiver.",
+    "noEligible": "No verified caregiver covers all these tasks.",
+    "confirmAccept": "Accept and assign",
+    "accepted": "Accepted. The care visit has been scheduled.",
+    "decline": "Decline",
+    "declineTitle": "Decline {reference}?",
+    "declineBody": "The family is told the request was declined. Choose the reason.",
+    "declined": "Declined. The list has been updated.",
+    "reasonLabel": "Reason",
+    "reasonPlaceholder": "Select a reason",
+    "reasonRequired": "Select a reason to continue.",
+    "emptyTitle": "No requests",
+    "emptyBody": "New care requests appear here."
+  },
+  "assignments": {
+    "title": "Assignments",
+    "description": "Agreed care visits. Caregivers see only their own; agency managers see the agency's.",
+    "columns": {
+      "reference": "Reference",
+      "caregiver": "Caregiver",
+      "time": "Agreed time",
+      "tasks": "Tasks",
+      "status": "Status",
+      "actions": "Next step"
+    },
+    "actions": {
+      "start": "Start care",
+      "end": "End care visit",
+      "interrupt": "Report a problem"
+    },
+    "confirmTitle": "{action} for {reference}?",
+    "confirmBody": "The time is recorded by the server, not your device.",
+    "interruptBody": "The visit ends and the agency is told. If anyone is in danger, call 112 first.",
+    "done": "Saved. The list has been updated.",
+    "emptyTitle": "No assignments",
+    "emptyBody": "Accepted care visits appear here.",
+    "back": "Back to assignments",
+    "detailTitle": "Care visit {reference}",
+    "shiftsTitle": "Shifts",
+    "shiftsUnavailable": "Shifts could not be loaded."
+  },
+  "shifts": {
+    "title": "Shifts",
+    "description": "Check in and out for your shifts. Times are recorded by the server.",
+    "columns": {
+      "caregiver": "Caregiver",
+      "planned": "Planned",
+      "checkIn": "Checked in",
+      "checkOut": "Checked out",
+      "attendance": "Attendance",
+      "actions": "Next step"
+    },
+    "actions": {
+      "check_in": "Check in",
+      "check_out": "Check out",
+      "absent": "Mark absent",
+      "replace": "Assign replacement"
+    },
+    "absentTitle": "Mark this shift as absent?",
+    "absentBody": "The agency is told so they can arrange a replacement.",
+    "replaceTitle": "Assign a replacement",
+    "replaceBody": "Choose another verified caregiver from your agency.",
+    "replacementLabel": "Replacement caregiver",
+    "replacementRequired": "Choose a caregiver.",
+    "replaceConfirm": "Assign",
+    "replacedBy": "Replaced by {name}",
+    "notEligible": "That caregiver is not eligible for this shift.",
+    "done": "Saved. The shift has been updated.",
+    "emptyTitle": "No shifts",
+    "emptyBody": "Shifts for your assignments appear here."
+  },
+  "billing": {
+    "title": "Billing",
+    "body": "Care payments and settlements are not connected yet. Only delivered care will be billed, never a recurring charge."
+  },
+  "support": {
+    "title": "Support",
+    "body": "Support tickets for your care visits are not connected yet. In an emergency, call 112."
+  }
+}
