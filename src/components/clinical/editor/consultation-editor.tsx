@@ -24,6 +24,7 @@ import {
 } from "@/modules/clinical/editor";
 import { canFinalize, isDirty } from "@/modules/clinical/draft-machine";
 import { finalizeWithRecovery, newIntentKey } from "@/modules/clinical/finalize-flow";
+import { editorLocked } from "./editor-lock";
 import { missingForFinalize, type SaveDraftRequest, type SignRequest, type VitalWarningRule } from "@/modules/clinical/schemas";
 import { describeDraftStatus } from "@/modules/clinical/status";
 import type { Consultation, DraftSnapshot, SaveDraftResponse, SignedConsultation } from "@/modules/clinical/types";
@@ -90,7 +91,11 @@ export function ConsultationEditor({
   const missing = useMemo(() => missingMeta(missingForFinalize(content, warnings)), [content, warnings]);
   const rail = buildStepRail(content, warnings, step);
   const errorMap: Record<string, string> = showErrors ? Object.fromEntries(missing.map((m) => [m.field, tk(m.labelKey)])) : {};
-  const disabled = !writable || auto.draft.finalized;
+  // Locked while signing is pending, so neither edits nor saves can race the finalize request.
+  const disabled = editorLocked({ writable, finalized: auto.draft.finalized, signing });
+  const edit = (next: typeof content) => {
+    if (!disabled) auto.edit(next);
+  };
   const idPrefix = "cx";
 
   // Focus the step heading on step change (or a requested field after "go to missing").
@@ -243,15 +248,15 @@ export function ConsultationEditor({
             {tk(STEP_LABEL_KEYS[step])}
           </h2>
 
-          {step === "vitals" ? <VitalsForm idPrefix={idPrefix} value={content.vitals} disabled={disabled} warnings={warnings} tk={tk} onChange={(v) => auto.edit(updateStep(content, "vitals", v))} /> : null}
-          {step === "assessment" ? <AssessmentForm idPrefix={idPrefix} value={content.assessment} disabled={disabled} errors={errorMap} onChange={(v) => auto.edit(updateStep(content, "assessment", v))} /> : null}
+          {step === "vitals" ? <VitalsForm idPrefix={idPrefix} value={content.vitals} disabled={disabled} warnings={warnings} tk={tk} onChange={(v) => edit(updateStep(content, "vitals", v))} /> : null}
+          {step === "assessment" ? <AssessmentForm idPrefix={idPrefix} value={content.assessment} disabled={disabled} errors={errorMap} onChange={(v) => edit(updateStep(content, "assessment", v))} /> : null}
           {step === "prescription" ? (
             <>
               {allergies.kind !== "none_recorded" ? <AllergyLine allergies={allergies} prominent /> : null}
-              <PrescriptionForm idPrefix={idPrefix} value={content.prescription} disabled={disabled} errors={errorMap} allergyFactVersions={allergyFactVersions} onChange={(v) => auto.edit(updateStep(content, "prescription", v))} />
+              <PrescriptionForm idPrefix={idPrefix} value={content.prescription} disabled={disabled} errors={errorMap} allergyFactVersions={allergyFactVersions} onChange={(v) => edit(updateStep(content, "prescription", v))} />
             </>
           ) : null}
-          {step === "care" ? <CareForm idPrefix={idPrefix} value={content.care} disabled={disabled} errors={errorMap} onChange={(v) => auto.edit(updateStep(content, "care", v))} /> : null}
+          {step === "care" ? <CareForm idPrefix={idPrefix} value={content.care} disabled={disabled} errors={errorMap} onChange={(v) => edit(updateStep(content, "care", v))} /> : null}
           {step === "review" ? (
             <div className="grid gap-6">
               <p className="text-muted">{t("review.intro")}</p>

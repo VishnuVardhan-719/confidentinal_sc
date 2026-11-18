@@ -97,3 +97,5 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
 - Merged feat/fe2-d (0f4b8da) into fe2-c base 0331c6b; conflicts in activeContext/REQUESTS resolved keeping both sides; no message JSON conflicts. npm ci done. typecheck exit0. lint/vitest deferred by orchestrator (RAM). Browser e2e banned by user rule (REQUESTS R-INT-1). docs/PROGRESS_REPORT.md created. Next: merge feat/fe2-a, b, e when told.
 - Merged feat/fe2-a 8decfb4 (conflicts COMPONENTS/REQUESTS/REVIEW_NEEDED kept both sides; JSON parses). Landing hero swapped to DoctorSearchBar+BookingIntl. typecheck exit0. lint/vitest still deferred; no browsers. Next: fe2-b, fe2-e when told.
 - At f18d7cb: lint exit0, vitest 35 files/617 pass, build exit0 (138 pages). No integration fixes needed.
+
+2026-11-18 (fe-d): patient dashboard built (/[locale]/patient/dashboard, modules/patient-dashboard, patient.json en/te/hi, fe2-c modules vendored byte-identical, REQUESTS R-FE-D-31). CodeRabbit 0f4b8da fixes 1-7 done + coderabbit-0f4b8da.test.ts. Browser e2e deferred (R-FE-D-32). lint/typecheck/build clean, 363/363 tests. Committed on feat/fe2-d at orchestrator request.

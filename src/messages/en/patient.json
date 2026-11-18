@@ -1,1 +1,91 @@
-{}
+{
+  "shell": {
+    "workspace": "Patient",
+    "nav": { "dashboard": "Overview", "findDoctor": "Find a doctor", "bookings": "Bookings", "profile": "Profile" }
+  },
+  "dashboard": {
+    "title": "Your overview",
+    "description": "Upcoming visits, what still needs your attention, and quick links.",
+    "upcoming": {
+      "title": "Upcoming bookings",
+      "empty": "No upcoming bookings",
+      "emptyBody": "When you book a verified provider, the visit appears here.",
+      "viewAll": "All bookings",
+      "more": "Showing the next {count} bookings."
+    },
+    "card": {
+      "reference": "Ref {reference}",
+      "noReference": "Reference pending",
+      "category": { "doctor": "Doctor visit", "lab": "Lab test", "ambulance": "Scheduled ambulance", "caretaker": "Caretaker" },
+      "price": "Price {price}",
+      "statuses": "Status",
+      "booking": "Booking",
+      "visit": "Visit",
+      "payment": "Payment",
+      "clinical": "Clinical record",
+      "open": "View booking"
+    },
+    "payment": {
+      "notInitiated": "Not started",
+      "due": "Due",
+      "processing": "Processing",
+      "paid": "Paid",
+      "partiallyPaid": "Partly paid",
+      "disputed": "Disputed",
+      "refunded": "Refunded",
+      "unknown": "Payment status unknown",
+      "unavailable": "Payment status not available"
+    },
+    "clinical": {
+      "off": "Clinical records are off",
+      "unknown": "Record status not available",
+      "signed": "Signed record available",
+      "none": "No signed record yet"
+    },
+    "profile": {
+      "title": "Complete your profile",
+      "progress": "{done} of {total} required details complete",
+      "body": "Providers need these details before you can book. Health details stay marked as entered by you until a doctor confirms them.",
+      "missing": "Still needed",
+      "action": "Complete profile",
+      "unknown": "We could not check your profile right now. You can still open it.",
+      "open": "Open profile",
+      "item": {
+        "fullName": "Full name",
+        "email": "Email",
+        "mobileVerified": "Verified mobile number",
+        "dateOfBirth": "Date of birth",
+        "gender": "Gender",
+        "address": "Address",
+        "city": "City",
+        "state": "State",
+        "pin": "PIN code",
+        "pinnedLocation": "Location on map",
+        "photo": "Photo",
+        "bloodGroup": "Blood group",
+        "heightCm": "Height",
+        "weightKg": "Weight",
+        "allergies": "Allergies",
+        "medicalHistory": "Medical history",
+        "currentMedicines": "Current medicines",
+        "previousSurgeries": "Previous surgeries"
+      }
+    },
+    "actions": {
+      "title": "Quick actions",
+      "findDoctor": "Find a doctor",
+      "findDoctorHint": "Verified doctors who visit your area",
+      "bookings": "My bookings",
+      "bookingsHint": "Past, upcoming and cancelled",
+      "profile": "My profile",
+      "profileHint": "Personal and health details",
+      "emergency": "Emergency",
+      "emergencyHint": "Call 112. SureCure Visit does not dispatch emergency help."
+    },
+    "state": {
+      "denied": "You do not have access to these bookings.",
+      "unavailable": "Bookings are not available right now.",
+      "gated": "Bookings are not connected yet."
+    }
+  }
+}

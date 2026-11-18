@@ -88,7 +88,7 @@ export function HealthFactsPanel({
       {facts.length === 0 ? (
         <p className="text-muted">{t("empty")}</p>
       ) : (
-        <form onSubmit={submit} noValidate className="grid gap-5">
+        <div className="grid gap-5">
           <ErrorSummary errors={errors} focusKey={attempt} />
           <ul id={ids.list} tabIndex={-1} className="divide-y divide-border rounded-lg border border-border bg-surface outline-none">
             {facts.map((f) => {
@@ -157,7 +157,8 @@ export function HealthFactsPanel({
             })}
           </ul>
           {disabled ? null : (
-            <>
+            // Separate from the fact list: a correction form in the list must never submit Confirm on Enter.
+            <form onSubmit={submit} noValidate aria-label={t("confirm")} className="grid gap-5">
               <LongTextField id={ids.evidence} label={t("evidence")} hint={t("evidenceHint")} required rows={2} maxLength={1000} value={evidence} onValue={setEvidence} error={errors.find((e) => e.fieldId === ids.evidence)?.message} />
               <CheckField id={ids.ack} label={t("ack")} checked={ack} onChecked={setAck} error={errors.find((e) => e.fieldId === ids.ack)?.message} />
               {apiError ? <InlineError code={apiError} /> : null}
@@ -167,9 +168,9 @@ export function HealthFactsPanel({
                   {busy ? tc("working") : t("confirm")}
                 </Button>
               </div>
-            </>
+            </form>
           )}
-        </form>
+        </div>
       )}
     </section>
   );
@@ -186,8 +187,26 @@ function CorrectFactForm({ fact, kindLabel, onCancel, onSubmit }: { fact: Health
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const valid = value.trim().length > 0 && reason.trim().length >= 10 && evidence.trim().length >= 3 && ack;
+  async function save() {
+    if (!valid || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      setError(await onSubmit({ factId: fact.factId, expectedVersion: fact.current.version, newValue: value.trim(), reason: reason.trim(), evidenceNote: evidence.trim(), reviewAcknowledged: true }));
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
-    <div role="group" aria-label={t("correctTitle", { kind: kindLabel })} className="grid gap-4 rounded-md bg-paper p-4">
+    <form
+      noValidate
+      aria-label={t("correctTitle", { kind: kindLabel })}
+      className="grid gap-4 rounded-md bg-paper p-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void save();
+      }}
+    >
       <TextField id={`${base}-value`} label={t("newValue")} required maxLength={500} value={value} onValue={setValue} />
       <LongTextField id={`${base}-reason`} label={t("correctReason")} required rows={2} maxLength={1000} value={reason} onValue={setReason} />
       <TextField id={`${base}-evidence`} label={t("evidence")} required maxLength={1000} value={evidence} onValue={setEvidence} />
@@ -195,19 +214,10 @@ function CorrectFactForm({ fact, kindLabel, onCancel, onSubmit }: { fact: Health
       {error ? <InlineError code={error} /> : null}
       <div className="flex flex-wrap gap-3">
         <Button
-          type="button"
+          type="submit"
           variant="secondary"
           disabled={!valid || busy}
           aria-busy={busy}
-          onClick={async () => {
-            setBusy(true);
-            setError(null);
-            try {
-              setError(await onSubmit({ factId: fact.factId, expectedVersion: fact.current.version, newValue: value.trim(), reason: reason.trim(), evidenceNote: evidence.trim(), reviewAcknowledged: true }));
-            } finally {
-              setBusy(false);
-            }
-          }}
         >
           {busy ? tc("working") : t("correctSubmit")}
         </Button>
@@ -215,6 +225,6 @@ function CorrectFactForm({ fact, kindLabel, onCancel, onSubmit }: { fact: Health
           {tc("cancel")}
         </Button>
       </div>
-    </div>
+    </form>
   );
 }

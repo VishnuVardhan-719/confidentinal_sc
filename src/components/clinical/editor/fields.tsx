@@ -6,6 +6,18 @@ import { Checkbox, RadioGroup, RadioGroupItem } from "@/components/ui/checkbox";
 import { Input, Textarea, fieldControlClass } from "@/components/ui/input";
 import { Field } from "@/components/shared/field";
 
+/**
+ * Text to show after the field's value changed from outside, or null to keep the typed text
+ * because it already represents that value.
+ */
+export function numberTextFor(text: string, value: number | null | undefined, pattern: RegExp): string | null {
+  const raw = text.trim();
+  const typed = raw === "" ? undefined : pattern.test(raw) ? Number(raw) : Number.NaN;
+  const next = value === null || value === undefined ? undefined : value;
+  if (typed === next) return null;
+  return next === undefined ? "" : String(next);
+}
+
 /** Number field that keeps the typed text (e.g. "37.") and only reports parseable values. */
 export function NumberField({
   id,
@@ -33,6 +45,17 @@ export function NumberField({
   const [text, setText] = useState(value === null || value === undefined ? "" : String(value));
   const [error, setError] = useState<string | undefined>();
   const pattern = integer ? /^\d{1,4}$/ : /^\d{1,4}(\.\d{1,2})?$/;
+  // Sync with external value changes (e.g. "use the saved version" after a conflict), without
+  // clobbering text the clinician is mid-way through typing ("37." still means 37).
+  const [seenValue, setSeenValue] = useState(value);
+  if (value !== seenValue) {
+    setSeenValue(value);
+    const next = numberTextFor(text, value, pattern);
+    if (next !== null) {
+      setText(next);
+      setError(undefined);
+    }
+  }
   return (
     <Field id={id} label={label} error={error ?? externalError}>
       {(control) => (

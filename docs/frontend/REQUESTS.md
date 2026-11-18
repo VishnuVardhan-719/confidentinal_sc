@@ -165,3 +165,16 @@ For URLs not prerendered (unknown `/{locale}/...` and story slugs), Next 16 + Ca
 ### R-FE01-12 (to lead) — browser e2e deferred by user rule
 Per the owner's instruction, Playwright/browser e2e is not run from this worktree any more. These specs are written but DEFERRED (not verified in their final form): `tests/e2e/public.spec.ts`, `tests/e2e/public-nav.spec.ts` (nav walk, signed-out header, hero doctor search, no-JS search), `tests/e2e/a11y.spec.ts` (axe at 360/768/1024/1440 x en/te/hi, 200%/400% zoom reflow, keyboard focus, security headers), `tests/e2e/perf.spec.ts` (lab metrics, gated by `E2E_PERF=1`). The last partial run before the rule (on a stale server, then a single-worker run stopped by the orchestrator) showed failures that were being fixed: 360px header overflow (fixed: compact "112" emergency label), Telugu story-page overflow (fixed: buttons and headings wrap), axe on the runtime 404 error shell (see R-FE01-10). Run them once on the integration branch with `--workers=1` before release; `NAV_WALK_STRICT=1` there.
 Last measured lab numbers (mobile 390, 1.6 Mbps / 150 ms RTT / 4x CPU, run alone): `/en` FCP=LCP 1.3 s, CLS 0.000, JS 201 KB compressed; `/te` 2.0 s, CLS 0.007; `/en/faq` 0.9 s; `/en/emergency` 1.0 s. These are lab indicators, not Lighthouse or real-user numbers (Lighthouse was not installed and was not added).
+
+## R-FE-D-31 (from fe-d owner) - patient dashboard built in fe2-d (FE-C2 handover)
+- `/[locale]/patient/dashboard` (page/loading/error) + `src/modules/patient-dashboard/{loader,session}.ts` + messages `patient.json` (en/te/hi).
+- Byte-identical copies from feat/fe2-c@0331c6b so fe2-d builds: `src/modules/{bookings,patient,payments,catalog,providers}/*` (import closure only), `src/lib/api/{fixture,http}.ts`, `src/lib/format/index.ts`, `src/fixtures/marketplace/{bookings,doctors,patient,payments,providers}.ts`, `src/messages/*/booking.json`. On merge take fe2-c's version of every one of these; fe2-d made no edits to them.
+- Interim patient session: http mode = unauthenticated -> login; fixture mode needs server env FIXTURE_PATIENT_SESSION=self. Replace with fe2-b requireRole("patient").
+- The fe2-c bookings fixture seeds nothing by default; server env FIXTURE_BOOKING_SCENARIO (e.g. accepted) selects a synthetic booking in fixture mode.
+- Missing routes linked from the dashboard: `/patient/bookings`, `/patient/bookings/[id]`, `/patient/profile`, `/patient/health-profile` (owners: fe-c / fe-b).
+- `payment.status.*` keys are referenced by fe2-c `payments/status.ts` but `payment.json` is empty; dashboard uses its own `patient.dashboard.payment.*` labels.
+- Clinical badge matches patient records by booking reference; it shows "Clinical records are off" while FEATURE_CLINICAL is off. A per-booking clinical-status field in the booking DTO would be better.
+
+## R-FE-D-32 (from fe-d owner) - browser e2e deferred
+Per user rule, no Playwright/browser runs from agents. `tests/e2e/doctor-workspace.spec.cts` stays `test.fixme` and the patient dashboard has no e2e spec yet; both are deferred to a run the owner starts. Evidence for fe2-d is lint, typecheck, unit tests and build only.
+

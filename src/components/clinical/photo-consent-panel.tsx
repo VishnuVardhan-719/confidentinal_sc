@@ -48,6 +48,10 @@ export function PhotoConsentPanel({
       const r = await record(consultationId, input);
       if (!r.ok) return setError(r.error.code);
       setConsent(r.data);
+      // A recorded decision consumes this purpose/confirmation; a later photo needs fresh consent.
+      setPurpose("");
+      setConfirmed(false);
+      setFieldErrors({});
     } finally {
       setBusy(false);
     }
