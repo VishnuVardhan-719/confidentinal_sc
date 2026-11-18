@@ -1,26 +1,216 @@
 @import "tailwindcss";
+@import "../styles/tokens.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* Map design tokens to Tailwind utilities. Only these colours exist; no default palette use. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-white: #ffffff;
+  --color-forest: var(--scv-forest);
+  --color-forest-strong: var(--scv-forest-strong);
+  --color-forest-soft: var(--scv-forest-soft);
+  --color-teal: var(--scv-teal);
+  --color-ink: var(--scv-ink);
+  --color-paper: var(--scv-paper);
+  --color-paper-deep: var(--scv-paper-deep);
+  --color-mist: var(--scv-mist);
+  --color-surface: var(--scv-surface);
+  --color-muted: var(--scv-text-muted);
+  --color-on-forest: var(--scv-text-on-forest);
+  --color-on-forest-muted: var(--scv-text-on-forest-muted);
+  --color-border: var(--scv-border);
+  --color-border-strong: var(--scv-border-strong);
+  --color-focus: var(--scv-focus);
+  --color-warning: var(--scv-warning);
+  --color-warning-text: var(--scv-warning-text);
+  --color-warning-surface: var(--scv-warning-surface);
+  --color-danger: var(--scv-danger);
+  --color-danger-strong: var(--scv-danger-strong);
+  --color-danger-surface: var(--scv-danger-surface);
+  --color-success: var(--scv-success);
+  --color-success-surface: var(--scv-success-surface);
+  --color-info: var(--scv-info);
+  --color-info-surface: var(--scv-info-surface);
+  --color-disabled: var(--scv-disabled-surface);
+  --color-disabled-text: var(--scv-disabled-text);
+
+  --font-sans: var(--font-ui), var(--font-telugu), var(--font-devanagari), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-serif), var(--font-telugu), var(--font-devanagari), Georgia, serif;
+
+  --text-xs: var(--scv-text-xs);
+  --text-sm: var(--scv-text-sm);
+  --text-base: var(--scv-text-base);
+  --text-lg: var(--scv-text-lg);
+  --text-xl: var(--scv-text-xl);
+  --text-2xl: var(--scv-text-2xl);
+  --text-3xl: var(--scv-text-3xl);
+  --text-display: var(--scv-text-display);
+
+  --radius-sm: var(--scv-radius-sm);
+  --radius-md: var(--scv-radius-md);
+  --radius-lg: var(--scv-radius-lg);
+  --shadow-raised: var(--scv-shadow-raised);
+  --shadow-overlay: var(--scv-shadow-overlay);
+  --container-content: var(--scv-content-max);
+  --container-form: var(--scv-form-max);
+  --spacing-target: var(--scv-target);
+  --spacing-sidebar: var(--scv-sidebar);
+  --ease-out: var(--scv-ease-out);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-padding-top: 5rem;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    background: var(--scv-paper);
+    color: var(--scv-ink);
+    font-family: var(--font-sans);
+    font-size: var(--scv-text-base);
+    line-height: 1.55;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Native scripts first for Telugu and Hindi pages; taller line boxes for matras and vowel signs. */
+  :lang(te) body,
+  body:lang(te) {
+    --font-sans: var(--font-telugu), var(--font-ui), ui-sans-serif, sans-serif;
+    --font-display: var(--font-telugu), var(--font-serif), serif;
+    line-height: 1.7;
+  }
+  :lang(hi) body,
+  body:lang(hi) {
+    --font-sans: var(--font-devanagari), var(--font-ui), ui-sans-serif, sans-serif;
+    --font-display: var(--font-devanagari), var(--font-serif), serif;
+    line-height: 1.7;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+    line-height: 1.18;
+  }
+  :lang(te) :is(h1, h2, h3, h4),
+  :lang(hi) :is(h1, h2, h3, h4) {
+    line-height: 1.4;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: var(--scv-selection);
+    color: var(--scv-ink);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--scv-focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  a {
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+  }
+
+  input,
+  textarea,
+  select {
+    caret-color: var(--scv-forest);
+  }
+
+  ::placeholder {
+    color: var(--scv-text-muted);
+    opacity: 1;
+  }
+
+  html {
+    scrollbar-color: var(--scv-border-strong) var(--scv-paper);
+  }
+
+  [hidden] {
+    display: none !important;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  .measure {
+    max-width: 68ch;
+  }
+}
+
+/* Hero entrance: CSS only, from an already-visible state. Disabled with reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .scv-rise {
+    animation: scv-rise var(--scv-duration-slow) var(--scv-ease-out) both;
+  }
+  .scv-rise-delay {
+    animation-delay: 120ms;
+  }
+  .scv-draw {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: scv-draw 1.6s var(--scv-ease-out) 200ms forwards;
+  }
+}
+
+@keyframes scv-rise {
+  from {
+    opacity: 0.55;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes scv-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes scv-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes scv-slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes scv-slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+}
+@keyframes scv-slide-in-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes scv-pulse {
+  50% {
+    opacity: 0.55;
+  }
 }
