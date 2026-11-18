@@ -8,7 +8,7 @@ import {
   isQuoteStale,
   nextTripState,
   quoteConsistent,
-  selectDriverTrips,
+  selectDriverQueue,
   tripActionDenial,
   tripBookingState,
   tripCommandSchema,
@@ -27,18 +27,22 @@ function allKeys(value: unknown, acc: string[] = []): string[] {
   return acc;
 }
 
+/** One hour before fx-trip-1's window (2026-11-20T04:00Z): inside the driver view lead time. */
+const IN_WINDOW = new Date("2026-11-20T03:00:00Z");
+
 describe("driver sees only assigned trip", () => {
-  it("rule returns only the driver's own non-terminal trips as a minimal projection", () => {
-    const views = selectDriverTrips(ambulanceFixtures.trips, ambulanceActors.driverA);
-    expect(views.map((v) => v.tripId)).toEqual(["fx-trip-1"]); // fx-trip-3 is completed, others are driver B's
-    expect(Object.keys(views[0]).sort()).toEqual(["destination", "pickup", "reference", "requirement", "state", "tripId", "vehicleLabel", "version", "window"]);
-    expect(selectDriverTrips(ambulanceFixtures.trips, ambulanceActors.operator)).toEqual([]);
+  it("rule returns only the driver's own current trip as a minimal projection", () => {
+    const queue = selectDriverQueue(ambulanceFixtures.trips, ambulanceActors.driverA, IN_WINDOW);
+    expect(queue.current?.tripId).toBe("fx-trip-1"); // fx-trip-3 is completed, others are driver B's
+    expect(queue.laterCount).toBe(0);
+    expect(Object.keys(queue.current!).sort()).toEqual(["destination", "pickup", "reference", "requirement", "state", "tripId", "vehicleLabel", "version", "window"]);
+    expect(selectDriverQueue(ambulanceFixtures.trips, ambulanceActors.operator, IN_WINDOW)).toEqual({ current: null, laterCount: 0 });
   });
 
   it("fixture: another driver's trip is not_found and cannot be progressed", async () => {
-    const api = createAmbulanceFixtureApi({ env: {}, actor: ambulanceActors.driverA });
-    const list = await api.listDriverTrips();
-    expect(list.ok && list.data.map((t) => t.tripId)).toEqual(["fx-trip-1"]);
+    const api = createAmbulanceFixtureApi({ env: {}, actor: ambulanceActors.driverA, now: () => IN_WINDOW });
+    const queue = await api.getDriverQueue();
+    expect(queue.ok && queue.data.current?.tripId).toBe("fx-trip-1");
     expect(await api.getDriverTrip("fx-trip-2")).toEqual({ ok: false, error: { code: "not_found" } });
     const step = await api.performTripAction({ tripId: "fx-trip-2", action: "arrived", expectedVersion: 3, idempotencyKey: "a1" });
     expect(step).toEqual({ ok: false, error: { code: "not_found" } });
@@ -47,12 +51,12 @@ describe("driver sees only assigned trip", () => {
 
   it("operator manager cannot record driver milestones", () => {
     const trip = ambulanceFixtures.trips[0];
-    expect(tripActionDenial(ambulanceActors.operator, trip, "en_route")).toBe("not_assigned");
-    expect(tripActionDenial(ambulanceActors.driverA, trip, "en_route")).toBeNull();
+    expect(tripActionDenial(ambulanceActors.operator, trip, "en_route", undefined, IN_WINDOW)).toBe("not_assigned");
+    expect(tripActionDenial(ambulanceActors.driverA, trip, "en_route", undefined, IN_WINDOW)).toBeNull();
   });
 
   it("assigned driver progresses in order only", async () => {
-    const api = createAmbulanceFixtureApi({ env: {}, actor: ambulanceActors.driverA });
+    const api = createAmbulanceFixtureApi({ env: {}, actor: ambulanceActors.driverA, now: () => IN_WINDOW });
     const skip = await api.performTripAction({ tripId: "fx-trip-1", action: "picked_up", expectedVersion: 2, idempotencyKey: "p0" });
     expect(skip).toEqual({ ok: false, error: { code: "conflict" } });
     const go = await api.performTripAction({ tripId: "fx-trip-1", action: "en_route", expectedVersion: 2, idempotencyKey: "p1" });
@@ -91,7 +95,7 @@ describe("emergency dispatch", () => {
   });
 
   it("no trip or driver view model carries ETA/tracking keys", () => {
-    const keys = allKeys([ambulanceFixtures.trips, selectDriverTrips(ambulanceFixtures.trips, ambulanceActors.driverA)]);
+    const keys = allKeys([ambulanceFixtures.trips, selectDriverQueue(ambulanceFixtures.trips, ambulanceActors.driverA, IN_WINDOW)]);
     expect(keys.filter((k) => FORBIDDEN_KEYS.test(k))).toEqual([]);
   });
 });

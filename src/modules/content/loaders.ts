@@ -6,6 +6,7 @@ import {
   emptyEditorForm,
   localeMatrix,
   previewFor,
+  publishBlockedKey,
   revisionRows,
   type EditorForm,
   type LocaleCellVM,
@@ -43,6 +44,8 @@ export type ContentEditorVM = {
   /** Null for a locale without a version yet (first save creates it). */
   expectedVersion: number | null;
   actions: ContentAction[];
+  /** Why publish is not offered (consent gate), for an explanatory hint. */
+  publishBlockedKey: string | null;
   revisions: RevisionRowVM[];
   preview: PreviewVM | null;
 };
@@ -63,7 +66,8 @@ export async function loadContentEditor(ctx: AdminLoaderContext, entryId: string
       locales: localeMatrix(entry),
       form: version ? editorFormFromBody(entry.slug, locale, version.working.content) : { ...emptyEditorForm(entry.kind, locale), slug: entry.slug },
       expectedVersion: version?.version ?? null,
-      actions: version ? availableContentActions(ctx.principal, version.working.state, now) : [],
+      actions: version ? availableContentActions(ctx.principal, version.working.state, now, version.working.content) : [],
+      publishBlockedKey: publishBlockedKey(version?.working.content),
       revisions: version ? revisionRows(version.history) : [],
       preview: previewFor(entry, locale),
     }),

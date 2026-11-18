@@ -168,7 +168,13 @@ export function toAmbulanceActor(ws: Workspace): AmbulanceActor {
 
 export function toCareActor(ws: Workspace): CareActor {
   const base = { profileId: ws.profileId, providerId: ws.providerId, resourceId: ws.resourceId, membershipStatus: "active" as const };
-  if (ws.organizationId === null) return { ...base, kind: "independent", agencyId: null };
+  if (ws.organizationId === null) {
+    // Individually owned provider: only the owner is the independent caregiver. Any other
+    // membership (staff/billing) is limited to its own assignments, never provider-wide data.
+    return ws.membershipRole === "owner"
+      ? { ...base, kind: "independent", agencyId: null }
+      : { ...base, kind: "agency_caregiver", agencyId: null };
+  }
   if (isManagerRole(ws.membershipRole)) return { ...base, kind: "agency_manager", agencyId: ws.organizationId };
   return { ...base, kind: "agency_caregiver", agencyId: ws.organizationId };
 }

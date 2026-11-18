@@ -21,19 +21,48 @@ import {
 const clock = (ctx: WorkspaceLoaderContext) => (ctx.now ? ctx.now() : new Date());
 const api = (ctx: WorkspaceLoaderContext) => getCaretakerApi({ env: ctx.env, actor: toCareActor(ctx.workspace), now: ctx.now });
 
-const kolkataDay = (iso: string | Date) =>
-  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+/** Asia/Kolkata is a fixed UTC+05:30 offset (no DST). */
+const IST_OFFSET_MS = 330 * 60_000;
+const DAY_MS = 86_400_000;
+
+/** UTC instants bounding the Asia/Kolkata calendar day that contains `now`. */
+export function istDayBounds(now: Date): { start: number; end: number } {
+  const start = Math.floor((now.getTime() + IST_OFFSET_MS) / DAY_MS) * DAY_MS - IST_OFFSET_MS;
+  return { start, end: start + DAY_MS };
+}
+
+/**
+ * Assignments whose interval overlaps today (IST), including multi-day care that
+ * started earlier. Returns null when any interval is unparseable, so the section
+ * shows an error instead of a wrong count.
+ */
+export function countOverlappingToday(items: readonly { interval: { start: string; end: string } }[], now: Date): number | null {
+  const { start, end } = istDayBounds(now);
+  let count = 0;
+  for (const a of items) {
+    const s = Date.parse(a.interval.start);
+    const e = Date.parse(a.interval.end);
+    if (!Number.isFinite(s) || !Number.isFinite(e)) return null;
+    if (s < end && e > start) count += 1;
+  }
+  return count;
+}
 
 export async function loadCaretakerDashboard(ctx: WorkspaceLoaderContext): Promise<LoaderResult<CaretakerDashboardVM>> {
   const care = api(ctx);
   const actor = toCareActor(ctx.workspace);
-  const today = kolkataDay(clock(ctx));
+  const now = clock(ctx);
   const seesRequests = actor.kind !== "agency_caregiver";
   const [requests, assignments] = await Promise.all([seesRequests ? care.listRequests() : null, care.listAssignments()]);
   const vm: CaretakerDashboardVM = {
     kind: actor.kind,
     pendingRequests: requests ? metricFrom(requests, (items) => items.filter((r) => r.bookingState === "requested").length) : null,
-    todayAssignments: metricFrom(assignments, (items) => items.filter((a) => kolkataDay(a.interval.start) === today).length),
+    todayAssignments: !assignments.ok
+      ? metricFrom(assignments)
+      : (() => {
+          const n = countOverlappingToday(assignments.data, now);
+          return n === null ? { kind: "unavailable" as const, reason: "error" as const } : { kind: "value" as const, value: n, lowerBound: false };
+        })(),
     activeCare: metricFrom(assignments, (items) => items.filter((a) => a.substate === "started").length),
   };
   return toLoaderResult(ok(vm), care.mode);

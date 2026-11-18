@@ -176,6 +176,8 @@ export type PaymentRecordView = {
   status: PaymentStatus;
   amountDuePaise: number;
   collectedPaise: number;
+  /** Server-supplied outstanding amount. Never derived in the browser. */
+  outstandingPaise: number;
   method: PaymentMethod | null;
   /** Gateway transaction reference, only when a verified capture exists. */
   gatewayReference: string | null;

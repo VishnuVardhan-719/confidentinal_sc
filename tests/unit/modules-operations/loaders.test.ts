@@ -5,7 +5,7 @@ import { workspaceMemberships as W } from "@/fixtures/operations/workspaces";
 import { metricFrom, toLoaderResult, type WorkspaceLoaderContext } from "@/modules/admin/access";
 import { loadAdminDashboard, loadBookingByReference, loadPayments, loadSettings } from "@/modules/admin/loaders";
 import { listWorkspaces, type WorkspaceMembership } from "@/modules/admin/workspace";
-import { loadAmbulanceDashboard, loadDriverTrips, loadEmergencyPlaceholder, loadRequests, loadTrips } from "@/modules/ambulance/loaders";
+import { loadAmbulanceDashboard, loadDriverQueue, loadEmergencyPlaceholder, loadRequests, loadTrips } from "@/modules/ambulance/loaders";
 import { loadAssignments, loadCareStaff, loadCaretakerDashboard, loadShifts } from "@/modules/caretaker/loaders";
 import { getPublishedFaq, getPublishedStories, getPublishedStory } from "@/modules/content/public";
 import { loadLabCollections, loadLabDashboard, loadLabOrderDetail, loadLabOrders, loadLabReports } from "@/modules/lab/loaders";
@@ -89,9 +89,9 @@ describe("ambulance loaders", () => {
   });
 
   it("driver loader returns only the assigned trip with a single next step and no ETA", async () => {
-    const res = await loadDriverTrips(ctx(W.ambulanceDriver));
+    const res = await loadDriverQueue(ctx(W.ambulanceDriver));
     if (res.status !== "ok") throw new Error(res.status);
-    expect(res.data.map((t) => [t.tripId, t.nextAction])).toEqual([["fx-trip-1", "en_route"]]);
+    expect([res.data.current?.tripId, res.data.current?.nextAction, res.data.laterCount]).toEqual(["fx-trip-1", "en_route", 0]);
     expect(JSON.stringify(res.data)).not.toMatch(/eta|tracking|latitude|longitude/i);
     expect(await loadTrips(ctx(W.ambulanceDriver), "today")).toEqual({ status: "denied" });
   });
@@ -142,7 +142,7 @@ describe("admin loaders", () => {
   });
 
   it("booking ops rejects free text before any call and keeps payment separate", async () => {
-    expect(await loadBookingByReference(actx(adminPrincipals.superAdmin), "Fixture Patient")).toEqual({ status: "error", code: "validation" });
+    expect(await loadBookingByReference(actx(adminPrincipals.superAdmin), "Fixture Patient")).toEqual({ status: "error", code: "validation", fields: { reference: "format" } });
     const res = await loadBookingByReference(actx(adminPrincipals.superAdmin), "scv-bkg-900104");
     if (res.status !== "ok") throw new Error(res.status);
     expect(res.data.bookingState).toBe("completed");

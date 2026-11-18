@@ -19,12 +19,12 @@ const story: ContentEntry = {
       working: {
         revision: 2,
         state: "draft",
-        content: { kind: "story", title: "Synthetic story one (revised draft)", summary: "Fixture text for layout testing.", body: doc("Revised fixture paragraph. Not a real account."), consentEvidenceId: "fx-consent-1" },
+        content: { kind: "story", title: "Synthetic story one (revised draft)", summary: "Fixture text for layout testing.", body: doc("Revised fixture paragraph. Not a real account."), consentEvidenceId: "fx-consent-1", noIdentifiablePerson: false },
         updatedAt: "2026-11-19T06:00:00Z",
       },
       published: {
         revision: 1,
-        content: { kind: "story", title: "Synthetic story one", summary: "Fixture text for layout testing.", body: doc("Fixture paragraph. Not a real account."), consentEvidenceId: "fx-consent-1" },
+        content: { kind: "story", title: "Synthetic story one", summary: "Fixture text for layout testing.", body: doc("Fixture paragraph. Not a real account."), consentEvidenceId: "fx-consent-1", noIdentifiablePerson: false },
         publishedAt: "2026-11-18T06:00:00Z",
       },
       history: [
@@ -67,7 +67,7 @@ const page: ContentEntry = {
   locales: {
     en: {
       locale: "en",
-      working: { revision: 1, state: "draft", content: { kind: "page", title: "Synthetic service notice", summary: "", body: doc("Fixture notice body."), consentEvidenceId: null }, updatedAt: "2026-11-19T07:00:00Z" },
+      working: { revision: 1, state: "draft", content: { kind: "page", title: "Synthetic service notice", summary: "", body: doc("Fixture notice body."), consentEvidenceId: null, noIdentifiablePerson: false }, updatedAt: "2026-11-19T07:00:00Z" },
       published: null,
       history: [{ revision: 1, state: "draft", editedByProfileId: "fx-adm-editor", editedAt: "2026-11-19T07:00:00Z", publishedByProfileId: null, publishedAt: null }],
       version: 1,

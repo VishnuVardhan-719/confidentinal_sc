@@ -87,7 +87,14 @@ export function visibleAssignments(actor: CareActor, assignments: readonly CareA
   });
 }
 
-export type CareDenial = "membership_inactive" | "not_assigned" | "invalid_transition" | "reason_required" | "too_early";
+export type CareDenial =
+  | "membership_inactive"
+  | "not_assigned"
+  | "invalid_transition"
+  | "reason_required"
+  | "too_early"
+  | "too_late"
+  | "invalid_interval";
 
 /** Only the assigned caregiver records start/end; an agency manager may record an interruption. */
 export function careActionDenial(
@@ -105,7 +112,16 @@ export function careActionDenial(
   if (action === "interrupt" && (options.reason === undefined || !CARE_INTERRUPT_REASONS.includes(options.reason))) {
     return "reason_required";
   }
-  if (action === "start" && (options.now ?? new Date()).getTime() < Date.parse(assignment.interval.start)) return "too_early";
+  if (action === "start") {
+    const start = Date.parse(assignment.interval.start);
+    const end = Date.parse(assignment.interval.end);
+    // Unparseable or inverted intervals fail closed.
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return "invalid_interval";
+    const now = (options.now ?? new Date()).getTime();
+    if (now < start) return "too_early";
+    // Care cannot be started once the agreed interval has ended (extension = new booking).
+    if (now >= end) return "too_late";
+  }
   return null;
 }
 

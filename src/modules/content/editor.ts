@@ -1,6 +1,5 @@
 import type { AdminPrincipal } from "@/modules/admin/capabilities";
-import { can } from "@/modules/admin/capabilities";
-import { contentCapabilityFor, nextContentState } from "./rules";
+import { contentActionDenial, publishConsentDenial } from "./rules";
 import { contentDraftSchema, LOCALES, type ContentDraftInput, type Locale, type RichTextBlock, type RichTextDoc, type RichTextInline } from "./schema";
 import { describeContent, type StatusDescriptor } from "./status";
 import type { ContentAction, ContentBody, ContentEntry, ContentKind, ContentRevision, ContentState } from "./types";
@@ -22,7 +21,7 @@ import type { ContentAction, ContentBody, ContentEntry, ContentKind, ContentRevi
 // Markup <-> rich text
 // ---------------------------------------------------------------------------
 
-const INLINE = /\[([^\]\n]+)\]\(([^)\s]+)\)|\*\*([^*\n]+)\*\*|\*([^*\n]+)\*/g;
+const INLINE = /\[([^\]\n]+)\]\(([^)\s]+)\)|\*\*\*([^*\n]+)\*\*\*|\*\*([^*\n]+)\*\*|\*([^*\n]+)\*/g;
 
 export function parseInline(text: string): RichTextInline[] {
   const out: RichTextInline[] = [];
@@ -31,8 +30,9 @@ export function parseInline(text: string): RichTextInline[] {
     const index = m.index ?? 0;
     if (index > last) out.push({ type: "text", text: text.slice(last, index) });
     if (m[1] !== undefined && m[2] !== undefined) out.push({ type: "link", href: m[2], children: [{ type: "text", text: m[1] }] });
-    else if (m[3] !== undefined) out.push({ type: "text", text: m[3], marks: ["bold"] });
-    else if (m[4] !== undefined) out.push({ type: "text", text: m[4], marks: ["italic"] });
+    else if (m[3] !== undefined) out.push({ type: "text", text: m[3], marks: ["bold", "italic"] });
+    else if (m[4] !== undefined) out.push({ type: "text", text: m[4], marks: ["bold"] });
+    else if (m[5] !== undefined) out.push({ type: "text", text: m[5], marks: ["italic"] });
     last = index + m[0].length;
   }
   if (last < text.length) out.push({ type: "text", text: text.slice(last) });
@@ -60,6 +60,7 @@ function serializeInline(nodes: readonly RichTextInline[]): string {
   return nodes
     .map((n) => {
       if (n.type === "link") return `[${n.children.map((c) => c.text).join("")}](${n.href})`;
+      if (n.marks?.includes("bold") && n.marks.includes("italic")) return `***${n.text}***`;
       if (n.marks?.includes("bold")) return `**${n.text}**`;
       if (n.marks?.includes("italic")) return `*${n.text}*`;
       return n.text;
@@ -90,6 +91,8 @@ export type EditorForm = {
   summary: string;
   bodyText: string;
   consentEvidenceId: string;
+  /** Story only: explicit attestation that no identifiable person appears (consent gate, R-E14). */
+  noIdentifiablePerson: boolean;
   /** faq */
   question: string;
   answerText: string;
@@ -104,6 +107,7 @@ export const emptyEditorForm = (kind: ContentKind, locale: Locale): EditorForm =
   summary: "",
   bodyText: "",
   consentEvidenceId: "",
+  noIdentifiablePerson: false,
   question: "",
   answerText: "",
   order: "0",
@@ -112,7 +116,7 @@ export const emptyEditorForm = (kind: ContentKind, locale: Locale): EditorForm =
 export function editorFormFromBody(slug: string, locale: Locale, body: ContentBody): EditorForm {
   const base = emptyEditorForm(body.kind, locale);
   if (body.kind === "faq") return { ...base, slug, question: body.question, answerText: serializeEditorMarkup(body.answer), order: String(body.order) };
-  return { ...base, slug, title: body.title, summary: body.summary, bodyText: serializeEditorMarkup(body.body), consentEvidenceId: body.consentEvidenceId ?? "" };
+  return { ...base, slug, title: body.title, summary: body.summary, bodyText: serializeEditorMarkup(body.body), consentEvidenceId: body.consentEvidenceId ?? "", noIdentifiablePerson: body.noIdentifiablePerson };
 }
 
 /** Unvalidated draft object; always pass it through validateEditorForm or the API (which validates again). */
@@ -135,10 +139,21 @@ export function draftFromForm(form: EditorForm): Record<string, unknown> {
     summary: form.summary,
     body: parseEditorMarkup(form.bodyText),
     consentEvidenceId: form.kind === "page" || form.consentEvidenceId.trim() === "" ? null : form.consentEvidenceId.trim(),
+    noIdentifiablePerson: form.kind === "story" && form.noIdentifiablePerson === true,
   };
 }
 
-export type EditorField = "slug" | "title" | "summary" | "bodyText" | "consentEvidenceId" | "question" | "answerText" | "order" | "form";
+export type EditorField =
+  | "slug"
+  | "title"
+  | "summary"
+  | "bodyText"
+  | "consentEvidenceId"
+  | "noIdentifiablePerson"
+  | "question"
+  | "answerText"
+  | "order"
+  | "form";
 
 const FIELD_FOR_PATH: Record<string, EditorField> = {
   slug: "slug",
@@ -146,6 +161,7 @@ const FIELD_FOR_PATH: Record<string, EditorField> = {
   summary: "summary",
   body: "bodyText",
   consentEvidenceId: "consentEvidenceId",
+  noIdentifiablePerson: "noIdentifiablePerson",
   question: "question",
   answer: "answerText",
   order: "order",
@@ -168,7 +184,7 @@ export function validateEditorForm(form: EditorForm): EditorValidation {
         ? "html_forbidden"
         : issue.message === "unsafe_href"
           ? "unsafe_link"
-          : issue.code === "too_small"
+          : issue.code === "too_small" || issue.message === "empty_block"
             ? "required"
             : issue.code === "too_big"
               ? "too_long"
@@ -210,9 +226,24 @@ export function localeMatrix(entry: ContentEntry): LocaleCellVM[] {
 
 const ACTIONS: readonly ContentAction[] = ["submit_preview", "return_to_draft", "publish", "archive"];
 
-/** Workflow buttons to show for this state and principal. Server re-checks capability and version. */
-export function availableContentActions(principal: AdminPrincipal | null, state: ContentState, now: Date = new Date()): ContentAction[] {
-  return ACTIONS.filter((a) => nextContentState(state, a) !== null && can(principal, contentCapabilityFor(a), { now }));
+/**
+ * Workflow buttons to show for this state and principal. Publish is offered
+ * only when the working copy passes the consent gate. Server re-checks
+ * capability, consent and version.
+ */
+export function availableContentActions(
+  principal: AdminPrincipal | null,
+  state: ContentState,
+  now: Date = new Date(),
+  content?: ContentBody,
+): ContentAction[] {
+  return ACTIONS.filter((a) => contentActionDenial(principal, state, a, now, content) === null);
+}
+
+/** Message key explaining why publish is not offered for a story, or null. */
+export function publishBlockedKey(content: ContentBody | undefined): string | null {
+  if (!content) return null;
+  return publishConsentDenial(content) === null ? null : "admin.cms.publishBlocked.consentRequired";
 }
 
 export type RevisionRowVM = {

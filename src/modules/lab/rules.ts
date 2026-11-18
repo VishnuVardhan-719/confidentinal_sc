@@ -79,15 +79,17 @@ export function canRequestRecollection(order: LabOrder): boolean {
 
 /** Server-derived totals must add up; the UI flags a mismatch instead of recomputing a price. */
 export function orderTotalsConsistent(order: LabOrder): boolean {
+  const nonNegativeInt = (n: number) => Number.isSafeInteger(n) && n >= 0;
   const linesOk = order.lines.every(
     (line) =>
-      Number.isSafeInteger(line.unitPricePaise) &&
+      nonNegativeInt(line.unitPricePaise) &&
+      nonNegativeInt(line.lineTotalPaise) &&
       Number.isSafeInteger(line.quantity) &&
       line.quantity > 0 &&
       line.lineTotalPaise === line.unitPricePaise * line.quantity,
   );
   const sum = order.lines.reduce((acc, line) => acc + line.lineTotalPaise, 0);
-  return linesOk && sum === order.totalPaise;
+  return linesOk && nonNegativeInt(order.totalPaise) && sum === order.totalPaise;
 }
 
 // ---------------------------------------------------------------------------

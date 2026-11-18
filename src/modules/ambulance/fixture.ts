@@ -3,7 +3,7 @@ import { ambulanceActors, ambulanceFixtures } from "@/fixtures/operations/ambula
 import { assertFixtureAllowed, cloneFixture, createReplayCache } from "@/fixtures/operations/guard";
 import type { AmbulanceApi, TripQueue } from "./api";
 import { getEmergencyGuidance } from "./emergency";
-import { nextTripState, selectDriverTrips, TERMINAL_TRIP_STATES, toDriverTripView, tripActionDenial } from "./rules";
+import { nextTripState, selectDriverQueue, TERMINAL_TRIP_STATES, toDriverTripView, tripActionDenial } from "./rules";
 import type { AmbulanceActor, DriverTripView, Trip } from "./types";
 
 export type AmbulanceFixtureOptions = {
@@ -62,21 +62,22 @@ export function createAmbulanceFixtureApi(options: AmbulanceFixtureOptions = {})
       const found = data.trips.find((t) => t.id === tripId);
       return isOperator() && found ? ok(found) : fail("not_found");
     },
-    async listDriverTrips() {
+    async getDriverQueue() {
       if (actor.membershipStatus !== "active" || !actor.roles.includes("driver")) return fail("forbidden");
-      return ok(selectDriverTrips(data.trips, actor));
+      return ok(selectDriverQueue(data.trips, actor, now()));
     },
     async getDriverTrip(tripId) {
-      const visible = selectDriverTrips(data.trips, actor).find((t) => t.tripId === tripId);
-      // Privacy-safe: another driver's trip looks exactly like a missing one.
-      return visible ? ok(visible) : fail("not_found");
+      const { current } = selectDriverQueue(data.trips, actor, now());
+      // Privacy-safe: another driver's trip, or a later one, looks exactly like a missing one.
+      return current && current.tripId === tripId ? ok(current) : fail("not_found");
     },
     async performTripAction(input) {
       return once("trip", input.idempotencyKey, (): ApiResult<DriverTripView> => {
         const trip = assignedTrip(input.tripId);
         if (!trip) return fail("not_found");
-        const denial = tripActionDenial(actor, trip, input.action, input.reason);
+        const denial = tripActionDenial(actor, trip, input.action, input.reason, now());
         if (denial === "membership_inactive") return fail("forbidden");
+        if (denial === "outside_window") return fail("conflict");
         if (denial === "not_assigned") return fail("not_found");
         if (denial === "invalid_transition") return fail("conflict");
         if (denial === "reason_required") return fail("validation", { fields: { reason: "required" } });

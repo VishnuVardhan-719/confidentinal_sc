@@ -123,3 +123,29 @@ Necessary for FE01; please review in the diff:
 - `AppShell` takes `nav: ShellNavItem[]` with already-localized labels and an icon key; `count` must be server-derived. Put role pages inside it from your role layout.
 - Status badges: keep one canonical map per state machine in `src/modules/<name>/status.ts` and resolve through `resolveStatus` from `src/components/shared/status.ts` so unknown statuses render neutral.
 - Import `Link`/`useRouter`/`usePathname` from `@/i18n/navigation`, not from `next/link` or `next/navigation`.
+
+---
+
+## 2026-11-18 · FE13-17 cross-review fixes (Kiro E, branch feat/fe2-e) · XREVIEW-d E1-E11
+
+### R-E14 Story publish consent gate (NEEDS PRODUCT CONFIRMATION)
+- Rule implemented (FE spec section 15, "publisher role and consent evidence"): a CMS story can be published only when its working copy has a `consentEvidenceId`, or when the editor ticks the explicit attestation `noIdentifiablePerson: true` ("this story shows no identifiable person").
+- FAQ entries and pages are not gated.
+- Enforcement points:
+  - `publishConsentDenial` / `contentActionDenial` in `src/modules/content/rules.ts`. Publish fails closed when the working copy is not supplied.
+  - `availableContentActions` hides Publish when the gate fails, and `publishBlockedKey` returns `admin.cms.publishBlocked.consentRequired`.
+  - The fixture adapter returns `validation` with `fields.consent = "required"`.
+- New schema field: `noIdentifiablePerson: boolean` on story/page drafts (default `false`).
+- Backend request: add the same check to the CMS publish command. Please confirm the policy: the attestation option, which content kinds are gated, and what consent evidence must reference (consent record ID, retention).
+
+### R-E15 Driver "current trip" window (backend must enforce)
+- The driver view shows exactly one current trip with pickup/destination, plus a bare count of later assignments (no references, places or times).
+- A trip is current while it is under way (`en_route`/`arrived`/`picked_up`), or from `DRIVER_VIEW_LEAD_MINUTES` (proposed: 120) before its window starts. Unparseable windows fail closed.
+- Milestones outside the window are denied (`outside_window`).
+- `AmbulanceApi.listDriverTrips()` is replaced by `getDriverQueue(): { current, laterCount }`.
+- Backend request: apply the same window server-side for driver reads and the S01 trip commands. Confirm the lead time.
+
+### R-E16 Payment DTO: server-supplied outstanding amount
+- `PaymentRecordView` now expects `outstandingPaise` from the server.
+- The UI no longer derives or clamps it. Instead it sets `reconciliationMismatch` when collected exceeds due, when any value is negative or not an integer, or when outstanding is not equal to due minus collected.
+- Backend request: include `outstanding_paise` in the payment read contract when it is defined.

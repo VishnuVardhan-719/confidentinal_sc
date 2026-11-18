@@ -100,9 +100,10 @@ export function createContentFixtureApi(options: ContentFixtureOptions = {}): Co
         const current = entry?.locales[input.locale];
         if (!canEdit() && !can(principal, "content:publish", { now: now() })) return fail("forbidden");
         if (!entry || !current || !principal) return fail("not_found");
-        const denial = contentActionDenial(principal, current.working.state, input.action, now());
+        const denial = contentActionDenial(principal, current.working.state, input.action, now(), current.working.content);
         if (denial === "no_capability") return fail("forbidden");
         if (denial === "invalid_transition") return fail("conflict");
+        if (denial === "consent_required") return fail("validation", { fields: { consent: "required" } });
         if (current.version !== input.expectedVersion) return fail("conflict");
         const next = applyTransition(current, input.action, principal.profileId, now().toISOString());
         if (!next) return fail("conflict");

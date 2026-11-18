@@ -28,21 +28,46 @@ export function contentCapabilityFor(action: ContentAction | "edit") {
   return action === "publish" || action === "archive" ? ("content:publish" as const) : ("content:edit" as const);
 }
 
-export type ContentDenial = "no_capability" | "invalid_transition";
+export type ContentDenial = "no_capability" | "invalid_transition" | "consent_required";
 
+/**
+ * Consent gate for publishing (FE spec 15 "consent evidence"; policy pending
+ * product confirmation, REQUESTS.md R-E14): a story can be published only with
+ * a consent evidence reference OR an explicit "no identifiable person"
+ * attestation. FAQ and pages are not person stories and are not gated.
+ */
+export function publishConsentDenial(content: ContentBody): "consent_required" | null {
+  if (content.kind !== "story") return null;
+  return content.consentEvidenceId !== null || content.noIdentifiablePerson === true ? null : "consent_required";
+}
+
+/**
+ * `content` is the working copy the action applies to. Publishing is denied
+ * when it is missing (fail closed) or fails the consent gate.
+ */
 export function contentActionDenial(
   admin: AdminPrincipal | null | undefined,
   current: ContentState,
   action: ContentAction,
   now: Date = new Date(),
+  content?: ContentBody,
 ): ContentDenial | null {
   if (!can(admin, contentCapabilityFor(action), { now })) return "no_capability";
-  return nextContentState(current, action) === null ? "invalid_transition" : null;
+  if (nextContentState(current, action) === null) return "invalid_transition";
+  if (action === "publish" && (content === undefined || publishConsentDenial(content) !== null)) return "consent_required";
+  return null;
 }
 
 export function draftToBody(draft: ContentDraftInput): ContentBody {
   if (draft.kind === "faq") return { kind: "faq", question: draft.question, answer: draft.answer, order: draft.order };
-  return { kind: draft.kind, title: draft.title, summary: draft.summary, body: draft.body, consentEvidenceId: draft.consentEvidenceId };
+  return {
+    kind: draft.kind,
+    title: draft.title,
+    summary: draft.summary,
+    body: draft.body,
+    consentEvidenceId: draft.consentEvidenceId,
+    noIdentifiablePerson: draft.noIdentifiablePerson,
+  };
 }
 
 /** Validates untrusted draft input (rejects HTML/script/unsafe links/extra fields). */

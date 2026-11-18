@@ -78,7 +78,10 @@ describe("CMS view models", () => {
 
   it("only publishers see publish/archive actions", () => {
     expect(availableContentActions(adminPrincipals.contentEditor, "in_preview", NOW)).toEqual(["return_to_draft"]);
-    expect(availableContentActions(adminPrincipals.contentPublisher, "in_preview", NOW)).toEqual(["return_to_draft", "publish"]);
+    const withConsent = story.locales.en!.working.content;
+    expect(availableContentActions(adminPrincipals.contentPublisher, "in_preview", NOW, withConsent)).toEqual(["return_to_draft", "publish"]);
+    // Fail closed: without the working copy, publish is never offered.
+    expect(availableContentActions(adminPrincipals.contentPublisher, "in_preview", NOW)).toEqual(["return_to_draft"]);
     expect(availableContentActions(adminPrincipals.contentEditor, "published", NOW)).toEqual([]);
     expect(availableContentActions(adminPrincipals.noGrants, "draft", NOW)).toEqual([]);
   });

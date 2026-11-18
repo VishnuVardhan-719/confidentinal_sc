@@ -135,6 +135,9 @@ export type DriverTripView = {
   version: number;
 };
 
+/** Driver queue: one current trip (or none) and a count of later assignments with no detail. */
+export type DriverQueueView = { current: DriverTripView | null; laterCount: number };
+
 export type AmbulanceActor = {
   profileId: string;
   providerId: string;

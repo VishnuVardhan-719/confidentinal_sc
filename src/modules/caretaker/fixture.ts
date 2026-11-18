@@ -83,7 +83,7 @@ export function createCaretakerFixtureApi(options: CaretakerFixtureOptions = {})
         if (!assignment) return fail("not_found");
         const denial = careActionDenial(actor, assignment, input.action, { reason: input.reason, now: now() });
         if (denial === "membership_inactive" || denial === "not_assigned") return fail("forbidden");
-        if (denial === "invalid_transition" || denial === "too_early") return fail("conflict");
+        if (denial === "invalid_transition" || denial === "too_early" || denial === "too_late" || denial === "invalid_interval") return fail("conflict");
         if (denial === "reason_required") return fail("validation", { fields: { reason: "required" } });
         if (assignment.version !== input.expectedVersion) return fail("conflict");
         const next = nextCareSubstate(assignment.substate, input.action);

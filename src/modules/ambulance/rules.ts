@@ -3,6 +3,7 @@ import type {
   AmbulanceActor,
   BookingState,
   CrewMember,
+  DriverQueueView,
   DriverTripView,
   FleetVehicle,
   TransportQuote,
@@ -114,19 +115,40 @@ export const tripCommandSchema = z.strictObject({
   reason: z.enum(TRIP_INTERRUPT_REASONS).optional(),
 }).refine((v) => (v.action === "interrupt") === (v.reason !== undefined), { path: ["reason"] });
 
-export type TripDenial = "membership_inactive" | "not_assigned" | "invalid_transition" | "reason_required";
+export type TripDenial = "membership_inactive" | "not_assigned" | "invalid_transition" | "reason_required" | "outside_window";
 
-/** Only the assigned driver may progress a trip. Operator managers cannot record driver milestones (S01 A11). */
+/**
+ * Driver view window (FE spec 13 "assigned current trip only"). A trip already
+ * under way is always current; an assigned trip becomes current this many
+ * minutes before its window starts. PROPOSED value for synthetic staging; the
+ * server is authoritative and must reject milestones outside its own window
+ * (REQUESTS.md R-E15).
+ */
+export const DRIVER_VIEW_LEAD_MINUTES = 120;
+
+const UNDER_WAY: readonly TripState[] = ["en_route", "arrived", "picked_up"];
+
+/** Is this trip the driver's current work? Unparseable windows fail closed. */
+export function tripInDriverWindow(trip: Pick<Trip, "state" | "window">, now: Date = new Date()): boolean {
+  if (TERMINAL_TRIP_STATES.includes(trip.state)) return false;
+  if (UNDER_WAY.includes(trip.state)) return true;
+  const start = Date.parse(trip.window.start);
+  return Number.isFinite(start) && now.getTime() >= start - DRIVER_VIEW_LEAD_MINUTES * 60_000;
+}
+
+/** Only the assigned driver may progress a trip, and only while it is current. Operator managers cannot record driver milestones (S01 A11). */
 export function tripActionDenial(
   actor: AmbulanceActor,
   trip: Trip,
   action: TripAction,
   reason?: TripInterruptReason,
+  now: Date = new Date(),
 ): TripDenial | null {
   if (actor.membershipStatus !== "active") return "membership_inactive";
   if (actor.providerId !== trip.providerId || !actor.roles.includes("driver") || actor.resourceId === null) return "not_assigned";
   if (trip.driver.resourceId !== actor.resourceId) return "not_assigned";
   if (nextTripState(trip.state, action) === null) return "invalid_transition";
+  if (!tripInDriverWindow(trip, now)) return "outside_window";
   if (action === "interrupt" && (reason === undefined || !TRIP_INTERRUPT_REASONS.includes(reason))) return "reason_required";
   return null;
 }
@@ -145,11 +167,17 @@ export function toDriverTripView(trip: Trip): DriverTripView {
   };
 }
 
-/** Driver sees only non-terminal trips assigned to them, as a minimal projection. */
-export function selectDriverTrips(trips: readonly Trip[], actor: AmbulanceActor): DriverTripView[] {
-  if (actor.membershipStatus !== "active" || !actor.roles.includes("driver") || actor.resourceId === null) return [];
-  return trips
+/**
+ * Driver queue: at most ONE current trip with its pickup/destination, plus a
+ * bare count of later assignments (no references, places or times).
+ */
+export function selectDriverQueue(trips: readonly Trip[], actor: AmbulanceActor, now: Date = new Date()): DriverQueueView {
+  if (actor.membershipStatus !== "active" || !actor.roles.includes("driver") || actor.resourceId === null) {
+    return { current: null, laterCount: 0 };
+  }
+  const mine = trips
     .filter((t) => t.providerId === actor.providerId && t.driver.resourceId === actor.resourceId && !TERMINAL_TRIP_STATES.includes(t.state))
-    .sort((a, b) => Date.parse(a.window.start) - Date.parse(b.window.start))
-    .map(toDriverTripView);
+    .sort((a, b) => Date.parse(a.window.start) - Date.parse(b.window.start));
+  const current = mine.find((t) => UNDER_WAY.includes(t.state)) ?? mine.find((t) => tripInDriverWindow(t, now)) ?? null;
+  return { current: current ? toDriverTripView(current) : null, laterCount: mine.length - (current ? 1 : 0) };
 }

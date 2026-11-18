@@ -14,7 +14,7 @@ import {
   toVehicleRow,
   type AmbulanceDashboardVM,
   type CrewRowVM,
-  type DriverTripVM,
+  type DriverQueueVM,
   type RequestRowVM,
   type TripRowVM,
   type VehicleRowVM,
@@ -36,7 +36,7 @@ export async function loadAmbulanceDashboard(ctx: WorkspaceLoaderContext): Promi
     isOperator ? amb.listTrips({ queue: "today" }) : null,
     isOperator ? amb.listFleet() : null,
     isOperator ? amb.listCrew() : null,
-    isDriver ? amb.listDriverTrips() : null,
+    isDriver ? amb.getDriverQueue() : null,
   ]);
   const vm: AmbulanceDashboardVM = {
     roles: actor.roles,
@@ -50,7 +50,15 @@ export async function loadAmbulanceDashboard(ctx: WorkspaceLoaderContext): Promi
             expiring: fleet.ok && crew.ok ? expiryWarnings(fleet.data, crew.data, now) : null,
           }
         : null,
-    driver: isDriver && driverTrips ? { assignedTrips: metricFrom(driverTrips) } : null,
+    driver:
+      isDriver && driverTrips
+        ? {
+            current: driverTrips.ok ? (driverTrips.data.current ? toDriverTrip(driverTrips.data.current) : null) : null,
+            laterCount: driverTrips.ok
+              ? { kind: "value", value: driverTrips.data.laterCount, lowerBound: false }
+              : metricFrom(driverTrips),
+          }
+        : null,
   };
   return toLoaderResult(ok(vm), amb.mode);
 }
@@ -108,11 +116,15 @@ export async function loadTripDetail(ctx: WorkspaceLoaderContext, tripId: string
   return toLoaderResult(result.ok ? ok(toTripRow(result.data)) : result, amb.mode);
 }
 
-/** Driver view: assigned, non-terminal trips only. */
-export async function loadDriverTrips(ctx: WorkspaceLoaderContext): Promise<LoaderResult<DriverTripVM[]>> {
+/** Driver view: the single current trip (or empty) plus a count of later assignments without detail. */
+export async function loadDriverQueue(ctx: WorkspaceLoaderContext): Promise<LoaderResult<DriverQueueVM>> {
   const amb = api(ctx);
-  const result = await amb.listDriverTrips();
-  return toLoaderResult(result.ok ? ok(result.data.map(toDriverTrip)) : result, amb.mode, (rows) => rows.length === 0);
+  const result = await amb.getDriverQueue();
+  return toLoaderResult(
+    result.ok ? ok({ current: result.data.current ? toDriverTrip(result.data.current) : null, laterCount: result.data.laterCount }) : result,
+    amb.mode,
+    (d) => d.current === null && d.laterCount === 0,
+  );
 }
 
 /** Emergency placeholder: always unavailable, always shows 112. No adapter or API call involved. */

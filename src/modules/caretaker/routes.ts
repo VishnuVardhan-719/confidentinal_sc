@@ -28,7 +28,7 @@ export function caretakerRoutePermits(route: CaretakerRoute, ws: Workspace): boo
     case "any":
       return true;
     case "billing":
-      return canSeeBilling(ws) || kind === "independent";
+      return canSeeBilling(ws);
     case "agency_manager":
       return kind === "agency_manager";
     case "provider_manager":

@@ -122,8 +122,8 @@ const invites: AdminInvite[] = [
 ];
 
 const payments: PaymentRecordView[] = [
-  { bookingReference: "#SCV-BKG-900104", status: "due", amountDuePaise: 55000, collectedPaise: 0, method: null, gatewayReference: null, reconciliation: "unreconciled", testMode: false, updatedAt: "2026-11-18T05:00:00Z" },
-  { bookingReference: "#SCV-BKG-900313", status: "partially_paid", amountDuePaise: 116000, collectedPaise: 50000, method: "pay_after_cash", gatewayReference: null, reconciliation: "unreconciled", testMode: false, updatedAt: "2026-11-18T06:00:00Z" },
+  { bookingReference: "#SCV-BKG-900104", status: "due", amountDuePaise: 55000, collectedPaise: 0, outstandingPaise: 55000, method: null, gatewayReference: null, reconciliation: "unreconciled", testMode: false, updatedAt: "2026-11-18T05:00:00Z" },
+  { bookingReference: "#SCV-BKG-900313", status: "partially_paid", amountDuePaise: 116000, collectedPaise: 50000, outstandingPaise: 66000, method: "pay_after_cash", gatewayReference: null, reconciliation: "unreconciled", testMode: false, updatedAt: "2026-11-18T06:00:00Z" },
 ];
 
 const refunds: RefundView[] = [

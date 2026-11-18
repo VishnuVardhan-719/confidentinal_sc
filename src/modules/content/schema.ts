@@ -32,13 +32,21 @@ const HTML_TAG = /<\s*[a-zA-Z!/?]/;
 const HTML_ENTITY = /&(?:#\d+|#x[0-9a-f]+|lt|gt|quot|apos|amp);/i;
 const SCRIPT_SCHEME = /(?:javascript|vbscript)\s*:/i;
 
-/** Normalizes text: NFC, strip control/bidi-override characters, normalize newlines, trim. */
-export function sanitizeText(value: string): string {
+/**
+ * Normalizes rich-text leaf text: NFC, newlines, strip control/bidi-override
+ * characters. Does NOT trim: inline nodes carry meaningful spaces
+ * ("Hello " + bold "world" + " today").
+ */
+export function sanitizeLeafText(value: string): string {
   const normalized = value.normalize("NFC").replace(/\r\n?/g, "\n");
   return Array.from(normalized)
     .filter((ch) => !isUnsafeCodePoint(ch.codePointAt(0) ?? 0))
-    .join("")
-    .trim();
+    .join("");
+}
+
+/** Normalizes a whole field (title, summary, question): leaf sanitizing plus trim. */
+export function sanitizeText(value: string): string {
+  return sanitizeLeafText(value).trim();
 }
 
 export function containsMarkup(value: string): boolean {
@@ -69,10 +77,21 @@ export const safeHref = z
     }
   }, { message: "unsafe_href" });
 
+/**
+ * Rich-text leaf: sanitized but not trimmed, so spaces between inline nodes
+ * survive. A leaf may be whitespace only; emptiness is checked per block.
+ */
+export const richTextLeaf = (max: number) =>
+  z
+    .string()
+    .transform(sanitizeLeafText)
+    .pipe(z.string().min(1).max(max))
+    .refine((v) => !containsMarkup(v), { message: "html_forbidden" });
+
 const textNode = z.strictObject({
   type: z.literal("text"),
-  text: plainText(2000),
-  marks: z.array(z.enum(["bold", "italic"])).max(2).optional(),
+  text: richTextLeaf(2000),
+  marks: z.array(z.enum(["bold", "italic"])).max(2).refine((m) => new Set(m).size === m.length).optional(),
 });
 
 const linkNode = z.strictObject({
@@ -82,7 +101,12 @@ const linkNode = z.strictObject({
 });
 
 export const inlineNode = z.discriminatedUnion("type", [textNode, linkNode]);
-const inlines = z.array(inlineNode).min(1).max(100);
+
+const visibleText = (nodes: readonly z.infer<typeof inlineNode>[]): boolean =>
+  nodes.some((n) => (n.type === "text" ? n.text : n.children.map((c) => c.text).join("")).trim().length > 0);
+
+/** A block's inline run must contain some visible text (individual leaves may be spaces). */
+const inlines = z.array(inlineNode).min(1).max(100).refine(visibleText, { message: "empty_block" });
 
 export const blockNode = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("paragraph"), children: inlines }),
@@ -110,6 +134,11 @@ const storyOrPage = {
   body: richTextDoc,
   /** Consent evidence reference for stories featuring a person (FE spec 15). */
   consentEvidenceId: z.string().min(1).max(64).nullable(),
+  /**
+   * Explicit attestation that the story shows no identifiable person. A story
+   * can be published only with consent evidence OR this attestation (R-E14).
+   */
+  noIdentifiablePerson: z.boolean().default(false),
 };
 
 /** Draft input. Discriminated by kind; extra keys (price, verification, clinical) are rejected. */

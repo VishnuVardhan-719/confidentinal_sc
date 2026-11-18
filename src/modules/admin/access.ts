@@ -111,7 +111,7 @@ export type LoaderResult<T> =
   | { status: "not_found" }
   | { status: "gated" }
   | { status: "unauthenticated" }
-  | { status: "error"; code: ApiErrorCode; retryAfterSeconds?: number };
+  | { status: "error"; code: ApiErrorCode; retryAfterSeconds?: number; fields?: Record<string, string> };
 
 export function toLoaderResult<T>(result: ApiResult<T>, mode: AdapterMode, isEmpty: (data: T) => boolean = () => false): LoaderResult<T> {
   const fixture = mode === "fixture";
@@ -125,10 +125,15 @@ export function toLoaderResult<T>(result: ApiResult<T>, mode: AdapterMode, isEmp
       return { status: "gated" };
     case "unauthenticated":
       return { status: "unauthenticated" };
-    default:
-      return result.error.retryAfterSeconds === undefined
-        ? { status: "error", code: result.error.code }
-        : { status: "error", code: result.error.code, retryAfterSeconds: result.error.retryAfterSeconds };
+    default: {
+      const { code, retryAfterSeconds, fields } = result.error;
+      return {
+        status: "error",
+        code,
+        ...(retryAfterSeconds === undefined ? {} : { retryAfterSeconds }),
+        ...(fields === undefined ? {} : { fields }),
+      };
+    }
   }
 }
 

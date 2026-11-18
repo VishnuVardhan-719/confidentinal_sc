@@ -14,7 +14,7 @@ export type ContentAction = "submit_preview" | "return_to_draft" | "publish" | "
 
 /** Kind-specific body. Stories and pages share a shape; FAQ is question + answer. */
 export type ContentBody =
-  | { kind: "story" | "page"; title: string; summary: string; body: RichTextDoc; consentEvidenceId: string | null }
+  | { kind: "story" | "page"; title: string; summary: string; body: RichTextDoc; consentEvidenceId: string | null; noIdentifiablePerson: boolean }
   | { kind: "faq"; question: string; answer: RichTextDoc; order: number };
 
 export type ContentRevision = {

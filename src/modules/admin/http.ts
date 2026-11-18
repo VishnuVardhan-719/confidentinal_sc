@@ -30,6 +30,16 @@ const reviewResponse = z
     version: provider.version,
   }));
 
+/** Field path -> stable code, from Zod issues (first issue per field wins). */
+export function issueFields(issues: readonly { path: readonly PropertyKey[]; code: string }[]): Record<string, string> {
+  const fields: Record<string, string> = {};
+  for (const issue of issues) {
+    const key = issue.path.map(String).join(".") || "body";
+    if (!(key in fields)) fields[key] = issue.code === "too_small" ? "required" : "invalid";
+  }
+  return fields;
+}
+
 export type AdminHttpOptions = HttpOptions & { env?: Record<string, string | undefined> };
 
 export function createAdminHttpApi(options: AdminHttpOptions = {}): AdminApi {
@@ -48,7 +58,7 @@ export function createAdminHttpApi(options: AdminHttpOptions = {}): AdminApi {
         reason: input.reason,
         expectedVersion: input.expectedVersion,
       });
-      if (!body.success) return fail("validation", { fields: { reason: "invalid" } });
+      if (!body.success) return fail("validation", { fields: issueFields(body.error.issues) });
       return request({
         method: "POST",
         path: `/api/admin/providers/${seg(input.providerId)}/review`,

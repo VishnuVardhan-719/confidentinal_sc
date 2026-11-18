@@ -107,7 +107,14 @@ export type PaymentRowVM = {
   status: StatusDescriptor;
   amountDuePaise: number;
   collectedPaise: number;
+  /** Server value, shown as-is. */
   outstandingPaise: number;
+  /**
+   * True when the server amounts do not reconcile (collected above due, negative
+   * or non-integer values, or outstanding != due - collected). Shown as a
+   * reconciliation problem, never clamped to zero.
+   */
+  reconciliationMismatch: boolean;
   /** Pay-after collections are never labelled as gateway payments. */
   methodKey: string | null;
   isGateway: boolean;
@@ -117,12 +124,19 @@ export type PaymentRowVM = {
   updatedAt: string;
 };
 
+export function paymentAmountsMismatch(p: Pick<PaymentRecordView, "amountDuePaise" | "collectedPaise" | "outstandingPaise">): boolean {
+  const amounts = [p.amountDuePaise, p.collectedPaise, p.outstandingPaise];
+  if (!amounts.every((n) => Number.isSafeInteger(n) && n >= 0)) return true;
+  return p.collectedPaise > p.amountDuePaise || p.outstandingPaise !== p.amountDuePaise - p.collectedPaise;
+}
+
 export const toPaymentRow = (p: PaymentRecordView): PaymentRowVM => ({
   bookingReference: p.bookingReference,
   status: describePayment(p.status),
   amountDuePaise: p.amountDuePaise,
   collectedPaise: p.collectedPaise,
-  outstandingPaise: Math.max(0, p.amountDuePaise - p.collectedPaise),
+  outstandingPaise: p.outstandingPaise,
+  reconciliationMismatch: paymentAmountsMismatch(p),
   methodKey: p.method ? `admin.paymentMethod.${p.method}` : null,
   isGateway: p.method === "gateway",
   gatewayReference: p.method === "gateway" ? p.gatewayReference : null,

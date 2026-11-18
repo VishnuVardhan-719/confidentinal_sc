@@ -21,7 +21,7 @@ export function createAmbulanceHttpApi(env: Record<string, string | undefined> =
     getRequest: gated,
     listTrips: gated,
     getTrip: gated,
-    listDriverTrips: gated,
+    getDriverQueue: gated,
     getDriverTrip: gated,
     performTripAction: gated,
     getEmergencyGuidance: () => getEmergencyGuidance(env),

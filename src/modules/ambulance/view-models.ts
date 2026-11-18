@@ -34,7 +34,8 @@ export type AmbulanceDashboardVM = {
     assignableDrivers: Metric;
     expiring: ExpiryWarningVM[] | null;
   } | null;
-  driver: { assignedTrips: Metric } | null;
+  /** Current trip only; later assignments are a bare count (FE spec 13). */
+  driver: { current: DriverTripVM | null; laterCount: Metric } | null;
 };
 
 export type VehicleRowVM = {
@@ -215,6 +216,8 @@ export function toDriverTrip(view: DriverTripView): DriverTripVM {
   };
 }
 
+export type DriverQueueVM = { current: DriverTripVM | null; laterCount: number };
+
 /** Re-check on the full trip (operator screens): which driver action is valid for this actor. */
-export const driverMayAct = (actor: AmbulanceActor, trip: Trip, action: TripAction): boolean =>
-  tripActionDenial(actor, trip, action, action === "interrupt" ? "driver_unable" : undefined) === null;
+export const driverMayAct = (actor: AmbulanceActor, trip: Trip, action: TripAction, now: Date = new Date()): boolean =>
+  tripActionDenial(actor, trip, action, action === "interrupt" ? "driver_unable" : undefined, now) === null;

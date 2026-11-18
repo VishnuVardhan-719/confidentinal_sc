@@ -82,7 +82,7 @@ describe("CMS workflow and public read model", () => {
     const publisher = createContentFixtureApi({ env: {}, principal: adminPrincipals.contentPublisher, store });
     const site = createPublicContentFixtureApi({ env: {}, store });
 
-    const saved = await editor.saveDraft({ entryId: null, draft: story({ slug: "new-fixture-story", title: "New fixture" }), expectedVersion: null, idempotencyKey: "a" });
+    const saved = await editor.saveDraft({ entryId: null, draft: story({ slug: "new-fixture-story", title: "New fixture", noIdentifiablePerson: true }), expectedVersion: null, idempotencyKey: "a" });
     if (!saved.ok) throw new Error("save failed");
     const id = saved.data.id;
     expect((await site.getStory("new-fixture-story", "en")).ok).toBe(false);
