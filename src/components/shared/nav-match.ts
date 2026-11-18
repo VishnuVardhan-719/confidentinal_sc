@@ -1,0 +1,5 @@
+/** True when `pathname` is `href` or a sub-path of it (segment-aware). `exact` disables sub-paths. */
+export function isActivePath(pathname: string, href: string, exact = false): boolean {
+  if (exact) return pathname === href;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
