@@ -25,3 +25,6 @@ All Telugu (`te`) and Hindi (`hi`) strings below were written by an AI agent (Ki
 
 ## How to record a review
 Change the table row to `reviewed by <name/role>, <date>` and list any strings changed. Do not put reviewer contact details in this repo.
+
+## `booking` namespace (fe-c2, 2026-11-18): te unreviewed, hi unreviewed
+Doctor search, filters, LocationPicker, booking gate. Review first: `booking.search.symptoms.*` + `symptomHint` (clinical wording), `booking.gate.consentLabel/consentHint/healthUnverified` (consent), `booking.location.consent`, `booking.card.manualAcceptance`, `booking.profile.feeNote`.

@@ -23,10 +23,24 @@ function retryAfterSeconds(header: string | null): number | undefined {
 }
 
 /** Same-origin JSON only. No automatic mutation retries or raw error-body parsing. */
-export function createHttpClient(config: { fetch?: typeof fetch; timeoutMs?: number } = {}): HttpClient {
+/** Server components cannot fetch relative URLs. A configured origin (never request headers) is required there. */
+export function serverApiOrigin(env: Record<string, string | undefined> = process.env): string | undefined {
+  const raw = env.APP_ORIGIN;
+  if (!raw) return undefined;
+  try {
+    const url = new URL(raw);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.origin : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function createHttpClient(config: { fetch?: typeof fetch; timeoutMs?: number; baseUrl?: string } = {}): HttpClient {
   const fetcher = config.fetch ?? globalThis.fetch;
   const timeout = config.timeoutMs ?? 15_000;
   if (!Number.isFinite(timeout) || timeout <= 0) throw new Error("Invalid request timeout");
+  const origin = config.baseUrl === undefined ? "" : serverApiOrigin({ APP_ORIGIN: config.baseUrl });
+  if (origin === undefined) throw new Error("Invalid API origin");
   return {
     async request(path, schema, options = {}) {
       if (!/^\/api\/[a-zA-Z0-9/_-]+(?:\?[a-zA-Z0-9=&%_,.:-]*)?$/.test(path) || /%0[ad]/i.test(path)) return fail("validation");
@@ -39,7 +53,7 @@ export function createHttpClient(config: { fetch?: typeof fetch; timeoutMs?: num
         const headers = new Headers({ Accept: "application/json" });
         if (options.body !== undefined) headers.set("Content-Type", "application/json");
         if (options.idempotencyKey) headers.set("Idempotency-Key", options.idempotencyKey);
-        const response = await fetcher(path, {
+        const response = await fetcher(origin + path, {
           method: options.method ?? "GET", headers,
           credentials: "same-origin", redirect: "error", cache: "no-store",
           signal: controller.signal,

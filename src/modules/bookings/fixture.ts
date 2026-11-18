@@ -1,8 +1,7 @@
 import { z } from "zod";
 import { fixtureGuard, type FixtureEnvironment } from "@/lib/api/fixture";
 import { fail, ok } from "@/lib/api/result";
-import { syntheticProvider } from "@/fixtures/marketplace/providers";
-import { categorySchema } from "@/modules/catalog/schemas";
+import { syntheticBookable } from "@/fixtures/marketplace/providers";
 import { syntheticBooking } from "@/fixtures/marketplace/bookings";
 import { acceptSchema, bookingListSchema, createBookingSchema, decisionSchema, type Booking, type BookingEvent, type BookingStatus } from "./schemas";
 import type { BookingsApi } from "./api";
@@ -75,7 +74,7 @@ export function createBookingsFixtureApi(options: BookingFixtureOptions = {}): B
       const prior = intents.get(key);
       if (prior) return prior.body === body ? ok({ id: prior.id }) : fail("conflict");
       if (options.scenario === "stale_slot") return fail("conflict");
-      const provider = categorySchema.options.map(category => syntheticProvider(category)).find(item => item.serviceId === parsed.data.serviceId);
+      const provider = syntheticBookable(parsed.data.serviceId);
       if (!provider) return fail("not_found");
       const id = crypto.randomUUID();
       const row = syntheticBooking(id);
