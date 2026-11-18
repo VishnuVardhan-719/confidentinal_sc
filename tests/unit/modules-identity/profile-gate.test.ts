@@ -18,7 +18,7 @@ describe("profile gate (USER-REQ-1 D, 13 items)", () => {
 
   it("refuses an incomplete profile with the missing items and a PHI-free fix path", async () => {
     const gate = await checkProfileGate(apiFor("new"), "te", NOW);
-    expect(gate).toMatchObject({ kind: "incomplete", total: 13, fixPath: "/te/patient/profile" });
+    expect(gate).toMatchObject({ kind: "incomplete", total: 13, fixPath: "/te/patient/onboarding" });
     if (gate.kind !== "incomplete") throw new Error("expected incomplete");
     expect(gate.completed).toBe(6);
     expect(gate.missing).toHaveLength(PROFILE_ITEM_TOTAL - gate.completed);
@@ -48,6 +48,6 @@ describe("profile gate (USER-REQ-1 D, 13 items)", () => {
       "en",
     );
     expect(gate).toMatchObject({ kind: "incomplete", missing: ["surgeries"] });
-    expect(profileFixPath("hi")).toBe("/hi/patient/profile");
+    expect(profileFixPath("hi")).toBe("/hi/patient/onboarding");
   });
 });

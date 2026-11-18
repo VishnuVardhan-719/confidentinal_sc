@@ -110,3 +110,40 @@ Necessary for FE01; please review in the diff:
 - **R-FE06-07 `/patient/onboarding` not built yet.** "My workspace" for an incomplete patient goes there (404 today). PHASE2-B wizard is pending; e2e "signed-in chrome" is `test.fixme` until then.
 - **R-FE06-08 booking must enforce the profile gate server-side.** `requireCompleteProfile()` / `authorizeCompleteProfile()` in `src/modules/onboarding/profile-gate-server.ts` (pure logic in `profile-gate.ts`) is a UX gate for booking pages/actions. Booking create must also reject incomplete profiles in the backend.
 - **R-FE06-09 browser e2e deferred (user rule: no Playwright/browser runs on this machine).** Identity specs in `tests/e2e/` (`auth`, `onboarding`, `admin-verification`, `profile`, `navigation`) are not run here. Last real run before the rule: `profile.spec.ts` 6/6 passed (desktop-1280); `navigation.spec.ts` 2 passed, 2 `fixme` (R-FE06-06/07). The mobile-360 project was never run. CI or a machine with headroom must run them.
+
+## R-FE07 (from Kiro B, PHASE3-B) - role guards, account session, migration targets
+
+### R-FE07-01 `getAccountSession()` for the public header and operations workspaces
+- **Import:** `import { getAccountSession, type AccountSession } from "@/modules/auth/server";` (server-only; call inside `<Suspense>`, it reads cookies). Pure mapping for tests: `accountSessionView(lookup, locale)` in `@/modules/auth/account-session`.
+- **Signature:** `getAccountSession(locale?: Locale): Promise<AccountSession>`. Locale defaults to the request locale (next-intl). One session lookup per request is shared with `requireRole` (React `cache`). Never redirects.
+- **Shape (no user IDs, email, phone, provider IDs, membership details or tokens):**
+  ```ts
+  type AccountSession =
+    | { kind: "anonymous" }
+    | { kind: "unavailable" }   // lookup failed: render the signed-out header
+    | { kind: "restricted" }    // disabled account: offer sign out only
+    | { kind: "signed_in";
+        displayName: string;    // trimmed, max 60 chars
+        role: Role | null;      // null when the user holds more than one role
+        roles: Role[];          // stable order: patient, doctor, lab, ambulance, caretaker, admin
+        dashboardHref: string;  // "My workspace": role dashboard, onboarding, or /workspace/select
+        workspaces: { role: Role; href: string }[]; // per-role entry links; non-active admin omitted
+      };
+  ```
+- **fe-a (`src/components/shared/session-seam.ts` `getPublicAccount`):** return `null` unless `kind === "signed_in"`; else `{ displayName, workspaces, signOutAction }`. Sign-out is the server action `logoutAction` (`@/modules/auth/actions`), not a URL; render `<SignOutButton/>` (`@/components/auth/sign-out-button`) or use `logoutAction` as the form `action`. `PublicAccount.signOutAction: string` should change to accept the action.
+- **Guards (all six roles):** `requireRole(role, { locale?, path? })` from `@/modules/auth/server`. Signed out -> `/{locale}/login?next=<safe path inside that role root>` (`&reason=session_expired` when a session cookie had existed). Wrong role (no workspace of that role) -> the user's own landing page (`/{locale}/{role}/dashboard`, onboarding, or `/workspace/select` for multi-role). Existing but unusable workspace (non-active admin) or disabled account -> `{ kind: "denied" }`, render `<AccessDenied/>`. Server actions use `authorizeRole` (never redirects). There is no public admin signup (`SIGNUP_ROLES` excludes admin).
+- **Patient booking:** `requireCompleteProfile()` / `authorizeCompleteProfile()` (`@/modules/onboarding/profile-gate-server`) now send incomplete profiles to `/{locale}/patient/onboarding`, which forwards to the 13-item health profile form until the questionnaire wizard ships. This also fixes the R-FE06-07 404.
+
+### R-FE07-02 operations need more than the non-PHI view
+`getOperationsSession()` (fe-e) wants `profileId`, memberships with scopes/resourceId, and an `AdminPrincipal` with server-asserted MFA and grants. `getAccountSession()` deliberately has none of these. Use `requireRole(role)` -> `access.identity` / `access.workspaces` (role, state, providerId, membership view) for workspace selection. MFA status and admin grants are not in the I01 session contract: backend request needed.
+
+### R-FE07-03 interim guards to migrate (do not edit from fe2-b; owners migrate at integration)
+| Branch | File | Interim check | Replace with |
+|---|---|---|---|
+| fe2-d (also on fe2-p, fe2-integration) | `src/modules/doctor/routing.ts` | `GuardResult` / `decideDoctorAccess` / `loginRedirect` mirror of requireRole (XREVIEW-b D4) | `requireRole("doctor")` in the doctor layout; delete the mirror |
+| fe2-d (also fe2-p, fe2-integration) | `src/modules/doctor/session.ts` | fixture-session mapping; http mode has no session | `requireRole("doctor")` + `getRequestApis()` |
+| fe2-d (also fe2-p, fe2-integration) | `src/modules/patient-dashboard/session.ts` | http mode treats every request as signed out (R-FE-D-31) | `requireRole("patient")`; booking: `requireCompleteProfile()` |
+| fe2-e (also fe2-p, fe2-integration) | `src/modules/admin/session.ts` | `getOperationsSession()` returns `{ guard: null, admin: null }` (R-E11/R-E17) | `requireRole(area)` -> identity/workspaces; MFA/grants per R-FE07-02 |
+| fe2-e (also fe2-p, fe2-integration) | `src/modules/admin/access.ts` | pure lab/ambulance/caretaker/admin decisions expecting a session from requireRole | keep; feed it `requireRole(...)` output |
+| fe2-a (also fe2-p, fe2-integration) | `src/components/shared/session-seam.ts` | `getPublicAccount()` returns `null` (R-FE01-6) | `getAccountSession()` per R-FE07-01 |
+| fe2-c (also fe2-p, fe2-integration) | `src/modules/catalog/FE07-08-HANDOFF.md` | private loaders not yet bound to a request-scoped guard | `requireRole("patient")` / `authorizeRole` |

@@ -1,6 +1,6 @@
 import type { ApiResult } from "@/lib/api/result";
 import type { Locale, Role } from "./roles";
-import { canAccessRoute, homePath, loginPath } from "./routes";
+import { canAccessRoute, homePath, landingPathFor, loginPath, workspaceStateFor } from "./routes";
 import { normalizeInternalPath } from "./redirect";
 import type { Identity, Session, Workspace } from "./types";
 
@@ -54,6 +54,12 @@ export function decideRoleAccess(input: SessionLookup & { role: Role; locale: Lo
     case "account_restricted":
       return { kind: "denied", reason: "account_restricted" };
     default:
+      // Wrong role (no workspace of this role at all): send the user to their own landing
+      // page. It never points back into `role`, so this cannot loop, and it reveals nothing
+      // about the requested area. A workspace that exists but is not usable stays denied.
+      if (session.kind === "authenticated" && workspaceStateFor(session.identity, role) === null) {
+        return { kind: "redirect", to: landingPathFor(session.identity, locale) };
+      }
       return { kind: "denied", reason: "forbidden" };
   }
 }

@@ -8,7 +8,7 @@ import { checkProfileGate, type ProfileGateOutcome } from "./profile-gate";
  * call, then the 13-item profile.
  *
  * Pages: `const gate = await requireCompleteProfile({ locale, path })`. Sends signed-out users to
- * sign in, sends incomplete profiles to /patient/profile, and returns `complete` or a failure
+ * sign in, sends incomplete profiles to patient onboarding (/patient/onboarding), and returns `complete` or a failure
  * (`forbidden`/`gated`/`not_found`/`error`) for the page to render. Only `complete` may book.
  *
  * Server actions: `const gate = await authorizeCompleteProfile({ locale })`. Never redirects.

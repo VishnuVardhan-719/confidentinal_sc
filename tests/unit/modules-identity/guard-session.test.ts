@@ -30,10 +30,10 @@ describe("decideRoleAccess (requireRole core)", () => {
     });
   });
 
-  it("denies the wrong role without redirecting (renders the denied page)", () => {
+  it("sends the wrong role to its own dashboard (PHASE3-B); restricted accounts stay denied", () => {
     expect(decideRoleAccess({ session: okSession(FIXTURE_SESSIONS.patient_complete), hadSession: true, role: "admin", locale: "en" })).toEqual({
-      kind: "denied",
-      reason: "forbidden",
+      kind: "redirect",
+      to: "/en/patient/dashboard",
     });
     expect(decideRoleAccess({ session: okSession(FIXTURE_SESSIONS.account_disabled), hadSession: true, role: "patient", locale: "en" })).toEqual({
       kind: "denied",
@@ -67,8 +67,8 @@ describe("decideRoleAccess (requireRole core)", () => {
 
   it("lets a signed-in user start a provider application without a workspace", () => {
     expect(decideRoleAccess({ session: okSession(FIXTURE_SESSIONS.patient_complete), hadSession: true, role: "lab", locale: "en", path: "/en/lab/onboarding" }).kind).toBe("allowed");
-    expect(decideRoleAccess({ session: okSession(FIXTURE_SESSIONS.patient_complete), hadSession: true, role: "lab", locale: "en", path: "/en/lab/orders" }).kind).toBe("denied");
-    expect(decideRoleAccess({ session: okSession(FIXTURE_SESSIONS.patient_complete), hadSession: true, role: "admin", locale: "en", path: "/en/admin/onboarding" }).kind).toBe("denied");
+    expect(decideRoleAccess({ session: okSession(FIXTURE_SESSIONS.patient_complete), hadSession: true, role: "lab", locale: "en", path: "/en/lab/orders" })).toEqual({ kind: "redirect", to: "/en/patient/dashboard" });
+    expect(decideRoleAccess({ session: okSession(FIXTURE_SESSIONS.patient_complete), hadSession: true, role: "admin", locale: "en", path: "/en/admin/onboarding" })).toEqual({ kind: "redirect", to: "/en/patient/dashboard" });
   });
 });
 

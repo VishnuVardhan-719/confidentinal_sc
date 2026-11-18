@@ -1,4 +1,5 @@
 import type { Locale } from "@/modules/auth/roles";
+import { onboardingPath } from "@/modules/auth/routes";
 import type { OnboardingApi } from "./api";
 import { loadPatientProfile, type LoadFailure, type PatientProfilePage } from "./loaders";
 import type { ProfileCompleteness, ProfileItemId } from "./profile";
@@ -16,12 +17,12 @@ export type ProfileGateOutcome =
       completed: number;
       total: number;
       missing: ProfileItemId[];
-      /** Where the patient finishes the profile. No profile data in the URL. */
+      /** Patient onboarding, where the profile is finished. No profile data in the URL. */
       fixPath: string;
     }
   | LoadFailure;
 
-export const profileFixPath = (locale: Locale): string => `/${locale}/patient/profile`;
+export const profileFixPath = (locale: Locale): string => onboardingPath("patient", locale);
 
 export function decideProfileGate(page: PatientProfilePage, locale: Locale): ProfileGateOutcome {
   if (page.kind !== "ready") return page;

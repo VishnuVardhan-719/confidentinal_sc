@@ -5,11 +5,12 @@ Kept separate from `COMPONENTS.md` (which lives on fe2-c) to avoid a merge confl
 ## Server helpers (server-only, never import in client components)
 | Helper | File | Use |
 |---|---|---|
-| `requireRole(role, { locale, path })` | `src/modules/auth/server.ts` | Role pages/layouts. Redirects signed-out users to `/login?next=` (safe path only); returns `allowed` or `denied` (render `<AccessDenied/>`). |
+| `requireRole(role, { locale, path })` | `src/modules/auth/server.ts` | Role pages/layouts, all six roles (`locale`/`path` optional). Signed out -> `/login?next=` (safe path only); wrong role -> the user's own landing page; unusable workspace or disabled account -> `denied` (render `<AccessDenied/>`). |
 | `requireSession({ locale, path })` | same | Any signed-in page (account pages). |
 | `authorizeRole(role, opts)` | same | Server actions. Never redirects; refuse unless `kind === "allowed"`. |
 | `getRequestApis()` | same | Request-bound `auth`/`onboarding`/`verification`/`organizations` APIs (cookie token, fixture or http adapter). |
-| `requireCompleteProfile({ locale, path })` | `src/modules/onboarding/profile-gate-server.ts` | Booking pages. Patient role + 13-item profile; redirects incomplete profiles to `/patient/profile`; only `kind === "complete"` may book. |
+| `getAccountSession(locale?)` | same | Non-PHI header view: `anonymous` / `unavailable` / `restricted` / `signed_in { displayName, role, roles, dashboardHref, workspaces }`. Shape in REQUESTS R-FE07-01. |
+| `requireCompleteProfile({ locale, path })` | `src/modules/onboarding/profile-gate-server.ts` | Booking pages. Patient role + 13-item profile; redirects incomplete profiles to `/patient/onboarding`; only `kind === "complete"` may book. |
 | `authorizeCompleteProfile({ locale })` | same | Booking server actions. Never redirects; refuse unless `complete`. Backend must enforce too (REQUESTS R-FE06-08). |
 | `decideProfileGate` / `checkProfileGate` | `src/modules/onboarding/profile-gate.ts` | Pure gate logic for tests and custom flows. Fails closed on load errors. |
 
