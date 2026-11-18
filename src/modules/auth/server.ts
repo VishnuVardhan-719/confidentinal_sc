@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getAdapterMode } from "@/lib/api/mode";
 import { getOnboardingApi } from "@/modules/onboarding";
 import { getVerificationApi } from "@/modules/verification";
+import { getOrganizationsApi } from "@/modules/organizations";
 import { FIXTURE_SESSIONS } from "@/fixtures/identity";
 import { fixtureScenarioFromToken } from "./fixture";
 import { getAuthApi } from "./index";
@@ -55,6 +56,7 @@ export async function getRequestApis() {
     auth: getAuthApi({ http, fixture: { accessToken: token } }),
     onboarding: getOnboardingApi({ http, fixture: { actorId: fixtureActorId(token) } }),
     verification: getVerificationApi({ http }),
+    organizations: getOrganizationsApi({ http }),
   };
 }
 

@@ -15,6 +15,7 @@ import { PATIENT_STEPS, patientCompletion, type PatientDraft, type PatientStepId
 import { PROVIDER_STEPS, providerCompletion, type ProviderOnboardingDraft } from "./provider";
 import type { OnboardingCompletion, StepDefinition } from "./steps";
 import { buildWizard, type WizardView } from "./wizard";
+import { providerReadiness, type ProviderReadiness } from "./readiness";
 
 /**
  * Server loaders for onboarding pages. Take the request-bound API and the guard's
@@ -76,6 +77,8 @@ export type SetupSummary = {
   requiredTotal: number;
   canEdit: boolean;
   canSubmit: boolean;
+  /** Profile, credentials, availability, review, activation and suspension shown separately. */
+  readiness: ProviderReadiness;
 };
 
 export type ProviderOnboardingView =
@@ -90,7 +93,11 @@ export type ProviderOnboardingView =
     }
   | LoadFailure;
 
-export function setupSummary(draft: ProviderOnboardingDraft, completion: OnboardingCompletion<string>): SetupSummary {
+export function setupSummary(
+  draft: ProviderOnboardingDraft,
+  completion: OnboardingCompletion<string>,
+  now: Date = new Date(),
+): SetupSummary {
   const canEdit = canEditOnboarding(draft.status);
   return {
     status: draft.status,
@@ -100,6 +107,7 @@ export function setupSummary(draft: ProviderOnboardingDraft, completion: Onboard
     requiredTotal: completion.requiredTotal,
     canEdit,
     canSubmit: canEdit && canSubmitForReview(draft.status) && completion.readyToSubmit,
+    readiness: providerReadiness(draft, completion, now),
   };
 }
 

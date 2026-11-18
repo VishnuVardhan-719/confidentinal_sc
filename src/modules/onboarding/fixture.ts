@@ -167,6 +167,10 @@ export function createFixtureOnboardingApi(options: OnboardingFixtureOptions = {
       // A new registration supersedes a pending document of the same kind (I02 behaviour).
       const existing = (sections.documents?.documents ?? []).filter((d) => d.kind !== valid.data.kind);
       sections.documents = { documents: [...existing, { kind: valid.data.kind, documentId }] };
+      const previous = (draft.evidence ?? []).map((e) =>
+        e.kind === valid.data.kind && e.status === "pending" ? { ...e, status: "superseded" as const } : e,
+      );
+      draft.evidence = [...previous, { documentId, kind: valid.data.kind, status: "pending", expiresAt: valid.data.expiresAt }];
       touch(draft);
       const extension = valid.data.contentType === "application/pdf" ? "pdf" : valid.data.contentType === "image/jpeg" ? "jpg" : "png";
       return ok({

@@ -7,7 +7,7 @@ import { documentKindSchema, expectedVersionSchema, parseDocumentStatus } from "
 import { providerStatusFromServer } from "@/modules/verification/status";
 import { createProviderSchema, registerDocumentSchema, selfPatientConsentSchema, type OnboardingApi } from "./api";
 import { patientQuestionnaireSchema } from "./patient";
-import { isServerManagedSection, providerSectionSchema, type ProviderOnboardingDraft } from "./provider";
+import { isServerManagedSection, providerSectionSchema, type EvidenceView, type ProviderOnboardingDraft } from "./provider";
 import { listingSchema, type DocumentRef } from "./shared";
 
 /**
@@ -38,9 +38,12 @@ const documentTicketSchema = z.object({
 function draftFromRead(p: ProviderRead): ProviderOnboardingDraft {
   const live = (p.documents ?? []).filter((d) => d.status === "pending" || d.status === "verified");
   const refs: DocumentRef[] = [];
-  for (const d of live) {
+  const evidence: EvidenceView[] = [];
+  for (const d of p.documents ?? []) {
     const kind = documentKindSchema.safeParse(d.kind);
-    if (kind.success) refs.push({ kind: kind.data, documentId: d.id });
+    if (!kind.success) continue;
+    evidence.push({ documentId: d.id, kind: kind.data, status: parseDocumentStatus(d.status), expiresAt: d.expires_at });
+    if (live.includes(d)) refs.push({ kind: kind.data, documentId: d.id });
   }
   const sections: Record<string, unknown> = {};
   if (p.profile) sections.listing = { displayName: p.profile.display_name, description: p.profile.description };
@@ -52,6 +55,7 @@ function draftFromRead(p: ProviderRead): ProviderOnboardingDraft {
     version: p.version,
     updatedAt: null,
     sections,
+    evidence,
   } as ProviderOnboardingDraft;
 }
 

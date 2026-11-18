@@ -48,8 +48,41 @@ export const loginSchema = z.discriminatedUnion("method", [
 ]);
 export type LoginInput = z.infer<typeof loginSchema>;
 
-/** Strip spaces/dashes from pasted or autofilled codes. Never log the result. */
-export const normalizeOtpInput = (raw: string): string => raw.replace(/[\s-]/g, "");
+/**
+ * Decimal digit blocks users may type on Indian-language keyboards (te/hi) or IMEs:
+ * Devanagari, Telugu, Arabic-Indic, extended Arabic-Indic and full-width. Each block
+ * holds 0-9 contiguously starting at the listed code point.
+ */
+const NATIVE_DIGIT_ZEROS = [0x0966, 0x0c66, 0x0660, 0x06f0, 0xff10];
+
+/** Map native-script digits to ASCII 0-9; other characters unchanged. */
+export function toAsciiDigits(raw: string): string {
+  let out = "";
+  for (const ch of raw) {
+    const code = ch.codePointAt(0) ?? 0;
+    const zero = NATIVE_DIGIT_ZEROS.find((z) => code >= z && code <= z + 9);
+    out += zero === undefined ? ch : String(code - zero);
+  }
+  return out;
+}
+
+/** Normalize pasted/autofilled/native-digit codes: ASCII digits, no spaces or dashes. Never log the result. */
+export const normalizeOtpInput = (raw: string): string => toAsciiDigits(raw).replace(/[\s\u00a0-]/g, "");
+
+/**
+ * Pull a code out of pasted text such as an SMS ("Your code is 246 810"). Returns the code
+ * only when exactly one six-digit group is present; otherwise null (never guess).
+ */
+export function extractOtpFromPaste(text: string, length = 6): string | null {
+  const ascii = toAsciiDigits(text);
+  const compact = normalizeOtpInput(ascii);
+  if (new RegExp(`^\\d{${length}}$`).test(compact)) return compact;
+  // Join digit groups split only by single spaces/dashes ("246 810"), then look for exactly one run.
+  const joined = ascii.replace(/(\d)[ \u00a0-](?=\d)/g, "$1");
+  const runs = joined.match(/\d+/g) ?? [];
+  const candidates = runs.filter((r) => r.length === length);
+  return candidates.length === 1 && runs.filter((r) => r.length > length).length === 0 ? candidates[0] : null;
+}
 
 export const otpCodeSchema = z.string().regex(/^\d{6}$/, { message: "otp_format" });
 

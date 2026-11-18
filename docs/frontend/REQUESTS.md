@@ -46,3 +46,13 @@ Backend inspected read-only: `origin/task/I01-auth-rls` @ `1efbab0`, `origin/tas
 | R-FE04-04 | `server-only` | `server-only` is not installed; Vitest cannot resolve it | Server modules (`auth/server.ts`, `*/actions.ts`) import `next/headers`, which already fails in client bundles | Package owner: optionally add `server-only` + a Vitest alias |
 | R-FE04-05 | Coverage admin | No coverage list/decision contract (canonical `provider_service_areas`) | `VerificationApi.listCoverage/decideCoverage`; HTTP returns `gated`, fixture is synthetic | Backend: `GET /api/admin/coverage?category=&state=&pin=` and `POST /api/admin/coverage/:id/decision {decision, reason, expectedVersion}` |
 | R-FE04-06 | i18n keys | New keys used by flow states: `auth.errors.{invalidCredentials,accountRestricted,accountExists,rateLimited,methodUnavailable,otpInvalid,otpExpired,checkFields,sessionExpired}`, `onboarding.errors.{checkFields,draftConflict,saveUnavailable}`, `admin.review.errors.{checkFields,staleVersion,unavailable,confirmRequired}`, `common.roles.*`, `common.workspaceState.*`, `errors.<ApiErrorCode>`, `errors.fields.<code>` | Returned as keys only | Added with the pages after the fe2-a i18n foundation is merged (my namespaces) or by the i18n owner (shared namespaces) |
+
+---
+
+## FE05 e2e scaffolding and spec-gap review (Kiro B, `feat/fe2-b`, on `4120d8f`), 2026-11-18
+
+| ID | Area | Finding | Frontend handling | Needs |
+|---|---|---|---|---|
+| R-FE05-01 | Playwright | `@playwright/test` and `@axe-core/playwright` are not installed on this branch (they arrive with `feat/fe2-a`). `tsconfig` includes `**/*.ts`, so specs importing them would fail typecheck | `tests/e2e/*.ts` carry a TEMPORARY `// @ts-nocheck` (with an eslint-disable for that rule only). All suites are `test.describe.fixme` until pages exist | After the fe2-a merge: remove the two header lines from each `tests/e2e/*.ts` file and run `npx playwright test --config tests/e2e/playwright.config.ts` |
+| R-FE05-02 | Playwright config | No repo-level `playwright.config.ts` exists | Area config in `tests/e2e/playwright.config.ts` (fixture adapter, port 3100, serial, artifacts in OS temp dir) | Package/CI owner: decide on a root config, or keep per-area configs |
+| R-FE05-03 | Invitations | I01 `list_organization_invites` returns `organization_id, scopes, version` only; there is no organization name or role to show the invitee | `OrganizationsApi.listInvitations` shows scopes only; unknown scope strings are dropped | Backend: include organization display name and `membership_role` in the invitation list |

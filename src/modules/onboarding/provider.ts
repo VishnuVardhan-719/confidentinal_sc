@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { ProviderCategory } from "@/modules/auth/roles";
 import type { ProviderStatusDisplay } from "@/modules/verification/status";
+import type { DocumentKind, DocumentStatus } from "@/modules/verification/schemas";
 import {
   contactPhoneSchema,
   evidenceSchema,
@@ -299,7 +300,11 @@ export type ProviderOnboardingDraft<C extends ProviderCategory = ProviderCategor
   version: number;
   updatedAt: string | null;
   sections: Partial<ProviderSectionValues<C>>;
+  /** Server-reported state of registered evidence (credential review is separate from profile completeness). */
+  evidence?: EvidenceView[];
 } : never;
+
+export type EvidenceView = { documentId: string; kind: DocumentKind; status: DocumentStatus; expiresAt: string };
 
 export function providerCompletion<C extends ProviderCategory>(category: C, sections: Partial<Record<string, unknown>>) {
   const steps = PROVIDER_STEPS[category] as readonly StepDefinition<string>[];
