@@ -1,0 +1,15 @@
+{
+  "close": "Close",
+  "dismiss": "Dismiss notification",
+  "notifications": "Notifications",
+  "skipToContent": "Skip to main content",
+  "mainNavigation": "Main",
+  "footerNavigation": "Footer",
+  "breadcrumb": "Breadcrumb",
+  "openMenu": "Open menu",
+  "menuDescription": "Site navigation, language and account links",
+  "language": "Language",
+  "loading": "Loading",
+  "mobileNavigation": "Quick links",
+  "sidebarNavigation": "Workspace"
+}

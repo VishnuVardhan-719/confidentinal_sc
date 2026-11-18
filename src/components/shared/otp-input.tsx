@@ -1,0 +1,55 @@
+"use client";
+
+import type { ComponentPropsWithRef } from "react";
+import { cn } from "@/components/ui/cn";
+import { sanitizeOtp } from "./input-format";
+
+/**
+ * One real <input> (works with SMS autofill, paste and screen readers) drawn as segmented boxes.
+ * Digits are never logged, put in URLs or persisted. Use inside <Field> for label/hint/error.
+ */
+export function OTPInput({
+  value,
+  onValueChange,
+  length = 6,
+  className,
+  ...props
+}: Omit<ComponentPropsWithRef<"input">, "value" | "onChange" | "type" | "maxLength"> & {
+  value: string;
+  onValueChange: (digits: string) => void;
+  length?: number;
+}) {
+  const chars = Array.from({ length }, (_, i) => value[i] ?? "");
+  return (
+    <div className={cn("relative w-fit", className)}>
+      <div aria-hidden className="flex gap-2">
+        {chars.map((c, i) => (
+          <span
+            key={i}
+            className={cn(
+              "inline-flex h-14 w-11 items-center justify-center rounded-md border bg-surface font-display text-2xl text-ink tabular sm:w-12",
+              "border-border-strong",
+            )}
+          >
+            {c}
+          </span>
+        ))}
+      </div>
+      <input
+        type="text"
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        pattern={`\\d{${length}}`}
+        spellCheck={false}
+        {...props}
+        value={value}
+        onChange={(e) => onValueChange(sanitizeOtp(e.target.value, length))}
+        className={cn(
+          "absolute inset-0 h-full w-full cursor-text rounded-md bg-transparent text-transparent caret-transparent",
+          "focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus",
+          "selection:bg-transparent",
+        )}
+      />
+    </div>
+  );
+}
