@@ -8,6 +8,9 @@ All Telugu (`te`) and Hindi (`hi`) strings below were written by an AI agent (Ki
 | `accessibility` | unreviewed | unreviewed | Screen-reader labels |
 | `errors` | unreviewed | unreviewed | API error messages, 404/error pages |
 | `public` | unreviewed | unreviewed | All public pages (landing, about, FAQ, legal outlines, emergency) |
+| `payment` | unreviewed | unreviewed | Payment status, summary, invoice/receipt states, cancellation dialog (money wording: review first) |
+| `support` | unreviewed | unreviewed | Support ticket form and timeline |
+| `common.notifications`, `common.account`, `common.roleNav`, `public.landing.search`, `public.storyPage` | unreviewed | unreviewed | Added in phase 2 / USER-REQ-1 |
 | other namespaces | empty | empty | No strings yet |
 
 ## Review first (safety, legal or money wording)
@@ -16,6 +19,9 @@ All Telugu (`te`) and Hindi (`hi`) strings below were written by an AI agent (Ki
 - `public.faqPage.items.pay`, `.cancel`, `.price`, `.privacy`, `public.howItWorks.paymentBody`, `.cancelBody`: payment, cancellation and privacy statements.
 - `public.landing.services.caretakers.caveat`: scope of non-clinical care.
 - `public.landing.trust.*`, `public.howItWorks.verificationBody`: what "verified" does and does not mean.
+
+- `payment.summary.method.payAfter`, `payment.cancellation.*`: must not suggest SureCure Visit holds money or that a fee is set by us.
+- `support.form.privacyBody`, `support.form.sensitiveWarning`: privacy warnings.
 
 ## Terminology choices to confirm
 - Telugu: "ప్రొవైడర్" (transliterated) for provider; "ధృవీకరించిన" for verified; "సంరక్షకులు" for caretakers; "ముసాయిదా" for draft.

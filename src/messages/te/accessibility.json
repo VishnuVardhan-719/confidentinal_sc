@@ -11,5 +11,6 @@
   "language": "భాష",
   "loading": "లోడ్ అవుతోంది",
   "mobileNavigation": "త్వరిత లింక్‌లు",
-  "sidebarNavigation": "వర్క్‌స్పేస్"
+  "sidebarNavigation": "వర్క్‌స్పేస్",
+  "unreadCount": "{count, plural, one {# చదవనిది} other {# చదవనివి}}"
 }

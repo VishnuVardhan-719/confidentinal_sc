@@ -1,1 +1,71 @@
-{}
+{
+  "status": {
+    "notInitiated": "Not started",
+    "due": "Payment due",
+    "processing": "Processing",
+    "paid": "Paid",
+    "partiallyPaid": "Partly paid",
+    "disputed": "Disputed",
+    "refunded": "Refunded",
+    "unknown": "Payment status unknown"
+  },
+  "summary": {
+    "title": "Payment",
+    "statusLabel": "Payment status",
+    "due": "Amount due",
+    "collected": "Received",
+    "collectedByProvider": "Recorded as collected by the provider",
+    "refunded": "Refunded",
+    "amountUnavailable": "Amount unavailable",
+    "method": {
+      "payAfter": "You pay the provider directly after the visit. This is not an online payment, and SureCure Visit does not hold the money.",
+      "onlineTest": "Test payment in sandbox mode. No real money moves.",
+      "none": "The payment method has not been set yet."
+    },
+    "separateNote": "Payment status is separate from booking status. A booking can be confirmed while payment is still due."
+  },
+  "documents": {
+    "invoice": {
+      "label": "Invoice",
+      "open": "Open invoice"
+    },
+    "receipt": {
+      "label": "Receipt",
+      "open": "Open receipt"
+    },
+    "newTab": "(opens in a new tab)",
+    "issuer": {
+      "platform": "Issued by SureCure Visit",
+      "provider": "Issued by the provider"
+    },
+    "state": {
+      "pending": "being prepared",
+      "not_issued": "not issued for this booking",
+      "expired": "the link has expired. Reload the page to get a new one.",
+      "unavailable": "not available"
+    }
+  },
+  "cancellation": {
+    "trigger": "Cancel booking",
+    "title": "Cancel this booking?",
+    "description": "Read the terms that apply to this booking before you cancel.",
+    "unavailableDescription": "The cancellation terms for this booking could not be loaded.",
+    "confirm": "Cancel booking",
+    "keep": "Keep booking",
+    "termsTitle": "Cancellation terms (version {version})",
+    "fee": "Cancellation fee",
+    "noFee": "No fee",
+    "refund": "Refund to your online payment",
+    "reasonLegend": "Why are you cancelling?",
+    "reasons": {
+      "schedule_change": "My plans changed",
+      "no_longer_needed": "I no longer need this service",
+      "chose_other_provider": "I chose another provider",
+      "other": "Another reason"
+    },
+    "acknowledge": "I have read the cancellation terms (version {version})",
+    "incomplete": "Choose a reason and confirm you have read the terms to continue.",
+    "unavailableTitle": "Cancellation is not available here right now",
+    "unavailableBody": "We could not load approved cancellation terms, so this booking cannot be cancelled online. Nothing has been changed. Try again later or contact support."
+  }
+}

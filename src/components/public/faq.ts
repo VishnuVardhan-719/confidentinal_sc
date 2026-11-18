@@ -1,5 +1,9 @@
+import type { RichTextDoc } from "./content-source";
+
 /** FAQ catalogue: ids map to public.faqPage.items.<id>.{q,a}. Order within a category is display order. */
 export const FAQ_CATEGORIES = {
+  /** Published CMS answers (when the content module serves them) are listed here. */
+  general: [],
   services: ["whatIs", "coverage", "emergency", "languages"],
   booking: ["browse", "confirmed", "questionnaire"],
   payments: ["price", "pay", "cancel"],
@@ -8,11 +12,19 @@ export const FAQ_CATEGORIES = {
 } as const;
 
 export type FaqCategory = keyof typeof FAQ_CATEGORIES;
-export type FaqId = (typeof FAQ_CATEGORIES)[FaqCategory][number];
+export type FaqId = Exclude<(typeof FAQ_CATEGORIES)[FaqCategory][number], never>;
 
 export const LANDING_FAQ: readonly FaqId[] = ["confirmed", "coverage", "price", "emergency", "verify"];
 
-export type FaqEntry = { id: FaqId; category: FaqCategory; q: string; a: string };
+/** Built-in FAQ entries use a FaqId; CMS-published entries use their slug and carry a rich answer. */
+export type FaqEntry = {
+  id: FaqId | (string & {});
+  category: FaqCategory;
+  q: string;
+  /** Plain text answer (also used for search). */
+  a: string;
+  answerDoc?: RichTextDoc;
+};
 
 /** Case- and whitespace-insensitive, Unicode-normalised (Telugu/Devanagari safe). */
 export function normalizeForSearch(text: string): string {

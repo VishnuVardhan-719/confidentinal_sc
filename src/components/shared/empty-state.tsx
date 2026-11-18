@@ -28,7 +28,7 @@ export function EmptyState({
         <Icon aria-hidden className="size-6" />
       </span>
       <div className="grid gap-2">
-        <Heading className="text-xl font-semibold text-ink">{title}</Heading>
+        <Heading className="text-xl font-semibold [overflow-wrap:anywhere] text-ink">{title}</Heading>
         {description ? <div className="measure text-base text-muted">{description}</div> : null}
       </div>
       {action ? <div className="flex flex-wrap gap-3">{action}</div> : null}

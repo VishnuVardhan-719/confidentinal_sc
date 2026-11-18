@@ -1,11 +1,14 @@
 import { ArrowRight, Check, Minus, Phone } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import { getPublishedStories, type PublicContentResult, type PublicStorySummary } from "@/components/public/content-source";
+import { FixtureNotice } from "@/components/shared/fixture-notice";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ServiceIcon } from "@/components/shared/service-icon";
 import { LANDING_FAQ } from "@/components/public/faq";
 import { FaqItem } from "@/components/public/faq-item";
+import { DoctorSearch, type DoctorSearchLabels } from "@/components/public/doctor-search";
 import { HeroArt } from "@/components/public/hero-art";
 import { ArrowLink, Container } from "@/components/public/layout";
 import { publicPageMetadata } from "@/components/public/metadata";
@@ -26,6 +29,7 @@ const TRUST_LIMITS = ["ratings", "outcomes", "instant"] as const;
 
 export default async function LandingPage() {
   const t = await getTranslations("public.landing");
+  const stories = await getPublishedStories(await getLocale());
   const finderLabels: FinderLabels = {
     pinLabel: t("finder.pinLabel"),
     pinHint: t("finder.pinHint"),
@@ -63,7 +67,7 @@ export default async function LandingPage() {
       <HowItWorks />
       <Trust />
       <AboutBlock />
-      <StoriesBlock />
+      <StoriesBlock stories={stories} />
       <MembershipsBlock />
       <ProvidersBlock />
       <FaqBlock />
@@ -74,6 +78,24 @@ export default async function LandingPage() {
 /* 2. Hero */
 function Hero() {
   const t = useTranslations("public.landing.hero");
+  const ts = useTranslations("public.landing.search");
+  const searchLabels: DoctorSearchLabels = {
+    query: {
+      label: ts("query"),
+      hint: ts("queryHint"),
+      placeholder: ts("queryPlaceholder"),
+      loading: ts("loading"),
+      empty: ts("empty"),
+      error: ts("error"),
+      unavailable: ts("unavailable"),
+      count: ts("count"),
+    },
+    location: ts("location"),
+    locationHint: ts("locationHint"),
+    locationPlaceholder: ts("locationPlaceholder"),
+    submit: ts("submit"),
+    submitting: ts("submitting"),
+  };
   return (
     <section aria-labelledby="hero-title" className="overflow-hidden">
       <Container className="grid items-center gap-10 pt-10 pb-14 md:pt-16 lg:grid-cols-12 lg:gap-8 lg:pt-20 lg:pb-24">
@@ -85,13 +107,9 @@ function Hero() {
             {t("title")}
           </h1>
           <p className="scv-rise scv-rise-delay measure text-xl leading-relaxed text-muted">{t("lead")}</p>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button asChild size="lg">
-              <Link href="/#finder">{t("primary")}</Link>
-            </Button>
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/how-it-works">{t("secondary")}</Link>
-            </Button>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <ArrowLink href="/#finder">{t("primary")}</ArrowLink>
+            <ArrowLink href="/how-it-works">{t("secondary")}</ArrowLink>
           </div>
           <p className="flex items-center gap-2 text-base text-muted">
             <Phone aria-hidden className="size-4 text-danger" />
@@ -101,6 +119,12 @@ function Hero() {
           </p>
         </div>
         <HeroArt className="mx-auto w-full max-w-md lg:col-span-5 lg:max-w-none lg:translate-y-6" />
+        {/*
+          Integration (R-C2-4): once feat/fe2-c is merged, replace with
+          <BookingIntl><DoctorSearchBar idPrefix="hero" className="lg:col-span-12" /></BookingIntl>
+          from @/components/directory. Both use the same /doctors?q=&city=|pin= contract.
+        */}
+        <DoctorSearch labels={searchLabels} className="lg:col-span-12" />
       </Container>
     </section>
   );
@@ -342,7 +366,7 @@ function AboutBlock() {
 }
 
 /* 8. Stories (honest empty state until real, consented stories are published) */
-function StoriesBlock() {
+function StoriesBlock({ stories }: { stories: PublicContentResult<PublicStorySummary[]> }) {
   const t = useTranslations("public.landing.stories");
   return (
     <section aria-labelledby="stories-title" className="py-16 md:py-24">
@@ -350,14 +374,31 @@ function StoriesBlock() {
         <h2 id="stories-title" className="font-display text-3xl font-medium tracking-[-0.02em] text-ink lg:col-span-4">
           {t("title")}
         </h2>
-        <EmptyState
-          icon="stories"
-          headingLevel="h3"
-          title={t("emptyTitle")}
-          description={t("emptyBody")}
-          action={<ArrowLink href="/stories">{t("cta")}</ArrowLink>}
-          className="lg:col-span-7 lg:col-start-6"
-        />
+        {stories.status === "ok" ? (
+          <div className="grid gap-6 lg:col-span-7 lg:col-start-6">
+            {stories.fixture ? <FixtureNotice /> : null}
+            <ul className="grid divide-y divide-border border-y border-border">
+              {stories.data.slice(0, 3).map((s) => (
+                <li key={s.slug} className="py-5">
+                  <Link href={`/stories/${s.slug}`} className="group grid gap-1">
+                    <span className="font-display text-xl text-ink group-hover:text-forest group-hover:underline">{s.title}</span>
+                    <span className="text-base text-muted">{s.summary}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <ArrowLink href="/stories">{t("cta")}</ArrowLink>
+          </div>
+        ) : (
+          <EmptyState
+            icon="stories"
+            headingLevel="h3"
+            title={t("emptyTitle")}
+            description={t("emptyBody")}
+            action={<ArrowLink href="/stories">{t("cta")}</ArrowLink>}
+            className="lg:col-span-7 lg:col-start-6"
+          />
+        )}
       </Container>
     </section>
   );

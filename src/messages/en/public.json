@@ -1,25 +1,63 @@
 {
   "meta": {
-    "landing": { "title": "SureCure Visit: verified healthcare at home", "description": "Find verified doctors, home lab sample collection, scheduled ambulance transport and caretakers who serve your PIN code. You choose the provider; they confirm your request." },
-    "about": { "title": "About us", "description": "What SureCure Visit is, how the marketplace works and what we do not do." },
-    "ourStory": { "title": "Our story", "description": "Why SureCure Visit exists: bringing verified care to people at home." },
-    "stories": { "title": "Stories", "description": "Published stories and health awareness articles from SureCure Visit." },
-    "howItWorks": { "title": "How it works", "description": "How requests, provider acceptance, verification and payment work on SureCure Visit." },
-    "faq": { "title": "Frequently asked questions", "description": "Answers about services, bookings, payments, accounts and becoming a provider." },
-    "contact": { "title": "Contact", "description": "How to reach SureCure Visit and where to find help." },
-    "privacy": { "title": "Privacy notice (draft)", "description": "Draft privacy notice for SureCure Visit, pending legal approval." },
-    "terms": { "title": "Terms of use (draft)", "description": "Draft terms of use for SureCure Visit, pending legal approval." },
-    "refunds": { "title": "Cancellations and refunds (draft)", "description": "Draft cancellation and refund policy for SureCure Visit, pending legal approval." },
-    "becomeProvider": { "title": "Become a provider", "description": "Doctors, laboratories, ambulance operators and caretakers can apply to offer services on SureCure Visit." },
-    "memberships": { "title": "Memberships", "description": "SureCure Visit memberships are not on sale. Read how any future plan will be published." },
-    "emergency": { "title": "Emergency: call 112", "description": "In a medical emergency in India, call 112. SureCure Visit does not dispatch emergency services." }
+    "landing": {
+      "title": "SureCure Visit: verified healthcare at home",
+      "description": "Find verified doctors, home lab sample collection, scheduled ambulance transport and caretakers who serve your PIN code. You choose the provider; they confirm your request."
+    },
+    "about": {
+      "title": "About us",
+      "description": "What SureCure Visit is, how the marketplace works and what we do not do."
+    },
+    "ourStory": {
+      "title": "Our story",
+      "description": "Why SureCure Visit exists: bringing verified care to people at home."
+    },
+    "stories": {
+      "title": "Stories",
+      "description": "Published stories and health awareness articles from SureCure Visit."
+    },
+    "howItWorks": {
+      "title": "How it works",
+      "description": "How requests, provider acceptance, verification and payment work on SureCure Visit."
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "description": "Answers about services, bookings, payments, accounts and becoming a provider."
+    },
+    "contact": {
+      "title": "Contact",
+      "description": "How to reach SureCure Visit and where to find help."
+    },
+    "privacy": {
+      "title": "Privacy notice (draft)",
+      "description": "Draft privacy notice for SureCure Visit, pending legal approval."
+    },
+    "terms": {
+      "title": "Terms of use (draft)",
+      "description": "Draft terms of use for SureCure Visit, pending legal approval."
+    },
+    "refunds": {
+      "title": "Cancellations and refunds (draft)",
+      "description": "Draft cancellation and refund policy for SureCure Visit, pending legal approval."
+    },
+    "becomeProvider": {
+      "title": "Become a provider",
+      "description": "Doctors, laboratories, ambulance operators and caretakers can apply to offer services on SureCure Visit."
+    },
+    "memberships": {
+      "title": "Memberships",
+      "description": "SureCure Visit memberships are not on sale. Read how any future plan will be published."
+    },
+    "emergency": {
+      "title": "Emergency: call 112",
+      "description": "In a medical emergency in India, call 112. SureCure Visit does not dispatch emergency services."
+    }
   },
-
   "landing": {
     "hero": {
       "title": "Care that comes closer.",
       "lead": "Find doctors, lab sample collection, scheduled ambulance transport and caretakers who are verified and actually serve your PIN code. You choose who comes; they confirm your request.",
-      "primary": "Find care near you",
+      "primary": "Search other services by PIN",
       "secondary": "See how it works",
       "note": "Not for emergencies. In an emergency, call 112."
     },
@@ -46,9 +84,18 @@
         "title": "A doctor, at your door",
         "body": "Request a home consultation from a doctor whose registration has been checked.",
         "points": {
-          "choose": { "term": "You choose the doctor", "detail": "Compare doctors who serve your PIN, their languages and their fee." },
-          "accept": { "term": "The doctor accepts", "detail": "Your request becomes a booking only when the doctor confirms it." },
-          "records": { "term": "Your visit, on record", "detail": "Visit notes will appear in your account once records are switched on." }
+          "choose": {
+            "term": "You choose the doctor",
+            "detail": "Compare doctors who serve your PIN, their languages and their fee."
+          },
+          "accept": {
+            "term": "The doctor accepts",
+            "detail": "Your request becomes a booking only when the doctor confirms it."
+          },
+          "records": {
+            "term": "Your visit, on record",
+            "detail": "Visit notes will appear in your account once records are switched on."
+          }
         },
         "caveat": "Availability varies by area and time. Home visits are not a substitute for emergency care.",
         "cta": "Find a doctor"
@@ -89,11 +136,26 @@
       "title": "How a visit happens",
       "description": "Every booking follows the same five steps, whichever service you choose.",
       "steps": {
-        "select": { "title": "Choose a provider", "body": "Compare verified providers who serve your PIN code." },
-        "request": { "title": "Send a request", "body": "Pick a time. The price is shown before you send it." },
-        "accept": { "title": "Provider accepts", "body": "The provider confirms or declines. Only then is it booked." },
-        "service": { "title": "Receive care", "body": "The provider comes to you at the agreed time." },
-        "records": { "title": "Keep your records", "body": "Reports and visit records appear in your account where available." }
+        "select": {
+          "title": "Choose a provider",
+          "body": "Compare verified providers who serve your PIN code."
+        },
+        "request": {
+          "title": "Send a request",
+          "body": "Pick a time. The price is shown before you send it."
+        },
+        "accept": {
+          "title": "Provider accepts",
+          "body": "The provider confirms or declines. Only then is it booked."
+        },
+        "service": {
+          "title": "Receive care",
+          "body": "The provider comes to you at the agreed time."
+        },
+        "records": {
+          "title": "Keep your records",
+          "body": "Reports and visit records appear in your account where available."
+        }
       },
       "requestNote": "A request is not a confirmed booking until the provider accepts it.",
       "cta": "Read the full guide"
@@ -136,10 +198,22 @@
       "title": "Offer your services on SureCure Visit",
       "body": "Professional accounts are separate from patient accounts. Apply, submit your documents, and our team reviews them before you can be booked. Applying does not guarantee approval.",
       "roles": {
-        "doctor": { "title": "Doctors", "body": "Home consultations at a fee you set." },
-        "lab": { "title": "Laboratories", "body": "Tests, packages and home sample collection." },
-        "ambulance": { "title": "Ambulance operators", "body": "Scheduled patient transport with your fleet." },
-        "caretaker": { "title": "Caretakers and agencies", "body": "Home care by the shift or over a period." }
+        "doctor": {
+          "title": "Doctors",
+          "body": "Home consultations at a fee you set."
+        },
+        "lab": {
+          "title": "Laboratories",
+          "body": "Tests, packages and home sample collection."
+        },
+        "ambulance": {
+          "title": "Ambulance operators",
+          "body": "Scheduled patient transport with your fleet."
+        },
+        "caretaker": {
+          "title": "Caretakers and agencies",
+          "body": "Home care by the shift or over a period."
+        }
       },
       "more": "What you will need"
     },
@@ -147,9 +221,23 @@
       "title": "Questions people ask first",
       "all": "All questions",
       "contact": "Contact"
+    },
+    "search": {
+      "query": "Doctor, speciality or symptom",
+      "queryHint": "For example: general physician, fever, or a doctor’s name",
+      "queryPlaceholder": "Search doctors",
+      "loading": "Looking for matches…",
+      "empty": "No suggestions. Press Enter to search.",
+      "error": "Suggestions could not load. Press Enter to search.",
+      "unavailable": "Suggestions are not available yet. Press Enter to search.",
+      "count": "# suggestions",
+      "location": "City or PIN code",
+      "locationHint": "Only verified doctors who visit this area are shown",
+      "locationPlaceholder": "Hyderabad or 500001",
+      "submit": "Search doctors",
+      "submitting": "Searching…"
     }
   },
-
   "about": {
     "title": "About SureCure Visit",
     "lead": "A marketplace for healthcare at home: doctors, laboratories, scheduled ambulance operators and caretakers, each verified and each serving the areas they say they serve.",
@@ -172,7 +260,6 @@
     "teamBody": "Team profiles will be published here once the people involved have reviewed and approved them.",
     "storyCta": "Read our story"
   },
-
   "ourStory": {
     "title": "Our story",
     "lead": "SureCure Visit started from a simple idea: when someone needs care, it should be possible to bring trustworthy care to them.",
@@ -181,7 +268,6 @@
     "pendingTitle": "The full story is coming",
     "pendingBody": "The founders’ own account of how SureCure Visit began will be published here after they have reviewed it. We would rather leave this space short than fill it with words that are not theirs."
   },
-
   "storiesPage": {
     "title": "Stories",
     "lead": "Real experiences from patients and providers, shared with their consent, and health awareness articles reviewed before publication. Articles are general information, not personal medical advice.",
@@ -189,26 +275,58 @@
     "emptyBody": "There are no published stories or articles yet. We do not invent testimonials, so this page stays empty until real ones are ready.",
     "emptyCta": "See how SureCure Visit works"
   },
-
   "howItWorks": {
     "title": "How SureCure Visit works",
     "lead": "The same steps apply to doctor visits, lab tests, scheduled ambulances and caretakers.",
     "patientTitle": "If you need care",
     "patient": {
-      "pin": { "title": "Enter your PIN code", "body": "We show only verified providers who serve your area. If there are none yet, we say so." },
-      "choose": { "title": "Choose a provider", "body": "Compare services, languages and prices. Browsing does not need an account." },
-      "account": { "title": "Create your account", "body": "Before your first booking you answer a short health questionnaire. “Unknown” and “None” are valid answers." },
-      "request": { "title": "Send a request", "body": "Pick a time and confirm the price shown. This is a request, not yet a booking." },
-      "accept": { "title": "The provider accepts", "body": "You are told when the provider confirms or declines. Only an accepted request is a booking." },
-      "visit": { "title": "Receive care", "body": "The provider comes at the agreed time. Records and reports appear in your account where available." }
+      "pin": {
+        "title": "Enter your PIN code",
+        "body": "We show only verified providers who serve your area. If there are none yet, we say so."
+      },
+      "choose": {
+        "title": "Choose a provider",
+        "body": "Compare services, languages and prices. Browsing does not need an account."
+      },
+      "account": {
+        "title": "Create your account",
+        "body": "Before your first booking you answer a short health questionnaire. “Unknown” and “None” are valid answers."
+      },
+      "request": {
+        "title": "Send a request",
+        "body": "Pick a time and confirm the price shown. This is a request, not yet a booking."
+      },
+      "accept": {
+        "title": "The provider accepts",
+        "body": "You are told when the provider confirms or declines. Only an accepted request is a booking."
+      },
+      "visit": {
+        "title": "Receive care",
+        "body": "The provider comes at the agreed time. Records and reports appear in your account where available."
+      }
     },
     "providerTitle": "If you provide care",
     "provider": {
-      "apply": { "title": "Apply", "body": "Create a professional account for your service type." },
-      "documents": { "title": "Submit documents", "body": "Identity, registration or licence where required, and the PIN codes you serve." },
-      "review": { "title": "Review", "body": "Our team checks your documents. We may ask for changes. Approval is not guaranteed." },
-      "publish": { "title": "Set services and prices", "body": "Once approved, publish what you offer, where and at what price." },
-      "requests": { "title": "Accept requests", "body": "You decide which requests to accept." }
+      "apply": {
+        "title": "Apply",
+        "body": "Create a professional account for your service type."
+      },
+      "documents": {
+        "title": "Submit documents",
+        "body": "Identity, registration or licence where required, and the PIN codes you serve."
+      },
+      "review": {
+        "title": "Review",
+        "body": "Our team checks your documents. We may ask for changes. Approval is not guaranteed."
+      },
+      "publish": {
+        "title": "Set services and prices",
+        "body": "Once approved, publish what you offer, where and at what price."
+      },
+      "requests": {
+        "title": "Accept requests",
+        "body": "You decide which requests to accept."
+      }
     },
     "paymentTitle": "Prices and payment",
     "paymentBody": "Providers set their own prices, shown in rupees before you send a request. The price is fixed at the moment you request. Some providers collect payment after the visit. Online payment is not available yet.",
@@ -220,7 +338,6 @@
     "emergencyBody": "SureCure Visit is for planned care. In an emergency, call 112.",
     "emergencyCta": "Emergency guidance"
   },
-
   "faqPage": {
     "title": "Frequently asked questions",
     "lead": "Short answers about using SureCure Visit. If your question is not here, see the contact page.",
@@ -237,25 +354,64 @@
       "booking": "Requests and bookings",
       "payments": "Prices and payment",
       "account": "Account and privacy",
-      "providers": "For providers"
+      "providers": "For providers",
+      "general": "General questions"
     },
     "items": {
-      "whatIs": { "q": "What is SureCure Visit?", "a": "A marketplace where you can find verified doctors, laboratories, scheduled ambulance operators and caretakers who serve your area, and request care at home." },
-      "coverage": { "q": "Which areas do you cover?", "a": "Only PIN codes where verified providers actually operate. Enter your PIN code to see who serves it. If nobody does yet, we will tell you." },
-      "emergency": { "q": "Can I use SureCure Visit in an emergency?", "a": "No. SureCure Visit is for planned care and does not dispatch emergency services. In an emergency, call 112." },
-      "browse": { "q": "Do I need an account to look at providers?", "a": "No. You can browse providers and prices without signing in. You need an account to send a request." },
-      "confirmed": { "q": "Is my booking confirmed when I send a request?", "a": "No. A request becomes a booking only when the provider accepts it. You will see its status in your account." },
-      "questionnaire": { "q": "Why do I have to answer a health questionnaire?", "a": "Providers need basic health information before visiting. You answer it once before your first booking, and “Unknown” or “None” are valid answers. It is never needed to see emergency information." },
-      "price": { "q": "Who sets the price?", "a": "Each provider sets their own price. It is shown before you send a request, and the price at the moment of your request is the one that applies." },
-      "pay": { "q": "How do I pay?", "a": "The payment method is shown on each booking. Some providers collect payment after the visit. Online payment is not available yet." },
-      "cancel": { "q": "What happens if I cancel?", "a": "Cancellation and refund terms are still being finalised. The terms that apply will be shown before you send a request." },
-      "privacy": { "q": "Who can see my health information?", "a": "Your health information is kept private and shared only with the providers involved in your care. The privacy notice, currently a draft, will describe this in full." },
-      "languages": { "q": "Which languages can I use?", "a": "The website is available in English, Telugu and Hindi. Each provider lists the languages they speak." },
-      "verify": { "q": "How are providers verified?", "a": "Our team reviews each provider’s identity, required registration or licence and the areas they serve before they can be booked. Verification is not a rating or a guarantee of outcome." },
-      "join": { "q": "How do I become a provider?", "a": "Sign up with a professional account for your service, submit your documents and wait for review. You can be booked only after approval." }
+      "whatIs": {
+        "q": "What is SureCure Visit?",
+        "a": "A marketplace where you can find verified doctors, laboratories, scheduled ambulance operators and caretakers who serve your area, and request care at home."
+      },
+      "coverage": {
+        "q": "Which areas do you cover?",
+        "a": "Only PIN codes where verified providers actually operate. Enter your PIN code to see who serves it. If nobody does yet, we will tell you."
+      },
+      "emergency": {
+        "q": "Can I use SureCure Visit in an emergency?",
+        "a": "No. SureCure Visit is for planned care and does not dispatch emergency services. In an emergency, call 112."
+      },
+      "browse": {
+        "q": "Do I need an account to look at providers?",
+        "a": "No. You can browse providers and prices without signing in. You need an account to send a request."
+      },
+      "confirmed": {
+        "q": "Is my booking confirmed when I send a request?",
+        "a": "No. A request becomes a booking only when the provider accepts it. You will see its status in your account."
+      },
+      "questionnaire": {
+        "q": "Why do I have to answer a health questionnaire?",
+        "a": "Providers need basic health information before visiting. You answer it once before your first booking, and “Unknown” or “None” are valid answers. It is never needed to see emergency information."
+      },
+      "price": {
+        "q": "Who sets the price?",
+        "a": "Each provider sets their own price. It is shown before you send a request, and the price at the moment of your request is the one that applies."
+      },
+      "pay": {
+        "q": "How do I pay?",
+        "a": "The payment method is shown on each booking. Some providers collect payment after the visit. Online payment is not available yet."
+      },
+      "cancel": {
+        "q": "What happens if I cancel?",
+        "a": "Cancellation and refund terms are still being finalised. The terms that apply will be shown before you send a request."
+      },
+      "privacy": {
+        "q": "Who can see my health information?",
+        "a": "Your health information is kept private and shared only with the providers involved in your care. The privacy notice, currently a draft, will describe this in full."
+      },
+      "languages": {
+        "q": "Which languages can I use?",
+        "a": "The website is available in English, Telugu and Hindi. Each provider lists the languages they speak."
+      },
+      "verify": {
+        "q": "How are providers verified?",
+        "a": "Our team reviews each provider’s identity, required registration or licence and the areas they serve before they can be booked. Verification is not a rating or a guarantee of outcome."
+      },
+      "join": {
+        "q": "How do I become a provider?",
+        "a": "Sign up with a professional account for your service, submit your documents and wait for review. You can be booked only after approval."
+      }
     }
   },
-
   "contact": {
     "title": "Contact",
     "lead": "Official contact channels will be listed here as soon as they are confirmed. Until then, these pages may answer your question.",
@@ -263,14 +419,25 @@
     "pendingBody": "We will not show a phone number, email or chat link until it is confirmed and staffed.",
     "routesTitle": "Find help now",
     "routes": {
-      "emergency": { "title": "Emergency", "body": "Call 112. Read what to do while help is on the way." },
-      "faq": { "title": "Questions", "body": "Answers about coverage, requests, prices and accounts." },
-      "how": { "title": "How it works", "body": "Requests, acceptance, verification and payment." },
-      "providers": { "title": "For providers", "body": "How to apply and what you will need." }
+      "emergency": {
+        "title": "Emergency",
+        "body": "Call 112. Read what to do while help is on the way."
+      },
+      "faq": {
+        "title": "Questions",
+        "body": "Answers about coverage, requests, prices and accounts."
+      },
+      "how": {
+        "title": "How it works",
+        "body": "Requests, acceptance, verification and payment."
+      },
+      "providers": {
+        "title": "For providers",
+        "body": "How to apply and what you will need."
+      }
     },
     "privacyNote": "When contact channels open, please do not send symptoms, test results or other health details through them. Health information belongs in your account, shared only with your providers."
   },
-
   "legal": {
     "draftBadge": "Draft",
     "draftTitle": "Draft, not in force",
@@ -282,48 +449,114 @@
       "title": "Privacy notice",
       "lead": "How SureCure Visit will collect, use, share and protect personal and health information.",
       "sections": {
-        "collect": { "title": "Information we collect", "body": "Account details, the health questionnaire, booking details and documents you choose to upload." },
-        "use": { "title": "How it is used", "body": "To provide the services you request, verify providers, keep records and meet legal duties." },
-        "share": { "title": "Who it is shared with", "body": "The providers involved in your care, and service providers bound to protect it." },
-        "rights": { "title": "Your rights", "body": "Access, correction, consent withdrawal and deletion requests, subject to retention rules." },
-        "security": { "title": "Security and retention", "body": "How information is protected and how long it is kept." },
-        "contact": { "title": "Contact for privacy", "body": "Who to contact about your information." }
+        "collect": {
+          "title": "Information we collect",
+          "body": "Account details, the health questionnaire, booking details and documents you choose to upload."
+        },
+        "use": {
+          "title": "How it is used",
+          "body": "To provide the services you request, verify providers, keep records and meet legal duties."
+        },
+        "share": {
+          "title": "Who it is shared with",
+          "body": "The providers involved in your care, and service providers bound to protect it."
+        },
+        "rights": {
+          "title": "Your rights",
+          "body": "Access, correction, consent withdrawal and deletion requests, subject to retention rules."
+        },
+        "security": {
+          "title": "Security and retention",
+          "body": "How information is protected and how long it is kept."
+        },
+        "contact": {
+          "title": "Contact for privacy",
+          "body": "Who to contact about your information."
+        }
       }
     },
     "terms": {
       "title": "Terms of use",
       "lead": "The rules for using SureCure Visit as a patient, a provider or a visitor.",
       "sections": {
-        "marketplace": { "title": "The marketplace", "body": "SureCure Visit connects you with independent providers who set their own prices and accept requests themselves." },
-        "accounts": { "title": "Accounts", "body": "Eligibility, accurate information and keeping your sign-in secure." },
-        "bookings": { "title": "Requests and bookings", "body": "When a request becomes a booking, and the responsibilities of each side." },
-        "providers": { "title": "Provider obligations", "body": "Verification, accurate listings and conduct during visits." },
-        "emergencies": { "title": "Not an emergency service", "body": "SureCure Visit is for planned care. Emergencies must go to 112." },
-        "liability": { "title": "Liability and disputes", "body": "Limits of responsibility and how disputes are handled." }
+        "marketplace": {
+          "title": "The marketplace",
+          "body": "SureCure Visit connects you with independent providers who set their own prices and accept requests themselves."
+        },
+        "accounts": {
+          "title": "Accounts",
+          "body": "Eligibility, accurate information and keeping your sign-in secure."
+        },
+        "bookings": {
+          "title": "Requests and bookings",
+          "body": "When a request becomes a booking, and the responsibilities of each side."
+        },
+        "providers": {
+          "title": "Provider obligations",
+          "body": "Verification, accurate listings and conduct during visits."
+        },
+        "emergencies": {
+          "title": "Not an emergency service",
+          "body": "SureCure Visit is for planned care. Emergencies must go to 112."
+        },
+        "liability": {
+          "title": "Liability and disputes",
+          "body": "Limits of responsibility and how disputes are handled."
+        }
       }
     },
     "refunds": {
       "title": "Cancellations and refunds",
       "lead": "What happens when a request or booking is cancelled, and when money is returned.",
       "sections": {
-        "beforeAccept": { "title": "Before a provider accepts", "body": "Withdrawing a request that has not been accepted." },
-        "afterAccept": { "title": "After a provider accepts", "body": "Cancellation windows and any charges set by the platform and the provider." },
-        "providerCancel": { "title": "If the provider cancels", "body": "What you are entitled to if a provider cancels or does not arrive." },
-        "refunds": { "title": "Refunds", "body": "How and when refunds are made for online payments, once they are available." },
-        "payAfter": { "title": "Paying after the visit", "body": "How disputes are handled when payment is collected by the provider." }
+        "beforeAccept": {
+          "title": "Before a provider accepts",
+          "body": "Withdrawing a request that has not been accepted."
+        },
+        "afterAccept": {
+          "title": "After a provider accepts",
+          "body": "Cancellation windows and any charges set by the platform and the provider."
+        },
+        "providerCancel": {
+          "title": "If the provider cancels",
+          "body": "What you are entitled to if a provider cancels or does not arrive."
+        },
+        "refunds": {
+          "title": "Refunds",
+          "body": "How and when refunds are made for online payments, once they are available."
+        },
+        "payAfter": {
+          "title": "Paying after the visit",
+          "body": "How disputes are handled when payment is collected by the provider."
+        }
       }
     }
   },
-
   "becomeProvider": {
     "title": "Become a provider",
     "lead": "Offer home healthcare to people in the areas you serve. Professional accounts are reviewed before they can be booked.",
     "rolesTitle": "Choose your service",
     "roles": {
-      "doctor": { "title": "Doctor", "body": "Home consultations at a fee you set, in the PIN codes you choose.", "cta": "Apply as a doctor" },
-      "lab": { "title": "Laboratory", "body": "Publish tests and packages, branches and home sample collection.", "cta": "Apply as a laboratory" },
-      "ambulance": { "title": "Ambulance operator", "body": "Offer scheduled patient transport with your verified fleet and crew.", "cta": "Apply as an ambulance operator" },
-      "caretaker": { "title": "Caretaker or agency", "body": "Offer home care shifts or longer arrangements within your verified skills.", "cta": "Apply as a caretaker" }
+      "doctor": {
+        "title": "Doctor",
+        "body": "Home consultations at a fee you set, in the PIN codes you choose.",
+        "cta": "Apply as a doctor"
+      },
+      "lab": {
+        "title": "Laboratory",
+        "body": "Publish tests and packages, branches and home sample collection.",
+        "cta": "Apply as a laboratory"
+      },
+      "ambulance": {
+        "title": "Ambulance operator",
+        "body": "Offer scheduled patient transport with your verified fleet and crew.",
+        "cta": "Apply as an ambulance operator"
+      },
+      "caretaker": {
+        "title": "Caretaker or agency",
+        "body": "Offer home care shifts or longer arrangements within your verified skills.",
+        "cta": "Apply as a caretaker"
+      }
     },
     "needTitle": "What you will need",
     "need": {
@@ -337,7 +570,6 @@
     "patientNote": "Looking for care instead?",
     "patientCta": "Create a patient account"
   },
-
   "membershipsPage": {
     "title": "Memberships",
     "lead": "There are no memberships on sale.",
@@ -351,7 +583,6 @@
     },
     "cta": "Find care without a membership"
   },
-
   "emergency": {
     "title": "In a medical emergency, call 112",
     "lead": "112 is India’s single emergency number for police, fire and ambulance. Calls are free.",
@@ -368,5 +599,11 @@
       "door": "If you can, have someone meet the ambulance at the gate or road."
     },
     "disclaimer": "This page is general guidance, not medical advice."
+  },
+  "storyPage": {
+    "back": "All stories",
+    "published": "Published {date}",
+    "fallbackLanguage": "This story is not yet available in your language, so it is shown in English.",
+    "disclaimer": "Stories and articles are general information, not personal medical advice."
   }
 }

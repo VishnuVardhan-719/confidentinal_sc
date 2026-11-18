@@ -1,10 +1,11 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { NAMESPACES } from "@/i18n/messages";
 import { LOCALES } from "@/i18n/routing";
 
-const ROOT = path.resolve(import.meta.dirname, "../../src/messages");
+const SRC = path.resolve(import.meta.dirname, "../../src");
+const ROOT = path.join(SRC, "messages");
 
 /** Keys whose value is intentionally identical in every locale (brand, endonyms, templates). */
 const SAME_IN_ALL_LOCALES = new Set([
@@ -74,5 +75,37 @@ describe("message catalogues", () => {
     const hi = Object.values(flatten(load("hi", "public")));
     expect(te.every((s) => /[\u0C00-\u0C7F]/.test(s) || /^[\d\s.:·]+$/.test(s))).toBe(true);
     expect(hi.every((s) => /[\u0900-\u097F]/.test(s) || /^[\d\s.:·]+$/.test(s))).toBe(true);
+  });
+  it("has no values that look like raw message keys", () => {
+    const rawKey = new RegExp(`^(${NAMESPACES.join("|")})(\\.[A-Za-z_]+)+$`);
+    for (const locale of LOCALES) {
+      for (const ns of NAMESPACES) {
+        for (const [key, value] of Object.entries(flatten(load(locale, ns)))) {
+          expect(rawKey.test(value.trim()), `${locale}:${ns}.${key} = "${value}"`).toBe(false);
+        }
+      }
+    }
+  });
+
+  it("resolves every full message key used in source (module labelKeys) in English", () => {
+    const en: Record<string, unknown> = Object.fromEntries(NAMESPACES.map((ns) => [ns, load("en", ns)]));
+    const resolves = (key: string) =>
+      key.split(".").reduce<unknown>((node, part) => (node && typeof node === "object" ? (node as Record<string, unknown>)[part] : undefined), en) !== undefined;
+    // Full keys handed to a root translator: `labelKey: "payment.status.due"` and `*_KEY = "common.status.unknown"`.
+    const literal = new RegExp(`(?:labelKey\\s*:|_KEY\\s*=)\\s*["'\`]((?:${NAMESPACES.join("|")})\\.[A-Za-z_]+(?:\\.[A-Za-z_]+)+)["'\`]`, "g");
+    const missing: string[] = [];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const full = path.join(dir, name);
+        if (statSync(full).isDirectory()) walk(full);
+        else if (/\.(ts|tsx)$/.test(name) && !name.endsWith(".d.ts")) {
+          for (const m of readFileSync(full, "utf8").matchAll(literal)) {
+            if (!resolves(m[1])) missing.push(`${path.relative(SRC, full)}: ${m[1]}`);
+          }
+        }
+      }
+    };
+    walk(SRC);
+    expect(missing).toEqual([]);
   });
 });

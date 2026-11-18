@@ -5,12 +5,15 @@ import { cn } from "@/components/ui/cn";
 export type StepState = "complete" | "current" | "upcoming";
 export type StepItem = { id: string; label: string; state: StepState };
 
-/** Progress through a multi-step form. Non-interactive; navigation lives in the form itself. */
+/**
+ * Progress through a multi-step form. Non-interactive, so it is a labelled group, not a <nav>
+ * landmark. If steps ever become links, switch to <nav> with real links.
+ */
 export function Stepper({ steps, className }: { steps: StepItem[]; className?: string }) {
   const t = useTranslations("common.stepper");
   const currentIndex = steps.findIndex((s) => s.state === "current");
   return (
-    <nav aria-label={t("label")} className={className}>
+    <div role="group" aria-label={t("label")} className={className}>
       <p className="mb-3 text-sm font-medium text-muted sm:sr-only">
         {t("progress", { current: Math.max(currentIndex, 0) + 1, total: steps.length })}
       </p>
@@ -48,6 +51,6 @@ export function Stepper({ steps, className }: { steps: StepItem[]; className?: s
           </li>
         ))}
       </ol>
-    </nav>
+    </div>
   );
 }
