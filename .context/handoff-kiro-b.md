@@ -34,3 +34,6 @@ Logs: `%TEMP%\scv-e2e-all.log`.
 - My port: 3310 (stopped). Start: `Start-Process cmd.exe -ArgumentList '/c','set FRONTEND_ADAPTER=fixture&& set APP_ENV=development&& npx next start -p 3310 > "%TEMP%\scv-fe2b-3310.log" 2>&1' -WorkingDirectory C:\Users\Yashwanth\fe2-b -WindowStyle Hidden`
 - e2e: `$env:E2E_PORT="3310"; npx playwright test --config tests/e2e/playwright.config.ts --project=desktop-1280 --workers=1` (needs a fresh server: fixture state is process memory).
 - Never push; never commit to develop/main.
+
+## Note
+- Root .gitignore `coverage/` also matches the route folder `src/app/[locale]/admin/coverage/`. Its files were force-added (git add -f). Lead: consider anchoring the rule to `/coverage/`.
