@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useRef, useState, useTransition, type FormEvent } from "react";
+import { useTrackedRun } from "@/components/admin/ops/use-tracked-run";
 import { ErrorSummary, type SummaryError } from "@/components/shared/error-summary";
 import { Field } from "@/components/shared/field";
 import { InlineError } from "@/components/shared/inline-error";
@@ -49,7 +50,9 @@ export function AcceptRequestForm({
   const [errors, setErrors] = useState<{ vehicle?: boolean; driver?: boolean }>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const [pending, startTransition] = useTransition();
+  const { running, track } = useTrackedRun();
+  const [refreshing, startTransition] = useTransition();
+  const pending = running || refreshing;
   const vId = `${id}-vehicle`;
   const dId = `${id}-driver`;
   const summary: SummaryError[] = [
@@ -59,21 +62,28 @@ export function AcceptRequestForm({
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (pending) return;
     setServerError(null);
     const next = { vehicle: vehicle === "", driver: driver === "" };
     setErrors(next);
     setAttempt((n) => n + 1);
     if (next.vehicle || next.driver) return;
-    const result = await run({ vehicleResourceId: vehicle, driverResourceId: driver, idempotencyKey: key.current });
-    if (!result.ok) {
-      setErrors({ vehicle: Boolean(result.fields?.vehicleResourceId), driver: Boolean(result.fields?.driverResourceId) });
+    // Acceptance stays pending (dialog locked, button busy) from before the action starts until the refetch begins.
+    const result = await track(async () => {
+      const r = await run({ vehicleResourceId: vehicle, driverResourceId: driver, idempotencyKey: key.current });
+      if (r.ok) {
+        key.current = newKey();
+        setOpen(false);
+        toast({ title: labels.done, tone: "success" });
+        startTransition(() => router.refresh());
+      }
+      return r;
+    });
+    if (result && !result.ok) {
+      const fields = "fields" in result ? result.fields : undefined;
+      setErrors({ vehicle: Boolean(fields?.vehicleResourceId), driver: Boolean(fields?.driverResourceId) });
       setServerError(result.code);
-      return;
     }
-    key.current = newKey();
-    setOpen(false);
-    toast({ title: labels.done, tone: "success" });
-    startTransition(() => router.refresh());
   }
 
   return (

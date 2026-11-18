@@ -12,7 +12,7 @@ export default async function Page({ params }: PageProps<"/[locale]/caretaker/as
   const { assignmentId } = await params;
   return (
     <CaretakerRouteGate route="assignments">
-      {async (ctx) => <CareAssignmentDetailView result={await loadAssignmentDetail(ctx, decodeURIComponent(assignmentId))} />}
+      {async (ctx) => <CareAssignmentDetailView result={await loadAssignmentDetail(ctx, assignmentId)} />}
     </CaretakerRouteGate>
   );
 }

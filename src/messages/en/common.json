@@ -192,5 +192,10 @@
     "refunds": "Refunds",
     "content": "Content",
     "audit": "Audit log"
+  },
+  "pagination": {
+    "label": "More results",
+    "next": "Show more",
+    "first": "Back to the first page"
   }
 }

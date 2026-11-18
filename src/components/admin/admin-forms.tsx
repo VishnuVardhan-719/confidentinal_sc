@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useRef, useState, useTransition, type FormEvent } from "react";
+import { useTrackedRun } from "@/components/admin/ops/use-tracked-run";
 import { ErrorSummary } from "@/components/shared/error-summary";
 import { Field } from "@/components/shared/field";
 import { InlineError } from "@/components/shared/inline-error";
@@ -20,19 +21,24 @@ export function BookingSearchForm({ run, labels }: { run: (reference: string) =>
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const [pending, startTransition] = useTransition();
+  const { running, track } = useTrackedRun();
+  const [refreshing, startTransition] = useTransition();
+  const pending = running || refreshing;
   const inputId = `${id}-ref`;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (pending) return;
     setAttempt((n) => n + 1);
-    const result = await run(value);
-    if (!result.ok) {
-      setError(result.code === "validation" ? labels.invalid : result.code);
-      return;
-    }
-    setError(null);
-    startTransition(() => router.refresh());
+    const result = await track(async () => {
+      const r = await run(value);
+      if (r.ok) {
+        setError(null);
+        startTransition(() => router.refresh());
+      }
+      return r;
+    });
+    if (result && !result.ok) setError(result.code === "validation" ? labels.invalid : result.code);
   }
 
   return (
@@ -69,28 +75,36 @@ export function InviteAdminForm({
   const [errors, setErrors] = useState<{ email?: boolean; capability?: boolean }>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const [pending, startTransition] = useTransition();
+  const { running, track } = useTrackedRun();
+  const [refreshing, startTransition] = useTransition();
+  const pending = running || refreshing;
   const emailId = `${id}-email`;
   const capId = `${id}-cap`;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (pending) return;
     setServerError(null);
     const next = { email: !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email), capability: capability === "" };
     setErrors(next);
     setAttempt((n) => n + 1);
     if (next.email || next.capability) return;
-    const result = await run({ email, capability, idempotencyKey: key.current });
-    if (!result.ok) {
-      setErrors({ email: Boolean(result.fields?.email), capability: Boolean(result.fields?.capability) });
+    const result = await track(async () => {
+      const r = await run({ email, capability, idempotencyKey: key.current });
+      if (r.ok) {
+        key.current = newKey();
+        setEmail("");
+        setCapability("");
+        toast({ title: labels.done, tone: "success" });
+        startTransition(() => router.refresh());
+      }
+      return r;
+    });
+    if (result && !result.ok) {
+      const fields = "fields" in result ? result.fields : undefined;
+      setErrors({ email: Boolean(fields?.email), capability: Boolean(fields?.capability) });
       setServerError(result.code);
-      return;
     }
-    key.current = newKey();
-    setEmail("");
-    setCapability("");
-    toast({ title: labels.done, tone: "success" });
-    startTransition(() => router.refresh());
   }
 
   const summary = [

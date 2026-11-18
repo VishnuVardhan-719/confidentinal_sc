@@ -1,5 +1,6 @@
 import { Phone } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { CursorPager } from "@/components/admin/ops/cursor-pager";
 import { formatDate, formatDateTime, formatPaise, formatWindow } from "@/components/admin/ops/format";
 import { MetricTile } from "@/components/admin/ops/metric-tile";
 import { OpsAction } from "@/components/admin/ops/ops-action";
@@ -188,8 +189,10 @@ export function AvailabilityView({ result }: { result: LoaderResult<{ vehicles: 
 
 export function RequestsView({
   result,
+  cursor,
 }: {
   result: LoaderResult<{ rows: RequestRowVM[]; nextCursor: string | null; vehicles: AssignOption[]; drivers: AssignOption[] }>;
+  cursor?: string;
 }) {
   const t = useTranslations("ambulance.requests");
   const td = useTranslations("ambulance.decline");
@@ -201,86 +204,89 @@ export function RequestsView({
       <PageHeader title={t("title")} description={t("description")} />
       <LoaderState result={result} empty={{ title: t("emptyTitle"), description: t("emptyBody") }}>
         {(d) => (
-          <RecordList
-            label={t("title")}
-            rows={d.rows}
-            rowKey={(r) => r.id}
-            columns={[
-              { key: "reference", header: t("columns.reference"), primary: true, cell: (r) => r.reference },
-              { key: "pickup", header: t("columns.pickup"), cell: (r) => place(r.pickup) },
-              { key: "destination", header: t("columns.destination"), cell: (r) => place(r.destination) },
-              { key: "window", header: t("columns.window"), cell: (r) => formatWindow(r.windowStart, r.windowEnd, locale) },
-              { key: "requirement", header: t("columns.requirement"), cell: (r) => tk(r.requirementKey) },
-              {
-                key: "quote",
-                header: t("columns.quote"),
-                cell: (r) =>
-                  r.quote ? (
-                    <div className="grid gap-1">
-                      <span className="font-semibold tabular">{formatPaise(r.quote.totalPaise, locale)}</span>
-                      <span className="text-sm text-muted">
-                        {t("quoteBreakdown", { base: formatPaise(r.quote.basePaise, locale), distance: formatPaise(r.quote.distancePaise, locale), km: r.quote.distanceKm })}
-                        {r.quote.fees.length ? ` ${t("quoteFees", { fees: formatPaise(r.quote.fees.reduce((a, f) => a + f.amountPaise, 0), locale) })}` : ""}
-                      </span>
-                      <OpsStatus status={r.quote.status} />
-                    </div>
-                  ) : (
-                    t("noQuote")
-                  ),
-              },
-              {
-                key: "actions",
-                header: t("columns.actions"),
-                cell: (r) => (
-                  <div className="grid gap-2">
-                    {r.acceptBlockers.length === 0 ? (
-                      <AcceptRequestForm
-                        vehicles={d.vehicles}
-                        drivers={d.drivers}
-                        run={ambulanceAcceptAction.bind(null, { requestId: r.id, expectedVersion: r.version })}
-                        labels={{
-                          accept: t("accept"),
-                          title: t("acceptTitle", { reference: r.reference }),
-                          body: t("acceptBody"),
-                          vehicle: t("vehicleLabel"),
-                          driver: t("driverLabel"),
-                          placeholder: t("selectPlaceholder"),
-                          vehicleRequired: t("vehicleRequired"),
-                          driverRequired: t("driverRequired"),
-                          confirm: t("confirmAccept"),
-                          done: t("accepted"),
-                        }}
-                      />
+          <>
+            <RecordList
+              label={t("title")}
+              rows={d.rows}
+              rowKey={(r) => r.id}
+              columns={[
+                { key: "reference", header: t("columns.reference"), primary: true, cell: (r) => r.reference },
+                { key: "pickup", header: t("columns.pickup"), cell: (r) => place(r.pickup) },
+                { key: "destination", header: t("columns.destination"), cell: (r) => place(r.destination) },
+                { key: "window", header: t("columns.window"), cell: (r) => formatWindow(r.windowStart, r.windowEnd, locale) },
+                { key: "requirement", header: t("columns.requirement"), cell: (r) => tk(r.requirementKey) },
+                {
+                  key: "quote",
+                  header: t("columns.quote"),
+                  cell: (r) =>
+                    r.quote ? (
+                      <div className="grid gap-1">
+                        <span className="font-semibold tabular">{formatPaise(r.quote.totalPaise, locale)}</span>
+                        <span className="text-sm text-muted">
+                          {t("quoteBreakdown", { base: formatPaise(r.quote.basePaise, locale), distance: formatPaise(r.quote.distancePaise, locale), km: r.quote.distanceKm })}
+                          {r.quote.fees.length ? ` ${t("quoteFees", { fees: formatPaise(r.quote.fees.reduce((a, f) => a + f.amountPaise, 0), locale) })}` : ""}
+                        </span>
+                        <OpsStatus status={r.quote.status} />
+                      </div>
                     ) : (
-                      <>
-                        <button type="button" disabled className="min-h-target cursor-not-allowed rounded-md bg-disabled px-5 text-base text-disabled-text">
-                          {t("accept")}
-                        </button>
-                        <ul className="grid gap-1 text-sm text-warning-text">
-                          {r.acceptBlockers.map((b) => (
-                            <li key={b}>{t(`blocked.${b}`)}</li>
-                          ))}
-                        </ul>
-                      </>
-                    )}
-                    {r.canDecline ? (
-                      <OpsAction
-                        variant="secondary"
-                        tone="danger"
-                        run={ambulanceDeclineAction.bind(null, { requestId: r.id, expectedVersion: r.version })}
-                        labels={{
-                          label: t("decline"),
-                          done: t("declined"),
-                          confirm: { title: t("declineTitle", { reference: r.reference }), description: t("declineBody"), confirmLabel: t("decline") },
-                          reason: { label: t("reasonLabel"), placeholder: t("reasonPlaceholder"), required: t("reasonRequired"), options: reasonOptions },
-                        }}
-                      />
-                    ) : null}
-                  </div>
-                ),
-              },
-            ]}
-          />
+                      t("noQuote")
+                    ),
+                },
+                {
+                  key: "actions",
+                  header: t("columns.actions"),
+                  cell: (r) => (
+                    <div className="grid gap-2">
+                      {r.acceptBlockers.length === 0 ? (
+                        <AcceptRequestForm
+                          vehicles={d.vehicles}
+                          drivers={d.drivers}
+                          run={ambulanceAcceptAction.bind(null, { requestId: r.id, expectedVersion: r.version })}
+                          labels={{
+                            accept: t("accept"),
+                            title: t("acceptTitle", { reference: r.reference }),
+                            body: t("acceptBody"),
+                            vehicle: t("vehicleLabel"),
+                            driver: t("driverLabel"),
+                            placeholder: t("selectPlaceholder"),
+                            vehicleRequired: t("vehicleRequired"),
+                            driverRequired: t("driverRequired"),
+                            confirm: t("confirmAccept"),
+                            done: t("accepted"),
+                          }}
+                        />
+                      ) : (
+                        <>
+                          <button type="button" disabled className="min-h-target cursor-not-allowed rounded-md bg-disabled px-5 text-base text-disabled-text">
+                            {t("accept")}
+                          </button>
+                          <ul className="grid gap-1 text-sm text-warning-text">
+                            {r.acceptBlockers.map((b) => (
+                              <li key={b}>{t(`blocked.${b}`)}</li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+                      {r.canDecline ? (
+                        <OpsAction
+                          variant="secondary"
+                          tone="danger"
+                          run={ambulanceDeclineAction.bind(null, { requestId: r.id, expectedVersion: r.version })}
+                          labels={{
+                            label: t("decline"),
+                            done: t("declined"),
+                            confirm: { title: t("declineTitle", { reference: r.reference }), description: t("declineBody"), confirmLabel: t("decline") },
+                            reason: { label: t("reasonLabel"), placeholder: t("reasonPlaceholder"), required: t("reasonRequired"), options: reasonOptions },
+                          }}
+                        />
+                      ) : null}
+                    </div>
+                  ),
+                },
+              ]}
+            />
+            <CursorPager pathname="/ambulance/requests" nextCursor={d.nextCursor} cursor={cursor} />
+          </>
         )}
       </LoaderState>
     </div>
@@ -289,7 +295,15 @@ export function RequestsView({
 
 export const TRIP_QUEUES: readonly TripQueue[] = ["today", "upcoming", "exceptions"];
 
-export function TripsView({ result, queue }: { result: LoaderResult<{ rows: TripRowVM[]; nextCursor: string | null }>; queue: TripQueue }) {
+export function TripsView({
+  result,
+  queue,
+  cursor,
+}: {
+  result: LoaderResult<{ rows: TripRowVM[]; nextCursor: string | null }>;
+  queue: TripQueue;
+  cursor?: string;
+}) {
   const t = useTranslations("ambulance.trips");
   const locale = useAppLocale();
   return (
@@ -312,27 +326,30 @@ export function TripsView({ result, queue }: { result: LoaderResult<{ rows: Trip
       </nav>
       <LoaderState result={result} empty={{ title: t("emptyTitle"), description: t("emptyBody") }}>
         {(d) => (
-          <RecordList
-            label={t(`queues.${queue}`)}
-            rows={d.rows}
-            rowKey={(r) => r.id}
-            columns={[
-              {
-                key: "reference",
-                header: t("columns.reference"),
-                primary: true,
-                cell: (r) => (
-                  <Link href={`/ambulance/trips/${encodeURIComponent(r.id)}`} className="font-semibold text-forest underline underline-offset-4">
-                    {r.reference}
-                  </Link>
-                ),
-              },
-              { key: "window", header: t("columns.window"), cell: (r) => formatWindow(r.windowStart, r.windowEnd, locale) },
-              { key: "vehicle", header: t("columns.vehicle"), cell: (r) => r.vehicleLabel },
-              { key: "driver", header: t("columns.driver"), cell: (r) => r.driverName },
-              { key: "status", header: t("columns.status"), cell: (r) => <OpsStatus status={r.status} /> },
-            ]}
-          />
+          <>
+            <RecordList
+              label={t(`queues.${queue}`)}
+              rows={d.rows}
+              rowKey={(r) => r.id}
+              columns={[
+                {
+                  key: "reference",
+                  header: t("columns.reference"),
+                  primary: true,
+                  cell: (r) => (
+                    <Link href={`/ambulance/trips/${encodeURIComponent(r.id)}`} className="font-semibold text-forest underline underline-offset-4">
+                      {r.reference}
+                    </Link>
+                  ),
+                },
+                { key: "window", header: t("columns.window"), cell: (r) => formatWindow(r.windowStart, r.windowEnd, locale) },
+                { key: "vehicle", header: t("columns.vehicle"), cell: (r) => r.vehicleLabel },
+                { key: "driver", header: t("columns.driver"), cell: (r) => r.driverName },
+                { key: "status", header: t("columns.status"), cell: (r) => <OpsStatus status={r.status} /> },
+              ]}
+            />
+            <CursorPager pathname="/ambulance/trips" query={{ queue }} nextCursor={d.nextCursor} cursor={cursor} />
+          </>
         )}
       </LoaderState>
     </div>

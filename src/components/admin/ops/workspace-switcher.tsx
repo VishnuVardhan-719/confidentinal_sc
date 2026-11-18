@@ -2,6 +2,7 @@
 
 import { Building2, ChevronDown } from "lucide-react";
 import { useState, useTransition } from "react";
+import { useTrackedRun } from "@/components/admin/ops/use-tracked-run";
 import { InlineError } from "@/components/shared/inline-error";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -28,26 +29,29 @@ export function WorkspaceSwitcher({
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const { running, track } = useTrackedRun();
+  const [refreshing, startTransition] = useTransition();
+  const pending = running || refreshing;
   const current = options.find((o) => o.key === currentKey);
   if (options.length < 2) return null;
 
+  // The switch is tracked before the refetch starts, so a second pick cannot race the first.
   async function choose(key: string) {
-    if (key === currentKey) return;
+    if (key === currentKey || pending) return;
     setError(null);
-    const result = await onSwitch(key);
-    if (!result.ok) {
-      setError(result.code);
-      return;
-    }
-    startTransition(() => router.refresh());
+    const result = await track(async () => {
+      const r = await onSwitch(key);
+      if (r.ok) startTransition(() => router.refresh());
+      return r;
+    });
+    if (result && !result.ok) setError(result.code);
   }
 
   return (
     <div className="grid gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="secondary" aria-busy={pending} aria-label={`${labels.switch}: ${current?.name ?? ""}`}>
+          <Button variant="secondary" disabled={pending} aria-busy={pending} aria-label={`${labels.switch}: ${current?.name ?? ""}`}>
             <Building2 aria-hidden />
             <span className="max-w-40 truncate">{current?.name}</span>
             <ChevronDown aria-hidden />
@@ -79,7 +83,9 @@ export function WorkspaceChooser({
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const { running, track } = useTrackedRun();
+  const [refreshing, startTransition] = useTransition();
+  const pending = running || refreshing;
   return (
     <section aria-labelledby="ws-choose-title" className="grid max-w-2xl gap-5">
       <h1 id="ws-choose-title" className="font-display text-3xl font-medium text-ink">
@@ -93,12 +99,17 @@ export function WorkspaceChooser({
               variant="secondary"
               className="w-full justify-start"
               disabled={pending}
+              aria-busy={pending}
               aria-label={`${labels.open} ${o.name}`}
               onClick={async () => {
+                if (pending) return;
                 setError(null);
-                const result = await onSwitch(o.key);
-                if (result.ok) startTransition(() => router.refresh());
-                else setError(result.code);
+                const result = await track(async () => {
+                  const r = await onSwitch(o.key);
+                  if (r.ok) startTransition(() => router.refresh());
+                  return r;
+                });
+                if (result && !result.ok) setError(result.code);
               }}
             >
               <Building2 aria-hidden />
