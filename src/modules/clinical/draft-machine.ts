@@ -50,6 +50,8 @@ export type DraftAction =
   | { type: "save_succeeded"; requestId: number; version: number; savedAt: string }
   | { type: "save_failed"; requestId: number; code: ApiErrorCode; serverVersion?: number }
   | { type: "connectivity_changed"; online: boolean }
+  /** Explicit "Retry saving" after a terminal or exhausted failure. */
+  | { type: "retry_requested" }
   | {
       type: "conflict_resolved";
       /** take_server: discard local edits; keep_local: rebase local edits on the server version. */
@@ -91,6 +93,9 @@ export function initDraftState(input: {
 }
 
 export const isDirty = (s: DraftState): boolean => s.editSeq !== s.savedEditSeq;
+
+/** Only transient failures are retried automatically (bounded by MAX_AUTOSAVE_FAILURES). */
+export const isRetryable = (code: ApiErrorCode): boolean => code === "unavailable" || code === "rate_limited";
 
 /** Status to show when nothing is in flight and there is no conflict. */
 function restingStatus(s: DraftState): DraftStatus {
@@ -151,7 +156,7 @@ export function draftReducer(state: DraftState, action: DraftAction): DraftState
       }
       const failures = state.failures + 1;
       // Auth/permission/validation/gate failures are not retried automatically.
-      const retryable = action.code === "unavailable" || action.code === "rate_limited";
+      const retryable = isRetryable(action.code);
       return {
         ...base,
         failures,
@@ -161,19 +166,37 @@ export function draftReducer(state: DraftState, action: DraftAction): DraftState
     }
 
     case "connectivity_changed": {
+      if (action.online === state.online) return state;
       const next: DraftState = { ...state, online: action.online };
       if (state.conflict) return next;
       if (state.inFlight) return { ...next, status: action.online ? "saving" : "offline" };
       if (!action.online) return { ...next, status: "offline" };
-      return { ...next, status: restingStatus(next), failures: 0, autosaveEnabled: true };
+      // Reconnecting never lifts a terminal block (auth/permission/validation/gate) and never
+      // refills the bounded retry budget; only retry_requested or a successful save does that.
+      if (state.lastErrorCode !== null) {
+        const retryable = isRetryable(state.lastErrorCode) && state.failures < MAX_AUTOSAVE_FAILURES;
+        return { ...next, status: retryable ? restingStatus(next) : "failed", autosaveEnabled: retryable };
+      }
+      return { ...next, status: restingStatus(next) };
+    }
+
+    case "retry_requested": {
+      // Explicit clinician action (after re-auth or correcting input). Never fired automatically.
+      if (state.conflict || state.inFlight || state.lastErrorCode === null) return state;
+      const next: DraftState = { ...state, failures: 0, lastErrorCode: null, autosaveEnabled: true };
+      return { ...next, status: restingStatus(next) };
     }
 
     case "conflict_resolved": {
       if (!state.conflict || state.inFlight) return state;
       const { server } = action;
+      // Both resolutions apply only to the exact edit sequence the clinician reviewed; newer
+      // local edits need another explicit comparison.
+      if (action.reviewedEditSeq !== state.editSeq) return state;
+      // The reviewed server snapshot must not be older than the version that raised the conflict.
+      const floor = state.conflict.serverVersion ?? state.serverVersion + 1;
+      if (server.version < floor) return state;
       if (action.resolution === "take_server") {
-        // Edits made after the clinician's review must be re-reviewed, not silently dropped.
-        if (action.reviewedEditSeq !== state.editSeq) return state;
         const next: DraftState = {
           ...state,
           content: server.content,

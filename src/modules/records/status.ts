@@ -5,13 +5,13 @@ import type { PdfLinkState } from "@/modules/clinical/pdf";
 
 /** Pay-after collection badge. Separate from booking, clinical and gateway payment badges. */
 export const COLLECTION_STATUS_MAP: Readonly<Record<CollectionStatus, StatusDescriptor>> = {
-  not_recorded: { labelKey: "payment.collection.status.notRecorded", tone: "neutral" },
-  recorded: { labelKey: "payment.collection.status.recorded", tone: "info" },
+  not_recorded: { labelKey: "clinical.collection.status.notRecorded", tone: "neutral" },
+  recorded: { labelKey: "clinical.collection.status.recorded", tone: "info" },
 };
 
 export const COLLECTION_METHOD_MAP: Readonly<Record<CollectionMethod, StatusDescriptor>> = {
-  cash: { labelKey: "payment.collection.method.cash", tone: "neutral" },
-  upi_direct: { labelKey: "payment.collection.method.upiDirect", tone: "neutral" },
+  cash: { labelKey: "clinical.collection.method.cash", tone: "neutral" },
+  upi_direct: { labelKey: "clinical.collection.method.upiDirect", tone: "neutral" },
 };
 
 export const FACT_BADGE_MAP: Readonly<Record<FactBadge, StatusDescriptor>> = {

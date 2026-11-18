@@ -28,10 +28,44 @@ async function recover(deps: SignDeps, id: string, isDone: (c: SignedConsultatio
   const latest = await deps.getConsultation(id).catch(() => null);
   if (latest?.ok && latest.data.status === "final") {
     // Final but not provably ours (e.g. a different amendment landed): review before any retry.
-    return isDone(latest.data) ? { kind: "signed", record: latest.data } : { kind: "conflict" };
+    return latest.data.consultationId === id && isDone(latest.data) ? { kind: "signed", record: latest.data } : { kind: "conflict" };
   }
   return { kind: "uncertain" };
 }
+
+/** Key-order independent structural equality for parsed JSON content. */
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  if (value !== null && typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .filter(([, v]) => v !== undefined)
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+    return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+/**
+ * After a lost amendment response the readback proves this intent only if the CURRENT signed
+ * version is an amendment of our base, with our reason, and exactly our content. Matching
+ * reason metadata alone, or a historical match under a newer version, is a conflict to review.
+ * (A server intent id would make this exact; requested in docs/frontend/REQUESTS.md.)
+ */
+export function isOurAmendment(c: SignedConsultation, input: AmendmentRequest): boolean {
+  const current = c.versions[c.versions.length - 1];
+  if (!current || current.version !== c.currentVersion) return false;
+  const record = c.amendments.find((a) => a.version === c.currentVersion);
+  if (!record) return false;
+  return (
+    record.previousVersion === input.baseVersion &&
+    record.reason === input.reason &&
+    record.reasonText === input.reasonText &&
+    canonical(current.content) === canonical(input.content)
+  );
+}
+
+/** First signing only: a record that was already amended was not produced by this finalize intent. */
+const isFirstSigning = (c: SignedConsultation): boolean => c.versions.length === 1 && c.amendments.length === 0;
 
 async function interpret(r: ApiResult<SignedConsultation> | null, deps: SignDeps, id: string, isDone: (c: SignedConsultation) => boolean): Promise<SignOutcome> {
   if (r === null) return recover(deps, id, isDone);
@@ -62,7 +96,7 @@ export async function finalizeWithRecovery(
   idempotencyKey: string,
 ): Promise<SignOutcome> {
   const r = await deps.finalize(consultationId, input, idempotencyKey).catch(() => null);
-  return interpret(r, deps, consultationId, () => true);
+  return interpret(r, deps, consultationId, isFirstSigning);
 }
 
 export async function amendWithRecovery(
@@ -72,8 +106,5 @@ export async function amendWithRecovery(
   idempotencyKey: string,
 ): Promise<SignOutcome> {
   const r = await deps.amend(consultationId, input, idempotencyKey).catch(() => null);
-  // After a lost response, done only if an amendment matching this intent exists on top of the base.
-  const ours = (c: SignedConsultation) =>
-    c.amendments.some((a) => a.previousVersion === input.baseVersion && a.reason === input.reason && a.reasonText === input.reasonText);
-  return interpret(r, deps, consultationId, ours);
+  return interpret(r, deps, consultationId, (c) => isOurAmendment(c, input));
 }

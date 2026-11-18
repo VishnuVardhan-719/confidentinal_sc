@@ -74,7 +74,7 @@ describe("DC01 assigned doctor visit access", () => {
   });
 
   it("unknown booking state never maps to an active/success tone", () => {
-    expect(describeBookingState("totally_new_state")).toEqual({ labelKey: "common.status.unknown", tone: "neutral" });
+    expect(describeBookingState("totally_new_state")).toEqual({ labelKey: "clinical.status.unknown", tone: "neutral" });
   });
 });
 

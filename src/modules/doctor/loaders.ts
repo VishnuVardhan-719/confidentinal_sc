@@ -41,6 +41,19 @@ export async function loadRequests(api: DoctorApi): Promise<PageState<DoctorRequ
   return toPageState(r.ok ? { ok: true as const, data: [...r.data].sort(byRespondBy) } : r, (d) => d.length === 0);
 }
 
+/**
+ * One request from the doctor's own request list (no single-request contract exists). A request
+ * that is not addressed to this doctor is simply absent, which renders as not_found.
+ */
+export async function loadRequestDetail(api: DoctorApi, rawId: unknown): Promise<PageState<DoctorRequestView>> {
+  const id = parseRouteId(rawId);
+  if (!id) return { kind: "not_found" };
+  const r = await api.listRequests();
+  if (!r.ok) return toPageState<DoctorRequestView>(r);
+  const found = r.data.find((x) => x.bookingId === id);
+  return found ? { kind: "ready", data: found } : { kind: "not_found" };
+}
+
 export async function loadVisits(api: DoctorApi, now: Date): Promise<PageState<{ today: AssignedVisitView[]; upcoming: AssignedVisitView[] }>> {
   const r = await api.listVisits();
   if (!r.ok) return toPageState(r);

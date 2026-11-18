@@ -90,3 +90,9 @@ Necessary for FE01; please review in the diff:
 - `AppShell` takes `nav: ShellNavItem[]` with already-localized labels and an icon key; `count` must be server-derived. Put role pages inside it from your role layout.
 - Status badges: keep one canonical map per state machine in `src/modules/<name>/status.ts` and resolve through `resolveStatus` from `src/components/shared/status.ts` so unknown statuses render neutral.
 - Import `Link`/`useRouter`/`usePathname` from `@/i18n/navigation`, not from `next/link` or `next/navigation`.
+
+## R-FE-D-29 (from fe-d owner) - server intent id for sign/amend recovery (XREVIEW-c P1)
+Amendment/finalize responses can be lost. The frontend now accepts a readback as success only if the CURRENT signed version is an amendment of the submitted base, with the same reason, reasonText and exactly the submitted content (finalize: first signing only, same consultationId); otherwise it shows conflict/review. That is still inference. Request: the clinical contract echoes the Idempotency-Key (or a server mutation id) on each signed version/amendment record, so recovery can bind the result to this intent and signer exactly. Until then a byte-identical amendment from another clinician would be indistinguishable (attribution still shows the server signer).
+
+## R-FE-D-30 (from fe-d owner) - autosave terminal failures (XREVIEW-c P2)
+Reconnect no longer lifts forbidden/unauthenticated/validation/gated autosave blocks or refills the retry budget. Only an explicit "Try saving again" (draft machine `retry_requested`) clears it. Backend note: the draft PUT must still re-check authorization on every write.

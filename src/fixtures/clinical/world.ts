@@ -251,11 +251,16 @@ export function createClinicalWorld(now: Date = new Date()): ClinicalWorld {
   };
 }
 
-let shared: ClinicalWorld | null = null;
-/** Process-wide world used by the index getters in fixture mode. Tests should create their own. */
+/**
+ * Process-wide world used by the index getters in fixture mode. Kept on globalThis so route
+ * segments and server actions bundled separately (dev/Turbopack) see the same synthetic state.
+ * Tests should create their own world.
+ */
+const WORLD_KEY = Symbol.for("scv.fixtures.clinicalWorld");
 export function sharedClinicalWorld(): ClinicalWorld {
-  shared ??= createClinicalWorld();
-  return shared;
+  const g = globalThis as typeof globalThis & { [WORLD_KEY]?: ClinicalWorld };
+  g[WORLD_KEY] ??= createClinicalWorld();
+  return g[WORLD_KEY];
 }
 
 /**

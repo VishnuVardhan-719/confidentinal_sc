@@ -7,7 +7,7 @@ export type StatusTone = "neutral" | "info" | "progress" | "success" | "warning"
 export type StatusDescriptor = { labelKey: string; tone: StatusTone };
 
 /** Unknown server values never map to an active/approved/success look. */
-export const UNKNOWN_STATUS: StatusDescriptor = { labelKey: "common.status.unknown", tone: "neutral" };
+export const UNKNOWN_STATUS: StatusDescriptor = { labelKey: "clinical.status.unknown", tone: "neutral" };
 
 export function describeStatus<K extends string>(map: Readonly<Record<K, StatusDescriptor>>, value: string | null | undefined): StatusDescriptor {
   if (value == null) return UNKNOWN_STATUS;

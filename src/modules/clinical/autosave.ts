@@ -146,6 +146,8 @@ export function createDraftAutosave(options: AutosaveOptions): AutosaveControlle
     edit: (content) => dispatch({ type: "edit", content }),
     saveNow: () => {
       clearTimer();
+      // An explicit click is the clinician's authorization to retry after a terminal failure.
+      dispatch({ type: "retry_requested" });
       dispatch({ type: "save_requested" });
     },
     setOnline: (online) => dispatch({ type: "connectivity_changed", online }),

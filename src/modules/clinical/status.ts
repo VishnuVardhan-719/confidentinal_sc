@@ -19,8 +19,8 @@ export const CONSULTATION_STATUS_MAP: Readonly<Record<ConsultationStatus, Status
 };
 
 export const ASSESSMENT_TYPE_MAP: Readonly<Record<AssessmentType, StatusDescriptor>> = {
-  provisional: { labelKey: "clinical.assessment.type.provisional", tone: "info" },
-  final: { labelKey: "clinical.assessment.type.final", tone: "neutral" },
+  provisional: { labelKey: "clinical.assessmentType.provisional", tone: "info" },
+  final: { labelKey: "clinical.assessmentType.final", tone: "neutral" },
 };
 
 export const describeDraftStatus = (s: string | null | undefined) => describeStatus(DRAFT_STATUS_MAP, s);

@@ -8,7 +8,17 @@ All Telugu (`te`) and Hindi (`hi`) strings below were written by an AI agent (Ki
 | `accessibility` | unreviewed | unreviewed | Screen-reader labels |
 | `errors` | unreviewed | unreviewed | API error messages, 404/error pages |
 | `public` | unreviewed | unreviewed | All public pages (landing, about, FAQ, legal outlines, emergency) |
+| `doctor` | unreviewed | unreviewed | Doctor workspace (FE10-FE12, Kiro D). Request/visit/OTP/travel wording |
+| `clinical` | unreviewed | unreviewed | Consultation editor, signed records, amendments, facts, photo consent, proof, PDF, collection. Needs a fluent reviewer AND a clinician |
 | other namespaces | empty | empty | No strings yet |
+
+## Review first (clinical wording, `doctor` / `clinical`)
+- `clinical.review.ack`, `clinical.amend.*`: signing is irreversible; amendments are append-only. Hindi uses "करता/करती" to avoid assuming gender.
+- `clinical.context.allergy*`, `clinical.prescription.allergy*`: an empty allergy list must never read as "no allergies".
+- `clinical.facts.*`: "patient entered" vs "doctor verified" must stay distinct.
+- `clinical.photo.*`: consent is specific and optional; declining does not block care.
+- `clinical.collection.*`: offline collection does not change online payment status.
+- Terms to confirm (hi): "परामर्श" consultation, "संस्करण" version, "संशोधन" amendment, "हस्ताक्षरित" signed, "अस्थायी" provisional, "विभेदक निदान" differential diagnosis.
 
 ## Review first (safety, legal or money wording)
 - `public.emergency.*`: emergency guidance. Needs both a fluent reviewer and a clinical/first-aid reviewer (applies to the English source too).

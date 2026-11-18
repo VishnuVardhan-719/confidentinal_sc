@@ -145,7 +145,7 @@ describe("D6 doctor DTO schemas tolerate unknown statuses", () => {
     const v = assignedVisitViewSchema.parse(visit);
     expect([v.state, v.phase]).toEqual(["unknown", "unknown"]);
     expect(describeBookingState(v.state).tone).toBe("neutral");
-    expect(describeVisitPhase(v.phase).labelKey).toBe("common.status.unknown");
+    expect(describeVisitPhase(v.phase).labelKey).toBe("clinical.status.unknown");
     expect(allowedVisitActions(v)).toEqual([]);
     // Deliberate: an unrecognised state is not assumed terminal, so the doctor still sees the visit.
     expect(splitTodayUpcoming([v], T0).today).toHaveLength(1);
