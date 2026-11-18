@@ -79,8 +79,17 @@ select pg_temp.assert_true((select count(*)=0 from public.bookings),'provider ca
 select pg_temp.expect_state(format('select public.advance_visit(%L,''arrived'',2)',:'booking'),'42501','unaccepted assignment denied');
 select public.accept_booking(:'booking',2,array['b6000000-0000-4000-8000-000000000001'::uuid]);
 select pg_temp.assert_true(public.get_booking(:'booking')->>'state'='confirmed','atomic confirmation');
-select pg_temp.assert_true(public.get_booking(:'booking') ? 'address_snapshot','assigned confirmed detail visible');
-select pg_temp.assert_true(booking_private.assigned(:'booking','doctor_visit'),'assigned predicate');
+select pg_temp.assert_true(not booking_private.assigned(:'booking','doctor_visit'),'future assignment denied');
+select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4)',:'booking'),'42501','early visit denied');
+select pg_temp.assert_true(not (public.get_booking(:'booking') ? 'address_snapshot'),'future scheduler contacts hidden');
+reset role;
+-- Fixture clock shift only; production commands below run with every guard enabled.
+alter table public.bookings disable trigger b01_booking_guard;
+update public.bookings set start_at=now()+interval '30 minutes',end_at=now()+interval '60 minutes' where id=:'booking';
+alter table public.bookings enable trigger b01_booking_guard;
+set local role authenticated;
+select pg_temp.assert_true(booking_private.assigned(:'booking','doctor_visit'),'in-window assigned predicate');
+select pg_temp.assert_true(public.get_booking(:'booking') ? 'address_snapshot','in-window contacts visible');
 select pg_temp.expect_state(format('select public.advance_visit(%L,''service_completed'',4)',:'booking'),'55000','substate skip denied');
 select public.advance_visit(:'booking','en_route',4);
 select public.advance_visit(:'booking','arrived',5);
