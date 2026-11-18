@@ -6,6 +6,8 @@ All Telugu (`te`) and Hindi (`hi`) strings below were written by an AI agent (Ki
 |---|---|---|---|
 | `common` | unreviewed | unreviewed | Navigation, footer, gate/fixture/offline notices, form helpers |
 | `accessibility` | unreviewed | unreviewed | Screen-reader labels |
+| `auth` | unreviewed | unreviewed | Sign-in/sign-up, OTP, session expiry, access denied, account security/privacy (Kiro B) |
+| `onboarding` | unreviewed | unreviewed | Patient profile, health record ("unverified until a doctor confirms it in person"), consent, readiness banner, field errors, provider/admin review (Kiro B) |
 | `errors` | unreviewed | unreviewed | API error messages, 404/error pages |
 | `public` | unreviewed | unreviewed | All public pages (landing, about, FAQ, legal outlines, emergency) |
 | `doctor` | unreviewed | unreviewed | Doctor workspace (FE10-FE12, Kiro D). Request/visit/OTP/travel wording |
