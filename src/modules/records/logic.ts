@@ -22,6 +22,14 @@ export function proofState(p: ProofOfVisit, now: Date): ProofState {
   return Date.parse(p.expiresAt) <= now.getTime() ? "expired" : "active";
 }
 
+/** Delay until an active proof expires (for re-rendering the badge), or null when nothing will change. */
+export function msUntilProofExpiry(p: ProofOfVisit, now: Date): number | null {
+  if (proofState(p, now) !== "active") return null;
+  const ms = Date.parse(p.expiresAt) - now.getTime();
+  // setTimeout overflows past ~24.8 days; re-check at the cap instead.
+  return Math.min(Math.max(ms, 0), 2_147_483_647);
+}
+
 /** Keys a public proof view may contain. Used to test that nothing else leaks. */
 export const PUBLIC_PROOF_ALLOWED_KEYS: ReadonlySet<string> = new Set(["status", "serviceDate", "serviceCategory", "providerDisplayName"]);
 

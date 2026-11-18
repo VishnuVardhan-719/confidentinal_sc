@@ -1,14 +1,14 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { InlineError } from "@/components/shared/inline-error";
 import { Notice } from "@/components/shared/notice";
 import { StatusBadge } from "@/components/shared/status-badge";
 import type { ApiResult } from "@/lib/api/result";
 import { newIntentKey } from "@/modules/clinical/finalize-flow";
-import { proofState } from "@/modules/records/logic";
+import { msUntilProofExpiry, proofState } from "@/modules/records/logic";
 import { describeProofState } from "@/modules/records/status";
 import type { ProofOfVisit } from "@/modules/records/types";
 import { badgeFor } from "./kit";
@@ -38,6 +38,15 @@ export function ProofCard({
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Re-evaluate the badge when the proof expires instead of showing "active" until a re-render.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    if (!proof) return;
+    const ms = msUntilProofExpiry(proof, new Date());
+    if (ms === null) return;
+    const timer = setTimeout(() => setNow(new Date()), ms + 50);
+    return () => clearTimeout(timer);
+  }, [proof, now]);
   const key = useRef<string | null>(null);
 
   async function create() {
@@ -68,7 +77,7 @@ export function ProofCard({
     }
   }
 
-  const state = proof ? proofState(proof, new Date()) : null;
+  const state = proof ? proofState(proof, now) : null;
   return (
     <section aria-labelledby={titleId} className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">

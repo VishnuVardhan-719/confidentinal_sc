@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { useRouter } from "@/i18n/navigation";
 import type { ApiResult } from "@/lib/api/result";
 import { amendWithRecovery, newIntentKey } from "@/modules/clinical/finalize-flow";
+import { amendmentSnapshot } from "./amendment-snapshot";
 import { pdfLinkState } from "@/modules/clinical/pdf";
 import { AMENDMENT_REASONS, amendmentRequestSchema, type AmendmentReason, type AmendmentRequest, type ClinicalDraftContent } from "@/modules/clinical/schemas";
 import { describeConsultationStatus } from "@/modules/clinical/status";
@@ -157,7 +158,9 @@ export function AmendmentForm({
   const [, startTransition] = useTransition();
   const base = useId();
   const [open, setOpen] = useState(false);
-  const [content, setContent] = useState<ClinicalDraftContent>(() => structuredClone(latestSigned(record).content));
+  // Base version and content are captured together at mount: the clinician edits THIS version.
+  const [snapshot] = useState(() => amendmentSnapshot(record));
+  const [content, setContent] = useState<ClinicalDraftContent>(snapshot.content);
   const [reason, setReason] = useState<AmendmentReason | "">("");
   const [reasonText, setReasonText] = useState("");
   const [ack, setAck] = useState(false);
@@ -176,7 +179,7 @@ export function AmendmentForm({
   }
 
   async function submit() {
-    const input = { baseVersion: record.currentVersion, reason, reasonText: reasonText.trim(), content, acknowledged: ack };
+    const input = { baseVersion: snapshot.baseVersion, reason, reasonText: reasonText.trim(), content, acknowledged: ack };
     const parsed = amendmentRequestSchema.safeParse(input);
     if (!parsed.success) return setMessage({ tone: "danger", text: tk("errors.api.validation") });
     setBusy(true);

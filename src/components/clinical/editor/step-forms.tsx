@@ -25,6 +25,7 @@ import {
 } from "@/modules/clinical/editor";
 import type { AssessmentStep, CareStep, MedicineLine, Prescription, PrescriptionStep, TestOrReferral, VitalsStep, VitalWarning } from "@/modules/clinical/schemas";
 import type { Tk } from "../kit";
+import { bpReading } from "./bp";
 import { CheckField, ChoiceField, DateField, LongTextField, NumberField, SelectField, TextField } from "./fields";
 
 type StepProps<T> = { value: T; onChange: (v: T) => void; disabled?: boolean; idPrefix: string };
@@ -75,8 +76,10 @@ export function VitalsForm({ value, onChange, disabled, idPrefix, warnings, tk }
   };
   const commitBp = (next: { sys?: number; dia?: number }) => {
     setBpDraft(next);
-    if (next.sys === undefined && next.dia === undefined) onChange(setVital(value, "bloodPressure", undefined));
-    else if (next.sys !== undefined && next.dia !== undefined) onChange(setVital(value, "bloodPressure", { systolicMmHg: next.sys, diastolicMmHg: next.dia }));
+    // Only a complete pair is a reading; an incomplete entry removes the previously committed one
+    // so the saved draft never shows an old value next to a half-typed new one.
+    const reading = bpReading(next);
+    if (reading !== undefined || value.bloodPressure !== undefined) onChange(setVital(value, "bloodPressure", reading));
   };
 
   return (
