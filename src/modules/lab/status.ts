@@ -51,6 +51,25 @@ const CATALOG = {
 } as const satisfies Record<string, readonly [string, StatusTone]>;
 
 export const describeCollection = (raw: unknown): StatusDescriptor => describe(COLLECTION, raw);
+
+const ORDER_BOOKING = {
+  requested: ["lab.status.order.requested", "warning"],
+  accepted: ["lab.status.order.accepted", "info"],
+  declined: ["lab.status.order.declined", "neutral"],
+  expired: ["lab.status.order.expired", "neutral"],
+  cancelled: ["lab.status.order.cancelled", "neutral"],
+  no_show: ["lab.status.order.noShow", "warning"],
+} as const satisfies Record<string, readonly [string, StatusTone]>;
+
+/**
+ * Order badge: the collection substate once accepted, otherwise the pre-acceptance
+ * or terminal booking state. Unknown combinations stay "unknown".
+ */
+export function describeLabOrder(order: { substate: string | null; bookingState: string }): StatusDescriptor {
+  const bookingTerminal = ["declined", "expired", "cancelled", "no_show"].includes(order.bookingState);
+  if (order.substate !== null && !bookingTerminal) return describeCollection(order.substate);
+  return describe(ORDER_BOOKING, order.bookingState);
+}
 export const describeReport = (raw: unknown): StatusDescriptor => describe(REPORT, raw);
 export const describeCredential = (raw: unknown): StatusDescriptor => describe(CREDENTIAL, raw);
 export const describeMembership = (raw: unknown): StatusDescriptor => describe(MEMBERSHIP, raw);

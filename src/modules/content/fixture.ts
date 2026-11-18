@@ -13,11 +13,26 @@ export type ContentFixtureOptions = {
   principal?: AdminPrincipal | null;
   now?: () => Date;
   /** Share state between the admin and public fixture adapters in tests. */
-  store?: { entries: ContentEntry[] };
+  store?: ContentFixtureStore;
 };
 
-export function createContentFixtureStore(): { entries: ContentEntry[] } {
-  return { entries: cloneFixture(contentFixtures.entries) };
+/**
+ * Shared fixture state. The ID counter lives here, not in an adapter, so every
+ * adapter sharing a store allocates unique entry IDs.
+ */
+export type ContentFixtureStore = { entries: ContentEntry[]; nextId: number };
+
+export function createContentFixtureStore(): ContentFixtureStore {
+  return { entries: cloneFixture(contentFixtures.entries), nextId: 1 };
+}
+
+function allocateEntryId(store: ContentFixtureStore): string {
+  let id: string;
+  do {
+    id = `fx-cms-new-${store.nextId}`;
+    store.nextId += 1;
+  } while (store.entries.some((e) => e.id === id));
+  return id;
 }
 
 /** Synthetic CMS adapter. Enforces content capabilities and the schema; refuses production. */
@@ -28,7 +43,6 @@ export function createContentFixtureApi(options: ContentFixtureOptions = {}): Co
   const now = options.now ?? (() => new Date());
   const store = options.store ?? createContentFixtureStore();
   const once = createReplayCache();
-  let seq = 1;
 
   const canEdit = () => can(principal, "content:edit", { now: now() });
 
@@ -69,7 +83,7 @@ export function createContentFixtureApi(options: ContentFixtureOptions = {}): Co
         if (entry && entry.kind !== draft.kind) return fail("validation", { fields: { kind: "mismatch" } });
         if (!entry) {
           if (store.entries.some((e) => e.kind === draft.kind && e.slug === draft.slug)) return fail("conflict");
-          entry = { id: `fx-cms-new-${seq++}`, kind: draft.kind, slug: draft.slug, locales: {} };
+          entry = { id: allocateEntryId(store), kind: draft.kind, slug: draft.slug, locales: {} };
           store.entries.push(entry);
         }
         const current = entry.locales[draft.locale];

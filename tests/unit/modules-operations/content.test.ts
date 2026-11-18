@@ -118,3 +118,20 @@ describe("CMS workflow and public read model", () => {
     expect(describeContent("published").tone).toBe("success");
   });
 });
+
+describe("content fixture store", () => {
+  it("two adapters sharing one store allocate unique entry IDs", async () => {
+    const store = createContentFixtureStore();
+    const a = createContentFixtureApi({ env: {}, principal: adminPrincipals.contentEditor, store });
+    const b = createContentFixtureApi({ env: {}, principal: adminPrincipals.contentPublisher, store });
+    const first = await a.saveDraft({ entryId: null, draft: story({ slug: "store-slug-a" }), expectedVersion: null, idempotencyKey: "u1" });
+    const second = await b.saveDraft({ entryId: null, draft: story({ slug: "store-slug-b" }), expectedVersion: null, idempotencyKey: "u1" });
+    const third = await a.saveDraft({ entryId: null, draft: story({ slug: "store-slug-c" }), expectedVersion: null, idempotencyKey: "u2" });
+    if (!first.ok || !second.ok || !third.ok) throw new Error("save failed");
+    const ids = [first.data.id, second.data.id, third.data.id];
+    expect(new Set(ids).size).toBe(3);
+    expect(new Set(store.entries.map((e) => e.id)).size).toBe(store.entries.length);
+    const fromB = await b.getEntry(first.data.id);
+    expect(fromB.ok && fromB.data.slug).toBe("store-slug-a");
+  });
+});

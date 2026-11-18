@@ -11,7 +11,11 @@ export type CaretakerFixtureOptions = {
   now?: () => Date;
 };
 
-/** Synthetic caretaker adapter. Simulates server authorization; refuses production. */
+/**
+ * Synthetic caretaker adapter. Simulates server authorization; refuses production.
+ * Every read and write returns a cloned snapshot, so callers can never mutate
+ * the adapter's internal state or see later changes through a retained result.
+ */
 export function createCaretakerFixtureApi(options: CaretakerFixtureOptions = {}): CaretakerApi {
   const env = options.env ?? process.env;
   assertFixtureAllowed(env);
@@ -56,22 +60,22 @@ export function createCaretakerFixtureApi(options: CaretakerFixtureOptions = {})
     mode: "fixture",
 
     async listServices() {
-      return active() ? ok(data.services.filter((s) => s.providerId === actor.providerId)) : fail("forbidden");
+      return active() ? ok(cloneFixture(data.services.filter((s) => s.providerId === actor.providerId))) : fail("forbidden");
     },
     async listStaff() {
-      return isManager() ? ok(data.staff.filter((s) => s.agencyId === actor.agencyId)) : fail("forbidden");
+      return isManager() ? ok(cloneFixture(data.staff.filter((s) => s.agencyId === actor.agencyId))) : fail("forbidden");
     },
     async listRequests() {
       return canSeeRequests()
-        ? ok({ items: data.requests.filter((r) => r.providerId === actor.providerId), nextCursor: null })
+        ? ok({ items: cloneFixture(data.requests.filter((r) => r.providerId === actor.providerId)), nextCursor: null })
         : fail("forbidden");
     },
     async listAssignments() {
-      return active() ? ok(visibleAssignments(actor, data.assignments)) : fail("forbidden");
+      return active() ? ok(cloneFixture(visibleAssignments(actor, data.assignments))) : fail("forbidden");
     },
     async getAssignment(assignmentId) {
       const found = visible(assignmentId);
-      return found ? ok(found) : fail("not_found");
+      return found ? ok(cloneFixture(found)) : fail("not_found");
     },
     async performCareAction(input) {
       return once("care", input.idempotencyKey, (): ApiResult<CareAssignment> => {
@@ -92,7 +96,7 @@ export function createCaretakerFixtureApi(options: CaretakerFixtureOptions = {})
     },
     async listShifts({ assignmentId }) {
       if (!visible(assignmentId)) return fail("not_found");
-      return ok(data.shifts.filter((s) => s.assignmentId === assignmentId && (isManager() || ownShift(s))));
+      return ok(cloneFixture(data.shifts.filter((s) => s.assignmentId === assignmentId && (isManager() || ownShift(s)))));
     },
     async checkIn(input) {
       return shiftStep("check_in", input, "check_in", (s, at) => { s.checkInAt = at; }, false);

@@ -53,3 +53,30 @@ Not documented, so `fail("gated")`:
 
 ### R-E09 Messages (owner: i18n)
 - Status label keys are defined in each module's `status.ts` (`lab.status.*`, `ambulance.status.*`, `ambulance.vehicleType.*`, `ambulance.emergency.call112`, `caretaker.status.*`, `caretaker.task.*`, `caretaker.rate.*`, `admin.status.*`, `admin.priority.*`, `admin.settings.*`, `admin.cms.status.*`, `admin.audit.*`). They need en/te/hi entries. Lab completion copy must never say "report ready" (S01-Q08), and no ambulance string may contain minutes or an ETA (S01 A13).
+
+---
+
+## 2026-11-18 · FE13-17 Phase 2 logic (Kiro E, branch feat/fe2-e) · guards, workspaces, loaders, CMS editor
+
+### R-E10 Public stories/FAQ helper (for the public-site owner)
+- Import from server components only: `import { getPublishedStories, getPublishedStory, getPublishedFaq } from "@/modules/content/public"`.
+- Signatures: `getPublishedStories(locale)`, `getPublishedStory(slug, locale)`, `getPublishedFaq(locale)`. Each returns `{ status: "ok", data, fixture } | { status: "empty", fixture } | { status: "not_found" } | { status: "unavailable" }`.
+- Only published snapshots are returned. `fixture: true` means synthetic data, so render `<FixtureNotice/>`. While there is no CMS contract, lists return `empty` and a story detail returns `not_found`, so public pages show their empty or not-found state and never invented copy.
+- `servedLocale` differs from the requested locale only on an explicit fallback to `en`; show a "shown in English" note in that case.
+- Bodies are structured rich-text nodes (`paragraph`, `heading` 2/3, `list`, text with bold/italic, `link`). Render them with React elements and never as HTML.
+
+### R-E11 Auth guard integration (owner: src/modules/auth)
+- Route layouts in the lab, ambulance, caretaker and admin areas will call `requireRole` and then the pure decisions in `src/modules/{lab,ambulance,caretaker}/routes.ts` and `src/modules/admin/routes.ts`.
+- They need these session fields from the auth module:
+  - `profileId`
+  - `memberships: WorkspaceMembership[]`: `membershipId, profileId, providerId, organizationId, area ("lab"|"ambulance"|"caretaker"), displayName, membershipRole ("owner"|"manager"|"staff"|"billing"), status, scopes, resourceId`
+  - for admins, an `AdminPrincipal`: `profileId, status, mfaVerified` (server-asserted), `grants[]`
+- Request: expose these from the server session, or a mapper, so `GuardSession` and `AdminPrincipal` are not built from client data.
+- Workspace selection is stored in the cookie `scv_ws_<area>`. The value is a workspace key such as `lab:<providerId>` (no personal or health data). The server must re-validate the membership on every request.
+- Login redirect: `loginRedirectPath(locale, path)` only keeps locale-prefixed internal paths and drops query strings. If auth already has an equivalent helper, the area layouts will use that one instead.
+
+### R-E12 Placement of shared operations helpers
+- Workspace/org-switcher logic (`src/modules/admin/workspace.ts`), loader results, metrics and guard decisions (`src/modules/admin/access.ts`) currently live in the admin module (FE spec section 15 covers organization management). An `organizations` module or `src/lib` may be a better home. Moving them is a mechanical import change.
+
+### R-E13 Booking status map (owner: bookings module)
+- Admin booking ops (`BookingOpsVM.bookingState`) passes the raw shared booking state through, so that the page renders it with the bookings module's canonical status map. This avoids a second map for the same state machine. Request: export `describeBookingState` (or equivalent) from the bookings module.

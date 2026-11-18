@@ -100,3 +100,45 @@ describe("staff/agency scoping and shifts", () => {
     expect(rateTotalPaise(30000, 0)).toBeNull();
   });
 });
+
+describe("fixture reads return snapshots", () => {
+  it("mutating a returned record or advancing state later does not change a retained result", async () => {
+    const api = createCaretakerFixtureApi({ env: {}, actor: careActors.caregiverA, now: () => new Date("2026-11-20T04:00:00Z") });
+    const first = await api.getAssignment("fx-care-asg-1");
+    if (!first.ok) throw new Error("expected assignment");
+    expect(first.data.substate).toBe("assigned");
+
+    // Caller-side mutation must not leak into the adapter.
+    first.data.substate = "ended";
+    first.data.taskCodes.push("light_household_help");
+    const again = await api.getAssignment("fx-care-asg-1");
+    expect(again.ok && again.data.substate).toBe("assigned");
+    expect(again.ok && again.data.taskCodes).toEqual(["companionship", "mobility_assistance"]);
+
+    // A later state change must not show through a retained result.
+    const retained = await api.listAssignments();
+    const retainedShifts = await api.listShifts({ assignmentId: "fx-care-asg-1" });
+    const started = await api.performCareAction({ assignmentId: "fx-care-asg-1", action: "start", expectedVersion: 2, idempotencyKey: "snap-1" });
+    expect(started.ok && started.data.substate).toBe("started");
+    expect(again.ok && again.data.substate).toBe("assigned");
+    expect(retained.ok && retained.data[0].substate).toBe("assigned");
+
+    await api.checkIn({ shiftId: "fx-shift-1", expectedVersion: 1, idempotencyKey: "snap-2" });
+    expect(retainedShifts.ok && retainedShifts.data.find((s) => s.id === "fx-shift-1")?.checkInAt).toBeNull();
+  });
+
+  it("list reads for services, staff and requests are snapshots too", async () => {
+    const api = createCaretakerFixtureApi({ env: {}, actor: careActors.agencyManager });
+    const services = await api.listServices();
+    const staff = await api.listStaff();
+    const requests = await api.listRequests();
+    if (!services.ok || !staff.ok || !requests.ok) throw new Error("expected data");
+    services.data[0].rates[0].amountPaise = 1;
+    staff.data[0].skills.length = 0;
+    requests.data.items[0].rateSnapshot.totalPaise = 1;
+    const [s2, st2, r2] = await Promise.all([api.listServices(), api.listStaff(), api.listRequests()]);
+    expect(s2.ok && s2.data[0].rates[0].amountPaise).toBe(30000);
+    expect(st2.ok && st2.data[0].skills.length).toBe(3);
+    expect(r2.ok && r2.data.items[0].rateSnapshot.totalPaise).toBe(120000);
+  });
+});
