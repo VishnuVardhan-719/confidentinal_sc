@@ -3,12 +3,14 @@ import { fail, type ApiResult } from "@/lib/api/result";
 import { getAdapterMode } from "@/lib/api/mode";
 import type { FixtureEnvironment } from "@/lib/api/fixture";
 import { createPatientFixtureApi } from "./fixture";
-import { offerRequestSchema, type BookingOffer, type OfferRequest, type PatientAddress, type PatientMember, type PatientOverview } from "./schemas";
+import { newAddressSchema, offerRequestSchema, type BookingOffer, type NewAddress, type OfferRequest, type PatientAddress, type PatientMember, type PatientOverview } from "./schemas";
 
 export interface PatientApi {
   getOverview(): Promise<ApiResult<PatientOverview>>;
   listMembers(): Promise<ApiResult<{ items: PatientMember[] }>>;
   listAddresses(): Promise<ApiResult<{ items: PatientAddress[] }>>;
+  /** Save a new visit address for the signed-in patient. */
+  addAddress(input: NewAddress): Promise<ApiResult<{ id: string }>>;
   /** Fresh server price/policy for a schedule; must be re-requested when any input changes. */
   getOffer(input: OfferRequest): Promise<ApiResult<BookingOffer>>;
 }
@@ -20,6 +22,7 @@ export function createPatientHttpApi(): PatientApi {
     async getOverview() { return fail("gated"); },
     async listMembers() { return fail("gated"); },
     async listAddresses() { return fail("gated"); },
+    async addAddress(input) { return fail(newAddressSchema.safeParse(input).success ? "gated" : "validation"); },
     async getOffer(input) { return fail(offerRequestSchema.safeParse(input).success ? "gated" : "validation"); },
   };
 }

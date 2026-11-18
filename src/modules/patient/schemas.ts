@@ -32,6 +32,14 @@ export const patientAddressSchema = z.object({
   pin: pinSchema, synthetic: z.boolean(),
 });
 export type PatientAddress = z.infer<typeof patientAddressSchema>;
+/** A new visit address typed by the patient. Locality and city are short labels; the PIN must be a valid Indian PIN. */
+export const newAddressSchema = z.strictObject({
+  label: z.enum(["home", "work", "other"]),
+  locality: z.string().trim().min(2).max(80),
+  city: z.string().trim().min(2).max(60),
+  pin: pinSchema,
+});
+export type NewAddress = z.infer<typeof newAddressSchema>;
 
 export const offerRequestSchema = z.strictObject({
   providerId: z.uuid(), serviceId: z.uuid(), category: categorySchema, pin: pinSchema, startAt: utcSchema, endAt: utcSchema,
