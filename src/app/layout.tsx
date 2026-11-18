@@ -5,10 +5,13 @@ import "./globals.css";
 
 // Body: built for low-vision legibility. Display: an optical-size serif for the editorial voice.
 // Telugu and Devanagari web fonts are added with the i18n ticket; system Noto/Nirmala fallbacks cover them until then.
+// next/font has no fallback metrics for this family; the metric-matched fallback is declared in globals.css.
 const body = Atkinson_Hyperlegible_Next({
   variable: "--font-body",
   subsets: ["latin"],
   display: "swap",
+  adjustFontFallback: false,
+  fallback: ["Atkinson Metric Fallback", "Arial", "sans-serif"],
 });
 
 const editorial = Newsreader({

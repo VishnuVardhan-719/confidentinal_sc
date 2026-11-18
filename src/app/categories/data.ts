@@ -19,7 +19,7 @@ export const categories: readonly Category[] = [
       "Doctor visits are meant for planned consultations. You will choose the doctor, and the doctor decides whether to accept your request.",
     helps: [
       "Planned consultations for non-urgent concerns",
-      "Follow-up visits with a doctor you already know",
+      "Follow-up consultations after an earlier visit",
       "Understanding the steps before you request a visit",
     ],
     notes: [
@@ -37,7 +37,7 @@ export const categories: readonly Category[] = [
     helps: [
       "Planned diagnostic tests",
       "Choosing a lab before you book",
-      "Keeping the request and its status in one place",
+      "Tests your doctor has advised",
     ],
     notes: [
       "Labs set their own prices and accept requests themselves.",
@@ -54,7 +54,7 @@ export const categories: readonly Category[] = [
     helps: [
       "Planned, non-emergency patient transport",
       "Journeys arranged ahead of time",
-      "Requests that the provider confirms before the day",
+      "Journeys the provider has accepted in advance",
     ],
     notes: [
       "This is not an emergency service. In an emergency in India, call 112.",
@@ -75,7 +75,7 @@ export const categories: readonly Category[] = [
     ],
     notes: [
       "Caretakers do not provide medical treatment.",
-      "Caretakers set their own terms and accept requests themselves.",
+      "Caretakers set their own prices and accept requests themselves.",
     ],
   },
 ];

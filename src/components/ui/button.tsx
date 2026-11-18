@@ -1,22 +1,30 @@
 import type { ButtonHTMLAttributes } from "react";
-import { cx } from "./cx";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "secondary" | "quiet";
+/** Shared with ButtonLink so a navigation link can look like a button without being a <button>. */
+export const buttonVariants = cva(
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-5 text-[0.9375rem] font-semibold no-underline " +
+    "transition-colors duration-150 focus-visible:outline-[3px] focus-visible:outline-offset-4 focus-visible:outline-[var(--focus)] " +
+    "active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none motion-reduce:active:translate-y-0",
+  {
+    variants: {
+      variant: {
+        primary: "bg-[var(--forest)] text-[var(--paper)] hover:bg-[var(--forest-deep)] hover:no-underline",
+        secondary:
+          "border border-[var(--forest)] bg-transparent text-[var(--forest)] hover:bg-[var(--mist)] hover:no-underline",
+        quiet: "bg-transparent text-[var(--forest)] underline underline-offset-4 hover:bg-[var(--mist)]",
+      },
+    },
+    defaultVariants: { variant: "primary" },
+  },
+);
+
+export type ButtonVariant = NonNullable<VariantProps<typeof buttonVariants>["variant"]>;
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: Variant;
+  variant?: ButtonVariant;
   loading?: boolean;
-};
-
-const base =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-5 text-[0.9375rem] font-semibold " +
-  "transition-colors duration-150 focus-visible:outline-[3px] focus-visible:outline-offset-4 focus-visible:outline-[var(--focus)] " +
-  "active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none motion-reduce:active:translate-y-0";
-
-const variants: Record<Variant, string> = {
-  primary: "bg-[var(--forest)] text-[var(--paper)] hover:bg-[#0b4c47]",
-  secondary: "border border-[var(--forest)] bg-transparent text-[var(--forest)] hover:bg-[var(--mist)]",
-  quiet: "bg-transparent text-[var(--forest)] underline underline-offset-4 hover:bg-[var(--mist)]",
 };
 
 export function Button({
@@ -31,7 +39,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={cx(base, variants[variant], className)}
+      className={cn(buttonVariants({ variant }), className)}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       {...rest}

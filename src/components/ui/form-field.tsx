@@ -12,7 +12,12 @@ export function fieldErrors(error: ZodError | null | undefined): Record<string, 
   return out;
 }
 
-type ControlProps = { id?: string; "aria-describedby"?: string; invalid?: boolean; required?: boolean };
+type ControlProps = {
+  id?: string;
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean | "true" | "false";
+  required?: boolean;
+};
 
 type Props = {
   label: string;
@@ -24,13 +29,20 @@ type Props = {
 };
 
 export function FormField({ label, children, hint, error, required }: Props) {
-  const id = useId();
+  const generatedId = useId();
+  const child = isValidElement(children) ? (children as ReactElement<ControlProps>) : null;
+  // Keep an id the caller already gave the control, so external references to it still work.
+  const id = child?.props.id ?? generatedId;
   const hintId = hint ? `${id}-hint` : undefined;
   const errorId = error ? `${id}-error` : undefined;
-  const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
-  const control = isValidElement(children)
-    ? cloneElement(children as ReactElement<ControlProps>, { id, "aria-describedby": describedBy, invalid: Boolean(error), required })
-    : children;
+  const describedBy = [child?.props["aria-describedby"], hintId, errorId].filter(Boolean).join(" ") || undefined;
+
+  // Only set what FormField owns. Uses standard attributes so native select/textarea get no unknown DOM props.
+  const wiring: ControlProps = { id, "aria-describedby": describedBy };
+  if (error) wiring["aria-invalid"] = true;
+  if (required !== undefined) wiring.required = required;
+  const control = child ? cloneElement(child, wiring) : children;
+
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-sm font-semibold text-[var(--ink)]">
@@ -42,7 +54,7 @@ export function FormField({ label, children, hint, error, required }: Props) {
         ) : null}
       </label>
       {hint ? (
-        <p id={hintId} className="text-sm text-[#40585b]">
+        <p id={hintId} className="text-sm text-[var(--ink-soft)]">
           {hint}
         </p>
       ) : null}

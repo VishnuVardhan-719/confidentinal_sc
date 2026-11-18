@@ -46,7 +46,7 @@
 ## 2026-11-17 - U01-a app shell and U01-c static pages (branch task/U01-a-app-shell, uncommitted)
 - Finished shell started earlier: root layout, skip link, header/footer, tokens and focus/reduced-motion CSS in src/app/globals.css, next/font Latin with Telugu/Devanagari fallbacks.
 - Added U01-c pages: /, /how-it-works, /categories, /categories/[slug] (doctor, lab, scheduled-ambulance, caretaker; data in src/app/categories/data.ts). No price, coverage, availability, rating or verification claims. Copy says online booking is not open and gives 112 for emergencies. Copy needs owner review.
-- U01-b (src/components/ui/**) belongs to Claude; not touched.
+- U01-b (src/components/ui/**) belongs to Claude; not touched. [Corrected 2026-11-18: these files were committed on this branch in 757a6e3. See the U01-a review fixes entry.]
 - Not done: Telugu/Hindi translation and locale routing (no i18n library yet), Telugu/Devanagari font files, page tests.
 
 ## 2026-11-17 - U01 Kiro adversarial QA pass (branch task/U01-a-app-shell)
@@ -58,3 +58,13 @@
 - Shared components used: `ErrorState` (new `src/app/error.tsx`, using the `retry` prop), `EmptyState` (new `src/app/not-found.tsx`, and "Booking is not open yet" on each category page), `Loading` (new `src/app/loading.tsx`). CTAs that navigate use the new `src/components/button-link.tsx`, which copies Button's variants onto `next/link`. Its class strings duplicate `ui/button.tsx`; U01-b could export a shared class helper.
 - Home redesign: Newsreader (optical-size serif) for display and Atkinson Hyperlegible Next for body. Large editorial hero with one CSS underline-draw on "choose" (disabled under reduced motion). "Where things stand today" panel (booking not open; 112). Hairline 2x2 service index, one link per row, each with a one-line boundary taken from existing notes. Forest band with the three-step request track, shared with How it works through `src/app/how-it-works/steps.ts`. No new factual claims; the new `boundary` lines restate existing copy and still need owner review.
 - Not done / limitations: i18n (te/hi, locale routing) is out of this scope. Atkinson has no fallback metrics in next/font, so some layout shift on font swap is possible. The shared ErrorState still uses a 4px left border (U01-b file, not touched). Unused create-next-app SVGs remain in `public/`.
+
+## 2026-11-18 - U01-a review fixes (branch fix/U01a-review, by Kiro)
+- Base: origin/task/U01-a-app-shell 1aebc29. Review findings: C:\tmp\scv_logs\review_U01a.md.
+- H2 file ownership: src/components/ui/** (U01-b, assigned to Claude) is committed on the U01-a branch and edited again here at the orchestrator's request. origin/wip/frontend-pause-2026-11-18 also edits these files (32c7b80, 6a3ca0f), so integration must pick one version. Claude to confirm U01-b ownership and record it in the ledger.
+- M1 shadcn/ui: added clsx, tailwind-merge and class-variance-authority (shadcn's standard utilities), `cn` in src/lib/utils.ts, `buttonVariants` (cva) shared by Button and ButtonLink, and components.json for the shadcn CLI. Removed src/components/ui/cx.ts.
+- M2 contrast: new `--input-border` #6a8680 (3.94:1 on white, 3.71:1 on paper) for Input; `--line` stays decorative only.
+- M3 FormField: keeps the child's id, appends to its aria-describedby, sets standard aria-invalid instead of an `invalid` prop, and only sets required when given. Input styles its error state from aria-invalid.
+- M5 copy: removed forward promises. "you see it before you send a request" is gone; "Follow-up visits with a doctor you already know" is now "Follow-up consultations after an earlier visit"; "Keeping the request and its status in one place" is now "Tests your doctor has advised"; "Requests that the provider confirms before the day" is now "Journeys the provider has accepted in advance"; "set their own terms" is now "set their own prices". All public copy still needs owner sign-off.
+- Low fixes: metric-matched Atkinson fallback (ported from 6a3ca0f), app/global-error.tsx with the 112 line, headingLevel prop on EmptyState/ErrorState, colours moved to tokens (--forest-deep, --ink-soft, new --placeholder).
+- Not done: L1 soft-404 for unknown category slugs (needs a decision), i18n, Telugu/Devanagari fonts.

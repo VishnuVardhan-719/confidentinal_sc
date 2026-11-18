@@ -6,7 +6,7 @@ export const requestSteps = [
   },
   {
     title: "You choose a provider",
-    body: "You select the provider you prefer. The provider sets their own price, and you see it before you send a request.",
+    body: "You select the provider you prefer. Each provider sets their own price.",
   },
   {
     title: "The provider accepts",
