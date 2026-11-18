@@ -2,7 +2,7 @@
 
 import { CircleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
 export type SummaryError = { fieldId: string; message: string };
 
@@ -13,6 +13,7 @@ export type SummaryError = { fieldId: string; message: string };
 export function ErrorSummary({ errors, focusKey }: { errors: SummaryError[]; focusKey?: number | string }) {
   const t = useTranslations("common.errorSummary");
   const ref = useRef<HTMLDivElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
     if (errors.length > 0) ref.current?.focus();
@@ -26,10 +27,10 @@ export function ErrorSummary({ errors, focusKey }: { errors: SummaryError[]; foc
       ref={ref}
       tabIndex={-1}
       role="alert"
-      aria-labelledby="error-summary-title"
+      aria-labelledby={titleId}
       className="rounded-md border-2 border-danger bg-danger-surface p-4 focus-visible:outline-3 focus-visible:outline-focus"
     >
-      <h2 id="error-summary-title" className="flex items-center gap-2 text-lg font-semibold text-ink">
+      <h2 id={titleId} className="flex items-center gap-2 text-lg font-semibold text-ink">
         <CircleAlert aria-hidden className="size-5 text-danger" />
         {t("title", { count: errors.length })}
       </h2>

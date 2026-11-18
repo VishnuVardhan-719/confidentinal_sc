@@ -133,3 +133,35 @@ Reconnect no longer lifts forbidden/unauthenticated/validation/gated autosave bl
 
 ## R-INT-1 (from fe-int, feat/fe2-integration) - browser e2e deferred
 User rule (2026-11-18): no Playwright/chrome-headless-shell or any browser e2e run on this machine. All browser e2e specs under `tests/e2e` (`*.spec.ts`, `*.spec.mjs`, `*.spec.cts`) are DEFERRED, not run, and not claimed as evidence. Verification on the integration branch relies on lint, typecheck, unit tests (vitest) and build only. Earlier per-branch e2e results (for example fe2-c doctor-search 9 pass) are historical and were not re-run here. Lead to schedule browser e2e on a machine or CI runner where it is allowed.
+
+---
+
+## 2026-11-18 · Kiro A (fe2-a) · phase 2 + USER-REQ-1 A
+
+### R-FE01-6 (to fe-b, auth) — session for the public header, sign-out, return path
+`src/components/shared/session-seam.ts` `getPublicAccount()` returns `null` until wired. Please provide from `@/modules/auth/server`: the signed-in account's display name (optional), its authorized workspaces (role + dashboard or onboarding href) and a POST sign-out route that clears the httpOnly cookies and redirects to `/{locale}`. Then replace the seam body. The header Sign in link sends `?next=<public path>` (built by `safeReturnPath`: internal, no query/hash). The login page must still validate `next` server-side.
+
+### R-FE01-7 (to fe-c2, providers/search) — doctor search URL and suggestions
+- Landing hero search navigates to `/{locale}/doctors?q=<text>&pin=<6 digits>` or `&city=<text, max 60>`; no JS goes through `/{locale}/find?search=doctors&q=&location=` (303 to the same URL). Please honour `q`, `pin`, `city` on the results page.
+- Suggestions: `src/components/public/search-suggest.ts` (server action) returns `gated`. On integration call the providers module and return `SuggestionGroup[]` with groups `specialities | symptoms | doctors | clinics`, localized labels, locale-less hrefs, published verified providers only. No suggest endpoint exists in API_CONTRACTS; this needs a backend contract (not invented here).
+- The shared `LocationPicker` (USER-REQ-1 C) should be added to the `@/components/shared` barrel when it lands; fe2-a will review the export.
+
+### R-FE01-8 (to all) — shared kit changes that affect consumers
+- Status tones now include `progress`; module maps can keep `{ labelKey, tone }` and render via `KeyedStatusBadge` / `toStatusDescriptor`. Full `labelKey`s must exist in en messages: `tests/unit/messages.test.ts` scans `labelKey: "..."` literals. Payment status keys (`payment.status.*`) were added to match fe2-c's map; please send any other namespace keys you need (booking, clinical, ...) so fe2-a can add en/te/hi.
+- `GateNotice` accepts `reason="contract_pending"` for gates without a feature flag.
+- `normalizeIndianMobile` no longer truncates; over-long input fails `isValidIndianMobile`.
+
+### R-FE01-9 (to lead) — config files touched outside listed paths
+- `vitest.config.mts`: `server.deps.inline: ["next-intl"]` (lets jsdom tests render components using the locale `Link`) and `testTimeout: 20000`.
+- `next.config.ts`: security headers + CSP (`script-src 'self' 'unsafe-inline'`, no third-party origins; Supabase origin from `NEXT_PUBLIC_SUPABASE_URL` in `connect-src`), `poweredByHeader: false`. Approved vendors (Razorpay, Maps) must be added explicitly when their gates open.
+
+### R-FE01-10 (to lead) — runtime 404 shell (known limitation)
+For URLs not prerendered (unknown `/{locale}/...` and story slugs), Next 16 + Cache Components streams an error shell (`<html id="__next_error__">`, status 404) that the client replaces with the localized not-found page. Without JS that shell has no `lang`, title or text. The documented fix for a dynamic root layout is the experimental `app/global-not-found.tsx` (`experimental.globalNotFound`), which needs a decision because it is experimental and must resolve the locale without root params. The first request for a new story slug also returns 200 (noindex) before later requests return 404.
+
+### R-FE01-11 (to lead / ex-fe-c2 code on feat/fe2-c) — doctor search integration and a script bug
+- Landing hero placement for R-C2-4 is ready: `src/app/[locale]/(public)/page.tsx` renders fe2-a's `DoctorSearch` today and carries the exact swap to `<BookingIntl><DoctorSearchBar idPrefix="hero" /></BookingIntl>` after the merge. Header primary nav now has "Find doctors" -> `/doctors` (desktop + mobile), alongside the Services menu and footer links.
+- Bug on feat/fe2-c `src/modules/providers/doctor-search.ts`: `querySchema` and `citySchema` use `\p{L}` without `\p{M}`, so most Telugu/Hindi words (vowel signs are combining marks) fail validation and the results page rejects the URL. Add `\p{M}` to both character classes (`cleanSearchText` in `doctor-search-bar.tsx` too). fe2-a's `doctorSearchHref` already keeps combining marks and otherwise mirrors the schema.
+
+### R-FE01-12 (to lead) — browser e2e deferred by user rule
+Per the owner's instruction, Playwright/browser e2e is not run from this worktree any more. These specs are written but DEFERRED (not verified in their final form): `tests/e2e/public.spec.ts`, `tests/e2e/public-nav.spec.ts` (nav walk, signed-out header, hero doctor search, no-JS search), `tests/e2e/a11y.spec.ts` (axe at 360/768/1024/1440 x en/te/hi, 200%/400% zoom reflow, keyboard focus, security headers), `tests/e2e/perf.spec.ts` (lab metrics, gated by `E2E_PERF=1`). The last partial run before the rule (on a stale server, then a single-worker run stopped by the orchestrator) showed failures that were being fixed: 360px header overflow (fixed: compact "112" emergency label), Telugu story-page overflow (fixed: buttons and headings wrap), axe on the runtime 404 error shell (see R-FE01-10). Run them once on the integration branch with `--workers=1` before release; `NAV_WALK_STRICT=1` there.
+Last measured lab numbers (mobile 390, 1.6 Mbps / 150 ms RTT / 4x CPU, run alone): `/en` FCP=LCP 1.3 s, CLS 0.000, JS 201 KB compressed; `/te` 2.0 s, CLS 0.007; `/en/faq` 0.9 s; `/en/emergency` 1.0 s. These are lab indicators, not Lighthouse or real-user numbers (Lighthouse was not installed and was not added).

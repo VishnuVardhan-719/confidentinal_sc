@@ -95,3 +95,4 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
 
 ## fe-int (feat/fe2-integration) - 2026-11-18
 - Merged feat/fe2-d (0f4b8da) into fe2-c base 0331c6b; conflicts in activeContext/REQUESTS resolved keeping both sides; no message JSON conflicts. npm ci done. typecheck exit0. lint/vitest deferred by orchestrator (RAM). Browser e2e banned by user rule (REQUESTS R-INT-1). docs/PROGRESS_REPORT.md created. Next: merge feat/fe2-a, b, e when told.
+- Merged feat/fe2-a 8decfb4 (conflicts COMPONENTS/REQUESTS/REVIEW_NEEDED kept both sides; JSON parses). Landing hero swapped to DoctorSearchBar+BookingIntl. typecheck exit0. lint/vitest still deferred; no browsers. Next: fe2-b, fe2-e when told.

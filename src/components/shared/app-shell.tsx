@@ -110,7 +110,12 @@ export function AppShell({
             <Icon aria-hidden className="size-5 shrink-0" strokeWidth={1.9} />
             <span className="flex-1 truncate">{item.label}</span>
             {typeof item.count === "number" && item.count > 0 ? (
-              <span className="rounded-full bg-forest px-2 text-sm font-semibold text-on-forest tabular">{item.count}</span>
+              <>
+                <span aria-hidden className="rounded-full bg-forest px-2 text-sm font-semibold text-on-forest tabular">
+                  {item.count}
+                </span>
+                <span className="sr-only">{ta("unreadCount", { count: item.count })}</span>
+              </>
             ) : null}
           </Link>
         );

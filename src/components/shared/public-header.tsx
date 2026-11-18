@@ -12,13 +12,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { AUTH_ROUTES, SERVICES } from "@/components/public/routes";
+import { SERVICES } from "@/components/public/routes";
 import { Link, usePathname } from "@/i18n/navigation";
+import { AccountActions } from "./account-actions";
 import { BrandLogo } from "./brand-logo";
+import type { PublicAccount } from "./session-seam";
 import { LocaleSwitcher } from "./locale-switcher";
 import { ServiceIcon } from "./service-icon";
 
 const PRIMARY_LINKS = [
+  { key: "findDoctors", href: "/doctors" },
   { key: "howItWorks", href: "/how-it-works" },
   { key: "about", href: "/about" },
   { key: "stories", href: "/stories" },
@@ -27,7 +30,11 @@ const PRIMARY_LINKS = [
 const navLinkClass =
   "inline-flex min-h-target items-center rounded-md px-3 text-base font-medium whitespace-nowrap text-ink hover:bg-mist aria-[current=page]:text-forest aria-[current=page]:underline aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8";
 
-export function PublicHeader() {
+/**
+ * Public site header. `account`: undefined while the session loads, null when signed out, or the
+ * signed-in account (role-aware dashboard links + sign out). Supplied by <PublicHeaderWithAccount/>.
+ */
+export function PublicHeader({ account }: { account?: PublicAccount | null }) {
   const t = useTranslations("common");
   const ta = useTranslations("accessibility");
   const pathname = usePathname();
@@ -36,10 +43,10 @@ export function PublicHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-paper/95 backdrop-blur-sm supports-[backdrop-filter]:bg-paper/85">
-      <div className="mx-auto flex h-16 max-w-content items-center gap-2 px-4 sm:px-6 lg:h-[4.5rem] lg:px-8">
-        <BrandLogo className="mr-auto lg:mr-6" />
+      <div className="mx-auto flex h-16 max-w-content items-center gap-2 px-4 sm:px-6 xl:h-[4.5rem] lg:px-8">
+        <BrandLogo className="mr-auto xl:mr-6" />
 
-        <nav aria-label={ta("mainNavigation")} className="hidden items-center gap-1 lg:flex">
+        <nav aria-label={ta("mainNavigation")} className="hidden items-center gap-1 xl:flex">
           <DropdownMenu>
             <DropdownMenuTrigger className={cn(navLinkClass, "gap-1.5 data-[state=open]:bg-mist")}>
               {t("nav.services")}
@@ -72,25 +79,24 @@ export function PublicHeader() {
             className="inline-flex min-h-target items-center gap-2 rounded-md px-2.5 font-semibold whitespace-nowrap text-danger hover:bg-danger-surface"
           >
             <Phone aria-hidden className="size-4.5" />
-            {t("nav.emergency")}
+            <span className="hidden sm:inline">{t("nav.emergency")}</span>
+            <span className="sm:hidden" aria-hidden>
+              112
+            </span>
+            <span className="sr-only sm:hidden">{t("nav.emergencyLong")}</span>
           </Link>
           <Link href="/#finder" className={cn(navLinkClass, "hidden gap-2 2xl:inline-flex")}>
             <MapPin aria-hidden className="size-4.5 text-forest" />
             {t("nav.location")}
           </Link>
-          <LocaleSwitcher className="hidden lg:inline-flex" />
-          <div className="hidden items-center gap-2 pl-2 lg:flex">
-            <Button asChild variant="quiet">
-              <Link href={AUTH_ROUTES.login}>{t("actions.signIn")}</Link>
-            </Button>
-            <Button asChild>
-              <Link href={AUTH_ROUTES.signup}>{t("actions.signUp")}</Link>
-            </Button>
+          <LocaleSwitcher className="hidden xl:inline-flex" />
+          <div className="hidden pl-2 xl:block">
+            <AccountActions account={account} variant="desktop" />
           </div>
 
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="quiet" size="icon" className="lg:hidden" aria-label={ta("openMenu")}>
+              <Button variant="quiet" size="icon" className="xl:hidden" aria-label={ta("openMenu")}>
                 <Menu aria-hidden className="size-6" />
               </Button>
             </SheetTrigger>
@@ -129,13 +135,8 @@ export function PublicHeader() {
                       </Link></SheetClose>
                     </li>
                   </ul>
-                  <div className="grid gap-3 border-t border-border pt-4">
-                    <Button asChild size="lg">
-                      <SheetClose asChild><Link href={AUTH_ROUTES.signup}>{t("actions.signUp")}</Link></SheetClose>
-                    </Button>
-                    <Button asChild size="lg" variant="secondary">
-                      <SheetClose asChild><Link href={AUTH_ROUTES.login}>{t("actions.signIn")}</Link></SheetClose>
-                    </Button>
+                  <div className="border-t border-border pt-4">
+                    <AccountActions account={account} variant="mobile" />
                   </div>
                 </nav>
                 <div className="grid gap-2 border-t border-border pt-4">

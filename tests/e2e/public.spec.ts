@@ -63,14 +63,17 @@ test("bare paths redirect to the default locale", async ({ page }) => {
 });
 
 test("unknown routes and unpublished stories show the localized 404", async ({ page }) => {
-  for (const [url, title] of [
-    ["/te/no-such-page", "ఆ పేజీ మాకు దొరకలేదు"],
-    ["/en/stories/anything", "We could not find that page"],
-    ["/hi/stories/anything", "हमें वह पेज नहीं मिला"],
+  for (const [url, title, status] of [
+    ["/te/no-such-page", "ఆ పేజీ మాకు దొరకలేదు", [404]],
+    // Story slugs are runtime params: the very first request for a new slug streams its not-found
+    // after the static shell (status 200 + noindex); later requests are 404. See handoff notes.
+    ["/en/stories/anything", "We could not find that page", [200, 404]],
+    ["/hi/stories/anything", "हमें वह पेज नहीं मिला", [200, 404]],
   ] as const) {
     const res = await page.goto(url);
-    expect(res?.status()).toBe(404);
+    expect(status).toContain(res?.status());
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(title);
+    await expect(page.locator('meta[name="robots"]').first()).toHaveAttribute("content", /noindex/);
   }
 });
 
@@ -122,15 +125,15 @@ test("finder validates the PIN and routes to the chosen directory", async ({ pag
   await page.getByRole("button", { name: "Show providers" }).click();
   await expect(page.getByText("Enter your 6-digit PIN code")).toBeVisible();
   await expect(page.getByText("Choose a service")).toBeVisible();
-  await expect(page.getByRole("textbox", { name: "PIN code" })).toBeFocused();
+  await expect(page.getByRole("textbox", { name: "PIN code", exact: true })).toBeFocused();
 
-  await page.getByRole("textbox", { name: "PIN code" }).fill("012345");
+  await page.getByRole("textbox", { name: "PIN code", exact: true }).fill("012345");
   await page.locator('label[for="finder-service-labTests"]').click();
   await expect(page.getByRole("radio", { name: /Lab tests/ })).toBeChecked();
   await page.getByRole("button", { name: "Show providers" }).click();
   await expect(page.getByText("A PIN code has 6 digits and does not start with 0")).toBeVisible();
 
-  await page.getByRole("textbox", { name: "PIN code" }).fill("500001");
+  await page.getByRole("textbox", { name: "PIN code", exact: true }).fill("500001");
   await page.getByRole("button", { name: "Show providers" }).click();
   await expect(page).toHaveURL(/\/en\/lab-tests\?pin=500001$/);
 });
@@ -148,9 +151,9 @@ test.describe("without JavaScript", () => {
 
   test("finder submits as a plain form", async ({ page }) => {
     await page.goto("/te");
-    await page.getByRole("textbox", { name: "పిన్ కోడ్" }).fill("500001");
+    await page.getByRole("textbox", { name: "పిన్ కోడ్", exact: true }).fill("500001");
     await page.locator('input[name="service"][value="caretakers"]').check({ force: true });
-    await page.locator('form[action="/te/find"] button[type="submit"]').click();
+    await page.locator('#finder form[action="/te/find"] button[type="submit"]').click();
     await expect(page).toHaveURL(/\/te\/caretakers\?pin=500001$/);
   });
 

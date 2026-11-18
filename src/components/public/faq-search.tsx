@@ -98,7 +98,7 @@ export function FaqSearch({ entries, labels }: { entries: FaqEntry[]; labels: Fa
                 </h2>
                 <div className="border-t border-border">
                   {items.map((e) => (
-                    <FaqItem key={e.id} id={e.id} question={e.q} answer={e.a} />
+                    <FaqItem key={e.id} id={e.id} question={e.q} answer={e.a} answerDoc={e.answerDoc} />
                   ))}
                 </div>
               </section>

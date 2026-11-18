@@ -27,7 +27,7 @@ describe("digits, phone and OTP", () => {
     expect(normalizeIndianMobile("+91 98765 43210")).toBe("9876543210");
     expect(normalizeIndianMobile("09876543210")).toBe("9876543210");
     expect(normalizeIndianMobile("98765-43210")).toBe("9876543210");
-    expect(normalizeIndianMobile("987654321099")).toBe("9876543210");
+    expect(normalizeIndianMobile("987654321099")).toBe("987654321099");
   });
 
   it("validates mobile shape and formats for display", () => {

@@ -26,6 +26,13 @@ const COLUMNS = [
     ],
   },
   {
+    key: "account",
+    links: [
+      { key: "signIn", href: "/login" },
+      { key: "createAccount", href: "/signup" },
+    ],
+  },
+  {
     key: "legal",
     links: [
       { key: "privacy", href: "/privacy" },
@@ -55,7 +62,7 @@ export function Footer() {
             {t("footer.emergency")}
           </Link>
         </div>
-        <nav aria-label={ta("footerNavigation")} className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+        <nav aria-label={ta("footerNavigation")} className="grid grid-cols-2 gap-8 sm:grid-cols-3 xl:grid-cols-5">
           <div className="grid content-start gap-3">
             <h2 className="text-sm font-semibold text-on-forest">{t("footer.columns.services")}</h2>
             <ul className="grid">

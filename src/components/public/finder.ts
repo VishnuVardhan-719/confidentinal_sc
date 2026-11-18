@@ -35,3 +35,37 @@ export function validateFinder(input: { pin?: string | null; service?: string | 
   if (errors.pin || errors.service) return { ok: false, errors };
   return { ok: true, href: finderHref(input.service as ServiceKey, pin) };
 }
+
+/**
+ * Doctor search URL (landing hero search). Mirrors the /doctors results contract on feat/fe2-c
+ * (`doctorSearchSchema` in src/modules/providers/doctor-search.ts):
+ *   q    - 1..80 chars of letters, digits, spaces and . , ' & ( ) -
+ *   pin  - 6-digit PIN when the location field holds one
+ *   city - 2..60 chars, starts with a letter; letters, spaces and . ' -
+ * Anything else is cleaned out or omitted, so the results page never rejects the URL. Combining marks
+ * (\p{M}) are kept: Telugu and Hindi words need them (REQUESTS R-FE01-11).
+ * Only coarse location ever goes in the URL; never coordinates.
+ */
+export function cleanDoctorQuery(raw: string | null | undefined): string {
+  return (raw ?? "").normalize("NFC").replace(/[^\p{L}\p{M}\p{N} .,'&()-]/gu, " ").replace(/\s+/g, " ").trim().slice(0, 80).trim();
+}
+
+export function cleanCity(raw: string | null | undefined): string | null {
+  const city = (raw ?? "").normalize("NFC").replace(/[^\p{L}\p{M} .'-]/gu, " ").replace(/\s+/g, " ").trim().slice(0, 60).trim();
+  return city.length >= 2 && /^\p{L}/u.test(city) ? city : null;
+}
+
+export function doctorSearchHref(input: { q?: string | null; location?: string | null }): string {
+  const params = new URLSearchParams();
+  const q = cleanDoctorQuery(input.q);
+  const loc = (input.location ?? "").trim();
+  if (q) params.set("q", q);
+  const pin = normalizePin(loc);
+  if (loc && /^[\s\d०-९౦-౯]+$/.test(loc) && isValidPin(pin)) params.set("pin", pin);
+  else {
+    const city = cleanCity(loc);
+    if (city) params.set("city", city);
+  }
+  const query = params.toString();
+  return query ? `/doctors?${query}` : "/doctors";
+}

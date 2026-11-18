@@ -1,26 +1,40 @@
 /** Pure helpers for phone and OTP inputs. Shared by PhoneInput/OTPInput and unit-tested. */
 
-/** Keep ASCII digits only; also maps Devanagari (०-९) and Telugu (౦-౯) digits typed on native keyboards. */
+/** Zero code point of each decimal digit block we accept from keyboards, IMEs and SMS apps. */
+const DIGIT_ZEROS = [
+  0x30, // ASCII
+  0x660, // Arabic-Indic
+  0x6f0, // Extended Arabic-Indic
+  0x966, // Devanagari
+  0xc66, // Telugu
+  0xff10, // Full-width
+];
+
+/** Keep decimal digits only, mapped to ASCII. Everything else (spaces, dashes, letters) is dropped. */
 export function toAsciiDigits(input: string): string {
   let out = "";
   for (const ch of input) {
     const code = ch.codePointAt(0) ?? 0;
-    if (code >= 0x30 && code <= 0x39) out += ch;
-    else if (code >= 0x966 && code <= 0x96f) out += String(code - 0x966);
-    else if (code >= 0xc66 && code <= 0xc6f) out += String(code - 0xc66);
+    const zero = DIGIT_ZEROS.find((z) => code >= z && code <= z + 9);
+    if (zero !== undefined) out += String(code - zero);
   }
   return out;
 }
 
+/** Longest digit string we keep while typing (E.164 maximum). Longer input is still invalid. */
+const MAX_PHONE_DIGITS = 15;
+
 /**
- * Normalise what a user typed or pasted into a 10-digit Indian mobile number (national part only).
- * Strips spaces, dashes, a leading +91 / 91 / 0 when that leaves 10 digits.
+ * Normalise what a user typed or pasted into the national part of an Indian mobile number.
+ * Strips spaces, dashes and a leading +91 / 91 / 0 only when exactly 10 digits remain. Anything else
+ * is kept as typed (never silently truncated), so a wrong or foreign number fails validation
+ * instead of becoming a different valid-looking number.
  */
 export function normalizeIndianMobile(input: string): string {
-  const digits = toAsciiDigits(input);
+  const digits = toAsciiDigits(input).slice(0, MAX_PHONE_DIGITS);
   if (digits.length === 12 && digits.startsWith("91")) return digits.slice(2);
   if (digits.length === 11 && digits.startsWith("0")) return digits.slice(1);
-  return digits.slice(0, 10);
+  return digits;
 }
 
 /** Shape check only. The server is the authority on whether a number can receive an OTP. */

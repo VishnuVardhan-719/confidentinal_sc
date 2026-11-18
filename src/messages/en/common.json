@@ -14,13 +14,26 @@
     "emergency": "Emergency",
     "emergencyLong": "Emergency? Call 112",
     "location": "Find care by PIN",
-    "menu": "Menu"
+    "menu": "Menu",
+    "findDoctors": "Find doctors"
   },
   "services": {
-    "doctors": { "label": "Doctor home visits", "short": "A doctor consults at your home" },
-    "labTests": { "label": "Lab tests", "short": "Samples collected at home" },
-    "ambulances": { "label": "Scheduled ambulance", "short": "Planned patient transport" },
-    "caretakers": { "label": "Caretakers", "short": "Support with daily care" }
+    "doctors": {
+      "label": "Doctor home visits",
+      "short": "A doctor consults at your home"
+    },
+    "labTests": {
+      "label": "Lab tests",
+      "short": "Samples collected at home"
+    },
+    "ambulances": {
+      "label": "Scheduled ambulance",
+      "short": "Planned patient transport"
+    },
+    "caretakers": {
+      "label": "Caretakers",
+      "short": "Support with daily care"
+    }
   },
   "actions": {
     "signIn": "Sign in",
@@ -30,7 +43,8 @@
     "cancel": "Cancel",
     "confirm": "Confirm",
     "working": "Please wait…",
-    "goHome": "Go to the home page"
+    "goHome": "Go to the home page",
+    "createAccount": "Create account"
   },
   "locales": {
     "en": "English",
@@ -45,7 +59,8 @@
       "services": "Services",
       "company": "SureCure Visit",
       "help": "Help",
-      "legal": "Legal (drafts)"
+      "legal": "Legal (drafts)",
+      "account": "Account"
     },
     "links": {
       "about": "About us",
@@ -59,7 +74,9 @@
       "becomeProvider": "Become a provider",
       "privacy": "Privacy notice (draft)",
       "terms": "Terms of use (draft)",
-      "refunds": "Cancellations and refunds (draft)"
+      "refunds": "Cancellations and refunds (draft)",
+      "signIn": "Sign in",
+      "createAccount": "Create account"
     }
   },
   "gate": {
@@ -73,7 +90,9 @@
       "subscriptions": "Paid memberships",
       "gps": "Live location tracking",
       "automatedPayouts": "Automatic payouts"
-    }
+    },
+    "pendingTitle": "Not available yet",
+    "pendingBody": "This part of SureCure Visit is still being connected. It will not show placeholder results, and nothing here will work until it is ready."
   },
   "fixture": {
     "title": "Synthetic data, not live",
@@ -90,7 +109,8 @@
     "optional": "(optional)"
   },
   "phone": {
-    "format": "10-digit Indian mobile number"
+    "format": "10-digit Indian mobile number",
+    "prefix": "India country code +91. Enter the 10-digit mobile number."
   },
   "stepper": {
     "label": "Progress",
@@ -100,5 +120,77 @@
       "current": "current step",
       "upcoming": "not started"
     }
+  },
+  "status": {
+    "unknown": "Unknown status"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unread": "{count, plural, =0 {none unread} one {# unread} other {# unread}}",
+    "unreadMarker": "Unread:",
+    "open": "Open",
+    "markRead": "Mark as read",
+    "emptyTitle": "No notifications",
+    "emptyBody": "Updates about your requests, bookings and payments will appear here.",
+    "kinds": {
+      "booking_requested": "A new booking request was sent",
+      "booking_accepted": "A provider accepted a request",
+      "booking_declined": "A provider declined a request",
+      "booking_cancelled": "A booking was cancelled",
+      "payment_update": "A payment status changed",
+      "report_available": "A report is ready to view",
+      "shift_update": "A care shift was updated",
+      "unknown": "You have an update"
+    }
+  },
+  "account": {
+    "signOut": "Sign out",
+    "signedInAs": "Signed in as {name}",
+    "myDashboard": "My dashboard",
+    "switch": "Switch workspace",
+    "workspaces": "Your workspaces",
+    "dashboards": {
+      "patient": "Patient dashboard",
+      "doctor": "Doctor workspace",
+      "lab": "Lab workspace",
+      "ambulance": "Ambulance workspace",
+      "caretaker": "Care workspace",
+      "admin": "Admin console"
+    }
+  },
+  "roleNav": {
+    "dashboard": "Dashboard",
+    "bookings": "Bookings",
+    "records": "Records",
+    "family": "Family",
+    "healthProfile": "Health profile",
+    "payments": "Payments",
+    "notifications": "Notifications",
+    "support": "Support",
+    "profile": "Profile",
+    "settings": "Settings",
+    "requests": "Requests",
+    "visits": "Visits",
+    "availability": "Availability",
+    "services": "Services",
+    "earnings": "Earnings",
+    "orders": "Orders",
+    "collections": "Collections",
+    "reports": "Reports",
+    "catalog": "Test catalogue",
+    "branches": "Branches",
+    "staff": "Staff",
+    "billing": "Billing",
+    "trips": "Trips",
+    "fleet": "Fleet",
+    "crew": "Crew",
+    "assignments": "Assignments",
+    "shifts": "Shifts",
+    "providers": "Providers",
+    "coverage": "Coverage",
+    "users": "Users",
+    "refunds": "Refunds",
+    "content": "Content",
+    "audit": "Audit log"
   }
 }

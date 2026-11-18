@@ -93,7 +93,7 @@ describe("FaqSearch", () => {
     noResultsTitle: "No matching questions",
     noResultsBody: "Try another word",
     clear: "Clear search",
-    categories: { services: "Services", booking: "Bookings", payments: "Payments", account: "Account", providers: "Providers" },
+    categories: { general: "General", services: "Services", booking: "Bookings", payments: "Payments", account: "Account", providers: "Providers" },
   };
 
   it("filters questions, announces the count and shows an empty state", async () => {

@@ -11,5 +11,6 @@
   "language": "भाषा",
   "loading": "लोड हो रहा है",
   "mobileNavigation": "त्वरित लिंक",
-  "sidebarNavigation": "वर्कस्पेस"
+  "sidebarNavigation": "वर्कस्पेस",
+  "unreadCount": "{count, plural, one {# अपठित} other {# अपठित}}"
 }

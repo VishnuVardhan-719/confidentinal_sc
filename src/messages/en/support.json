@@ -1,1 +1,67 @@
-{}
+{
+  "form": {
+    "privacyTitle": "Do not include health details",
+    "privacyBody": "Describe the problem in a few words. Never share symptoms, test results, OTPs or passwords here. Providers see your health information through your booking, not through support.",
+    "category": "What is it about?",
+    "categories": {
+      "service": {
+        "label": "A visit or service",
+        "hint": "Late, missed or not as agreed"
+      },
+      "payment": {
+        "label": "Payment",
+        "hint": "Amounts, receipts or refunds"
+      },
+      "account": {
+        "label": "My account",
+        "hint": "Profile, sign-in or settings"
+      },
+      "access": {
+        "label": "Access to records",
+        "hint": "Reports or documents you cannot open"
+      }
+    },
+    "booking": "Related booking",
+    "bookingHint": "Choose the booking this is about, if any.",
+    "bookingNone": "Not about a specific booking",
+    "description": "Describe the problem",
+    "descriptionHint": "Up to {max} characters. Plain text only.",
+    "count": "{count} of {max} characters",
+    "sensitiveWarning": "This looks like it contains a code or a long number. Never share OTPs, card or Aadhaar numbers in support messages.",
+    "submit": "Send request",
+    "submitting": "Sending…",
+    "errors": {
+      "category": {
+        "required": "Choose what the request is about"
+      },
+      "bookingId": {
+        "invalid": "Choose a booking from the list"
+      },
+      "description": {
+        "required": "Describe the problem",
+        "tooLong": "Keep the description to {max} characters or fewer"
+      }
+    },
+    "success": {
+      "title": "Request received",
+      "reference": "Your reference is {reference}. Use it if you contact us about this request.",
+      "noReference": "We have your request. Its reference will appear in your support list.",
+      "another": "Send another request"
+    }
+  },
+  "timeline": {
+    "emptyTitle": "No updates yet",
+    "emptyBody": "Replies and status changes will appear here.",
+    "actor": {
+      "you": "You",
+      "provider": "Provider",
+      "platform": "SureCure Visit support"
+    },
+    "kind": {
+      "created": "opened this request",
+      "status_changed": "changed the status to",
+      "message": "replied",
+      "escalated": "escalated this to SureCure Visit support"
+    }
+  }
+}

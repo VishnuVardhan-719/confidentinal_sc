@@ -10,7 +10,7 @@ Branch `feat/fe2-integration`, written 2026-11-18 by fe-int. States: `NOT_STARTE
 
 | Branch | Tip | In this branch |
 |---|---|---|
-| feat/fe2-a | 857b005 | yes (via fe2-c and fe2-d) |
+| feat/fe2-a | 8decfb4 | yes (merged directly; earlier 857b005 via fe2-c/fe2-d) |
 | feat/fe2-c | 0331c6b | yes (base) |
 | feat/fe2-d | 0f4b8da | yes (merged in this commit) |
 | feat/fe2-b | f9129e6 | no (pending) |
@@ -20,7 +20,7 @@ Branch `feat/fe2-integration`, written 2026-11-18 by fe-int. States: `NOT_STARTE
 
 | Check | Result |
 |---|---|
-| `npm run typecheck` (after fe2-d merge) | exit 0 |
+| `npm run typecheck` (after fe2-d merge, and again after fe2-a 8decfb4 merge + hero swap) | exit 0 |
 | `npm run lint` | not run (orchestrator deferred: RAM cap) |
 | `vitest --maxWorkers=2` | not run (orchestrator deferred: RAM cap) |
 | `npm run build` | not run yet |
@@ -46,3 +46,4 @@ Branch `feat/fe2-integration`, written 2026-11-18 by fe-int. States: `NOT_STARTE
 - Fixture-only coverage. Nothing here proves real integration, RLS or concurrency behaviour.
 - Emergency dispatch, clinical activation, live payments, GPS/maps and photo hosting remain gated per `AGENTS.md` and REQUESTS R-C2-5.
 - Merge conflicts in `.context/activeContext.md` and `docs/frontend/REQUESTS.md` were resolved by keeping both sides. No message JSON keys conflicted or were dropped.
+- Landing hero now uses fe-c's `DoctorSearchBar` inside `BookingIntl` (R-C2-4). fe-a's `src/components/public/doctor-search.tsx` and `public.landing.search` strings are kept but no longer used on the landing page; fe-a/lead to decide whether to remove them.
