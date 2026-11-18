@@ -42,11 +42,14 @@ const serverErrorCode = (value: unknown): string | null => {
   return typeof code === "string" && /^[a-z_]{1,64}$/.test(code) ? code : null;
 };
 
-function retryAfter(response: Response): number | undefined {
-  const raw = response.headers.get("retry-after");
+/** Retry-After as delay-seconds or HTTP-date (RFC 9110), converted to non-negative seconds. */
+export function parseRetryAfter(raw: string | null, now: Date = new Date()): number | undefined {
   if (!raw) return undefined;
-  const seconds = Number(raw);
-  return Number.isFinite(seconds) && seconds >= 0 ? Math.ceil(seconds) : undefined;
+  const value = raw.trim();
+  if (/^\d+$/.test(value)) return Number(value);
+  const date = Date.parse(value);
+  if (Number.isNaN(date)) return undefined;
+  return Math.max(0, Math.ceil((date - now.getTime()) / 1000));
 }
 
 export function createJsonClient(options: HttpAdapterOptions = {}) {
@@ -57,7 +60,13 @@ export function createJsonClient(options: HttpAdapterOptions = {}) {
     const headers: Record<string, string> = { Accept: "application/json" };
     if (req.body !== undefined) headers["Content-Type"] = "application/json";
     if (req.auth !== false) {
-      const token = options.getAccessToken ? await options.getAccessToken() : null;
+      let token: string | null = null;
+      try {
+        token = options.getAccessToken ? await options.getAccessToken() : null;
+      } catch {
+        // Session store failure is an outage, not "signed out".
+        return { ok: false, error: { code: "unavailable" }, serverCode: null, status: 0 };
+      }
       if (!token) return { ok: false, error: { code: "unauthenticated" }, serverCode: null, status: 401 };
       headers.Authorization = `Bearer ${token}`;
     }
@@ -83,7 +92,7 @@ export function createJsonClient(options: HttpAdapterOptions = {}) {
     if (!response.ok) {
       const code = codeFromStatus(response.status);
       const error: ApiError = { code };
-      const seconds = code === "rate_limited" ? retryAfter(response) : undefined;
+      const seconds = code === "rate_limited" ? parseRetryAfter(response.headers.get("retry-after")) : undefined;
       if (seconds !== undefined) error.retryAfterSeconds = seconds;
       return { ok: false, error, serverCode: serverErrorCode(json), status: response.status };
     }

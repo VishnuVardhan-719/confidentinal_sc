@@ -84,7 +84,8 @@ describe("family and documents", () => {
   });
 
   it("covers exactly the seven questionnaire sections", () => {
-    expect(QUESTIONNAIRE_SECTIONS).toHaveLength(7);
+    expect([...QUESTIONNAIRE_SECTIONS]).toEqual(["bloodGroup", "allergies", "medicines", "surgeries", "medicalHistory", "family", "documents"]);
+    expect(new Set(QUESTIONNAIRE_SECTIONS).size).toBe(7);
   });
 });
 

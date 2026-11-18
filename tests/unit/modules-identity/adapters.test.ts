@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { getAuthApi } from "@/modules/auth";
-import { createFixtureAuthApi } from "@/modules/auth/fixture";
+import { createFixtureAuthApi, createFixtureChallengeStore } from "@/modules/auth/fixture";
 import { createHttpAuthApi } from "@/modules/auth/http";
 import type { FetchLike } from "@/modules/auth/http-client";
 import { getOnboardingApi } from "@/modules/onboarding";
 import { createFixtureOnboardingApi } from "@/modules/onboarding/fixture";
 import { createHttpOnboardingApi } from "@/modules/onboarding/http";
 import { getVerificationApi } from "@/modules/verification";
-import { createFixtureVerificationApi } from "@/modules/verification/fixture";
+import { createFixtureVerificationApi, createFixtureVerificationStore } from "@/modules/verification/fixture";
 import { createHttpVerificationApi } from "@/modules/verification/http";
 import { FIXTURE_IDS, FIXTURE_OTP_CODE } from "@/fixtures/identity";
 
@@ -142,7 +142,7 @@ describe("AuthApi http adapter", () => {
 describe("AuthApi fixture OTP flow", () => {
   it("handles wrong code, resend throttling and verification", async () => {
     let t = new Date("2026-11-18T10:00:00Z");
-    const api = createFixtureAuthApi({ env: DEV_FIXTURE, now: () => t });
+    const api = createFixtureAuthApi({ env: DEV_FIXTURE, now: () => t, challengeStore: createFixtureChallengeStore() });
     const signup = await api.signup({ method: "phone_otp", role: "patient", phone: "+916000000000", acceptedTerms: true, termsVersion: "v" });
     if (!signup.ok || signup.data.kind !== "otp_challenge") throw new Error("expected challenge");
     const { challengeId, maskedDestination } = signup.data.challenge;
@@ -168,7 +168,7 @@ describe("AuthApi fixture OTP flow", () => {
 
   it("expired challenge is rejected", async () => {
     let t = new Date("2026-11-18T10:00:00Z");
-    const api = createFixtureAuthApi({ env: DEV_FIXTURE, now: () => t });
+    const api = createFixtureAuthApi({ env: DEV_FIXTURE, now: () => t, challengeStore: createFixtureChallengeStore() });
     const r = await api.login({ method: "phone_otp", phone: "+916000000000" });
     if (!r.ok || r.data.kind !== "otp_challenge") throw new Error("expected challenge");
     t = new Date("2026-11-18T10:06:00Z");
@@ -220,7 +220,7 @@ describe("VerificationApi http adapter", () => {
 
 describe("VerificationApi fixture", () => {
   it("enforces transitions, versions and required evidence", async () => {
-    const api = createFixtureVerificationApi({ env: DEV_FIXTURE });
+    const api = createFixtureVerificationApi({ env: DEV_FIXTURE, store: createFixtureVerificationStore() });
     const queue = await api.listReviewQueue();
     expect(queue.ok && queue.data.map((q) => q.status).sort()).toEqual(["submitted", "under_review"]);
 

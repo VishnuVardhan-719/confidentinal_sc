@@ -9,7 +9,7 @@ import { adminReviewSchema, startReviewSchema, type ReviewDecision, type ReviewR
  * HTTP adapter. Endpoints from I02: `GET /api/providers/:id`,
  * `POST /api/admin/providers/:id/review` (also listed in API_CONTRACTS.md),
  * `POST /api/providers/:id/documents/:documentId/signed-url`.
- * Gated (no contract): review queue list, `changes_required` decision.
+ * Gated (no contract): review queue list, `changes_required` decision, coverage list/decisions.
  */
 
 const DECISION_TO_SERVER: Readonly<Record<Exclude<ReviewDecision, "changes_required">, string>> = {
@@ -77,6 +77,14 @@ export function createHttpVerificationApi(options: HttpAdapterOptions = {}): Ver
       });
       if (!result.ok && result.serverCode === "provider_signed_urls_unavailable") return fail("gated");
       return toApiResult(result);
+    },
+
+    async listCoverage() {
+      return fail("gated");
+    },
+
+    async decideCoverage() {
+      return fail("gated");
     },
   };
 }

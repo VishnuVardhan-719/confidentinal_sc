@@ -21,15 +21,20 @@ export const createProviderSchema = z.strictObject({
 });
 export type CreateProviderInput = z.input<typeof createProviderSchema>;
 
-/** Register private evidence metadata before uploading bytes (I02 documentSchema, no filename). */
-export const registerDocumentSchema = z.strictObject({
-  kind: documentKindSchema,
-  contentType: documentContentTypeSchema,
-  expiresAt: z.iso
-    .datetime({ offset: true })
-    .refine((v) => Date.parse(v) > Date.now(), { message: "expiry_in_past" }),
-  expectedVersion: expectedVersionSchema,
-});
+/**
+ * Register private evidence metadata before uploading bytes (I02 documentSchema, no filename).
+ * `now` lets an adapter validate expiry against the same clock it uses for the mutation.
+ */
+export const registerDocumentSchemaAt = (now: () => Date) =>
+  z.strictObject({
+    kind: documentKindSchema,
+    contentType: documentContentTypeSchema,
+    expiresAt: z.iso
+      .datetime({ offset: true })
+      .refine((v) => Date.parse(v) > now().getTime(), { message: "expiry_in_past" }),
+    expectedVersion: expectedVersionSchema,
+  });
+export const registerDocumentSchema = registerDocumentSchemaAt(() => new Date());
 export type RegisterDocumentInput = z.infer<typeof registerDocumentSchema>;
 
 export const selfPatientConsentSchema = consentSectionSchema;

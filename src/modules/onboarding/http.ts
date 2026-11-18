@@ -7,7 +7,7 @@ import { documentKindSchema, expectedVersionSchema, parseDocumentStatus } from "
 import { providerStatusFromServer } from "@/modules/verification/status";
 import { createProviderSchema, registerDocumentSchema, selfPatientConsentSchema, type OnboardingApi } from "./api";
 import { patientQuestionnaireSchema } from "./patient";
-import { providerSectionSchema, type ProviderOnboardingDraft } from "./provider";
+import { isServerManagedSection, providerSectionSchema, type ProviderOnboardingDraft } from "./provider";
 import { listingSchema, type DocumentRef } from "./shared";
 
 /**
@@ -123,6 +123,7 @@ export function createHttpOnboardingApi(options: HttpAdapterOptions = {}): Onboa
       if (!version.ok) return version.result;
       const schema = providerSectionSchema(category, sectionId);
       if (!schema) return fail("validation", { fields: { sectionId: "unknown_section" } });
+      if (isServerManagedSection(sectionId)) return fail("validation", { fields: { sectionId: "server_managed" } });
       const valid = validateInput(schema, value);
       if (!valid.ok) return valid.result;
       if (sectionId !== "listing") return fail("gated");

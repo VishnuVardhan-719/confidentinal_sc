@@ -25,8 +25,16 @@ export const homePath = (role: Role, locale: Locale = DEFAULT_LOCALE): string =>
 export const onboardingPath = (role: Role, locale: Locale = DEFAULT_LOCALE): string =>
   role === "admin" ? homePath(role, locale) : `/${locale}/${role}/onboarding`;
 
-export const loginPath = (locale: Locale = DEFAULT_LOCALE, next?: string): string =>
-  next ? `/${locale}/login?next=${encodeURIComponent(next)}` : `/${locale}/login`;
+export const LOGIN_REASONS = ["session_expired", "signed_out"] as const;
+export type LoginReason = (typeof LOGIN_REASONS)[number];
+
+export function loginPath(locale: Locale = DEFAULT_LOCALE, next?: string, reason?: LoginReason): string {
+  const params = new URLSearchParams();
+  if (next) params.set("next", next);
+  if (reason) params.set("reason", reason);
+  const query = params.toString();
+  return query ? `/${locale}/login?${query}` : `/${locale}/login`;
+}
 
 export const workspaceSelectPath = (locale: Locale = DEFAULT_LOCALE): string => `/${locale}/workspace/select`;
 
@@ -111,6 +119,11 @@ export function canAccessRoute(session: Session, path: string): AccessDecision {
 
   const role = root;
   const state = workspaceStateFor(session.identity, role);
+  // A signed-in user may open a provider category's onboarding to START an application;
+  // the server authorizes provider creation. Nothing private is reachable this way.
+  if (state === null && role !== "patient" && role !== "admin" && (segments[1] ?? "") === "onboarding") {
+    return { allowed: true };
+  }
   // No workspace: minimal denial without hinting whether anything exists there.
   if (state === null) return { allowed: false, reason: "forbidden", redirectTo: null };
   if (state === "active") return { allowed: true };
@@ -135,6 +148,8 @@ export function landingPathFor(identity: Identity, locale: Locale = DEFAULT_LOCA
   if (roles.length !== 1) return workspaceSelectPath(locale);
   const role = roles[0];
   const state = workspaceStateFor(identity, role);
+  // A non-active admin has no admin route the guard allows; send them to their own account page.
+  if (role === "admin" && state !== "active") return `/${locale}/account/security`;
   if (state === "onboarding_incomplete" || state === "unknown") return onboardingPath(role, locale);
   return homePath(role, locale);
 }

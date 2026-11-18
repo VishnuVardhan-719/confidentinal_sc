@@ -5,31 +5,67 @@ import { assertFixtureAllowed, type FixtureOptions } from "@/modules/auth/fixtur
 import { validateInput } from "@/modules/auth/http-client";
 import { expectedVersionSchema } from "@/modules/verification/schemas";
 import { canEditOnboarding, canSubmitForReview } from "@/modules/verification/status";
-import { createProviderSchema, registerDocumentSchema, selfPatientConsentSchema, type OnboardingApi } from "./api";
+import { createProviderSchema, registerDocumentSchemaAt, selfPatientConsentSchema, type OnboardingApi } from "./api";
 import { patientQuestionnaireSchema, patientSectionSchemas, type PatientDraft } from "./patient";
-import { providerCompletion, providerSectionSchema, type ProviderOnboardingDraft } from "./provider";
+import { isServerManagedSection, providerCompletion, providerSectionSchema, type ProviderOnboardingDraft } from "./provider";
 import type { DocumentRef } from "./shared";
 
 /** Synthetic OnboardingApi. Server-saved drafts are simulated in memory only (never localStorage). */
 
-export type OnboardingFixtureOptions = FixtureOptions & { patientDraft?: "empty" | "new" | "complete" };
+type PatientSeed = "empty" | "new" | "complete";
+
+export type FixtureOnboardingStore = {
+  patientDrafts: Map<string, PatientDraft>;
+  providers: Map<string, ProviderOnboardingDraft>;
+  /** Document IDs actually registered per provider (the only way evidence enters a draft). */
+  registeredDocuments: Map<string, Set<string>>;
+};
+
+export type OnboardingFixtureOptions = FixtureOptions & {
+  /** Synthetic user whose patient draft is read/written. */
+  actorId?: string;
+  store?: FixtureOnboardingStore;
+  /** Shortcut for tests: isolated store whose actor starts with this draft. */
+  patientDraft?: PatientSeed;
+};
 
 const uuid = z.uuid();
+const ANONYMOUS_ACTOR = "fixture-anonymous";
 
-const emptyPatientDraft = (): PatientDraft => ({ version: 0, updatedAt: null, sections: {} });
+/** Fixture actors are signed-in synthetic users, so the server-derived account step is verified. */
+const emptyPatientDraft = (): PatientDraft => ({ version: 0, updatedAt: null, sections: { account: { contactVerified: true } } });
+const seedDraft = (seed: PatientSeed): PatientDraft =>
+  seed === "complete"
+    ? structuredClone(FIXTURE_PATIENT_DRAFT_COMPLETE)
+    : seed === "new"
+      ? structuredClone(FIXTURE_PATIENT_DRAFT_NEW)
+      : emptyPatientDraft();
+
+export function createFixtureOnboardingStore(seeds: Record<string, PatientSeed> = {}): FixtureOnboardingStore {
+  return {
+    patientDrafts: new Map(Object.entries(seeds).map(([actor, seed]) => [actor, seedDraft(seed)])),
+    providers: new Map(FIXTURE_PROVIDER_DRAFTS.map((d) => [d.providerId ?? "", structuredClone(d)])),
+    registeredDocuments: new Map(),
+  };
+}
+
+/** Dev-server process memory so "server-saved" drafts survive reloads in fixture mode. */
+let sharedStore: FixtureOnboardingStore | null = null;
+const getSharedStore = (): FixtureOnboardingStore =>
+  (sharedStore ??= createFixtureOnboardingStore({
+    [FIXTURE_IDS.patientNew]: "new",
+    [FIXTURE_IDS.patientComplete]: "complete",
+    [FIXTURE_IDS.doctorDraftUser]: "empty",
+  }));
 
 export function createFixtureOnboardingApi(options: OnboardingFixtureOptions = {}): OnboardingApi {
   assertFixtureAllowed(options.env);
   const now = options.now ?? (() => new Date());
-  let patientDraft: PatientDraft =
-    options.patientDraft === "complete"
-      ? structuredClone(FIXTURE_PATIENT_DRAFT_COMPLETE)
-      : options.patientDraft === "new"
-        ? structuredClone(FIXTURE_PATIENT_DRAFT_NEW)
-        : emptyPatientDraft();
-  const providers = new Map<string, ProviderOnboardingDraft>(
-    FIXTURE_PROVIDER_DRAFTS.map((d) => [d.providerId ?? "", structuredClone(d)]),
-  );
+  const actor = options.actorId ?? ANONYMOUS_ACTOR;
+  const store =
+    options.store ?? (options.patientDraft ? createFixtureOnboardingStore({ [actor]: options.patientDraft }) : getSharedStore());
+  const providers = store.providers;
+  const readDraft = (): PatientDraft => store.patientDrafts.get(actor) ?? emptyPatientDraft();
 
   const touch = (draft: { version: number; updatedAt: string | null }) => {
     draft.version += 1;
@@ -47,7 +83,7 @@ export function createFixtureOnboardingApi(options: OnboardingFixtureOptions = {
     },
 
     async getPatientDraft() {
-      return ok(structuredClone(patientDraft));
+      return ok(structuredClone(readDraft()));
     },
 
     async savePatientSection(section, value, expectedVersion) {
@@ -58,15 +94,21 @@ export function createFixtureOnboardingApi(options: OnboardingFixtureOptions = {
       if (section === "account") return fail("forbidden");
       const valid = validateInput(patientSectionSchemas[section], value);
       if (!valid.ok) return valid.result;
-      if (expectedVersion !== patientDraft.version) return fail("conflict");
-      patientDraft = { ...patientDraft, sections: { ...patientDraft.sections, [section]: valid.data } };
-      touch(patientDraft);
-      return ok(structuredClone(patientDraft));
+      const current = readDraft();
+      if (expectedVersion !== current.version) return fail("conflict");
+      const next: PatientDraft = { ...current, sections: { ...current.sections, [section]: valid.data } };
+      touch(next);
+      store.patientDrafts.set(actor, next);
+      return ok(structuredClone(next));
     },
 
     async submitPatientQuestionnaire(input) {
       const valid = validateInput(patientQuestionnaireSchema, input);
       if (!valid.ok) return valid.result;
+      // Account verification is server-derived; the payload cannot claim it.
+      if (readDraft().sections.account?.contactVerified !== true) {
+        return fail("validation", { fields: { account: "contact_unverified" } });
+      }
       return ok({ status: "submitted" });
     },
 
@@ -100,6 +142,7 @@ export function createFixtureOnboardingApi(options: OnboardingFixtureOptions = {
       if (draft.category !== category) return fail("validation", { fields: { category: "category_mismatch" } });
       const schema = providerSectionSchema(category, sectionId);
       if (!schema) return fail("validation", { fields: { sectionId: "unknown_section" } });
+      if (isServerManagedSection(sectionId)) return fail("validation", { fields: { sectionId: "server_managed" } });
       const valid = validateInput(schema, value);
       if (!valid.ok) return valid.result;
       if (!canEditOnboarding(draft.status)) return fail("forbidden");
@@ -110,13 +153,16 @@ export function createFixtureOnboardingApi(options: OnboardingFixtureOptions = {
     },
 
     async registerProviderDocument(providerId, input) {
-      const valid = validateInput(registerDocumentSchema, input);
+      const valid = validateInput(registerDocumentSchemaAt(now), input);
       if (!valid.ok) return valid.result;
       const draft = providers.get(providerId);
       if (!draft) return fail("not_found");
       if (!canEditOnboarding(draft.status)) return fail("forbidden");
       if (draft.version !== valid.data.expectedVersion) return fail("conflict");
       const documentId = crypto.randomUUID();
+      const registered = store.registeredDocuments.get(providerId) ?? new Set<string>();
+      registered.add(documentId);
+      store.registeredDocuments.set(providerId, registered);
       const sections = draft.sections as { documents?: { documents: DocumentRef[] } };
       // A new registration supersedes a pending document of the same kind (I02 behaviour).
       const existing = (sections.documents?.documents ?? []).filter((d) => d.kind !== valid.data.kind);
@@ -148,6 +194,11 @@ export function createFixtureOnboardingApi(options: OnboardingFixtureOptions = {
       const completion = providerCompletion(draft.category, draft.sections);
       if (!completion.readyToSubmit) {
         return fail("validation", { fields: Object.fromEntries(completion.missingRequired.map((s) => [s, "required"])) });
+      }
+      const refs = (draft.sections as { documents?: { documents: DocumentRef[] } }).documents?.documents ?? [];
+      const registered = store.registeredDocuments.get(providerId) ?? new Set<string>();
+      if (!refs.every((d) => registered.has(d.documentId))) {
+        return fail("validation", { fields: { documents: "unregistered_document" } });
       }
       draft.status = "submitted";
       touch(draft);

@@ -15,3 +15,4 @@ export function getVerificationApi(options: Omit<AdapterFactoryOptions, "fixture
 export type { VerificationApi } from "./api";
 export * from "./status";
 export * from "./schemas";
+export * from "./queries";

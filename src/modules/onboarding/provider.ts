@@ -307,6 +307,13 @@ export function providerCompletion<C extends ProviderCategory>(category: C, sect
   return computeCompletion(steps, schemas, sections);
 }
 
+/**
+ * Sections clients may not write directly. Evidence enters a draft only through document
+ * registration (server-issued IDs), never by saving arbitrary references.
+ */
+const SERVER_MANAGED_SECTIONS: ReadonlySet<string> = new Set(["documents"]);
+export const isServerManagedSection = (sectionId: string): boolean => SERVER_MANAGED_SECTIONS.has(sectionId);
+
 /** Validate one section value for a category. Unknown section IDs are rejected. */
 export function providerSectionSchema(category: ProviderCategory, sectionId: string): z.ZodType | null {
   const schemas = PROVIDER_SECTION_SCHEMAS[category] as Partial<Record<string, z.ZodType>>;

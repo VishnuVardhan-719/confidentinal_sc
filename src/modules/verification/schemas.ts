@@ -90,6 +90,8 @@ export type ReviewQueueItem = {
   status: ProviderStatusDisplay;
   displayName: string;
   submittedAt: string;
+  /** Earliest expiry among live (pending/verified) documents, if any. */
+  earliestDocumentExpiry: string | null;
 };
 
 export type ReviewResult = { providerId: string; status: ProviderStatusDisplay; version: number };

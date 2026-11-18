@@ -1,5 +1,6 @@
 import type { ProviderOnboardingDraft } from "@/modules/onboarding/provider";
 import type { ProviderReviewDetail } from "@/modules/verification/schemas";
+import type { CoverageArea } from "@/modules/verification/queries";
 import { FIXTURE_IDS } from "./sessions";
 
 /** SYNTHETIC provider records for fixture adapters. Not real providers; never shown as live. */
@@ -109,5 +110,39 @@ export const FIXTURE_PROVIDER_DRAFTS: readonly ProviderOnboardingDraft[] = [
       },
       coverage: { coveragePins: ["500001", "500002"] },
     },
+  },
+];
+
+/** SYNTHETIC coverage rows (placeholder PINs). Not real service availability. */
+export const FIXTURE_COVERAGE_AREAS: readonly CoverageArea[] = [
+  {
+    areaId: "00000000-0000-4000-8000-0000000c0001",
+    providerId: FIXTURE_IDS.labProvider,
+    providerName: "Synthetic Diagnostics",
+    category: "lab",
+    pinCode: "500001",
+    state: "proposed",
+    validUntil: null,
+    version: 1,
+  },
+  {
+    areaId: "00000000-0000-4000-8000-0000000c0002",
+    providerId: FIXTURE_IDS.doctorActiveProvider,
+    providerName: "Synthetic Doctor D",
+    category: "doctor",
+    pinCode: "500002",
+    state: "approved",
+    validUntil: "2027-11-30T00:00:00Z",
+    version: 3,
+  },
+  {
+    areaId: "00000000-0000-4000-8000-0000000c0003",
+    providerId: FIXTURE_IDS.ambulanceProvider,
+    providerName: "Synthetic Transport Co",
+    category: "ambulance",
+    pinCode: "500003",
+    state: "rejected",
+    validUntil: null,
+    version: 2,
   },
 ];

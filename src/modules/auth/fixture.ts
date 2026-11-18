@@ -6,6 +6,7 @@ import {
   FIXTURE_OTP_MAX_RESENDS,
   FIXTURE_OTP_RESEND_COOLDOWN_SECONDS,
   FIXTURE_OTP_TTL_SECONDS,
+  FIXTURE_SCENARIOS,
   FIXTURE_SESSIONS,
   type FixtureScenario,
 } from "@/fixtures/identity";
@@ -15,31 +16,73 @@ import { validateInput } from "./http-client";
 import { loginSchema, otpVerifySchema, signupSchema, type OtpChallenge } from "./schemas";
 import type { Session, SessionTokens } from "./types";
 
-/** Synthetic AuthApi. Pages using it must render <FixtureNotice/>. Tokens are placeholders. */
+/**
+ * Synthetic AuthApi. Pages using it must render <FixtureNotice/>.
+ * Fixture "tokens" are opaque placeholders that name a synthetic scenario so a fixture
+ * session survives across requests in the dev server. They are not JWTs, grant nothing
+ * over HTTP, and the fixture adapter cannot be constructed when APP_ENV=production.
+ */
 
-/** Internal record; `phone` and `scenario` never leave the adapter. */
-type Challenge = OtpChallenge & { scenario: FixtureScenario; phone: string };
+/** Internal record; `phone`, `scenario` and `superseded` never leave the adapter. */
+type Challenge = OtpChallenge & { scenario: FixtureScenario; phone: string; superseded: boolean };
 
-const FIXTURE_TOKENS: SessionTokens = {
-  accessToken: "fixture-access-token-not-a-jwt",
-  refreshToken: "fixture-refresh-token",
-  expiresAt: null,
+export type FixtureChallengeStore = {
+  challenges: Map<string, Challenge>;
+  /** Phone -> scenario chosen at OTP signup, so a later OTP login resolves to the same synthetic user. */
+  phones: Map<string, FixtureScenario>;
 };
+
+const ACCESS_PREFIX = "fixture-session.";
+const REFRESH_PREFIX = "fixture-refresh.";
+
+export const fixtureTokensFor = (scenario: FixtureScenario): SessionTokens => ({
+  accessToken: `${ACCESS_PREFIX}${scenario}`,
+  refreshToken: `${REFRESH_PREFIX}${scenario}`,
+  expiresAt: null,
+});
+
+const isScenario = (value: string): value is FixtureScenario =>
+  (FIXTURE_SCENARIOS as readonly string[]).includes(value);
+
+/** Scenario named by a fixture access token, or null for anything else. */
+export function fixtureScenarioFromToken(token: string | null | undefined, prefix = ACCESS_PREFIX): FixtureScenario | null {
+  if (!token || !token.startsWith(prefix)) return null;
+  const scenario = token.slice(prefix.length);
+  return isScenario(scenario) ? scenario : null;
+}
 
 const mask = (phone: string): string => `+91 ******${phone.slice(-4)}`;
 
-export function createFixtureAuthApi(options: FixtureOptions & { scenario?: FixtureScenario } = {}): AuthApi {
+export const createFixtureChallengeStore = (): FixtureChallengeStore => ({ challenges: new Map(), phones: new Map() });
+
+/** Dev-server process memory so an OTP challenge survives between server actions. */
+const sharedStore: FixtureChallengeStore = createFixtureChallengeStore();
+
+/** Default scenario for an OTP login from a phone that never signed up in fixture mode. */
+const DEFAULT_OTP_LOGIN_SCENARIO: FixtureScenario = "patient_complete";
+
+export type FixtureAuthOptions = FixtureOptions & {
+  scenario?: FixtureScenario;
+  /** Fixture access token from the session cookie; overrides `scenario`. */
+  accessToken?: string | null;
+  challengeStore?: FixtureChallengeStore;
+};
+
+export function createFixtureAuthApi(options: FixtureAuthOptions = {}): AuthApi {
   assertFixtureAllowed(options.env);
   const now = options.now ?? (() => new Date());
-  let current: Session = FIXTURE_SESSIONS[options.scenario ?? "anonymous"];
-  const challenges = new Map<string, Challenge>();
-  let counter = 0;
+  const fromToken = options.accessToken !== undefined ? fixtureScenarioFromToken(options.accessToken) : null;
+  let current: Session = FIXTURE_SESSIONS[fromToken ?? options.scenario ?? "anonymous"];
+  let currentScenario: FixtureScenario = fromToken ?? options.scenario ?? "anonymous";
+  const store = options.challengeStore ?? sharedStore;
+  const challenges = store.challenges;
+  /** Challenges started through this API instance (invalidated on logout). */
+  const issuedHere = new Set<string>();
 
   function issueChallenge(phone: string, scenario: FixtureScenario, resendsRemaining = FIXTURE_OTP_MAX_RESENDS): Challenge {
     const t = now().getTime();
-    counter += 1;
     const challenge: Challenge = {
-      challengeId: `fixture-challenge-${counter}`,
+      challengeId: `fixture-challenge-${crypto.randomUUID()}`,
       channel: "sms",
       maskedDestination: mask(phone),
       status: "pending",
@@ -50,8 +93,10 @@ export function createFixtureAuthApi(options: FixtureOptions & { scenario?: Fixt
       serverNow: new Date(t).toISOString(),
       scenario,
       phone,
+      superseded: false,
     };
     challenges.set(challenge.challengeId, challenge);
+    issuedHere.add(challenge.challengeId);
     return challenge;
   }
 
@@ -76,7 +121,8 @@ export function createFixtureAuthApi(options: FixtureOptions & { scenario?: Fixt
       const valid = validateInput(signupSchema, input);
       if (!valid.ok) return valid.result;
       if (valid.data.method === "email_password") return ok({ kind: "received" });
-      const scenario: FixtureScenario = valid.data.role === "patient" ? "patient_new" : "doctor_draft";
+      const scenario = store.phones.get(valid.data.phone) ?? (valid.data.role === "patient" ? "patient_new" : "doctor_draft");
+      store.phones.set(valid.data.phone, scenario);
       return ok({ kind: "otp_challenge", challenge: publicChallenge(issueChallenge(valid.data.phone, scenario)) });
     },
 
@@ -86,8 +132,8 @@ export function createFixtureAuthApi(options: FixtureOptions & { scenario?: Fixt
       const challenge = challenges.get(valid.data.challengeId);
       if (!challenge) return fail("not_found");
       if (challenge.status === "locked" || challenge.attemptsRemaining <= 0) return fail("rate_limited");
-      if (challenge.status !== "pending" || now().getTime() >= Date.parse(challenge.expiresAt)) {
-        challenge.status = challenge.status === "verified" ? "verified" : "expired";
+      if (challenge.status !== "pending" || challenge.superseded || now().getTime() >= Date.parse(challenge.expiresAt)) {
+        if (challenge.status === "pending") challenge.status = "expired";
         return fail("validation", { fields: { code: "otp_expired" } });
       }
       if (valid.data.code !== FIXTURE_OTP_CODE) {
@@ -100,16 +146,22 @@ export function createFixtureAuthApi(options: FixtureOptions & { scenario?: Fixt
       }
       challenge.status = "verified";
       current = FIXTURE_SESSIONS[challenge.scenario];
-      return ok({ kind: "verified", session: FIXTURE_TOKENS });
+      currentScenario = challenge.scenario;
+      return ok({ kind: "verified", session: fixtureTokensFor(challenge.scenario) });
     },
 
     async resendOtp(challengeId) {
       const challenge = challenges.get(challengeId);
-      if (!challenge || challenge.status !== "pending") return fail("not_found");
+      // Eligibility depends on the challenge itself, not on whether verify ran first:
+      // a time-expired (pending or expired) challenge can be replaced; verified,
+      // locked or already-replaced ones cannot.
+      if (!challenge || challenge.superseded || challenge.status === "verified") return fail("not_found");
+      if (challenge.status === "locked") return fail("rate_limited");
       const waitMs = Date.parse(challenge.resendAvailableAt) - now().getTime();
       if (waitMs > 0) return fail("rate_limited", { retryAfterSeconds: Math.ceil(waitMs / 1000) });
       if (challenge.resendsRemaining <= 0) return fail("rate_limited");
       challenge.status = "expired";
+      challenge.superseded = true;
       const next = issueChallenge(challenge.phone, challenge.scenario, challenge.resendsRemaining - 1);
       return ok(publicChallenge(next));
     },
@@ -118,27 +170,39 @@ export function createFixtureAuthApi(options: FixtureOptions & { scenario?: Fixt
       const valid = validateInput(loginSchema, input);
       if (!valid.ok) return valid.result;
       if (valid.data.method === "phone_otp") {
-        return ok({ kind: "otp_challenge", challenge: publicChallenge(issueChallenge(valid.data.phone, "patient_complete")) });
+        const scenario = store.phones.get(valid.data.phone) ?? DEFAULT_OTP_LOGIN_SCENARIO;
+        return ok({ kind: "otp_challenge", challenge: publicChallenge(issueChallenge(valid.data.phone, scenario)) });
       }
       const scenario = FIXTURE_ACCOUNTS[valid.data.email.toLowerCase()];
       // Unknown account and wrong password look identical (no enumeration).
       if (!scenario) return fail("unauthenticated");
       const session = FIXTURE_SESSIONS[scenario];
-      if (session.kind === "restricted") {
-        current = session;
-        return fail("forbidden");
-      }
       current = session;
-      return ok({ kind: "signed_in", session: FIXTURE_TOKENS });
+      currentScenario = scenario;
+      if (session.kind === "restricted") return fail("forbidden");
+      return ok({ kind: "signed_in", session: fixtureTokensFor(scenario) });
     },
 
     async refresh(refreshToken) {
-      if (current.kind !== "authenticated" || refreshToken !== FIXTURE_TOKENS.refreshToken) return fail("unauthenticated");
-      return ok(FIXTURE_TOKENS);
+      const scenario = fixtureScenarioFromToken(refreshToken, REFRESH_PREFIX);
+      if (!scenario || FIXTURE_SESSIONS[scenario].kind !== "authenticated") return fail("unauthenticated");
+      current = FIXTURE_SESSIONS[scenario];
+      currentScenario = scenario;
+      return ok(fixtureTokensFor(scenario));
     },
 
     async logout() {
+      // Pending challenges must not be able to sign the caller back in after sign-out.
+      for (const c of challenges.values()) {
+        const ownedHere = issuedHere.has(c.challengeId);
+        const sameUser = currentScenario !== "anonymous" && c.scenario === currentScenario;
+        if (c.status === "pending" && (ownedHere || sameUser)) {
+          c.status = "expired";
+          c.superseded = true;
+        }
+      }
       current = FIXTURE_SESSIONS.anonymous;
+      currentScenario = "anonymous";
       return ok({ status: "signed_out" });
     },
   };
