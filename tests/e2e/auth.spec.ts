@@ -1,16 +1,16 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { ACCOUNTS, COPY, FIXTURE_OTP, emailInput, expectCleanUrl, passwordInput, expectNoPrivateBrowserStorage, signIn, signOut } from "./support/identity";
+import { ACCOUNTS, COPY, FIXTURE_OTP, emailInput, expectCleanUrl, passwordInput, expectNoPrivateBrowserStorage, signIn, signOut, visible } from "./support/identity";
 
 /**
  * FE03/FE04 auth journeys against the SYNTHETIC fixture adapter.
  * test.describe.fixme: pages (/login, /signup, guards) are built after the fe2-a merge.
  */
 
-test.describe.fixme("sign in", () => {
+test.describe("sign in", () => {
   test("shows the synthetic-data notice and passes axe", async ({ page }) => {
-    await page.goto("/en/login");
-    await expect(page.getByText(COPY.fixtureNotice)).toBeVisible();
+    await page.goto("/en/login", { waitUntil: "domcontentloaded" });
+    await expect(visible(page.getByText(COPY.fixtureNotice))).toBeVisible();
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations).toEqual([]);
   });
@@ -35,7 +35,7 @@ test.describe.fixme("sign in", () => {
   }
 
   test("wrong credentials show one generic message and keep the email, not the password", async ({ page }) => {
-    await page.goto("/en/login");
+    await page.goto("/en/login", { waitUntil: "domcontentloaded" });
     await emailInput(page).fill("nobody@example.invalid");
     await passwordInput(page).fill("wrong-password");
     await page.getByRole("button", { name: COPY.signIn }).click();
@@ -46,14 +46,14 @@ test.describe.fixme("sign in", () => {
 
   test("restricted account cannot sign in", async ({ page }) => {
     await signIn(page, ACCOUNTS.disabled, undefined, { expectSuccess: false });
-    await expect(page.getByRole("alert")).toContainText(COPY.accountRestricted);
+    await expect(visible(page.getByRole("alert"))).toContainText(COPY.accountRestricted);
     await expect(page).toHaveURL(/\/en\/login/);
   });
 
   test("multi-role users choose a workspace", async ({ page }) => {
     await signIn(page, ACCOUNTS.multiRole);
     await expect(page).toHaveURL("/en/workspace/select");
-    await page.getByRole("link", { name: /doctor/i }).click();
+    await visible(page.getByRole("link", { name: /doctor/i })).click();
     await expect(page).toHaveURL("/en/doctor/dashboard");
   });
 
@@ -63,7 +63,7 @@ test.describe.fixme("sign in", () => {
     await expect(page.getByText(COPY.signedOut)).toBeVisible();
     const cookies = await page.context().cookies();
     expect(cookies.filter((c) => c.name === "scv_at" || c.name === "scv_rt")).toEqual([]);
-    await page.goto("/en/patient/dashboard");
+    await page.goto("/en/patient/dashboard", { waitUntil: "domcontentloaded" });
     await expect(page).toHaveURL("/en/login?next=%2Fen%2Fpatient%2Fdashboard");
   });
 
@@ -84,15 +84,15 @@ test.describe.fixme("sign in", () => {
     const refresh = (await context.cookies()).find((c) => c.name === "scv_rt");
     await context.clearCookies();
     if (refresh) await context.addCookies([refresh]);
-    await page.goto("/en/patient/bookings");
+    await page.goto("/en/patient/bookings", { waitUntil: "domcontentloaded" });
     await expect(page).toHaveURL(/\/en\/login\?next=%2Fen%2Fpatient%2Fbookings&reason=session_expired/);
     await expect(page.getByText(COPY.sessionExpired)).toBeVisible();
   });
 });
 
-test.describe.fixme("sign up", () => {
+test.describe("sign up", () => {
   test("offers patient and four provider roles, never admin", async ({ page }) => {
-    await page.goto("/en/signup");
+    await page.goto("/en/signup", { waitUntil: "domcontentloaded" });
     const roles = page.getByRole("radiogroup");
     for (const name of [/patient/i, /doctor/i, /lab/i, /ambulance/i, /caretaker|caregiver/i]) {
       await expect(roles.getByRole("radio", { name })).toBeVisible();
@@ -103,7 +103,7 @@ test.describe.fixme("sign up", () => {
   });
 
   test("missing consent shows an error summary and focuses the first invalid field", async ({ page }) => {
-    await page.goto("/en/signup");
+    await page.goto("/en/signup", { waitUntil: "domcontentloaded" });
     await page.getByRole("radio", { name: /patient/i }).check();
     await emailInput(page).fill("new.person@example.invalid");
     await passwordInput(page).fill("a-long-enough-password");
@@ -114,7 +114,7 @@ test.describe.fixme("sign up", () => {
 
   test("email signup always shows the same confirmation (no account enumeration)", async ({ page }) => {
     for (const email of [ACCOUNTS.patientComplete, "brand.new@example.invalid"]) {
-      await page.goto("/en/signup");
+      await page.goto("/en/signup", { waitUntil: "domcontentloaded" });
       await page.getByRole("radio", { name: /patient/i }).check();
       await emailInput(page).fill(email);
       await passwordInput(page).fill("a-long-enough-password");
@@ -125,7 +125,7 @@ test.describe.fixme("sign up", () => {
   });
 
   test("phone OTP: wrong code, throttled resend, paste with spaces, then onboarding of chosen role", async ({ page }) => {
-    await page.goto("/en/signup");
+    await page.goto("/en/signup", { waitUntil: "domcontentloaded" });
     await page.getByRole("radio", { name: /doctor/i }).check();
     await page.getByRole("tab", { name: /mobile/i }).click();
     await page.getByLabel(COPY.phoneLabel).fill("+916000000002");
@@ -152,12 +152,12 @@ test.describe.fixme("sign up", () => {
   });
 });
 
-test.describe.fixme("direct URL access", () => {
-  const PRIVATE = ["/en/patient/dashboard", "/en/doctor/onboarding", "/en/admin/providers", "/en/admin/coverage", "/en/workspace/select", "/en/account/security"];
+test.describe("direct URL access", () => {
+  const PRIVATE = ["/en/patient/profile", "/en/patient/onboarding", "/en/doctor/onboarding", "/en/admin/providers", "/en/admin/coverage", "/en/workspace/select", "/en/account/security"];
 
   for (const path of PRIVATE) {
     test(`anonymous ${path} redirects to login with next`, async ({ page }) => {
-      await page.goto(path);
+      await page.goto(path, { waitUntil: "domcontentloaded" });
       await expect(page).toHaveURL(`/en/login?next=${encodeURIComponent(path)}`);
     });
   }
@@ -165,7 +165,7 @@ test.describe.fixme("direct URL access", () => {
   test("a patient cannot open admin or another role's workspace, and sees no private data", async ({ page }) => {
     await signIn(page, ACCOUNTS.patientComplete);
     for (const path of ["/en/admin/providers", "/en/admin/providers/00000000-0000-4000-8000-000000003001", "/en/admin/coverage", "/en/doctor/dashboard"]) {
-      await page.goto(path);
+      await page.goto(path, { waitUntil: "domcontentloaded" });
       await expect(page.getByText(COPY.accessDenied)).toBeVisible();
       await expect(page.getByText(/synthetic diagnostics/i)).toHaveCount(0);
     }
@@ -174,16 +174,16 @@ test.describe.fixme("direct URL access", () => {
   test("case, encoding and dot-segment tricks do not bypass the guard", async ({ page }) => {
     await signIn(page, ACCOUNTS.patientComplete);
     for (const path of ["/en/ADMIN/providers", "/en/%61dmin/providers", "/en/patient/../admin/providers"]) {
-      await page.goto(path);
+      await page.goto(path, { waitUntil: "domcontentloaded" });
       await expect(page.getByText(/synthetic diagnostics/i)).toHaveCount(0);
     }
   });
 
   test("emergency guidance works signed out and for incomplete patients", async ({ page }) => {
-    await page.goto("/en/emergency");
+    await page.goto("/en/emergency", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("link", { name: /112/ })).toHaveAttribute("href", "tel:112");
     await signIn(page, ACCOUNTS.patientNew);
-    await page.goto("/en/emergency");
+    await page.goto("/en/emergency", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("link", { name: /112/ })).toBeVisible();
   });
 });
