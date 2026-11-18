@@ -1,1 +1,263 @@
-{}
+{
+  "shell": {
+    "workspace": "Doctor workspace",
+    "nav": {
+      "overview": "Overview",
+      "requests": "Requests",
+      "visits": "Visits",
+      "availability": "Availability",
+      "services": "Services & fees",
+      "profile": "Profile",
+      "earnings": "Earnings",
+      "support": "Support",
+      "settings": "Settings"
+    }
+  },
+  "guard": {
+    "deniedTitle": "This area is for doctors",
+    "deniedBody": "You are signed in, but this account does not have an active doctor workspace. If you think this is wrong, contact support.",
+    "restrictedTitle": "Your doctor workspace is restricted",
+    "restrictedBody": "While your account is under review or restricted you can open your overview, profile, settings and support only.",
+    "home": "Go to the home page"
+  },
+  "common": {
+    "loadError": "This section did not load.",
+    "denied": "You do not have access to this visit. Only the assigned doctor can open it.",
+    "notFound": "We could not find this. It may have been removed or the link may be wrong.",
+    "lastUpdated": "Last updated {time}",
+    "refresh": "Refresh",
+    "back": "Back",
+    "bookingStatus": "Booking",
+    "visitStatus": "Visit",
+    "paymentStatus": "Payment",
+    "paymentState": {
+      "NOT_INITIATED": "Not started",
+      "DUE": "Due",
+      "PROCESSING": "Processing",
+      "PAID": "Paid",
+      "PARTIALLY_PAID": "Partly paid",
+      "DISPUTED": "Disputed",
+      "REFUNDED": "Refunded"
+    },
+    "emergency": "Emergency? Call 112. Emergency help never waits for a code, booking or payment.",
+    "age": "{age, plural, one {# year} other {# years}}",
+    "ageUnknown": "Age not shared"
+  },
+  "dashboard": {
+    "title": "Overview",
+    "description": "Your requests and visits, using times in India Standard Time.",
+    "active": {
+      "title": "Consultation in progress",
+      "continue": "Continue consultation"
+    },
+    "requests": {
+      "title": "Pending requests",
+      "empty": "No requests are waiting for you.",
+      "emptyBody": "When a patient chooses you, the request appears here for you to accept or decline.",
+      "viewAll": "All requests"
+    },
+    "today": {
+      "title": "Today",
+      "empty": "No visits today."
+    },
+    "upcoming": {
+      "title": "Upcoming",
+      "empty": "No upcoming visits.",
+      "viewAll": "All visits"
+    }
+  },
+  "requests": {
+    "title": "Requests",
+    "description": "Patients who chose you. Nothing is booked until you accept.",
+    "empty": "No requests are waiting for you.",
+    "emptyBody": "When a patient chooses you, the request appears here.",
+    "open": "Review request",
+    "respondBy": "Respond by {time}",
+    "respondLeft": "{minutes, plural, one {# minute left} other {# minutes left}}",
+    "respondClosed": "The response window has closed.",
+    "noDeadline": "No response deadline set",
+    "detail": {
+      "service": "Service",
+      "when": "Requested time",
+      "area": "Area",
+      "areaValue": "{locality}, PIN {pin}",
+      "price": "Price agreed at request",
+      "reference": "Reference",
+      "noReference": "Issued after acceptance",
+      "privacy": "The patient's name, phone number and full address are shared with you only after you accept."
+    },
+    "accept": {
+      "action": "Accept request",
+      "title": "Accept this request?",
+      "body": "You commit to visiting at the requested time. The patient sees your acceptance straight away.",
+      "confirm": "Accept request",
+      "noResource": "Your bookable profile is not set up yet, so this request cannot be accepted here. Contact support.",
+      "done": "Request accepted. The visit is now in your list."
+    },
+    "decline": {
+      "action": "Decline request",
+      "title": "Decline this request?",
+      "body": "The patient is told you cannot take it and can choose another provider.",
+      "reasonLabel": "Reason for declining",
+      "reasonPlaceholder": "Choose a reason",
+      "reasonRequired": "Choose a reason to decline.",
+      "confirm": "Decline request",
+      "done": "Request declined.",
+      "reason": {
+        "patientRequest": "Patient asked to cancel",
+        "providerUnavailable": "I am not available at that time",
+        "unableToService": "I cannot provide this service there",
+        "other": "Another reason"
+      }
+    }
+  },
+  "visits": {
+    "title": "Visits",
+    "description": "Visits assigned to you, in India Standard Time.",
+    "today": "Today",
+    "upcoming": "Upcoming",
+    "empty": "No visits assigned to you.",
+    "emptyBody": "Accepted requests appear here.",
+    "open": "Open visit"
+  },
+  "visit": {
+    "titleFallback": "Visit",
+    "reference": "Reference {reference}",
+    "scheduled": "Scheduled for {time}",
+    "patient": "Patient",
+    "contact": "Contact",
+    "noContact": "No phone number shared",
+    "address": "Visit address",
+    "allergies": "Known allergies",
+    "allergiesYes": "Allergies recorded. Review them in the consultation.",
+    "allergiesNo": "No allergies recorded",
+    "allergiesUnknown": "Not known",
+    "progress": "Visit progress",
+    "nextStep": "Next step",
+    "noAction": "There is nothing for you to do on this visit right now.",
+    "onTheWay": "On the way",
+    "onTheWayHint": "Tell the patient you are travelling. No live location is shared.",
+    "arrived": "I have arrived",
+    "arrivedHint": "This asks the patient's app to show a one-time code.",
+    "startConsultation": "Start consultation",
+    "startHint": "The patient's code is verified. Start when you are ready to examine.",
+    "openConsultation": "Open consultation",
+    "steps": {
+      "scheduled": "Scheduled",
+      "en_route": "On the way",
+      "arrived": "Arrived",
+      "arrival_verified": "Code verified",
+      "service_started": "Consultation",
+      "service_completed": "Completed"
+    },
+    "stepState": {
+      "done": "done",
+      "current": "current",
+      "upcoming": "not yet"
+    },
+    "phase": {
+      "scheduled": "Scheduled",
+      "enRoute": "On the way",
+      "arrived": "Arrived",
+      "arrivalVerified": "Code verified",
+      "inConsultation": "In consultation",
+      "completed": "Visit completed"
+    }
+  },
+  "arrival": {
+    "title": "Confirm your arrival",
+    "instructions": "Ask the patient for the 6-digit code shown in their SureCure Visit app. You never see the code yourself.",
+    "safety": "Make sure you are at the right home. Never ask for the code by phone or before you arrive.",
+    "codeLabel": "Patient's 6-digit code",
+    "codeHint": "Digits only. The code expires a few minutes after you report arrival.",
+    "codeFormat": "Enter the 6-digit code.",
+    "verify": "Verify code",
+    "verifying": "Checking the code.",
+    "resend": "Request a new code",
+    "resendIn": "You can request a new code in {seconds} s.",
+    "expiresIn": "Code expires in {minutes}:{seconds}",
+    "attemptsLeft": "{count, plural, one {# attempt left} other {# attempts left}}",
+    "verified": "Code verified. You can start the consultation.",
+    "newCode": "A new code is on the patient's screen. The old code no longer works.",
+    "loadError": "We could not load the code check. Refresh to try again.",
+    "challenge": {
+      "active": "Waiting for code",
+      "verified": "Verified",
+      "expired": "Expired",
+      "locked": "Locked",
+      "superseded": "Replaced"
+    },
+    "phase": {
+      "enterCode": "Enter the code",
+      "expired": "The code has expired. Request a new one.",
+      "locked": "Too many attempts. Request a new code.",
+      "verified": "Verified",
+      "superseded": "A newer code replaced this one."
+    },
+    "error": {
+      "invalidCode": "That code is not right. Check it with the patient.",
+      "expired": "The code has expired. Request a new one.",
+      "replayed": "This code was already used or replaced. Request a new one if needed.",
+      "attemptsExhausted": "Too many attempts. Request a new code.",
+      "notAssigned": "Only the doctor assigned to this visit can confirm arrival.",
+      "resendLimited": "No more new codes can be sent. Contact support.",
+      "noActiveChallenge": "Report your arrival first."
+    }
+  },
+  "command": {
+    "accept": { "conflict": "Someone else changed this request, or it was already answered. The latest status is shown. No duplicate booking was made." },
+    "decline": { "conflict": "This request changed before you declined it. The latest status is shown." },
+    "en_route": { "conflict": "This visit changed. The latest status is shown." },
+    "arrive": { "conflict": "This visit changed. The latest status is shown." },
+    "start": { "conflict": "Verify the patient's code before starting, or refresh to see the latest status." },
+    "denied": "You cannot do this on this visit.",
+    "invalid": "This could not be sent. Check the details and try again.",
+    "gated": "This action is not available yet.",
+    "signin": "Your session has ended. Sign in again to continue.",
+    "rateLimited": "Too many attempts. Wait a moment and try again.",
+    "unavailable": "We could not reach SureCure Visit. Your action may not have been saved. Refresh before trying again."
+  },
+  "booking": {
+    "status": {
+      "draft": "Draft",
+      "requested": "Requested",
+      "accepted": "Accepted",
+      "confirmed": "Confirmed",
+      "inProgress": "In progress",
+      "completed": "Completed",
+      "declined": "Declined",
+      "expired": "Expired",
+      "cancelled": "Cancelled",
+      "noShow": "No-show",
+      "interrupted": "Interrupted"
+    }
+  },
+  "pages": {
+    "availability": {
+      "title": "Availability",
+      "body": "Setting your working hours here is not connected yet. Your availability is managed during onboarding and by SureCure Visit operations."
+    },
+    "services": {
+      "title": "Services & fees",
+      "body": "Your services and fees come from your approved onboarding profile. Editing them here is not connected yet."
+    },
+    "profile": {
+      "title": "Profile",
+      "body": "Your public profile and credentials are managed through onboarding and verification. Editing them here is not connected yet.",
+      "onboarding": "Go to onboarding"
+    },
+    "earnings": {
+      "title": "Earnings",
+      "body": "Payouts are not automated. Amounts you record as collected appear on each visit."
+    },
+    "support": {
+      "title": "Support",
+      "body": "In-app support tickets are not connected yet. For an emergency call 112. For account help, use the contact page.",
+      "contact": "Contact page"
+    },
+    "settings": {
+      "title": "Settings",
+      "body": "Language can be changed from the menu. Other settings are not connected yet."
+    }
+  }
+}
