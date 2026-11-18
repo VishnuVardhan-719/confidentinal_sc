@@ -77,3 +77,7 @@ Last measured lab numbers (mobile 390, 1.6 Mbps / 150 ms RTT / 4x CPU, run alone
 - Add `src/app/[locale]/(public)/stories/[slug]/loading.tsx` with `export { PublicPageLoading as default } from "@/components/public/page-loading";` (the only public route rendered at request time; the others are prerendered).
 - `stories/[slug]/page.tsx` "unavailable" branch renders no `<h1>`; wrap it in `<PublicPageIntro title={t("unavailableTitle")}>` or call `notFound()` and add a key, then update `tests/unit/a11y-static.test.ts`.
 - Route-link check (`tests/unit/route-links.test.ts`): 0 dead links; 73 pending routes owned by fe2-b (login/signup), fe2-c (doctors, lab-tests, ambulances, caretakers, patient), fe2-d (doctor) and fe2-e (lab, ambulance, caretaker, admin). Remove entries from its `PENDING` map as each branch merges.
+
+### R-FE01-14 (to lead) — browser e2e un-deferred and passing on feat/fe2-a
+R-FE01-12 is resolved: with the ban lifted, all fe2-a browser specs ran against `next start` (port 3330, --workers=1):
+`public.spec.ts` + `public-nav.spec.ts` 115 passed / 1 skipped (mobile-only test on desktop); `a11y.spec.ts` 16 passed / 16 skipped (runs once on the desktop project; covers 360/768/1024/1440 x en/te/hi, 200%/400% zoom, keyboard focus, headers); `perf.spec.ts` (E2E_PERF=1, mobile-390) 4 passed. Fix made during the run: Telugu/Hindi header overflowed by 12px at 1280 -> emergency link and language trigger are compact between xl and 2xl, account buttons stay on one line.
