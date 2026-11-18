@@ -52,6 +52,9 @@ describe("XREVIEW X1/A1: shared status tones", () => {
     expect(toStatusDescriptor({ labelKey: "payment.status.paid", tone: "verified-gold" }, fakeT)).toMatchObject({ tone: "neutral" });
     expect(toStatusDescriptor({ labelKey: "missing.key", tone: "success" }, fakeT)).toEqual({ tone: "neutral", label: "T(common.status.unknown)", icon: "help" });
     expect(toStatusDescriptor(null, fakeT).tone).toBe("neutral");
+    // CodeRabbit #4: an invalid tone also drops an explicit (e.g. verified-looking) icon.
+    expect(toStatusDescriptor({ labelKey: "payment.status.paid", tone: "gold", icon: "shield" }, fakeT)).toEqual({ tone: "neutral", label: "T(payment.status.paid)", icon: "help" });
+    expect(toStatusDescriptor({ labelKey: "payment.status.paid", tone: "success", icon: "shield" }, fakeT).icon).toBe("shield");
   });
 
   it("KeyedStatusBadge renders the translated label, never the raw key", () => {
@@ -246,6 +249,20 @@ describe("support tickets", () => {
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Send request" })));
     expect(onSubmit).toHaveBeenLastCalledWith({ category: "payment", description: "Refund not received" });
     expect(screen.getByRole("status").textContent).toContain("#SCV-SUP-000042");
+  });
+
+  it("keeps an invalid preselected booking visible and lets the user remove it", async () => {
+    const onSubmit = vi.fn().mockResolvedValue({ ok: true, data: { reference: null } });
+    render(withIntl(h(SupportTicketForm, { defaultBookingId: "stale-id", bookings: [], onSubmit })));
+    fireEvent.click(screen.getByLabelText(/Payment/));
+    fireEvent.change(screen.getByLabelText(/Describe the problem/), { target: { value: "Receipt missing" } });
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Send request" })));
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getAllByText("Choose a booking from the list").length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "Remove the booking link" }));
+    expect(screen.queryByRole("button", { name: "Remove the booking link" })).toBeNull();
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Send request" })));
+    expect(onSubmit).toHaveBeenCalledWith({ category: "payment", description: "Receipt missing" });
   });
 
   it("renders the ticket timeline oldest first in IST, and an empty state", () => {
