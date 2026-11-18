@@ -1,3 +1,7 @@
+# fe-q (continuing fe-c3 PHASE4-C3) - 2026-11-19T00:36:45
+- Owner of task now: fe-q. State source: .context/handoff-t3j.md. WIP commit 7550c76 (booking-store).
+- Plan: data layer (store wiring, addAddress, reschedule, slots, visitReason) -> journey.ts server factory -> routes /patient/book, /patient/book/[id], /receipt -> strings -> e2e booking-journey.spec.ts -> lint/typecheck/test/build -> browser run port 3360 -> commit.
+
 # Active SureCure Visit context
 
 ## E2E specs / branch tests / component needs — 2026-11-18
@@ -100,3 +104,9 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
 
 2026-11-18 (fe-d): patient dashboard built (/[locale]/patient/dashboard, modules/patient-dashboard, patient.json en/te/hi, fe2-c modules vendored byte-identical, REQUESTS R-FE-D-31). CodeRabbit 0f4b8da fixes 1-7 done + coderabbit-0f4b8da.test.ts. Browser e2e deferred (R-FE-D-32). lint/typecheck/build clean, 363/363 tests. Committed on feat/fe2-d at orchestrator request.
 - Merged fe2-d 9b341f5 (00de692) and fe2-e 5a6bcf8 (2276679); conflicts in activeContext/REQUESTS/REVIEW_NEEDED kept both sides; message JSON parses, 0 duplicate keys. At 2276679: typecheck/lint exit0, vitest 58 files/929 pass, build exit0 (326 pages). No integration fixes needed. Pending: fe2-b.
+
+## Active PHASE4-C3 (Kiro fe-c3) - 2026-11-19
+- Task: C:/Users/Yashwanth/.claude-scratch-tasks/PHASE4-common.md + PHASE4-C3.md. Doctor discovery + 22-step booking journey verified in browser (Playwright, port 3360). Commit on feat/fe2-c, never push. Don't touch src/app/[locale]/patient/bookings* (fe-p).
+- Fast-forwarded feat/fe2-c 0331c6b -> feat/fe2-integration 1ac677e (ancestor, no conflicts) to get patient session (modules/patient-dashboard/session.ts), payments components, CSP.
+- Plan: wizard route /patient/book (8 steps) + request page /patient/book/[id] (pending/accepted/declined, payment pay-after, confirm ref, cancel, reschedule, request receipt). Process-wide synthetic store src/fixtures/marketplace/booking-store.ts (globalThis); synthetic doctor 2 declines, others accept after FIXTURE_PROVIDER_RESPONSE_MS. Slots fixture API; patient addAddress; createBooking optional visitReason; BookingsApi.reschedule (http gated).
+- E2E env: FRONTEND_ADAPTER=fixture APP_ENV=test FIXTURE_PATIENT_SESSION=self, PLAYWRIGHT_BASE_URL=http://localhost:3360.
