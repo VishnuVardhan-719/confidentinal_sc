@@ -10,14 +10,16 @@ import { POST as price } from "@/app/api/provider/services/[id]/prices/route";
 import { POST as coverage } from "@/app/api/provider/coverage/route";
 import { POST as review } from "@/app/api/catalog/admin/coverage/[id]/review/route";
 import { GET as queue } from "@/app/api/catalog/admin/coverage/route";
+const ref = "SCV-DOC-100001";
 const id = "10000000-0000-4000-8000-000000000001";
 const other = "10000000-0000-4000-8000-000000000002";
 const context = { params: Promise.resolve({ id }) };
+const detailContext = { params: Promise.resolve({ id: ref }) };
 const get = (query: string) => new Request(`http://localhost/api/catalog?${query}`);
 const post = (body: unknown, key: string | null = other) => new Request("http://localhost/api/provider/services", {
   method: "POST", body: JSON.stringify(body), headers: key ? { "Idempotency-Key": key } : {},
 });
-const row = { provider_id: id, category: "doctor", display_name: "Synthetic", service_id: other,
+const row = { provider_reference: ref, public_profile: { display_name: "Synthetic" }, category: "doctor", display_name: "Synthetic", service_id: other,
   service_title: "Synthetic visit", duration_minutes: 30, amount_paise: "10000000000", currency: "INR", unit: "visit",
   terms_version: "synthetic-v1", pin_code: "500001", city: "Synthetic", advisory_availability: null };
 beforeEach(() => { vi.resetAllMocks(); mock.rpc.mockResolvedValue({ data: [], error: null }); mock.session.mockResolvedValue({ db: { rpc: mock.rpc } }); });
@@ -31,16 +33,16 @@ it("projects only public fields, preserves paise and emits a stable cursor", asy
   mock.rpc.mockResolvedValue({ data: [{ ...row, owner_profile_id: id, storage_path: "private", version: 4 }], error: null });
   const result = await search(get("category=doctor&pin=500001&limit=1"));
   expect(result.status).toBe(200);
-  expect(await result.json()).toEqual({ results: [row], nextCursor: `${row.amount_paise},${id},${other}` });
+  expect(await result.json()).toEqual({ results: [row], nextCursor: `${row.amount_paise},${ref},${other}` });
   expect(result.headers.get("cache-control")).toBe("private, no-store");
 });
 it("passes cursor tuple and price filter as parameters", async () => {
-  await search(get(`category=doctor&pin=500001&priceMax=100&cursor=1,${id},${other}`));
-  expect(mock.rpc).toHaveBeenCalledWith("search_providers", expect.objectContaining({ p_after_amount: "1", p_after_provider: id, p_after_service: other, p_price_max: "100" }));
+  await search(get(`category=doctor&pin=500001&priceMax=100&cursor=1,${ref},${other}`));
+  expect(mock.rpc).toHaveBeenCalledWith("search_providers", expect.objectContaining({ p_after_amount: "1", p_after_provider: ref, p_after_service: other, p_price_max: "100" }));
 });
 it("returns identical not-found responses for invisible and unknown providers", async () => {
-  const a = await detail(get("category=doctor&pin=500001"), context);
-  const b = await detail(get("category=doctor&pin=500001"), { params: Promise.resolve({ id: other }) });
+  const a = await detail(get("category=doctor&pin=500001"), detailContext);
+  const b = await detail(get("category=doctor&pin=500001"), { params: Promise.resolve({ id: "SCV-DOC-999999" }) });
   expect(a.status).toBe(404); expect(b.status).toBe(404);
   expect(await a.text()).toBe(await b.text());
 });

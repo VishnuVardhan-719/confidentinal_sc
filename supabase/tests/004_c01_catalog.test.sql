@@ -1,16 +1,6 @@
 \set ON_ERROR_STOP on
 begin;
-create function pg_temp.assert_true(ok boolean,label text) returns void language plpgsql as $$
-begin if ok is distinct from true then raise exception 'FAIL: %',label; end if; end $$;
-create function pg_temp.expect_state(statement text,expected text,label text) returns void language plpgsql as $$
-declare actual text; begin
- begin execute statement; exception when others then
-  get stacked diagnostics actual=returned_sqlstate;
-  if actual=expected then return; end if;
-  raise exception 'FAIL: %, expected %, got %',label,expected,actual;
- end;
- raise exception 'FAIL: %, unexpectedly succeeded',label;
-end $$;
+\ir _tap_helpers.inc
 -- All identities, coverage and reference data are synthetic and rolled back.
 insert into auth.users(id,email) values
  ('13000000-0000-4000-8000-000000000001','c01-owner@example.invalid'),
@@ -55,7 +45,8 @@ do $$ declare t text; f record; begin
   perform pg_temp.assert_true(has_function_privilege('anon',f.oid,'EXECUTE')=(f.proname in ('search_providers','get_public_provider')),f.proname||' guest allowlist');
  end loop;
 end $$;
-select pg_temp.assert_true((select proargnames[9:21]=array['provider_id','category','display_name','service_id','service_title','duration_minutes','amount_paise','currency','unit','terms_version','pin_code','city','advisory_availability'] from pg_proc where oid='public.search_providers(text,text,text,integer,text,uuid,uuid,uuid)'::regprocedure),'exact public column allowlist');
+select pg_temp.assert_true((select proargnames[9:22]=array['provider_reference','category','display_name','public_profile','service_id','service_title','duration_minutes','amount_paise','currency','unit','terms_version','pin_code','city','advisory_availability'] from pg_proc where oid='public.search_providers(text,text,text,integer,text,text,uuid,text)'::regprocedure),'exact public column allowlist');
+select public_reference as ref1 from public.providers where id='33000000-0000-4000-8000-000000000001' \gset
 
 set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"13000000-0000-4000-8000-000000000001","aal":"aal2"}',true);
@@ -101,13 +92,13 @@ select pg_temp.assert_true((select count(*)=1 from public.search_providers('doct
 select pg_temp.assert_true((select count(*)=0 from public.search_providers('doctor','500002')),'adjacent PIN never matched');
 select pg_temp.assert_true((select count(*)=0 from public.search_providers('lab','500001')),'other category not matched');
 select pg_temp.assert_true((select count(*)=0 from public.search_providers('doctor','500001','100')),'price filter exact');
-select pg_temp.assert_true((select count(*)=0 from public.search_providers('doctor','500001',null,20,'10000000000','33000000-0000-4000-8000-000000000001',:'service')),'cursor does not repeat final row');
+select pg_temp.assert_true((select count(*)=0 from public.search_providers('doctor','500001',null,20,'10000000000',:'ref1',:'service')),'cursor does not repeat final row');
 select pg_temp.expect_state('select * from public.search_providers(''doctor'',''50001%'')','22023','SQL wildcard PIN denied');
 select pg_temp.expect_state('select * from public.search_providers(''doctor'',''050001'')','22023','SQL leading zero PIN denied');
 select pg_temp.expect_state('select * from public.search_providers(''doctor'',''500001'',null,1000)','22023','SQL oversized page denied');
 select pg_temp.expect_state('select * from public.services','42501','guest direct table denied');
 select pg_temp.expect_state('select * from public.list_service_area_reviews()','42501','guest cannot enumerate coverage queue');
-select pg_temp.assert_true((select count(*)=0 from public.get_public_provider('33000000-0000-4000-8000-000000000099','doctor','500001')),'unknown detail is empty');
+select pg_temp.assert_true((select count(*)=0 from public.get_public_provider('SCV-DOC-999999','doctor','500001')),'unknown detail is empty');
 reset role;
 -- Trusted fixture changes simulate revocation/expiry without a background sweep.
 do $$ declare state text; begin
@@ -119,7 +110,7 @@ end $$;
 update public.providers set status='active',verification_state='approved' where id='33000000-0000-4000-8000-000000000001';
 update public.provider_documents set expires_at=now() where id='53000000-0000-4000-8000-000000000001';
 select pg_temp.assert_true((select count(*)=0 from public.search_providers('doctor','500001')),'credential expires exactly at UTC boundary');
-select pg_temp.assert_true((select count(*)=0 from public.get_public_provider('33000000-0000-4000-8000-000000000001','doctor','500001')),'expired detail identical to unknown');
+select pg_temp.assert_true((select count(*)=0 from public.get_public_provider(:'ref1','doctor','500001')),'expired detail identical to unknown');
 update public.provider_documents set expires_at=now()+interval '1 year' where id='53000000-0000-4000-8000-000000000001';
 update public.profiles set status='disabled' where id='13000000-0000-4000-8000-000000000001';
 select pg_temp.assert_true((select count(*)=0 from public.search_providers('doctor','500001')),'disabled owner disappears');
@@ -260,5 +251,7 @@ select pg_temp.assert_true((select area_id=:'renewed_area' from public.list_serv
 select pg_temp.assert_true((select area_id=:'area' from public.list_service_area_reviews(1,:'renewed_area',0,(select created_at from public.provider_service_areas where id=:'renewed_area'))),'queue returns reviewed rows only after all pending');
 select pg_temp.expect_state('select * from public.list_service_area_reviews(1,''93000000-0000-4000-8000-000000000099'',0,now())','22023','unknown queue cursor rejected');
 reset role;
+\echo 1..1
+\echo ok 1 - 004_c01_catalog assertions
 rollback;
 \echo C01 SQL assertions passed; all synthetic fixtures rolled back.

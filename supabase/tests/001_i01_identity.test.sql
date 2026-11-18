@@ -5,22 +5,7 @@
 -- This is SQL integration coverage, not a replacement for Auth/Storage HTTP E2E.
 \set ON_ERROR_STOP on
 begin;
-create function pg_temp.assert_true(ok boolean, label text) returns void
-language plpgsql as $$ begin
-  if ok is distinct from true then raise exception 'FAIL: %', label; end if;
-end $$;
-create function pg_temp.expect_state(statement text, expected text, label text) returns void
-language plpgsql as $$
-declare actual text;
-begin
-  begin execute statement;
-  exception when others then
-    get stacked diagnostics actual = returned_sqlstate;
-    if actual = expected then return; end if;
-    raise exception 'FAIL: %, expected %, got %', label, expected, actual;
-  end;
-  raise exception 'FAIL: %, command unexpectedly succeeded', label;
-end $$;
+\ir _tap_helpers.inc
 
 -- .invalid is reserved, no real contact details or patient/health data.
 insert into auth.users(id,email,raw_user_meta_data) values
@@ -80,7 +65,7 @@ begin
     perform pg_temp.assert_true(exists(select 1 from unnest(f.proconfig) setting where setting in ('search_path=""','search_path=')),f.proname || ' empty search_path');
     perform pg_temp.assert_true(not exists(select 1 from aclexplode(coalesce(f.proacl,acldefault('f',f.proowner))) a where a.grantee=0 and a.privilege_type='EXECUTE'),f.proname || ' no PUBLIC execute');
     perform pg_temp.assert_true(not has_function_privilege('anon',f.oid,'EXECUTE'),f.proname || ' no anon execute');
-    if f.nspname='identity_private' and f.proname not in ('active_account','org_scope','patient_scope') then
+    if f.nspname='identity_private' and f.proname not in ('active_account','org_scope','patient_scope','has_capability') then
       perform pg_temp.assert_true(not has_function_privilege('authenticated',f.oid,'EXECUTE'),f.proname || ' no authenticated execute');
     end if;
   end loop;
@@ -352,6 +337,8 @@ begin
   end loop;
 end $$;
 reset role;
+\echo 1..1
+\echo ok 1 - 001_i01_identity assertions
 rollback;
 \echo 'I01 SQL assertions passed; all synthetic fixtures rolled back.'
 

@@ -1,16 +1,6 @@
 \set ON_ERROR_STOP on
 begin;
-create function pg_temp.assert_true(ok boolean,label text) returns void language plpgsql as $$
-begin if ok is distinct from true then raise exception 'FAIL: %',label; end if; end $$;
-create function pg_temp.expect_state(statement text,expected text,label text) returns void language plpgsql as $$
-declare actual text; begin
- begin execute statement; exception when others then
-  get stacked diagnostics actual=returned_sqlstate;
-  if actual=expected then return; end if;
-  raise exception 'FAIL: %, expected %, got %',label,expected,actual;
- end;
- raise exception 'FAIL: %, unexpectedly succeeded',label;
-end $$;
+\ir _tap_helpers.inc
 select pg_temp.assert_true(to_regclass('public.bookings') is not null,'B01 schema exists');
 -- B01 FIXTURES START: synthetic only; concurrency runner commits this section in scratch DB.
 insert into auth.users(id,email) values
@@ -107,4 +97,6 @@ select pg_temp.assert_true((select count(*)=7 from public.booking_events where b
 select pg_temp.assert_true((select count(*)=7 from public.audit_events where target_id=:'booking'),'one audit per transition');
 select pg_temp.assert_true((select count(*)=0 from public.notification_outbox where payload::text like '%Synthetic%'),'outbox contains no contact data');
 select 'B01 booking assertions passed; fixtures rolled back' as result;
+\echo 1..1
+\echo ok 1 - 005_b01_booking assertions
 rollback;

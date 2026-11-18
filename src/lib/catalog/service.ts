@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { IdentityError } from "@/lib/auth/identity";
-import { categorySchema, paiseSchema, pinSchema, queueCursorSchema, searchSchema } from "@/lib/validation/catalog";
+import { categorySchema, paiseSchema, providerReferenceSchema, pinSchema, queueCursorSchema, searchSchema } from "@/lib/validation/catalog";
 
 type Client = Pick<SupabaseClient, "rpc" | "from">;
 type Command = "upsert_service" | "publish_price_version" | "propose_service_area" | "withdraw_service_area" | "review_service_area";
@@ -19,7 +19,8 @@ export async function catalogCommand(db: Pick<Client, "rpc">, name: Command, arg
 }
 // Parse with strip semantics: even an accidental upstream column addition cannot
 // expand the HTTP public projection. Paise remains a decimal string throughout.
-const publicRow = z.object({ provider_id: z.uuid(), category: categorySchema, display_name: z.string(),
+const publicRow = z.object({ provider_reference: providerReferenceSchema, category: categorySchema, display_name: z.string(),
+  public_profile: z.record(z.string(), z.unknown()),
   service_id: z.uuid(), service_title: z.string(), duration_minutes: z.number().int().positive(),
   amount_paise: paiseSchema, currency: z.literal("INR"), unit: z.enum(["visit", "test", "trip", "hour", "day"]),
   terms_version: z.string(), pin_code: pinSchema, city: z.string(), advisory_availability: z.null(),
@@ -34,10 +35,10 @@ export async function searchCatalog(db: Pick<Client, "rpc">, value: Search) {
   const rows = z.array(publicRow).parse(data);
   const last = rows.at(-1);
   return { results: rows, nextCursor: rows.length === value.limit && last
-    ? `${last.amount_paise},${last.provider_id},${last.service_id}` : null };
+    ? `${last.amount_paise},${last.provider_reference},${last.service_id}` : null };
 }
 export async function publicProvider(db: Pick<Client, "rpc">, id: string, category: Search["category"], pin: string) {
-  const { data, error } = await db.rpc("get_public_provider", { p_provider_id: id, p_category: category, p_pin: pin });
+  const { data, error } = await db.rpc("get_public_provider", { p_provider_reference: id, p_category: category, p_pin: pin });
   catalogError(error);
   const rows = z.array(publicRow).parse(data);
   if (!rows.length) throw new IdentityError(404, "not_found");

@@ -1,16 +1,6 @@
 \set ON_ERROR_STOP on
 begin;
-create function pg_temp.assert_true(ok boolean,label text) returns void language plpgsql as $$
-begin if ok is distinct from true then raise exception 'FAIL: %',label; end if; end $$;
-create function pg_temp.expect_state(statement text,expected text,label text) returns void language plpgsql as $$
-declare actual text; begin
-  begin execute statement; exception when others then
-    get stacked diagnostics actual=returned_sqlstate;
-    if actual=expected then return; end if;
-    raise exception 'FAIL: %, expected %, got %',label,expected,actual;
-  end;
-  raise exception 'FAIL: %, unexpectedly succeeded',label;
-end $$;
+\ir _tap_helpers.inc
 create function pg_temp.assert_owner_role(category text,expected boolean) returns void language plpgsql as $$
 declare previous text := current_setting('request.jwt.claims'); begin
   perform set_config('request.jwt.claims','{"sub":"12000000-0000-4000-8000-000000000001","aal":"aal2"}',true);
@@ -35,7 +25,7 @@ insert into public.organization_members(organization_id,profile_id,membership_ro
 
 select pg_temp.assert_true((select count(*)=3 from pg_class c join pg_namespace n on n.oid=c.relnamespace
  where n.nspname='public' and c.relname in ('provider_profiles','provider_documents','provider_verification_events') and c.relrowsecurity),'all new tables have RLS');
-select pg_temp.assert_true((select not public and file_size_limit=10485760 from storage.buckets where id='provider-verification'),'private bounded bucket');
+select pg_temp.assert_true((select not public and file_size_limit=5242880 from storage.buckets where id='provider-verification'),'private bounded bucket');
 select pg_temp.assert_true(not has_function_privilege('anon','public.review_provider(uuid,text,text,integer)','EXECUTE'),'guest cannot review');
 select pg_temp.assert_true(not has_function_privilege('authenticated','providers_private.lock_provider(uuid)','EXECUTE'),'private mutator not callable');
 do $$ declare f record; begin
@@ -72,7 +62,9 @@ select pg_temp.assert_true((select count(*)=0 from storage.objects),'batch signi
 select set_config('storage.operation','storage.object.sign_upload_url',true);
 select pg_temp.assert_true((select count(*)=0 from storage.objects),'upload signing blocked for owner');
 select set_config('storage.operation','storage.object.get_authenticated',true);
-select pg_temp.assert_true((select count(*)=1 from storage.objects),'authenticated owner download remains allowed');
+select pg_temp.assert_true((select count(*)=0 from storage.objects),'download without a read ticket denied');
+select count(*) from public.authorize_provider_document_read(:'doc','owner_view');
+select pg_temp.assert_true((select count(*)=1 from storage.objects),'authenticated owner download allowed with live ticket');
 select set_config('storage.operation','',true);
 select pg_temp.expect_state('insert into storage.objects(bucket_id,name) values(''provider-verification'',''person-name.pdf'')','42501','unreserved filename denied');
 select pg_temp.assert_true((select count(*)=1 from storage.objects),'owner reads own object');
@@ -98,6 +90,7 @@ select pg_temp.expect_state(format('select public.create_provider(''lab'',''Synt
 
 select set_config('request.jwt.claims','{"sub":"12000000-0000-4000-8000-000000000004","aal":"aal1"}',true);
 select pg_temp.assert_true((select count(*)=1 from public.provider_documents),'active scoped org manager reads evidence');
+select count(*) from public.authorize_provider_document_read(:'labdoc','owner_view');
 select pg_temp.assert_true((select count(*)=1 from storage.objects),'active scoped org manager reads object');
 reset role;
 update public.organization_members set status='disabled' where profile_id='12000000-0000-4000-8000-000000000004';
@@ -129,6 +122,11 @@ select pg_temp.assert_owner_role('doctor',false);
 select pg_temp.assert_owner_role('doctor',false);
 reset role;
 update public.provider_documents set expires_at=now()+interval '1 year' where id=:'doc';
+set local role authenticated;
+select pg_temp.expect_state(format('select public.review_provider(%L,''suspended'',''Verifier only'',5)',:'doctor'),'42501','verify capability alone cannot suspend');
+reset role;
+insert into public.admin_capabilities(profile_id,capability,scope_key,granted_by) values
+ ('12000000-0000-4000-8000-000000000003','provider:suspend','global','12000000-0000-4000-8000-000000000001');
 set local role authenticated;
 select public.review_provider(:'doctor','suspended','Synthetic suspension',5);
 select pg_temp.assert_true(not public.provider_is_publishable(:'doctor'),'suspended provider not publishable');
@@ -284,5 +282,7 @@ select pg_temp.assert_true(not public.provider_is_publishable(:'doctor'),'guest 
 select pg_temp.expect_state('select * from public.provider_documents','42501','guest private metadata denied');
 select pg_temp.assert_true((select count(*)=0 from storage.objects),'guest object denied');
 reset role;
+\echo 1..1
+\echo ok 1 - 003_i02_providers assertions
 rollback;
 \echo I02 SQL assertions passed

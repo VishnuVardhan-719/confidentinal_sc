@@ -5,9 +5,10 @@ export const pinSchema = z.string().trim().regex(/^[1-9][0-9]{5}$/);
 export const paiseSchema = z.string().regex(/^(0|[1-9][0-9]{0,18})$/)
   .refine(value => /^(0|[1-9][0-9]{0,18})$/.test(value) && BigInt(value) <= BigInt("10000000000"));
 export const categorySchema = z.enum(["doctor", "lab", "ambulance", "caretaker"]);
-export const cursorSchema = z.string().max(120).regex(/^[0-9]+,[0-9a-f-]+,[0-9a-f-]+$/i)
+export const providerReferenceSchema = z.string().regex(/^SCV-(DOC|LAB|AMB|CARE)-[0-9]{6,19}$/);
+export const cursorSchema = z.string().max(120).regex(/^[0-9]+,SCV-(DOC|LAB|AMB|CARE)-[0-9]{6,19},[0-9a-f-]+$/i)
   .transform(value => value.split(","))
-  .pipe(z.tuple([paiseSchema, z.uuid(), z.uuid()]));
+  .pipe(z.tuple([paiseSchema, providerReferenceSchema, z.uuid()]));
 export const queueCursorSchema = z.string().max(120).transform(value => value.split(","))
   .pipe(z.tuple([z.enum(["0", "1"]), z.iso.datetime({ offset: true }), z.uuid()]));
 export const searchSchema = z.strictObject({

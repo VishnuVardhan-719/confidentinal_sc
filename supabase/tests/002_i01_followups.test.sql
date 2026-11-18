@@ -1,19 +1,7 @@
 -- Run after 001 and 003 on an isolated synthetic database. All fixtures roll back.
 \set ON_ERROR_STOP on
 begin;
-create function pg_temp.assert_true(ok boolean,label text) returns void language plpgsql as $$
-begin if ok is distinct from true then raise exception 'FAIL: %',label; end if; end $$;
-create function pg_temp.expect_state(statement text,expected text,label text) returns void language plpgsql as $$
-declare actual text;
-begin
-  begin execute statement;
-  exception when others then
-    get stacked diagnostics actual=returned_sqlstate;
-    if actual=expected then return; end if;
-    raise exception 'FAIL: %, expected %, got %',label,expected,actual;
-  end;
-  raise exception 'FAIL: %, unexpectedly succeeded',label;
-end $$;
+\ir _tap_helpers.inc
 
 -- Deterministic synthetic identities, enough rows to test the maximum page size.
 insert into auth.users(id,email,raw_user_meta_data)
@@ -133,5 +121,7 @@ select pg_temp.expect_state($q$select public.list_organizations()$q$,'42501','an
 select pg_temp.expect_state($q$select public.list_organization_members('72000000-0000-4000-8000-000000000001')$q$,'42501','anonymous membership pagination denied');
 select pg_temp.expect_state($q$select public.list_organization_invites_page()$q$,'42501','anonymous invitation pagination denied');
 reset role;
+\echo 1..1
+\echo ok 1 - 002_i01_followups assertions
 rollback;
 \echo 'I01 follow-up SQL assertions passed; all synthetic fixtures rolled back.'
