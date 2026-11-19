@@ -100,3 +100,11 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
 
 2026-11-18 (fe-d): patient dashboard built (/[locale]/patient/dashboard, modules/patient-dashboard, patient.json en/te/hi, fe2-c modules vendored byte-identical, REQUESTS R-FE-D-31). CodeRabbit 0f4b8da fixes 1-7 done + coderabbit-0f4b8da.test.ts. Browser e2e deferred (R-FE-D-32). lint/typecheck/build clean, 363/363 tests. Committed on feat/fe2-d at orchestrator request.
 - Merged fe2-d 9b341f5 (00de692) and fe2-e 5a6bcf8 (2276679); conflicts in activeContext/REQUESTS/REVIEW_NEEDED kept both sides; message JSON parses, 0 duplicate keys. At 2276679: typecheck/lint exit0, vitest 58 files/929 pass, build exit0 (326 pages). No integration fixes needed. Pending: fe2-b.
+# Active context (2026-11-19, FE v2 Phase 4)
+Owner rejected the old demo frontend (preserved on wip/frontend-pause-2026-11-18). Fresh build per docs/FRONTEND_MASTER.md. Conventions: docs/frontend/CONVENTIONS.md.
+Lead = Claude (commits/push, integration, review). Task files: C:/Users/Yashwanth/.claude-scratch-tasks/PHASE4-common.md + PHASE4-E2.md.
+
+## fe-e2 Phase 4 (feat/fe2-e, base 05ba88a, port 3350)
+Task: merge feat/fe2-b (64b916f) -> replace getOperationsSession/interim guards with requireRole -> un-fixme e2e admin-ops/ambulance/caretaker/lab/cms -> role-isolation browser test -> axe on each workspace -> tsc/lint/vitest/build/playwright -> commit.
+Progress:
+- [ ] merge fe2-b

@@ -215,6 +215,7 @@ Backend inspected read-only: `origin/task/I01-auth-rls` @ `1efbab0`, `origin/tas
 | R-FE05-02 | Playwright config | No repo-level `playwright.config.ts` exists | Area config in `tests/e2e/playwright.config.ts` (fixture adapter, port 3100, serial, artifacts in OS temp dir) | Package/CI owner: decide on a root config, or keep per-area configs |
 | R-FE05-03 | Invitations | I01 `list_organization_invites` returns `organization_id, scopes, version` only; there is no organization name or role to show the invitee | `OrganizationsApi.listInvitations` shows scopes only; unknown scope strings are dropped | Backend: include organization display name and `membership_role` in the invitation list |
 
+
 # Frontend cross-workstream requests (append-only)
 
 Add new entries at the bottom. Do not edit or delete other agents' entries; reply with a new entry.
@@ -409,3 +410,4 @@ Per user rule, no Playwright/browser runs from agents. `tests/e2e/doctor-workspa
 | fe2-e (also fe2-p, fe2-integration) | `src/modules/admin/access.ts` | pure lab/ambulance/caretaker/admin decisions expecting a session from requireRole | keep; feed it `requireRole(...)` output |
 | fe2-a (also fe2-p, fe2-integration) | `src/components/shared/session-seam.ts` | `getPublicAccount()` returns `null` (R-FE01-6) | `getAccountSession()` per R-FE07-01 |
 | fe2-c (also fe2-p, fe2-integration) | `src/modules/catalog/FE07-08-HANDOFF.md` | private loaders not yet bound to a request-scoped guard | `requireRole("patient")` / `authorizeRole` |
+
