@@ -59,3 +59,6 @@ Review first: `lab.status.collection.processingHandoff` must never read as "repo
 | `ambulance` | unreviewed | unreviewed | Emergency/112 wording (`ambulance.emergency.*`) needs fluent and safety review; no ETA wording allowed |
 | `caretaker` | unreviewed | unreviewed | Non-clinical scope note (`caretaker.scopeNote`), task names, recurring-plan gate |
 | `admin` (all pages incl. CMS) | unreviewed | unreviewed | Payments/refund gating wording, consent-gate wording (`admin.cms.publishBlocked.*`) |
+
+## `services` namespace (fe-q, PHASE-R6-C, 2026-11-19): te unreviewed, hi unreviewed
+Patient lab tests, caretakers and scheduled ambulance transfers. Machine-written by an agent; real Telugu/Hindi, not copies. Review first: `services.ambulance.emergency*` and `notEmergency*` (safety wording, 112), `services.care.scope*` and `care.task.medicine_reminder` (non-clinical scope), `services.lab.preparation.*` (patient instructions), `services.common.status.lead.*` (money and "not charged" wording).

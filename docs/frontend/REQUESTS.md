@@ -310,3 +310,12 @@ Contracts the patient booking journey uses that B01 / `docs/API_CONTRACTS.md` do
 - Open slots: `GET /providers/{providerId}/services/{serviceId}/slots` for the next 5 IST days, excluding slots that overlap active bookings of that provider.
 - Add patient address: `POST /patient/addresses { label, locality, city, pin }` returning the new id and the address list.
 - Cancel reason: the cancellation dialog reasons (`schedule_change`, `no_longer_needed`, `chose_other_provider`, `other`) need a mapping to `decisionReasonSchema`; the fixture always sends `patient_request`.
+
+## 2026-11-19 - PHASE-R6-C patient lab, caretaker and ambulance requests (fe-q, feat/fe2-c)
+`docs/API_CONTRACTS.md` has only the generic `POST /api/bookings` flow. These patient flows need contracts; until then their HTTP adapters (`src/modules/{lab-orders,care-requests,ambulance-requests}/http.ts`) validate input and return `gated`.
+- Providers by category and PIN with catalogue: lab tests (name, specimen, preparation, price, report time, collection fee), caretaker (kind, languages, non-clinical tasks, hourly rate, min/max hours), ambulance operator (vehicle types with fixed scheduled-transfer fare).
+- Open times per provider (lab collection windows, care shift starts, transfer pickups), excluding overlaps.
+- Create: lab order with several test lines; care shift with tasks and hours; scheduled transfer with pickup address, drop-off (kind, optional name, locality, city, PIN), mobility, vehicle, companion and a `notEmergency` confirmation. The server derives the price snapshot in paise; the client sends `expectedTotalPaise` only to detect a change (409 when it differs). Idempotency key required.
+- Read one / list own requests with separate booking state, payment state (pay after service) and record state (lab report released only by a reviewer; caretaker and ambulance have no clinical record).
+- Patient cancel with version check (`expectedVersion`), free until 2 hours before the start (synthetic, not an approved policy).
+- Ambulance: emergency dispatch stays a separate, disabled module. No ETA, tracking or distance quote until an approved contract exists.

@@ -156,7 +156,8 @@ async function send(page: Page, retime: { day: number; time: number }) {
   for (let attempt = 0; attempt < 4; attempt++) {
     await page.getByRole("button", { name: "Send request" }).click();
     const changed = page.getByText("That time is no longer available", { exact: true });
-    await expect(page.getByText("Request sent", { exact: true }).or(changed).first()).toBeVisible({ timeout: 15_000 });
+    // Either the request page opens (the "Request sent" notice is brief) or the time step explains the slot was taken.
+    await expect(page.getByRole("heading", { level: 1, name: /^Visit with / }).or(changed).first()).toBeVisible({ timeout: 15_000 });
     if (!(await changed.isVisible())) break;
     await expectStep(page, 4, "Choose a time");
     await pickSlot(page.locator("main"), retime.day, retime.time === -1 ? -1 - attempt - 1 : attempt + 1);
@@ -221,7 +222,8 @@ test.describe("booking journey", () => {
     await expectAxeClean(page, "request/reschedule");
     await reschedule.getByRole("button", { name: "Send new time" }).click();
     await expect(page.getByText("New time sent. Waiting for the doctor to accept.")).toBeVisible();
-    await expect(page.getByText(`Waiting for ${DOCTOR_1.name} to answer`)).toBeVisible();
+    // The new time goes back to the doctor: the history shows a second request (the answer may already follow it).
+    await expect(page.getByRole("region", { name: "History" }).getByText("Requested", { exact: true })).toHaveCount(2, { timeout: 15_000 });
     await waitForAnswer(page, `${DOCTOR_1.name} accepted your request`);
 
     await cancelRequest(page);

@@ -97,14 +97,14 @@ test.describe("lab tests", () => {
     await expectFitsViewport(page);
     await page.getByLabel("PIN code").fill("12");
     await page.getByRole("button", { name: "Search" }).click();
-    await expect(page.getByText("Enter a 6-digit PIN code that does not start with 0.")).toBeVisible();
+    await expect(page.getByText("Enter a 6-digit PIN code that does not start with 0.").filter({ visible: true }).first()).toBeVisible();
     await page.getByLabel("PIN code").fill("500081");
     await page.getByRole("button", { name: "Search" }).click();
     await expect(page).toHaveURL(/pin=500081$/);
-    await expect(page.getByText("1 provider serving PIN 500081")).toBeVisible();
-    await expect(page.getByTestId("service-provider-card")).toHaveText(/Synthetic lab 3/);
+    await expect(page.getByText("1 provider serving PIN 500081").filter({ visible: true })).toBeVisible();
+    await expect(page.getByTestId("service-provider-card").filter({ visible: true })).toHaveText(/Synthetic lab 3/);
     await page.goto("/en/patient/lab-tests?pin=600001");
-    await expect(page.getByText("No providers serve this PIN yet")).toBeVisible();
+    await expect(page.getByText("No providers serve this PIN yet").filter({ visible: true }).first()).toBeVisible();
     await expectAxeClean(page, "lab/empty");
   });
 
@@ -242,7 +242,7 @@ test.describe("caretakers", () => {
     await expect(page.getByTestId("service-provider-card").first()).toContainText("₹500.00");
     await page.getByLabel("PIN code").fill("500032");
     await page.getByRole("button", { name: "Search" }).click();
-    await expect(page.getByText("1 provider serving PIN 500032")).toBeVisible();
+    await expect(page.getByText("1 provider serving PIN 500032").filter({ visible: true })).toBeVisible();
     await expectAxeClean(page, "care/list");
     await expectFitsViewport(page);
   });
@@ -326,5 +326,118 @@ test.describe("caretakers", () => {
     await tabTo(page, page.getByRole("button", { name: "Send request" })); await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/en\/patient\/caretakers\/requests\/[0-9a-f-]{36}$/, { timeout: 20_000 });
     await expect(page.getByRole("button", { name: "Check for updates" })).toBeVisible({ timeout: 15_000 });
+  });
+});
+
+test.describe("ambulance transfer", () => {
+  test("every ambulance page leads with the 112 emergency notice", async ({ page }) => {
+    await page.goto("/en/patient/ambulance");
+    const banner = page.getByTestId("emergency-banner");
+    await expect(banner).toContainText("Emergency? Call 112 now");
+    await expect(banner.getByRole("link", { name: "Call 112" })).toHaveAttribute("href", "tel:112");
+    // It is the first notice in the main content, above the synthetic-data notice.
+    const firstNotice = page.locator("main [data-testid='emergency-banner'], main [data-fixture-notice]").first();
+    await expect(firstNotice).toHaveAttribute("data-testid", "emergency-banner");
+    await expect(page.getByRole("heading", { level: 1, name: "Scheduled ambulance transfer" })).toBeVisible();
+    await expect(page.getByText(/\bETA\b|\bon the way\b|\barriving\b/i)).toHaveCount(0);
+    await expectAxeClean(page, "amb/list");
+    await expectFitsViewport(page);
+    await page.goto("/en/patient/ambulance/request?providerId=00000000-0000-4000-8400-000000000001");
+    await expect(page.getByTestId("emergency-banner").filter({ visible: true })).toBeVisible();
+  });
+
+  test("happy path: scheduled transfer, operator accepts, patient cancels", async ({ page }, info) => {
+    test.setTimeout(150_000);
+    const col = column(info.project.name);
+    await page.goto("/en/patient/ambulance");
+    await page.getByRole("link", { name: "Request transfer: Synthetic transfer operator 1" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Request a transfer from Synthetic transfer operator 1" })).toBeVisible({ timeout: 20_000 });
+    await page.getByRole("button", { name: "Send request" }).click();
+    const summary = page.getByRole("alert").filter({ hasText: /problem/ });
+    await expect(summary).toBeFocused();
+    await expect(summary).toContainText("Confirm this is not an emergency. For emergencies call 112.");
+    await expect(summary).toContainText("Choose how the patient moves.");
+    await page.getByRole("radio", { name: "Needs a stretcher" }).check();
+    await expect(page.getByRole("radio", { name: /Wheelchair van/ })).toBeDisabled();
+    await page.getByRole("radio", { name: /Patient transport with stretcher/ }).check();
+    await expect(page.getByRole("radio", { name: /Home: Synthetic locality, Synthetic city, PIN 500001/ })).toBeChecked();
+    const drop = page.getByRole("group", { name: "Drop-off" });
+    await drop.getByRole("radio", { name: "Hospital or clinic" }).check();
+    await drop.getByLabel("Name of the place (optional)").fill("Synthetic general hospital");
+    await drop.getByLabel("Area or locality").fill("Synthetic locality B");
+    await drop.getByLabel("City").fill("Hyderabad");
+    await drop.getByLabel("PIN code").fill("500081");
+    await page.getByRole("checkbox", { name: "Someone will travel with the patient" }).check();
+    const timeGroup = page.getByRole("group", { name: "Date and time" });
+    await pickSlot(timeGroup, 1, col);
+    await page.getByRole("checkbox", { name: "I confirm this is a planned transfer, not an emergency." }).check();
+    await page.getByRole("checkbox", { name: "I accept the price and the cancellation policy." }).check();
+    // A drop-off outside the operator's area is caught before sending.
+    await page.getByRole("button", { name: "Send request" }).click();
+    await expect(page.getByRole("alert").filter({ hasText: /problem/ })).toContainText("Enter the drop-off area, city and a 6-digit PIN in this operator's area.");
+    await drop.getByLabel("PIN code").fill("500032");
+    await expect(page.getByTestId("request-price")).toContainText("Scheduled transfer: Patient transport with stretcher");
+    await expect(page.getByTestId("request-price")).toContainText("₹1,200.00");
+    await expectAxeClean(page, "amb/form");
+    await expectFitsViewport(page);
+    await sendWithRetry(page, timeGroup, { day: 1, time: col });
+    await expect(page).toHaveURL(/\/en\/patient\/ambulance\/requests\/[0-9a-f-]{36}$/);
+    await expect(page.getByTestId("emergency-banner").filter({ visible: true })).toBeVisible();
+    await waitForAnswer(page, "Synthetic transfer operator 1 accepted your request");
+    await expectBadges(page, "Confirmed", "Payment due", "No clinical record");
+    const details = page.getByRole("region", { name: "Request details" });
+    await expect(details).toContainText("Needs a stretcher");
+    await expect(details).toContainText("Hospital or clinic: Synthetic general hospital, Synthetic locality B, Hyderabad, PIN 500032");
+    await expect(page.getByText(/\bETA\b|\bon the way\b|\barriving\b/i)).toHaveCount(0);
+    await expectAxeClean(page, "amb/confirmed");
+    await cancelRequest(page);
+    await expectBadges(page, "Cancelled", "Not started", "No clinical record");
+  });
+
+  test("decline path: the operator declines", async ({ page }, info) => {
+    test.setTimeout(150_000);
+    const col = column(info.project.name);
+    await page.goto("/en/patient/ambulance/request?providerId=00000000-0000-4000-8400-000000000002");
+    await expect(page.getByRole("heading", { level: 1, name: "Request a transfer from Synthetic transfer operator 2" })).toBeVisible({ timeout: 20_000 });
+    await page.getByRole("radio", { name: "Walks without help" }).check();
+    await page.getByRole("radio", { name: /Patient transport with stretcher/ }).check();
+    const drop = page.getByRole("group", { name: "Drop-off" });
+    await drop.getByRole("radio", { name: "Home" }).check();
+    await drop.getByLabel("Area or locality").fill("Synthetic locality D");
+    await drop.getByLabel("City").fill("Secunderabad");
+    await drop.getByLabel("PIN code").fill("500003");
+    const timeGroup = page.getByRole("group", { name: "Date and time" });
+    await pickSlot(timeGroup, 0, col);
+    await page.getByRole("checkbox", { name: "I confirm this is a planned transfer, not an emergency." }).check();
+    await page.getByRole("checkbox", { name: "I accept the price and the cancellation policy." }).check();
+    await sendWithRetry(page, timeGroup, { day: 0, time: col });
+    await waitForAnswer(page, "Synthetic transfer operator 2 could not take this request");
+    await expectBadges(page, "Declined", "Not started", "No clinical record");
+    await expect(page.getByTestId("emergency-banner").filter({ visible: true })).toBeVisible();
+    await expectAxeClean(page, "amb/declined");
+  });
+
+  test("keyboard only: the 112 call link and the form are reachable without a pointer", async ({ page }) => {
+    test.setTimeout(150_000);
+    await page.goto("/en/patient/ambulance/request?providerId=00000000-0000-4000-8400-000000000001");
+    await expect(page.getByRole("heading", { level: 1, name: /Request a transfer/ })).toBeVisible({ timeout: 20_000 });
+    await tabTo(page, page.getByRole("link", { name: "Call 112" }));
+    // Native radio groups: Tab enters the group, arrow keys choose within it.
+    await tabTo(page, page.getByRole("radio", { name: "Walks without help" }));
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByRole("radio", { name: "Uses a wheelchair" })).toBeChecked();
+    await tabTo(page, page.getByRole("radio", { name: /Patient transport with stretcher/ }));
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByRole("radio", { name: /Wheelchair van/ })).toBeChecked();
+    await tabTo(page, page.getByRole("group", { name: "Drop-off" }).getByLabel("Area or locality")); await page.keyboard.type("Synthetic locality B");
+    await page.keyboard.press("Tab"); await page.keyboard.type("Hyderabad");
+    await page.keyboard.press("Tab"); await page.keyboard.type("500032");
+    const timeGroup = page.getByRole("group", { name: /^Time on / });
+    await tabTo(page, timeGroup.getByRole("radio").first()); await page.keyboard.press("Space");
+    await tabTo(page, page.getByRole("checkbox", { name: "I confirm this is a planned transfer, not an emergency." })); await page.keyboard.press("Space");
+    await tabTo(page, page.getByRole("checkbox", { name: "I accept the price and the cancellation policy." })); await page.keyboard.press("Space");
+    await expect(page.getByTestId("request-price")).toContainText("₹900.00");
+    await tabTo(page, page.getByRole("button", { name: "Send request" })); await page.keyboard.press("Enter");
+    await expect(page.getByRole("heading", { level: 1, name: /Scheduled transfer with/ }).or(page.getByText("Something changed", { exact: true })).first()).toBeVisible({ timeout: 20_000 });
   });
 });

@@ -40,8 +40,8 @@ export async function RequestStatusView<D>({ request, now, segment, title, recor
   const change = cancelState(request, now);
   return (
     <>
-      {request.synthetic ? <FixtureNotice /> : null}
       {banner}
+      {request.synthetic ? <FixtureNotice /> : null}
       <div><Button asChild variant="quiet"><Link href={segment}><ArrowLeft aria-hidden />{t("back")}</Link></Button></div>
       <PageHeader title={title} description={request.publicReference ? t("reference", { reference: request.publicReference }) : t("noReference")} />
 
