@@ -100,8 +100,14 @@ select pg_temp.expect_state(format('select public.submit_provider(%L,1)',:'docto
 select pg_temp.expect_state(format('select public.add_provider_document(%L,''registration'',''application/pdf'',now()-interval ''1 day'',1)',:'doctor'),'22023','expired metadata rejected');
 select (public.add_provider_document(:'doctor','registration','application/pdf',now()+interval '1 year',1)->'document'->>'id') as doc \gset
 select pg_temp.expect_state(format('select public.submit_provider(%L,2)',:'doctor'),'23514','metadata without uploaded bytes blocks submission');
+-- 20261117001400 (M1): Storage may write with INSERT ... RETURNING (upsert probe, older
+-- releases), so the new row must also pass SELECT. Outside the upload operation the
+-- read-back is still denied; during it the uploader gets their own reservation back.
+select pg_temp.expect_state(format('insert into storage.objects(bucket_id,name) select bucket_id,object_name from public.provider_documents where id=%L returning id',:'doc'),'42501','owner read-back outside the upload operation denied');
+select set_config('storage.operation','storage.object.upload',true);
 -- The same direct INSERT represents the Storage service write under the user JWT.
-insert into storage.objects(bucket_id,name) select bucket_id,object_name from public.provider_documents where id=:'doc';
+insert into storage.objects(bucket_id,name) select bucket_id,object_name from public.provider_documents where id=:'doc' returning id as uploaded_object \gset
+select pg_temp.assert_true((select count(*)=1 from storage.objects where id=:'uploaded_object'),'owner upload with RETURNING read-back allowed');
 select set_config('storage.operation','storage.object.sign',true);
 select pg_temp.assert_true((select count(*)=0 from storage.objects),'single signing blocked for owner');
 select set_config('storage.operation','storage.object.sign_many',true);
@@ -174,6 +180,9 @@ select set_config('request.jwt.claims','{"sub":"12000000-0000-4000-8000-00000000
 select pg_temp.expect_state(format('select public.authorize_provider_document_read(%L,''admin_review'')',:'doc'),'42501','aal1 document reader denied');
 select set_config('request.jwt.claims','{"sub":"12000000-0000-4000-8000-000000000003","aal":"aal2"}',true);
 select pg_temp.assert_true((select count(*)=0 from storage.objects),'expired read ticket opens nothing');
+select set_config('storage.operation','storage.object.upload',true);
+select pg_temp.assert_true((select count(*)=0 from storage.objects),'reviewer gets no read-back during an upload operation');
+select set_config('storage.operation','',true);
 select pg_temp.assert_true((select bucket='provider-verification' and object_path=(select object_name from public.provider_documents where id=:'doc')
  and ticket_expires_at=now()+interval '60 seconds' from public.authorize_provider_document_read(:'doc','admin_review')),'ticket names the exact object and a 60 s expiry');
 select pg_temp.assert_true((select count(*)=1 from storage.objects),'document reader opens evidence under review with a live ticket');
@@ -269,8 +278,16 @@ update public.provider_documents set expires_at=now()-interval '1 second' where 
 set local role authenticated;
 select (public.add_provider_document(:'caretaker','background_check','application/pdf',now()+interval '1 year',2)->'document'->>'id') as fresh \gset
 select pg_temp.assert_true((select status='superseded' from public.provider_documents where id=:'stale'),'expired evidence superseded');
-insert into storage.objects(bucket_id,name) select bucket_id,object_name from public.provider_documents where id=:'fresh';
+select set_config('storage.operation','storage.object.upload',true);
+insert into storage.objects(bucket_id,name) select bucket_id,object_name from public.provider_documents where id=:'fresh' returning id as fresh_object \gset
+select pg_temp.assert_true((select count(*)=1 from storage.objects where id=:'fresh_object'),'replacement upload reads back during the upload operation');
+select set_config('storage.operation','storage.object.get_authenticated',true);
+select pg_temp.assert_true((select count(*)=0 from storage.objects where id=:'fresh_object'),'replacement download without a ticket still denied');
+select set_config('storage.operation','',true);
 select public.submit_provider(:'caretaker',3);
+select set_config('storage.operation','storage.object.upload',true);
+select pg_temp.assert_true((select count(*)=0 from storage.objects where id=:'fresh_object'),'upload read-back ends once the reservation is no longer writable');
+select set_config('storage.operation','',true);
 select pg_temp.assert_true((select verification_state='submitted' from public.providers where id=:'caretaker'),'replacement fixes expired draft');
 -- Historical rejected/superseded rows do not consume the live-document cap.
 select set_config('request.jwt.claims','{"sub":"12000000-0000-4000-8000-000000000002","aal":"aal1"}',true);

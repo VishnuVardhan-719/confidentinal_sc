@@ -21,10 +21,24 @@ select pg_temp.expect_state(format('update public.provider_verification_cases se
 select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000005","aal":"aal2"}',true);
 select public.add_staff_credential_document(:'staff_case','application/pdf',now()+interval '1 year',1) as document \gset
 select pg_temp.expect_state(format('select public.submit_staff_credential_case(%L,2)',:'staff_case'),'55000','bytes required');
-insert into storage.objects(bucket_id,name) values (:'document'::jsonb->>'bucket_id',:'document'::jsonb->>'object_name');
+-- 20261117001400 (M1): the uploader's own pending object is read back only while Storage
+-- runs the upload; no other read path to staff evidence exists.
+select pg_temp.expect_state(format('insert into storage.objects(bucket_id,name) values (%L,%L) returning id',:'document'::jsonb->>'bucket_id',:'document'::jsonb->>'object_name'),'42501','staff read-back outside the upload operation denied');
+select set_config('storage.operation','storage.object.upload',true);
+insert into storage.objects(bucket_id,name) values (:'document'::jsonb->>'bucket_id',:'document'::jsonb->>'object_name') returning id as staff_object \gset
+select pg_temp.assert_true((select count(*)=1 from storage.objects where id=:'staff_object'),'staff upload with RETURNING read-back allowed');
+select set_config('storage.operation','storage.object.get_authenticated',true);
 select pg_temp.assert_true((select count(*)=0 from storage.objects),'staff evidence private without read authorization');
+select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000002"}',true);
+select set_config('storage.operation','storage.object.upload',true);
+select pg_temp.assert_true((select count(*)=0 from storage.objects),'org owner gets no read-back of staff evidence');
+select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000005","aal":"aal2"}',true);
+select set_config('storage.operation','',true);
 select pg_temp.expect_state('select object_name from public.staff_credential_documents','42501','raw object paths hidden');
 select public.submit_staff_credential_case(:'staff_case',2);
+select set_config('storage.operation','storage.object.upload',true);
+select pg_temp.assert_true((select count(*)=0 from storage.objects),'staff read-back ends once the case is submitted');
+select set_config('storage.operation','',true);
 select pg_temp.expect_state(format('select public.review_staff_credential_case(%L,''approved'',''Synthetic review'',3)',:'staff_case'),'42501','self review denied');
 select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000003","aal":"aal2"}',true);
 select pg_temp.assert_true((select count(*)=0 from public.provider_verification_cases),'foreign case invisible');
