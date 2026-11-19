@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import type { ActionResult } from "./action-result";
-import { getOperationsSession } from "./session";
+import { authorizeOperationsSession } from "./session";
 import { switchWorkspace, type ProviderArea } from "./workspace";
 
 const AREAS: readonly ProviderArea[] = ["lab", "ambulance", "caretaker"];
@@ -14,7 +14,7 @@ const AREAS: readonly ProviderArea[] = ["lab", "ambulance", "caretaker"];
  */
 export async function switchWorkspaceAction(area: unknown, key: unknown): Promise<ActionResult> {
   if (typeof area !== "string" || !(AREAS as readonly string[]).includes(area)) return { ok: false, code: "validation" };
-  const { guard } = await getOperationsSession();
+  const { guard } = await authorizeOperationsSession(area as ProviderArea);
   if (!guard) return { ok: false, code: "unauthenticated" };
   const own = guard.memberships.filter((m) => m.profileId === guard.profileId);
   const result = switchWorkspace(own, area as ProviderArea, key);

@@ -25,7 +25,7 @@ const PRIMARY = ["dashboard", "orders", "collections", "reports"] as const;
 /** Lab layout body: unauthenticated -> login, no lab workspace -> denied, several -> choose, else shell. */
 export async function LabFrame({ children }: { children: ReactNode }) {
   const locale = await currentLocale();
-  const access = await providerAreaAccess("lab", (s, key) => decideLabRoute(s, "dashboard", locale, labPath(locale, "dashboard"), key));
+  const access = await providerAreaAccess("lab", (s, key) => decideLabRoute(s, "dashboard", locale, labPath(locale, "dashboard"), key), labPath(locale, "dashboard"));
   if (access.kind === "unauthenticated") redirect(access.loginPath);
   if (access.kind === "denied") {
     return (
@@ -62,7 +62,7 @@ export async function LabRouteGate({
   children: (ctx: WorkspaceLoaderContext, locale: AppLocale) => Promise<ReactNode> | ReactNode;
 }) {
   const locale = await currentLocale();
-  const access = await providerAreaAccess("lab", (s, key) => decideLabRoute(s, route, locale, labPath(locale, route), key));
+  const access = await providerAreaAccess("lab", (s, key) => decideLabRoute(s, route, locale, labPath(locale, route), key), labPath(locale, route));
   if (access.kind === "unauthenticated") redirect(access.loginPath);
   if (access.kind !== "allowed") return <AccessDenied />;
   return <>{await children({ workspace: access.workspace }, locale)}</>;

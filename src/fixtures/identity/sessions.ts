@@ -1,4 +1,5 @@
 import type { Identity, Session } from "@/modules/auth/types";
+import { OPERATIONS_ACCOUNTS, OPERATIONS_SCENARIOS, OPERATIONS_SESSIONS } from "./operations";
 
 /**
  * SYNTHETIC identity fixtures. Fictional names, `@example.invalid` emails and placeholder
@@ -41,6 +42,7 @@ export const FIXTURE_SCENARIOS = [
   "admin",
   "multi_role",
   "account_disabled",
+  ...OPERATIONS_SCENARIOS,
 ] as const;
 export type FixtureScenario = (typeof FIXTURE_SCENARIOS)[number];
 
@@ -121,6 +123,7 @@ export const FIXTURE_SESSIONS: Readonly<Record<FixtureScenario, Session>> = {
     ]),
   },
   account_disabled: { kind: "restricted", reason: "account_disabled" },
+  ...OPERATIONS_SESSIONS,
 };
 
 /** Fixture logins: email -> scenario. Any password of 1..128 chars is accepted in fixture mode. */
@@ -135,6 +138,7 @@ export const FIXTURE_ACCOUNTS: Readonly<Record<string, FixtureScenario>> = {
   "verifier@example.invalid": "admin",
   "multi.role@example.invalid": "multi_role",
   "disabled@example.invalid": "account_disabled",
+  ...OPERATIONS_ACCOUNTS,
 };
 
 /** Fixture-only OTP. Real OTPs are never constants, logged, or placed in URLs. */

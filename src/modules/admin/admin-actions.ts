@@ -11,7 +11,7 @@ import { ADMIN_CAPABILITIES } from "./capabilities";
 import { getAdminApi } from "./index";
 import { decideAdminRoute, type AdminRoute } from "./routes";
 import { normalizeBookingReference } from "./rules";
-import { BOOKING_LOOKUP_COOKIE, getOperationsSession } from "./session";
+import { BOOKING_LOOKUP_COOKIE, authorizeOperationsSession } from "./session";
 
 /**
  * Admin and CMS server actions. Each re-checks the route capability for the
@@ -24,7 +24,7 @@ const LOCALES: readonly Locale[] = ["en", "te", "hi"];
 const CMS_ACTIONS: readonly ContentAction[] = ["submit_preview", "return_to_draft", "publish", "archive"];
 
 async function principalFor(route: AdminRoute) {
-  const { admin } = await getOperationsSession();
+  const { admin } = await authorizeOperationsSession("admin");
   const access = decideAdminRoute(admin, route, "en", `/en/admin/${route}`);
   if (access.kind === "unauthenticated") return { ok: false as const, result: { ok: false, code: "unauthenticated" } as ActionResult };
   if (access.kind !== "allowed") return { ok: false as const, result: { ok: false, code: "forbidden" } as ActionResult };
