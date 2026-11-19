@@ -1,6 +1,5 @@
 import { ArrowLeft } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { z } from "zod";
 import { CareRequestForm } from "@/components/service-requests/care-request-form";
@@ -13,8 +12,9 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { createCareRequestsApi } from "@/modules/care-requests/api";
-import { getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { requirePatientSession } from "@/modules/patient-dashboard/session";
 import { servicePatientApi } from "@/modules/service-requests/server";
+import { AccessDenied } from "@/components/auth/access-denied";
 import { careSlotsAction, createCareRequestAction } from "../actions";
 
 export async function generateMetadata() {
@@ -31,8 +31,8 @@ export default async function CareRequestPage({ params, searchParams }: PageProp
   const { locale: raw } = await params;
   await connection();
   const locale = toLocale(raw);
-  const session = getPatientSession();
-  if (session.status !== "ok") redirect(patientLoginRedirect(locale, `/${locale}/patient/caretakers`));
+  const session = await requirePatientSession(locale, `/${locale}/patient/caretakers`);
+  if (session.status !== "ok") return <AccessDenied reason={session.reason} />;
   const providerId = z.uuid().safeParse(first((await searchParams).providerId));
   const t = await getTranslations("services");
   const back = <Button asChild variant="quiet"><Link href="/patient/caretakers"><ArrowLeft aria-hidden />{t("common.back")}</Link></Button>;

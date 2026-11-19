@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { EmergencyBanner } from "@/components/service-requests/emergency-banner";
 import { RequestStatusView } from "@/components/service-requests/request-status";
@@ -10,8 +10,9 @@ import { PageHeader } from "@/components/shared/page-header";
 import { createAmbulanceRequestsApi } from "@/modules/ambulance-requests/api";
 import { ambulanceRecordPresentation } from "@/modules/ambulance-requests/status";
 import type { VehicleType } from "@/modules/ambulance-requests/types";
-import { getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { requirePatientSession } from "@/modules/patient-dashboard/session";
 import { servicePatientApi } from "@/modules/service-requests/server";
+import { AccessDenied } from "@/components/auth/access-denied";
 import { cancelAmbulanceRequestAction } from "../../actions";
 
 export async function generateMetadata() {
@@ -28,7 +29,8 @@ export default async function AmbulanceRequestStatusPage({ params }: PageProps<"
   const { locale: raw, id } = await params;
   await connection();
   const locale = toLocale(raw);
-  if (getPatientSession().status !== "ok") redirect(patientLoginRedirect(locale, `/${locale}/patient/ambulance`));
+  const session = await requirePatientSession(locale, `/${locale}/patient/ambulance`);
+  if (session.status !== "ok") return <AccessDenied reason={session.reason} />;
   const found = await createAmbulanceRequestsApi({ patient: servicePatientApi() }).get(id).catch(() => ({ ok: false as const, error: { code: "unavailable" as const } }));
   if (!found.ok && ["not_found", "validation", "forbidden"].includes(found.error.code)) notFound();
   const t = await getTranslations("services");

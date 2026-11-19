@@ -12,7 +12,7 @@ import { servicePatientApi } from "@/modules/service-requests/server";
  * Inputs are untrusted and validated by the module adapter; the price, status and reference come from the server.
  */
 async function guarded<T>(run: (api: CareRequestsApi) => Promise<ApiResult<T>>): Promise<ApiResult<T>> {
-  if (getPatientSession().status !== "ok") return fail("unauthenticated");
+  if ((await getPatientSession()).status !== "ok") return fail("unauthenticated");
   try { return await run(createCareRequestsApi({ patient: servicePatientApi() })); } catch { return fail("unavailable"); }
 }
 
