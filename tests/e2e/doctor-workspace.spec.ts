@@ -1,35 +1,24 @@
 /**
  * FE10-FE12 doctor workspace e2e (Playwright, synthetic fixture world only).
  *
- * "Signed in as" = which fixture server the page talks to (tests/e2e/workspace-servers.ts):
- * the interim doctor session is a SERVER env var (FIXTURE_DOCTOR_SESSION), never a cookie or URL.
- * `page` talks to the assigned-doctor server; `as("other" | "anon" | "gateOff")` opens a page on
- * the other servers. Replace with the fe2-b fixture auth adapter once merged (REQUESTS.md #15, #26).
+ * "Signed in as" = a synthetic fixture account through the real fe-b guards (tests/e2e/workspace-servers.ts):
+ * `page` = multi.role (the assigned doctor); `as("other")` = doctor.other; `as("anon")` = not signed in;
+ * `as("gateOff")` runs only in the E2E_CLINICAL=off pass against a server without FEATURE_CLINICAL.
  *
  * State: the fixture world is process-wide and tests mutate it (travel, OTP, drafts, signing).
- * Tests in this file run in order (project fullyParallel: false) and each viewport project has its
- * own server set. A fixture reset hook would give full isolation (REQUESTS.md #25).
+ * Tests in this file run in order (project fullyParallel: false); start a fresh server per viewport
+ * project (.context/int3-run.ps1). A fixture reset hook would give full isolation (REQUESTS.md #25).
  *
  * Accessible names below (LABEL) are the English strings the doctor pages must render. They are
  * the contract between these specs and src/messages/en/{doctor,clinical,payment}.json.
  */
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test as base, type Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { FIXTURE_IDS as I } from "../../src/fixtures/clinical/world";
-import { wsOrigin, type WorkspaceServer } from "./workspace-servers";
+import { wsTest } from "./workspace-servers";
 
-const test = base.extend<{ as: (who: WorkspaceServer) => Promise<Page> }>({
-  baseURL: async ({}, provide, testInfo) => provide(wsOrigin(testInfo.project.name, "assigned")),
-  as: async ({ browser, viewport }, provide, testInfo) => {
-    const contexts: Awaited<ReturnType<typeof browser.newContext>>[] = [];
-    await provide(async (who) => {
-      const ctx = await browser.newContext({ baseURL: wsOrigin(testInfo.project.name, who), viewport });
-      contexts.push(ctx);
-      return ctx.newPage();
-    });
-    for (const c of contexts) await c.close();
-  },
-});
+// Signed in through the real fe-b guards (tests/e2e/workspace-servers.ts).
+const test = wsTest;
 
 async function expectNoAxeViolations(page: Page) {
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();

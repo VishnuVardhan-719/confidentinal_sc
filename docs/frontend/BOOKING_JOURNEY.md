@@ -2,7 +2,7 @@
 
 Branch `feat/fe2-c`. Fixture adapter only: every value is synthetic and labelled "Synthetic data, not live". The HTTP adapter returns `gated` for every journey call that has no agreed backend contract (see `REQUESTS.md`, 2026-11-19 entry).
 
-Run the server with `FRONTEND_ADAPTER=fixture APP_ENV=test FIXTURE_PATIENT_SESSION=self FIXTURE_PROVIDER_RESPONSE_MS=1500 npx next start -p <port>`. The synthetic store (`src/fixtures/marketplace/booking-store.ts`) is in memory per server process: "Synthetic doctor 2" declines every request; every other synthetic doctor accepts and the booking is confirmed with a server-made `SCV-` reference after `FIXTURE_PROVIDER_RESPONSE_MS`.
+Run the server with `FRONTEND_ADAPTER=fixture APP_ENV=test FIXTURE_PROVIDER_RESPONSE_MS=1500 npx next start -p <port>`. The synthetic store (`src/fixtures/marketplace/booking-store.ts`) is in memory per server process: "Synthetic doctor 2" declines every request; every other synthetic doctor accepts and the booking is confirmed with a server-made `SCV-` reference after `FIXTURE_PROVIDER_RESPONSE_MS`.
 
 ## The 22 steps
 

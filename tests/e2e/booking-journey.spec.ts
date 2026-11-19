@@ -1,10 +1,11 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
+import { patientTest as test } from "./support/fixture-session";
 
 /**
  * The patient doctor-booking journey (docs/frontend/BOOKING_JOURNEY.md): discovery, profile, the seven-step
  * request wizard, the doctor's manual answer, reschedule, cancel and the receipt. Runs only against the
- * synthetic fixture adapter with the server started as FIXTURE_PATIENT_SESSION=self and a short
+ * synthetic fixture adapter signed in as the synthetic patient (support/fixture-session.ts) and a server started with a short
  * FIXTURE_PROVIDER_RESPONSE_MS. The shared synthetic store lives in the server process, so each test picks
  * its own day and time column and never depends on a fixed clock time.
  */

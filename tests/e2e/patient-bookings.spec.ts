@@ -1,19 +1,17 @@
 /**
  * fe-p: patient bookings list + detail against the synthetic fixture app.
  *
- * The interim patient session is a SERVER env var, so each mode needs its own server:
- *   session: FRONTEND_ADAPTER=fixture APP_ENV=test FIXTURE_PATIENT_SESSION=self FIXTURE_BOOKING_SCENARIO=requested
- *   guest:   FRONTEND_ADAPTER=fixture APP_ENV=test (no FIXTURE_PATIENT_SESSION)
- * Run with E2E_FEP_MODE=session|guest and PLAYWRIGHT_BASE_URL pointing at that server. Without
- * E2E_FEP_MODE the suite is skipped (other agents' runs do not start this server).
+ * Server: FRONTEND_ADAPTER=fixture APP_ENV=test FIXTURE_BOOKING_SCENARIO=requested (PLAYWRIGHT_BASE_URL).
+ * Signed-in tests sign in as the synthetic patient through the real fe-b guards
+ * (support/fixture-session.ts); guest tests use a fresh anonymous context on the same server.
  * Synthetic data only; the fixture booking id is not a real record.
  */
-import { expect as baseExpect, test, type Page } from "@playwright/test";
+import { expect as baseExpect, test as base, type Page } from "@playwright/test";
+import { patientTest as test } from "./support/fixture-session";
 
 // Redirects, client navigations and server actions on a shared, often loaded machine; 5 s was flaky.
 const expect = baseExpect.configure({ timeout: 15_000 });
 
-const MODE = process.env.E2E_FEP_MODE;
 const BOOKING = "00000000-0000-4000-8000-000000000061";
 
 async function expectNoHorizontalScroll(page: Page) {
@@ -22,8 +20,6 @@ async function expectNoHorizontalScroll(page: Page) {
 }
 
 test.describe("patient bookings (signed-in synthetic patient)", () => {
-  test.skip(MODE !== "session", "needs the session-mode fixture server");
-
   test("list shows the synthetic notice, filters, a booking row and separate badges", async ({ page }) => {
     await page.goto("/en/patient/bookings");
     await expect(page.getByRole("heading", { level: 1, name: "Your bookings" })).toBeVisible();
@@ -140,10 +136,8 @@ test.describe("patient bookings (signed-in synthetic patient)", () => {
   });
 });
 
-test.describe("patient bookings (guest)", () => {
-  test.skip(MODE !== "guest", "needs the guest-mode fixture server");
-
-  test("private URLs redirect to login with a safe locale-aware return path", async ({ page }) => {
+base.describe("patient bookings (guest)", () => {
+  base("private URLs redirect to login with a safe locale-aware return path", async ({ page }) => {
     for (const [path, next] of [
       [`/hi/patient/bookings/${BOOKING}`, `/hi/patient/bookings/${BOOKING}`],
       ["/te/patient/bookings?status=past", "/te/patient/bookings"],
@@ -154,7 +148,8 @@ test.describe("patient bookings (guest)", () => {
       const location = new URL(page.url());
       expect(location.pathname).toBe(`/${next.split("/")[1]}/login`);
       expect(location.searchParams.get("next")).toBe(next);
-      await expect(page.getByText("Synthetic data, not live")).toHaveCount(0);
+      // The login page itself labels the fixture adapter; no booking content may render there.
+      await expect(page.getByRole("main").getByRole("heading", { level: 1 })).not.toHaveText(/booking/i);
     }
   });
 });

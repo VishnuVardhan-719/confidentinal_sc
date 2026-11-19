@@ -211,3 +211,20 @@ Open: te/hi errorPage strings need native review (REVIEW_NEEDED `services`). Pub
 - PHASE R7-D (C:/Users/Yashwanth/.claude-scratch-tasks/PHASE-R7-D.md): task 1 DONE d1a06f4 (public /verify proof check). All ws e2e 130/130. Next: task 2 consultation notes (doctor/consultations/[bookingId]).
 - PHASE4-E2 done (b77fb24, ea568c8, b49844c): 5 ops specs + new role-isolation.spec pass on desktop-1280 and mobile-390 (lab also with FEATURE_CLINICAL=true); fixture ops clock, lab 'scheduled' queue, recollection reference, public stories/FAQ read CMS. Open: pre-existing soft 404 on /stories/<unknown>. Details: .context/handoff-fe-b-e2.md. zz-discover deleted.
 - DONE saved-providers 20f0f2c, reviews 275c9da (records e2e expect timeout 15s). NEXT reminder-prefs (/patient/settings/reminders): channels sms/whatsapp/email, quiet hours IST (may span midnight), version-checked save, FIXTURE_REMINDERS_SCENARIO.
+- INT3 step3a (re-merge) done early (branches advanced and touched the stale specs): c,d,e,p merged; codemod for new patient pages; gate 94/1373. Next: step1 specs.
+- INT3 step1: specs converted (support/fixture-session.ts, workspace-servers.ts single server). Results so far: patient-bookings 10/10 x2, patient-records 6 pass + 3 fixme (fe-p notifications page not served) x2, booking-journey 5/5 x2, service-requests 13/13 x2. Next: patient-workspace, doctor-workspace (ws projects) + clinical-off pass. Runner .context/int3-run.ps1.
+
+## PAUSED STATE (fe-int2, INT3, 2026-11-19)
+Done:
+- Step 3 (re-merge) done FIRST because c/d/e/p had advanced and touched the stale specs: merged c ebe3000 (86da407), d 9511e32 (7ca3577), e 0813f7b (82b454c), p 8f7ca31 (23b0973); a/b unchanged. Guard codemod for new patient pages: 0e4ced8 (fe-c ambulance/caretakers), 02dc8bf (fe-p reviews/saved/reminders). NOTE: 86da407 message wrongly says tsc clean (fixed by 0e4ced8); 82b454c committed conflict markers in activeContext.md (cleaned in 23b0973). Gate after re-merge: tsc/lint clean, vitest 94 files/1373. Rebuild exit 0 (502 pages).
+- Step 1 (specs -> real fixture sign-in) done in this WIP commit: tests/e2e/support/fixture-session.ts (patientTest, storageFor, E2E_ACCOUNTS), workspace-servers.ts (one server, wsTest: assigned=multi.role, other=doctor.other, anon, gateOff only with E2E_CLINICAL=off), root playwright.config.ts single webServer. Results (per project mobile-390 / desktop-1280, fresh server each):
+  patient-bookings 10/10 both (FIXTURE_BOOKING_SCENARIO=requested); patient-records 6 pass + 3 fixme (fe-p notifications page not served), clinical-off 1 pass + 1 fixme; booking-journey 5/5 both; service-requests 13/13 both (FIXTURE_PROVIDER_RESPONSE_MS=1500); patient-workspace 18 pass + 4 fixme/skip (fe-d records copy; fe-p records served), clinical-off gate test fixme; doctor-workspace 32 pass + 1 skip both, clinical-off 1/1 both; doctor-consultation 17 pass + 2 skip; proof-check 9 pass + 1 skip.
+  Key fix: browser.newContext() inside a test inherits project storageState -> storageFor/anon pass explicit empty storageState.
+Not started:
+- Step 2: smoke mutation flows (booking request, provider accept/decline, cancel, CMS publish) + axe with dialogs open in tests/e2e/integration-smoke.spec.ts.
+- Step 3 tail: rerun integration smoke on the new build (npx playwright test --config tests/e2e/integration.config.ts after .context/int2-serve.ps1).
+- Update docs/frontend/INTEGRATION_REPORT.md with INT3 results; TASK REPORT.
+Commands:
+- Build: FRONTEND_ADAPTER=fixture APP_ENV=test FEATURE_CLINICAL=true FIXTURE_BOOKING_SCENARIO=accepted npm run build (build is current as of this commit's src; rebuild only if src changes).
+- Spec run: pwsh .context/int3-run.ps1 -Spec <name> -Projects mobile-390,desktop-1280 [-Env @{K='V'}] [-ClinicalOff -Grep 'gate off|flag off'] (ws specs use ws-mobile-390,ws-desktop-1280).
+- Gate: pwsh .context/int2-check.ps1. Server on 3320 stopped.

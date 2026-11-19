@@ -1,9 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
+import { patientTest as test } from "./support/fixture-session";
 
 /**
  * Patient lab tests, caretaker and scheduled ambulance requests (PHASE-R6-C). Synthetic fixture adapter only,
- * with the server started as FIXTURE_PATIENT_SESSION=self and a short FIXTURE_PROVIDER_RESPONSE_MS. The request
+ * signed in as the synthetic patient (support/fixture-session.ts) and a server started with a short FIXTURE_PROVIDER_RESPONSE_MS. The request
  * stores live in the server process, so each test picks its own slot column per project and recovers when another
  * run took the slot first.
  */

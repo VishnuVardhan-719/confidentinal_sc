@@ -1,22 +1,18 @@
 /**
  * fe-p: patient records and notifications against the synthetic fixture app.
  *
- * The interim patient session and the clinical flag are SERVER env vars, so each mode needs its own server:
- *   clinical on:  FRONTEND_ADAPTER=fixture APP_ENV=test FIXTURE_PATIENT_SESSION=self FEATURE_CLINICAL=true
- *                 run with E2E_FEP_MODE=session E2E_FEP_CLINICAL=on
- *   clinical off: FRONTEND_ADAPTER=fixture APP_ENV=test FIXTURE_PATIENT_SESSION=self FIXTURE_NOTIFICATION_SCENARIO=empty
- *                 run with E2E_FEP_MODE=session E2E_FEP_CLINICAL=off
- *   guest:        FRONTEND_ADAPTER=fixture APP_ENV=test   (E2E_FEP_MODE=guest)
- * Without E2E_FEP_MODE the suite is skipped. Synthetic data only; fixture ids are not real records.
+ * Signed-in tests sign in as the synthetic patient through the real fe-b guards (support/fixture-session.ts);
+ * guest tests use an anonymous context. The clinical flag is a SERVER env var:
+ *   clinical on:  FRONTEND_ADAPTER=fixture APP_ENV=test FEATURE_CLINICAL=true (default run)
+ *   clinical off: FRONTEND_ADAPTER=fixture APP_ENV=test FIXTURE_NOTIFICATION_SCENARIO=empty, run with E2E_CLINICAL=off Synthetic data only; fixture ids are not real records.
  */
 import AxeBuilder from "@axe-core/playwright";
-import { expect as baseExpect, test, type Page } from "@playwright/test";
+import { expect as baseExpect, test as base, type Page } from "@playwright/test";
+import { CLINICAL_OFF, patientTest as test } from "./support/fixture-session";
 
 // Client navigations and server actions stream on a shared, often loaded dev machine; 5 s was flaky.
 const expect = baseExpect.configure({ timeout: 15_000 });
 
-const MODE = process.env.E2E_FEP_MODE;
-const CLINICAL = process.env.E2E_FEP_CLINICAL;
 const OWN_FINAL = "00000000-0000-4000-8000-000000000202";
 const OWN_DRAFT = "00000000-0000-4000-8000-000000000201";
 const OTHER_PATIENT = "00000000-0000-4000-8000-000000000203";
@@ -44,7 +40,7 @@ async function openNavIfCollapsed(page: Page) {
 }
 
 test.describe("patient records and notifications (clinical on)", () => {
-  test.skip(MODE !== "session" || CLINICAL !== "on", "needs the session-mode fixture server with FEATURE_CLINICAL=true");
+  test.skip(CLINICAL_OFF, "needs the server with FEATURE_CLINICAL=true");
 
   test("records list shows only signed records with reference, signer and version", async ({ page }) => {
     await page.goto("/en/patient/records");
@@ -95,7 +91,9 @@ test.describe("patient records and notifications (clinical on)", () => {
     }
   });
 
-  test("notifications show kind and time only, with an unread marker and mark as read", async ({ page }) => {
+  // Integration chose fe-d's /patient/notifications page (patient-scoped store, unread count in the nav), so
+  // this fe-p page design is not served; fe-d's page is covered by patient-workspace.spec.ts.
+  test.fixme("notifications show kind and time only, with an unread marker and mark as read", async ({ page }) => {
     await page.goto("/en/patient/notifications");
     await expect(page.getByRole("heading", { level: 1, name: "Notifications" })).toBeVisible();
     await expect(page.getByRole("heading", { level: 2, name: /Notifications \(1 unread\)/ })).toBeVisible();
@@ -127,13 +125,14 @@ test.describe("patient records and notifications (clinical on)", () => {
       await page.goto(start);
       await openNavIfCollapsed(page);
       await expect(page.getByRole("link", { name: "Records", exact: true }).first()).toHaveAttribute("href", "/en/patient/records");
-      await expect(page.getByRole("link", { name: "Notifications", exact: true }).first()).toHaveAttribute("href", "/en/patient/notifications");
+      // The nav label carries the server-derived unread count ("Notifications 2").
+      await expect(page.getByRole("link", { name: /^Notifications\b/ }).first()).toHaveAttribute("href", "/en/patient/notifications");
     }
   });
 });
 
 test.describe("patient records and notifications (clinical off, empty inbox)", () => {
-  test.skip(MODE !== "session" || CLINICAL !== "off", "needs the session-mode fixture server without FEATURE_CLINICAL");
+  test.skip(!CLINICAL_OFF, "needs the server without FEATURE_CLINICAL (E2E_CLINICAL=off)");
 
   test("records list and detail say clinical records are switched off", async ({ page }) => {
     for (const path of ["/en/patient/records", `/en/patient/records/${OWN_FINAL}`]) {
@@ -147,7 +146,8 @@ test.describe("patient records and notifications (clinical off, empty inbox)", (
     }
   });
 
-  test("an empty inbox says so honestly", async ({ page }) => {
+  // fe-p's inbox (FIXTURE_NOTIFICATION_SCENARIO) is not the served page; see the note on the clinical-on inbox test.
+  test.fixme("an empty inbox says so honestly", async ({ page }) => {
     await page.goto("/en/patient/notifications");
     await expect(page.getByRole("heading", { name: "No notifications" })).toBeVisible();
     await expect(page.getByRole("main").getByText("Updates about your requests, bookings and payments will appear here.")).toBeVisible();
@@ -156,10 +156,8 @@ test.describe("patient records and notifications (clinical off, empty inbox)", (
   });
 });
 
-test.describe("patient records and notifications (guest)", () => {
-  test.skip(MODE !== "guest", "needs the guest-mode fixture server");
-
-  test("private URLs redirect to login; a record id never travels in the return path", async ({ page }) => {
+base.describe("patient records and notifications (guest)", () => {
+  base("private URLs redirect to login; a record id never travels in the return path", async ({ page }) => {
     for (const [path, next] of [
       ["/en/patient/records", "/en/patient/records"],
       [`/te/patient/records/${OWN_FINAL}`, "/te/patient/records"],
@@ -170,7 +168,8 @@ test.describe("patient records and notifications (guest)", () => {
       const location = new URL(page.url());
       expect(location.pathname).toBe(`/${next.split("/")[1]}/login`);
       expect(location.searchParams.get("next")).toBe(next);
-      await expect(page.getByText("Synthetic data, not live")).toHaveCount(0);
+      // The login page itself labels the fixture adapter; no patient content may render there.
+      await expect(page.getByRole("main").getByRole("heading", { level: 1 })).not.toHaveText(/record|notification/i);
     }
   });
 });

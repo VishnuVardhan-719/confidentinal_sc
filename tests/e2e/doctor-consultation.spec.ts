@@ -5,22 +5,12 @@
  * share a document run serially.
  */
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test as base, type Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { FIXTURE_IDS as I } from "../../src/fixtures/clinical/world";
-import { wsOrigin, type WorkspaceServer } from "./workspace-servers";
+import { wsTest } from "./workspace-servers";
 
-const test = base.extend<{ as: (who: WorkspaceServer) => Promise<Page> }>({
-  baseURL: async ({}, provide, testInfo) => provide(wsOrigin(testInfo.project.name, "assigned")),
-  as: async ({ browser, viewport }, provide, testInfo) => {
-    const contexts: Awaited<ReturnType<typeof browser.newContext>>[] = [];
-    await provide(async (who) => {
-      const ctx = await browser.newContext({ baseURL: wsOrigin(testInfo.project.name, who), viewport });
-      contexts.push(ctx);
-      return ctx.newPage();
-    });
-    for (const c of contexts) await c.close();
-  },
-});
+// Signed in through the real fe-b guards (tests/e2e/workspace-servers.ts).
+const test = wsTest;
 
 const notes = (id: string) => `/en/doctor/consultations/${id}`;
 const PHI_MARKERS = ["Fixture Patient A", "Synthetic Nagar", "+910000000000", "Flat 0", "Synthetic note text"];
