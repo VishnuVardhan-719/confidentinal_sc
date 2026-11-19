@@ -15,7 +15,7 @@ select ((clock_timestamp() at time zone 'Asia/Kolkata')::date+3)::text as day \g
 select pg_temp.p5_provider('doctor') as doc_provider,pg_temp.p5_service('doctor') as doc_service \gset
 set local role authenticated;
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
-select pg_temp.assert_true((select count(*)>0 from public.list_slots(:'doc_provider',:'doc_service',:'day'::date)),'doctor slots while W1 is free');
+select pg_temp.assert_true((select count(*)>0 from public.list_slots(:'doc_provider'::uuid,:'doc_service'::uuid,:'day'::date)),'doctor slots while W1 is free');
 reset role;
 
 -- (1) Lab work overruns its reservation: W1 cannot be accepted as a driver.
@@ -35,7 +35,7 @@ do $$ declare m text; begin
 end $$;
 set local role authenticated;
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
-select pg_temp.assert_true((select count(*)=0 from public.list_slots(:'doc_provider',:'doc_service',:'day'::date)),'generic slots exclude the busy person');
+select pg_temp.assert_true((select count(*)=0 from public.list_slots(:'doc_provider'::uuid,:'doc_service'::uuid,:'day'::date)),'generic slots exclude the busy person');
 reset role;
 select pg_temp.as_user('c1000000-0000-4000-8000-000000000002');
 select booking_private.assignee_finish(:'l1','completed','other',gen_random_uuid());

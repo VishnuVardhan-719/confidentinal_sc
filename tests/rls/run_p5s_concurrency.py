@@ -22,6 +22,8 @@ assert re.fullmatch(r"p5s_engine_[0-9a-f]{12}", TARGET)
 b01.TARGET = TARGET
 base.TARGET = TARGET
 sql = b01.sql
+# Schema loads and suites can exceed the inherited 60 s per psql call on a busy Docker host.
+base.call.__defaults__ = (None, 900)
 
 PATIENT = "b1000000-0000-4000-8000-000000000001"
 M = "c1000000-0000-4000-8000-000000000001"
@@ -96,32 +98,33 @@ def scalar(statement):
     return sql(statement).strip()
 
 
-SETUP = """
-select 'E1='||pg_temp.p5_raw('doctor','confirmed',now()-interval '20 hours');
-select 'E2='||pg_temp.p5_raw('lab','in_progress',now()-interval '10 minutes','c1000000-0000-4000-8000-000000000002');
-select 'E3='||pg_temp.p5_raw('caretaker','in_progress',now()-interval '10 minutes','c1000000-0000-4000-8000-000000000003');
-select 'E4='||pg_temp.p5_raw('ambulance','confirmed',now()-interval '20 hours');
+SETUP = r"""
+select pg_temp.p5_raw('doctor','confirmed',now()-interval '20 hours') as e1 \gset
+select pg_temp.p5_raw('lab','in_progress',now()-interval '10 minutes','c1000000-0000-4000-8000-000000000002') as e2 \gset
+select pg_temp.p5_raw('caretaker','in_progress',now()-interval '10 minutes','c1000000-0000-4000-8000-000000000003') as e3 \gset
+select pg_temp.p5_raw('ambulance','confirmed',now()-interval '20 hours') as e4 \gset
+-- Open exceptions make the in-progress bookings escalatable for ops.
 select pg_temp.as_user('c1000000-0000-4000-8000-000000000002');
-select booking_private.open_exception(id,'eligibility_lapsed','other') from public.bookings where category='lab' and state='in_progress';
+select booking_private.open_exception(:'e2','eligibility_lapsed','other');
 select pg_temp.as_user('c1000000-0000-4000-8000-000000000003');
-select booking_private.open_exception(id,'eligibility_lapsed','other') from public.bookings where category='caretaker' and state='in_progress';
+select booking_private.open_exception(:'e3','eligibility_lapsed','other');
 -- Lab and ambulance accepts stand in for their category commands in this scratch DB only.
 update booking_private.category_paths set generic_accept=true where category in ('lab','ambulance');
-select 'X='||pg_temp.p5_book('ambulance',pg_temp.p5_at(2),array['c6000000-0000-4000-8000-000000000001','c6000000-0000-4000-8000-000000000003']::uuid[]);
-select 'X2='||pg_temp.p5_book('ambulance',pg_temp.p5_at(2,2),array['c6000000-0000-4000-8000-000000000002','c6000000-0000-4000-8000-000000000004']::uuid[]);
-select 'Y='||pg_temp.p5_create('lab',pg_temp.p5_at(5));
-select 'Y2='||pg_temp.p5_create('lab',pg_temp.p5_at(5,2));
+select pg_temp.p5_book('ambulance',pg_temp.p5_at(2),array['c6000000-0000-4000-8000-000000000001','c6000000-0000-4000-8000-000000000003']::uuid[]) as x \gset
+select pg_temp.p5_book('ambulance',pg_temp.p5_at(2,2),array['c6000000-0000-4000-8000-000000000002','c6000000-0000-4000-8000-000000000004']::uuid[]) as x2 \gset
+select pg_temp.p5_create('lab',pg_temp.p5_at(5)) as y \gset
+select pg_temp.p5_create('lab',pg_temp.p5_at(5,2)) as y2 \gset
+select pg_temp.p5_shift(:'x',now()-interval '10 minutes');
+select pg_temp.p5_shift(:'x2',now()-interval '10 minutes');
+select pg_temp.p5_step(:'x','c1000000-0000-4000-8000-000000000002','in_progress','other');
+select pg_temp.p5_step(:'x2','c1000000-0000-4000-8000-000000000003','in_progress','other');
+select 'E1='||:'e1'; select 'E2='||:'e2'; select 'E3='||:'e3'; select 'E4='||:'e4';
+select 'X='||:'x'; select 'X2='||:'x2'; select 'Y='||:'y'; select 'Y2='||:'y2';
 """
-SHIFT = """
-select pg_temp.p5_shift(id,now()-interval '10 minutes') from public.bookings where category='ambulance' and state='confirmed' and start_at>now();
-select pg_temp.p5_step(id,(select assigned_profile_id from public.booking_assignments a where a.booking_id=b.id and a.purpose='driver'),'in_progress','other')
- from public.bookings b where category='ambulance' and state='confirmed' and start_at<now() and start_at>now()-interval '1 hour';
-"""
-
 
 def concurrency():
     tests = ROOT / "supabase/tests"
-    script = "begin;" + (tests / "_b01_fixture.inc").read_text() + (tests / "_p5s_fixture.inc").read_text() + SETUP + SHIFT + "commit;"
+    script = "begin;" + (tests / "_b01_fixture.inc").read_text() + (tests / "_p5s_fixture.inc").read_text() + SETUP + "commit;"
     out = sql(script)
     ids = dict(re.findall(r"^(E1|E2|E3|E4|X2|X|Y2|Y)=([0-9a-f-]{36})$", out, re.M))
     if len(ids) != 8:
@@ -171,26 +174,41 @@ def concurrency():
     print("PASS: blocking exception vs accept on one resource serialises on the resource lock in both orders", flush=True)
 
 
+CRON = re.compile(r"^.*(\bpg_cron\b|\bcron\.|\bSCHEMA cron\b).*$", re.M | re.I)
+
+
+def without_cron(text):
+    """pg_cron can only live in the cron.database_name database (see 20261117001500 M2),
+    so the scratch copy drops the extension and the 000670 job; nothing else changes."""
+    return CRON.sub("-- pg_cron omitted in the scratch database", text)
+
+
+def build():
+    schema = base.call(["exec", base.CONTAINER, "pg_dump", "-U", "postgres", "-d", "postgres", "--schema-only"], timeout=180)
+    sql('create database "' + TARGET + '";', db="postgres")
+    sql(without_cron(schema), user="supabase_admin")
+    reset = "drop schema public cascade;drop schema if exists identity_private cascade;drop schema if exists providers_private cascade;drop schema if exists catalog_private cascade;drop schema if exists booking_private cascade;create schema public authorization postgres;grant usage on schema public to anon,authenticated,service_role;grant all on schema public to postgres,service_role;"
+    reset += "do $$ declare p record;begin for p in select schemaname,tablename,policyname from pg_policies where schemaname='storage' and tablename in ('objects','buckets') loop execute format('drop policy %I on %I.%I',p.policyname,p.schemaname,p.tablename);end loop;end $$;"
+    sql(reset, user="supabase_admin")
+    paths = sorted((ROOT / "supabase/migrations").glob("*.sql"))
+    for path in paths:
+        sql(without_cron(path.read_text()) if path.name.startswith("20261117000670_") else path.read_text())
+    print("PASS: fresh replay of every migration through " + paths[-1].name, flush=True)
+
+
+def drop():
+    assert re.fullmatch(r"p5s_engine_[0-9a-f]{12}", TARGET)
+    sql('drop database if exists "' + TARGET + '" with (force);', db="postgres", user="supabase_admin")
+    print("PASS: scratch database removed; source DB unchanged", flush=True)
+
+
 def main():
     base.assert_local_target()
-    created = False
     try:
-        schema = base.call(["exec", base.CONTAINER, "pg_dump", "-U", "postgres", "-d", "postgres", "--schema-only"], timeout=120)
-        sql('create database "' + TARGET + '";', db="postgres")
-        created = True
-        sql(schema, user="supabase_admin")
-        reset = "drop schema public cascade;drop schema if exists identity_private cascade;drop schema if exists providers_private cascade;drop schema if exists catalog_private cascade;drop schema if exists booking_private cascade;create schema public authorization postgres;grant usage on schema public to anon,authenticated,service_role;grant all on schema public to postgres,service_role;"
-        reset += "do $$ declare p record;begin for p in select schemaname,tablename,policyname from pg_policies where schemaname='storage' and tablename in ('objects','buckets') loop execute format('drop policy %I on %I.%I',p.policyname,p.schemaname,p.tablename);end loop;end $$;"
-        sql(reset, user="supabase_admin")
-        for path in sorted((ROOT / "supabase/migrations").glob("*.sql")):
-            sql(path.read_text())
-        print("PASS: fresh replay of every migration through " + sorted((ROOT / "supabase/migrations").glob("*.sql"))[-1].name, flush=True)
+        build()
         concurrency()
     finally:
-        if created:
-            assert re.fullmatch(r"p5s_engine_[0-9a-f]{12}", TARGET)
-            sql('drop database "' + TARGET + '" with (force);', db="postgres")
-            print("PASS: scratch database removed; source DB unchanged", flush=True)
+        drop()
 
 
 if __name__ == "__main__":

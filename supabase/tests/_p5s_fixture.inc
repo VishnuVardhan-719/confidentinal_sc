@@ -26,8 +26,8 @@ insert into public.providers(id,organization_id,category,status,verification_sta
  from unnest(array['doctor','lab','ambulance','caretaker']) with ordinality x(c,n);
 insert into public.provider_profiles(provider_id,display_name) select id,'Synthetic P5 '||category from public.providers where organization_id='c8000000-0000-4000-8000-000000000001';
 insert into public.provider_documents(id,provider_id,owner_profile_id,kind,object_name,content_type,status,expires_at)
- select d,p.id,'c1000000-0000-4000-8000-000000000001',providers_private.required_kind(p.category),p.id::text||'/'||d::text||'.pdf','application/pdf','verified',now()+interval '1 year'
- from public.providers p cross join lateral (select gen_random_uuid() d) g where p.organization_id='c8000000-0000-4000-8000-000000000001';
+ select d,id,'c1000000-0000-4000-8000-000000000001',providers_private.required_kind(category),id::text||'/'||d::text||'.pdf','application/pdf','verified',now()+interval '1 year'
+ from (select gen_random_uuid() d,p.id,p.category from public.providers p where p.organization_id='c8000000-0000-4000-8000-000000000001') x;
 insert into storage.objects(bucket_id,name) select bucket_id,object_name from public.provider_documents where provider_id in
  (select id from public.providers where organization_id='c8000000-0000-4000-8000-000000000001');
 insert into public.service_catalog_types(id,code,category,name,unit)
