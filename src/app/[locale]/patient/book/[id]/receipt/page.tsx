@@ -1,6 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { FixtureNotice } from "@/components/shared/fixture-notice";
 import { InlineError } from "@/components/shared/inline-error";
@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { formatDateTime, formatPaise, type Locale } from "@/lib/format";
 import { journeyApis } from "@/modules/bookings/journey";
-import { getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { requirePatientSession } from "@/modules/patient-dashboard/session";
+import { AccessDenied } from "@/components/auth/access-denied";
 import { PatientBookShell } from "../../shell";
 
 export async function generateMetadata() {
@@ -28,8 +29,8 @@ export default async function BookingReceiptPage({ params }: PageProps<"/[locale
   const { locale: raw, id } = await params;
   await connection();
   const locale = toLocale(raw);
-  const session = getPatientSession();
-  if (session.status !== "ok") redirect(patientLoginRedirect(locale, `/${locale}/patient/book/${id}/receipt`));
+  const session = await requirePatientSession(locale, `/${locale}/patient/book/${id}/receipt`);
+  if (session.status !== "ok") return <AccessDenied reason={session.reason} />;
   const apis = journeyApis();
   const booking = await apis.bookings.get(id).catch(() => ({ ok: false as const, error: { code: "unavailable" as const } }));
   if (!booking.ok && ["not_found", "validation", "forbidden"].includes(booking.error.code)) notFound();

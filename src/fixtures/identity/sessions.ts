@@ -12,6 +12,8 @@ export const FIXTURE_IDS = {
   patientComplete: "00000000-0000-4000-8000-000000000102",
   doctorDraftUser: "00000000-0000-4000-8000-000000000201",
   doctorActiveUser: "00000000-0000-4000-8000-000000000202",
+  /** Second active doctor, used to prove one doctor cannot see another doctor's visits. */
+  doctorOtherUser: "00000000-0000-4000-8000-000000000203",
   labOwnerUser: "00000000-0000-4000-8000-000000000301",
   ambulanceUser: "00000000-0000-4000-8000-000000000401",
   caretakerUser: "00000000-0000-4000-8000-000000000501",
@@ -20,6 +22,7 @@ export const FIXTURE_IDS = {
   doctorDraftProvider: "00000000-0000-4000-8000-000000002001",
   doctorActiveProvider: "00000000-0000-4000-8000-000000002002",
   doctorSubmittedProvider: "00000000-0000-4000-8000-000000002003",
+  doctorOtherProvider: "00000000-0000-4000-8000-000000002004",
   labProvider: "00000000-0000-4000-8000-000000003001",
   ambulanceProvider: "00000000-0000-4000-8000-000000004001",
   caretakerProvider: "00000000-0000-4000-8000-000000005001",
@@ -36,6 +39,7 @@ export const FIXTURE_SCENARIOS = [
   "patient_complete",
   "doctor_draft",
   "doctor_active",
+  "doctor_other",
   "lab_pending_review",
   "ambulance_changes_required",
   "caretaker_suspended",
@@ -115,6 +119,12 @@ export const FIXTURE_SESSIONS: Readonly<Record<FixtureScenario, Session>> = {
     kind: "authenticated",
     identity: identity(FIXTURE_IDS.adminUser, "Synthetic Verifier H", [{ role: "admin", state: "active" }]),
   },
+  doctor_other: {
+    kind: "authenticated",
+    identity: identity(FIXTURE_IDS.doctorOtherUser, "Synthetic Doctor J", [
+      { role: "doctor", state: "active", providerId: FIXTURE_IDS.doctorOtherProvider, providerStatus: "active" },
+    ]),
+  },
   multi_role: {
     kind: "authenticated",
     identity: identity(FIXTURE_IDS.multiRoleUser, "Synthetic Multi-role I", [
@@ -132,6 +142,7 @@ export const FIXTURE_ACCOUNTS: Readonly<Record<string, FixtureScenario>> = {
   "patient.complete@example.invalid": "patient_complete",
   "doctor.draft@example.invalid": "doctor_draft",
   "doctor.active@example.invalid": "doctor_active",
+  "doctor.other@example.invalid": "doctor_other",
   "lab.owner@example.invalid": "lab_pending_review",
   "ambulance.operator@example.invalid": "ambulance_changes_required",
   "caregiver.suspended@example.invalid": "caretaker_suspended",

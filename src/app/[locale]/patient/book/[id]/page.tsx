@@ -1,6 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
 import { RefreshStatus, RequestActions } from "@/components/booking/request-actions";
@@ -20,9 +20,10 @@ import { SYNTHETIC_CANCELLATION_POLICY } from "@/fixtures/marketplace/booking-st
 import { journeyApis } from "@/modules/bookings/journey";
 import type { Booking } from "@/modules/bookings/schemas";
 import { bookingStatusPresentation } from "@/modules/bookings/status";
-import { getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { requirePatientSession } from "@/modules/patient-dashboard/session";
 import { paymentStatusPresentation } from "@/modules/payments/status";
 import { cancelBookingAction, listSlotsAction, rescheduleBookingAction } from "../actions";
+import { AccessDenied } from "@/components/auth/access-denied";
 import { PatientBookShell } from "../shell";
 
 export async function generateMetadata() {
@@ -60,8 +61,8 @@ export default async function BookingRequestPage({ params }: PageProps<"/[locale
   const { locale: raw, id } = await params;
   await connection();
   const locale = toLocale(raw);
-  const session = getPatientSession();
-  if (session.status !== "ok") redirect(patientLoginRedirect(locale, `/${locale}/patient/book/${id}`));
+  const session = await requirePatientSession(locale, `/${locale}/patient/book/${id}`);
+  if (session.status !== "ok") return <AccessDenied reason={session.reason} />;
 
   const apis = journeyApis();
   const booking = await apis.bookings.get(id).catch(() => ({ ok: false as const, error: { code: "unavailable" as const } }));

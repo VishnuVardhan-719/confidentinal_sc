@@ -24,7 +24,7 @@ export default async function FamilyPage({ params, searchParams }: PageProps<"/[
   const { locale: raw } = await params;
   await connection();
   const locale = toLocale(raw);
-  const { api, synthetic } = familyPage(locale);
+  const { api, synthetic } = await familyPage(locale);
   const [t, sp] = await Promise.all([getTranslations("patientAccount.family"), searchParams]);
   const flash = parseFlash(sp.status);
   const result = await api.list().catch(() => fail("unavailable"));

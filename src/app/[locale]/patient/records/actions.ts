@@ -15,7 +15,7 @@ const idSchema = z.uuid();
  */
 export async function requestMyRecordPdfLinkAction(consultationId: string): Promise<ApiResult<PdfLink>> {
   if (!idSchema.safeParse(consultationId).success) return fail("validation");
-  const session = getPatientSession();
+  const session = await getPatientSession();
   if (session.status !== "ok") return fail("unauthenticated");
   try {
     return await getRecordsApi(process.env, { fixtureActor: session.fixtureActor ?? undefined }).requestMyRecordPdfLink(consultationId.toLowerCase());

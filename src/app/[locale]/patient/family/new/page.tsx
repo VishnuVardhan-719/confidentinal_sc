@@ -16,7 +16,7 @@ export async function generateMetadata() {
 export default async function NewFamilyMemberPage({ params }: PageProps<"/[locale]/patient/family/new">) {
   const { locale } = await params;
   await connection();
-  const { synthetic } = familyPage(toLocale(locale));
+  const { synthetic } = await familyPage(toLocale(locale));
   const t = await getTranslations("patientAccount.family");
   return (
     <PatientShell synthetic={synthetic}>

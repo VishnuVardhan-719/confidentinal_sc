@@ -15,6 +15,17 @@ import { checkReschedule, rescheduleRequestSchema } from "@/components/patient/r
 import { permittedActions } from "@/modules/bookings/actions";
 import type { BookingEvent } from "@/modules/bookings/schemas";
 import { patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { FIXTURE_SESSIONS } from "@/fixtures/identity";
+
+// Actions re-check the patient through fe-b authorizeRole (mocked here: no request scope in unit tests).
+const guard = vi.hoisted(() => ({ authorizeRole: vi.fn(), requireRole: vi.fn(), isFixtureAdapter: () => true }));
+vi.mock("@/modules/auth/server", () => guard);
+vi.mock("next/server", async (orig) => ({ ...(await orig<typeof import("next/server")>()), connection: async () => undefined }));
+const patientIdentity = (() => {
+  const s = FIXTURE_SESSIONS.patient_complete;
+  if (s.kind !== "authenticated") throw new Error("fixture");
+  return s.identity;
+})();
 
 const ID = "00000000-0000-4000-8000-000000000061";
 const OTHER = "00000000-0000-4000-8000-000000000099";
@@ -138,7 +149,7 @@ describe("patient booking server actions (fixture adapter)", () => {
     vi.stubEnv("FRONTEND_ADAPTER", "fixture");
     vi.stubEnv("APP_ENV", "test");
     vi.stubEnv("FIXTURE_BOOKING_SCENARIO", "requested");
-    vi.stubEnv("FIXTURE_PATIENT_SESSION", session ? "self" : "");
+    guard.authorizeRole.mockResolvedValue(session ? { kind: "allowed", identity: patientIdentity, workspaces: [] } : { kind: "redirect", to: "/en/login?next=%2Fen%2Fpatient%2Fbookings" });
   };
 
   it("validates ids and versions before checking anything else", async () => {

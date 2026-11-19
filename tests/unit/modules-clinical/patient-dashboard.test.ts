@@ -18,21 +18,23 @@ import {
   paymentBadge,
   type PatientDashboardDeps,
 } from "@/modules/patient-dashboard/loader";
-import { authorizerFor, dashboardBookingsApi, getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { DEFAULT_PATIENT_ACTOR } from "@/fixtures/clinical/world";
+import { FIXTURE_SESSIONS } from "@/fixtures/identity";
+import { dashboardBookingsApi, patientLoginRedirect, patientSessionFrom } from "@/modules/patient-dashboard/session";
 import type { PatientRecordSummary } from "@/modules/records/types";
 
 // Synthetic data - not live.
-const ENV = { FRONTEND_ADAPTER: "fixture", FIXTURE_PATIENT_SESSION: "self", FIXTURE_BOOKING_SCENARIO: "accepted" };
+const ENV = { FRONTEND_ADAPTER: "fixture", FIXTURE_BOOKING_SCENARIO: "accepted" };
 const NOW = new Date("2026-11-18T04:30:00.000Z");
 
 function deps(env: Record<string, string | undefined> = ENV, over: Partial<PatientDashboardDeps> = {}): PatientDashboardDeps {
-  const s = getPatientSession(env);
   return {
-    authorizePatient: authorizerFor(env),
+    // The page re-checks fe-b authorizeRole per operation; here the patient is always allowed.
+    authorizePatient: async () => ok(null),
     bookings: dashboardBookingsApi(env),
     payments: createPaymentsApi(env),
     patient: createPatientApi(env),
-    records: getRecordsApi(env, { fixtureActor: s.status === "ok" ? s.fixtureActor ?? undefined : undefined }),
+    records: getRecordsApi(env, { fixtureActor: DEFAULT_PATIENT_ACTOR }),
     ...over,
   };
 }
@@ -127,12 +129,23 @@ describe("patient dashboard: profile completeness prompt", () => {
   });
 });
 
-describe("patient dashboard: interim session", () => {
-  it("fails closed outside an explicit fixture session", () => {
-    expect(getPatientSession({ FRONTEND_ADAPTER: "http" })).toEqual({ status: "unauthenticated" });
-    expect(getPatientSession({ FRONTEND_ADAPTER: "fixture" })).toEqual({ status: "unauthenticated" });
-    expect(() => getPatientSession({ ...ENV, APP_ENV: "production" })).toThrow();
-    expect(getPatientSession(ENV).status).toBe("ok");
+describe("patient dashboard: session from fe-b guard", () => {
+  const identity = (scenario: keyof typeof FIXTURE_SESSIONS) => {
+    const s = FIXTURE_SESSIONS[scenario];
+    if (s.kind !== "authenticated") throw new Error("not authenticated");
+    return s.identity;
+  };
+
+  it("only an allowed patient gets a session; redirects and denials fail closed", () => {
+    expect(patientSessionFrom({ kind: "redirect", to: "/en/login?next=%2Fen%2Fpatient%2Fdashboard" }, true)).toEqual({ status: "unauthenticated" });
+    expect(patientSessionFrom({ kind: "redirect", to: "/en/doctor/dashboard" }, true)).toEqual({ status: "unauthenticated" });
+    expect(patientSessionFrom({ kind: "denied", reason: "account_restricted" }, true)).toEqual({ status: "unauthenticated" });
+  });
+
+  it("fixture mode maps the patient to the synthetic world; http mode carries no fixture actor", () => {
+    const allowed = { kind: "allowed" as const, identity: identity("patient_complete"), workspaces: [] };
+    expect(patientSessionFrom(allowed, true)).toEqual({ status: "ok", synthetic: true, fixtureActor: DEFAULT_PATIENT_ACTOR });
+    expect(patientSessionFrom(allowed, false)).toEqual({ status: "ok", synthetic: false, fixtureActor: null });
   });
 
   it("login redirect keeps only safe patient paths in next", () => {

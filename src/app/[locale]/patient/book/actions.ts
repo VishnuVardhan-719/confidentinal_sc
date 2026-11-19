@@ -15,7 +15,7 @@ import type { BookingOffer, PatientAddress } from "@/modules/patient/schemas";
  * the module adapters (unknown is passed through to them, not trusted). Errors become stable codes only.
  */
 async function guarded<T>(run: (apis: JourneyApis) => Promise<ApiResult<T>>): Promise<ApiResult<T>> {
-  if (getPatientSession().status !== "ok") return fail("unauthenticated");
+  if ((await getPatientSession()).status !== "ok") return fail("unauthenticated");
   try { return await run(journeyApis()); } catch { return fail("unavailable"); }
 }
 

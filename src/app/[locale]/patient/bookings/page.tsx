@@ -18,8 +18,9 @@ import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/lib/format";
 import { fail } from "@/lib/api/result";
 import { createPatientBookingLoaders } from "@/modules/bookings/server-loaders";
-import { authorizerFor, dashboardBookingsApi, getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { authorizerFor, dashboardBookingsApi, patientLoginRedirect, requirePatientSession } from "@/modules/patient-dashboard/session";
 import { createPaymentsApi } from "@/modules/payments/api";
+import { AccessDenied } from "@/components/auth/access-denied";
 import { getRecordsApi } from "@/modules/records";
 
 export async function generateMetadata() {
@@ -33,15 +34,15 @@ export default async function PatientBookingsPage({ params, searchParams }: Page
   const { locale: raw } = await params;
   await connection();
   const locale = toLocale(raw);
-  const session = getPatientSession();
+  const session = await requirePatientSession(locale, `/${locale}/patient/bookings`);
   // Advisory UI guard; the loaders and backend authorize every read independently.
-  if (session.status !== "ok") redirect(patientLoginRedirect(locale, `/${locale}/patient/bookings`));
+  if (session.status !== "ok") return <AccessDenied reason={session.reason} />;
 
   const query = parseBookingsQuery(await searchParams);
   const [t, tAll] = await Promise.all([getTranslations("patient.bookings"), getTranslations()]);
   const tk = asTk(tAll);
   const env = process.env;
-  const loaders = createPatientBookingLoaders({ authorizePatient: authorizerFor(env), api: dashboardBookingsApi(env) });
+  const loaders = createPatientBookingLoaders({ authorizePatient: authorizerFor(), api: dashboardBookingsApi(env) });
   const records = getRecordsApi(env, { fixtureActor: session.fixtureActor ?? undefined });
   const payments = createPaymentsApi(env);
 
@@ -56,7 +57,7 @@ export default async function PatientBookingsPage({ params, searchParams }: Page
   if (!list.ok) {
     const code = list.error.code;
     return (
-      <PatientShell synthetic={session.synthetic}>
+      <PatientShell synthetic={session.synthetic} fixtureActor={session.fixtureActor}>
         {header}
         {code === "forbidden" || code === "not_found" ? (
           <Notice tone="neutral" icon="lock" title={t("state.denied")} />
@@ -90,7 +91,7 @@ export default async function PatientBookingsPage({ params, searchParams }: Page
 
   if (counts.all === 0 && !query.cursor) {
     return (
-      <PatientShell synthetic={session.synthetic}>
+      <PatientShell synthetic={session.synthetic} fixtureActor={session.fixtureActor}>
         {header}
         <EmptyState
           title={t("empty.title")}
@@ -106,7 +107,7 @@ export default async function PatientBookingsPage({ params, searchParams }: Page
   }
 
   return (
-    <PatientShell synthetic={session.synthetic}>
+    <PatientShell synthetic={session.synthetic} fixtureActor={session.fixtureActor}>
       {header}
 
       <section aria-labelledby="bookings-filter" className="grid gap-3">

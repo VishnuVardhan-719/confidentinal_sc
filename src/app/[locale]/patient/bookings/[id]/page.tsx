@@ -29,11 +29,12 @@ import { fail, type ApiResult } from "@/lib/api/result";
 import { formatDateTime, formatPaise, type Locale } from "@/lib/format";
 import { createPatientBookingLoaders } from "@/modules/bookings/server-loaders";
 import type { Booking, BookingEvent } from "@/modules/bookings/schemas";
-import { authorizerFor, dashboardBookingsApi, getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { authorizerFor, dashboardBookingsApi, patientLoginRedirect, requirePatientSession } from "@/modules/patient-dashboard/session";
 import { createPaymentsApi } from "@/modules/payments/api";
 import type { PaymentSummary } from "@/modules/payments/schemas";
 import { createProvidersApi } from "@/modules/providers/api";
 import { getRecordsApi } from "@/modules/records";
+import { AccessDenied } from "@/components/auth/access-denied";
 import { cancelBookingAction, requestRescheduleAction } from "../actions";
 
 export async function generateMetadata() {
@@ -59,9 +60,9 @@ export default async function PatientBookingDetailPage({ params }: PageProps<"/[
   await connection();
   const locale = toLocale(raw);
   const id = z.uuid().safeParse(rawId).success ? rawId.toLowerCase() : null;
-  const session = getPatientSession();
+  const session = await requirePatientSession(locale, bookingDetailPath(locale, id));
   // Advisory UI guard; the loaders and backend authorize every read and mutation independently.
-  if (session.status !== "ok") redirect(patientLoginRedirect(locale, bookingDetailPath(locale, id)));
+  if (session.status !== "ok") return <AccessDenied reason={session.reason} />;
 
   const [t, tc, tAll] = await Promise.all([getTranslations("patient.booking"), getTranslations("patient.dashboard.card"), getTranslations()]);
   const tk = asTk(tAll);
@@ -74,7 +75,7 @@ export default async function PatientBookingDetailPage({ params }: PageProps<"/[
     />
   );
 
-  const shell = (children: ReactNode) => <PatientShell synthetic={session.synthetic}>{children}</PatientShell>;
+  const shell = (children: ReactNode) => <PatientShell synthetic={session.synthetic} fixtureActor={session.fixtureActor}>{children}</PatientShell>;
   const notAvailable = shell(
     <>
       <PageHeader title={t("title")} breadcrumb={crumbs(t("title"))} />
@@ -89,7 +90,7 @@ export default async function PatientBookingDetailPage({ params }: PageProps<"/[
 
   const env = process.env;
   const loaders = createPatientBookingLoaders({
-    authorizePatient: authorizerFor(env),
+    authorizePatient: authorizerFor(),
     api: dashboardBookingsApi(env),
     payments: createPaymentsApi(env),
   });

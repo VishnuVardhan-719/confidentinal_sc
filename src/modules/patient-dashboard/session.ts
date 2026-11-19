@@ -1,6 +1,10 @@
 import { fail, ok, type ApiResult } from "@/lib/api/result";
 import { getAdapterMode } from "@/lib/api/mode";
-import { assertFixtureAllowed, DEFAULT_PATIENT_ACTOR, type FixtureActor } from "@/fixtures/clinical/world";
+import { connection } from "next/server";
+import type { FixtureActor } from "@/fixtures/clinical/world";
+import { fixtureActorFor } from "@/modules/auth/fixture-actors";
+import type { DeniedReason, GuardOutcome } from "@/modules/auth/guard";
+import { authorizeRole, isFixtureAdapter, requireRole } from "@/modules/auth/server";
 import { createBookingsApi, type BookingsApi } from "@/modules/bookings/api";
 import { createBookingsFixtureApi } from "@/modules/bookings/fixture";
 
@@ -10,26 +14,44 @@ export type PatientSession =
   | { status: "ok"; synthetic: boolean; fixtureActor: FixtureActor | null }
   | { status: "unauthenticated" };
 
+export type PatientPageSession = Extract<PatientSession, { status: "ok" }> | { status: "denied"; reason: DeniedReason };
+
+/** Allowed patient -> session view. Pure; exported for unit tests. */
+export function patientSessionFrom(outcome: GuardOutcome, fixture: boolean): PatientSession {
+  if (outcome.kind !== "allowed") return { status: "unauthenticated" };
+  return { status: "ok", synthetic: fixture, fixtureActor: fixture ? fixtureActorFor(outcome.identity, "patient") : null };
+}
+
 /**
- * INTERIM patient session (server-only), same model as modules/doctor/session.ts.
- * - http mode: fe2-b requireRole("patient") is not on this branch, so every request is
- *   unauthenticated and redirected to login. Fails closed; never fakes a session.
- * - fixture mode (never production): FIXTURE_PATIENT_SESSION=self, a SERVER env var (not a cookie,
- *   URL or user choice). Unset = unauthenticated.
- * Replace with requireRole("patient") when fe2-b merges (docs/frontend/REQUESTS.md R-FE-D-31).
+ * Patient session for SERVER ACTIONS and per-operation re-checks, on fe-b `authorizeRole("patient")`.
+ * Never redirects; anything other than an allowed, usable patient workspace is "unauthenticated"
+ * (refused). The module adapters and the backend still authorize every read and write.
  */
-export function getPatientSession(env: Env = process.env): PatientSession {
-  if (getAdapterMode(env) !== "fixture") return { status: "unauthenticated" };
-  assertFixtureAllowed(env);
-  if (env.FIXTURE_PATIENT_SESSION !== "self") return { status: "unauthenticated" };
-  return { status: "ok", synthetic: true, fixtureActor: DEFAULT_PATIENT_ACTOR };
+export async function getPatientSession(): Promise<PatientSession> {
+  await connection();
+  return patientSessionFrom(await authorizeRole("patient", { locale: "en" }), isFixtureAdapter());
+}
+
+/**
+ * Patient session for PAGES, on fe-b `requireRole("patient")`: signed out -> login with `path` as
+ * the return path; onboarding incomplete -> onboarding; wrong role -> the user's own landing.
+ * A workspace that exists but cannot be used (or an unavailable session lookup) is `denied`;
+ * pages render <AccessDenied reason/>. Pass a path without record or booking IDs when the ID
+ * must not travel through the login URL.
+ */
+export async function requirePatientSession(locale: string, path: string): Promise<PatientPageSession> {
+  await connection();
+  const loc = locale === "te" || locale === "hi" ? locale : "en";
+  const access = await requireRole("patient", { locale: loc, path });
+  if (access.kind === "denied") return { status: "denied", reason: access.reason };
+  const s = patientSessionFrom(access, isFixtureAdapter());
+  return s.status === "ok" ? s : { status: "denied", reason: "forbidden" };
 }
 
 /** Per-operation re-check for the bookings loaders (they authorize on every call). */
-export function authorizerFor(env: Env = process.env): () => Promise<ApiResult<null>> {
-  return async () => (getPatientSession(env).status === "ok" ? ok(null) : fail("unauthenticated"));
+export function authorizerFor(): () => Promise<ApiResult<null>> {
+  return async () => ((await getPatientSession()).status === "ok" ? ok(null) : fail("unauthenticated"));
 }
-
 const SAFE_NEXT = /^\/(en|te|hi)\/patient(\/[a-z0-9-]+)*$/;
 
 const BOOKING_SCENARIOS = ["empty", "requested", "accepted", "declined", "cancelled", "cancel_window"] as const;

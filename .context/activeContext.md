@@ -183,3 +183,8 @@ Order: lab -> caretakers -> ambulance; commit per sub-task.
   - e2e spec pattern tests/e2e/patient-family.spec.ts; add new spec to .context/fep-e2e-all.ps1
 - NEXT: saved-providers (/patient/saved), then reviews (/patient/reviews), then reminder-prefs (/patient/settings/reminders).
 - Port 3380 is still held by fe2-d's server; use 3384.
+
+## fe-int2 PHASE-INT2 (2026-11-19, replaces fe-int)
+- Step1+2 DONE: merged a(ef13b79) b(1e69436) c(00559ba) d(31be862) e(8e9e524) p(a2c19ed); gate after each: tsc/lint/vitest green (final 83 files/1268). Helpers: .context/int2-check.ps1 (gate), .context/json-merge.mjs (message JSON deep-merge from git stages).
+- Resolutions: notifications module split (fe-c api/fixture/http; fe-d patient-*.ts behind index); content-source re-exports modules/content/public (stories-source dropped); records pages = fe-p, notifications page = fe-d.
+- Step3 guards: IN PROGRESS. Step4 build+playwright port 3320: pending.

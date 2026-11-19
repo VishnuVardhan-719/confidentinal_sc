@@ -1,5 +1,4 @@
 import { getTranslations } from "next-intl/server";
-import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { ProviderDirectory } from "@/components/service-requests/provider-directory";
 import { ServicesShell } from "@/components/service-requests/services-shell";
@@ -8,7 +7,8 @@ import { PageHeader } from "@/components/shared/page-header";
 import { pinSchema } from "@/modules/catalog/schemas";
 import { createLabOrdersApi } from "@/modules/lab-orders/api";
 import type { LabProvider } from "@/modules/lab-orders/types";
-import { getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { requirePatientSession } from "@/modules/patient-dashboard/session";
+import { AccessDenied } from "@/components/auth/access-denied";
 import { servicePatientApi } from "@/modules/service-requests/server";
 
 export async function generateMetadata() {
@@ -24,8 +24,8 @@ export default async function PatientLabTestsPage({ params, searchParams }: Page
   const { locale: raw } = await params;
   await connection();
   const locale = toLocale(raw);
-  const session = getPatientSession();
-  if (session.status !== "ok") redirect(patientLoginRedirect(locale, `/${locale}/patient/lab-tests`));
+  const session = await requirePatientSession(locale, `/${locale}/patient/lab-tests`);
+  if (session.status !== "ok") return <AccessDenied reason={session.reason} />;
   const rawPin = first((await searchParams).pin)?.trim() || null;
   const pin = rawPin ? pinSchema.safeParse(rawPin) : null;
   const t = await getTranslations("services.lab");

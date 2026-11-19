@@ -1,6 +1,5 @@
 import { ArrowLeft } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { z } from "zod";
 import { BookingWizard } from "@/components/booking/booking-wizard";
@@ -12,8 +11,9 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { journeyApis } from "@/modules/bookings/journey";
-import { getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { requirePatientSession } from "@/modules/patient-dashboard/session";
 import { addAddressAction, bookingOfferAction, createBookingAction, getBookingAction, listSlotsAction, prepareBookingAction } from "./actions";
+import { AccessDenied } from "@/components/auth/access-denied";
 import { PatientBookShell } from "./shell";
 
 export async function generateMetadata() {
@@ -32,12 +32,12 @@ export default async function PatientBookPage({ params, searchParams }: PageProp
   const { locale: raw } = await params;
   await connection();
   const locale = toLocale(raw);
-  const session = getPatientSession();
+  const session = await requirePatientSession(locale, `/${locale}/patient/book`);
   const query = await searchParams;
   const providerId = z.uuid().safeParse(first(query.providerId));
   const serviceId = z.uuid().safeParse(first(query.serviceId));
   // Advisory guard for navigation; every server action re-checks the session.
-  if (session.status !== "ok") redirect(patientLoginRedirect(locale, `/${locale}/patient/book`));
+  if (session.status !== "ok") return <AccessDenied reason={session.reason} />;
 
   const t = await getTranslations("booking.wizard");
   const back = <Button asChild variant="quiet"><Link href="/doctors"><ArrowLeft aria-hidden />{t("backToSearch")}</Link></Button>;

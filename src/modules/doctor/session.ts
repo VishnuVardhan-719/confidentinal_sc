@@ -1,9 +1,12 @@
-import { getAdapterMode } from "@/lib/api/mode";
-import { assertFixtureAllowed, FIXTURE_IDS, type FixtureActor } from "@/fixtures/clinical/world";
+import { cookies } from "next/headers";
+import { fixtureActorFor, isLoginRedirect } from "@/modules/auth/fixture-actors";
+import type { GuardOutcome } from "@/modules/auth/guard";
+import type { Locale } from "@/modules/auth/roles";
+import { authorizeRole, isFixtureAdapter, requireRole } from "@/modules/auth/server";
+import { readAccessToken } from "@/modules/auth/session-cookie";
 import type { ApiContext } from "@/modules/clinical/context";
+import type { HttpOptions } from "@/modules/clinical/http-util";
 import type { GuardResult } from "./routing";
-
-type Env = Record<string, string | undefined>;
 
 export type DoctorSession = {
   guard: GuardResult;
@@ -13,27 +16,44 @@ export type DoctorSession = {
   synthetic: boolean;
 };
 
-/**
- * INTERIM session adapter for /[locale]/doctor/** (server-only use).
- *
- * - http mode: the fe2-b auth module (requireRole + session cookie -> bearer token) is not on
- *   this branch yet, so there is no way to read a session here. Every request is treated as
- *   unauthenticated and redirected to login. This fails closed; it never fakes a session.
- * - fixture mode (never production): the synthetic doctor is chosen by the SERVER env var
- *   FIXTURE_DOCTOR_SESSION=assigned|other. It is not a cookie, not a URL switch and not user
- *   selectable, so it cannot be used to fake a role in a deployed app. Unset = unauthenticated.
- *
- * Replace with fe2-b requireRole("doctor") and the fixture-session mapping when merged
- * (docs/frontend/REQUESTS.md #15, #26).
- */
-export async function getDoctorSession(env: Env = process.env): Promise<DoctorSession> {
-  if (getAdapterMode(env) !== "fixture") {
-    return { guard: { status: "unauthenticated" }, ctx: {}, synthetic: false };
+/** Allowed doctor -> per-request wiring. Pure; exported for unit tests. */
+export function doctorSessionFrom(outcome: GuardOutcome, fixture: boolean, http?: HttpOptions): DoctorSession {
+  if (outcome.kind !== "allowed") {
+    return { guard: isLoginRedirect(outcome) ? { status: "unauthenticated" } : { status: "forbidden" }, ctx: {}, synthetic: fixture };
   }
-  assertFixtureAllowed(env);
-  const which = env.FIXTURE_DOCTOR_SESSION;
-  const doctorId = which === "assigned" ? FIXTURE_IDS.doctorAssigned : which === "other" ? FIXTURE_IDS.doctorOther : null;
-  if (!doctorId) return { guard: { status: "unauthenticated" }, ctx: {}, synthetic: true };
-  const actor: FixtureActor = { role: "doctor", doctorId };
-  return { guard: { status: "ok" }, ctx: { fixtureActor: actor }, synthetic: true };
+  if (!fixture) return { guard: { status: "ok" }, ctx: http ? { http } : {}, synthetic: false };
+  const actor = fixtureActorFor(outcome.identity, "doctor");
+  // A synthetic identity with no clinical-world doctor gets no actor: fixture adapters deny everything.
+  return { guard: { status: "ok" }, ctx: actor ? { fixtureActor: actor } : {}, synthetic: true };
+}
+
+/**
+ * Doctor session for the layout and SERVER ACTIONS, on fe-b `authorizeRole("doctor")` (never
+ * redirects; anything but allowed is refused). Pages use `requireDoctorSession` (redirects).
+ * http mode: the clinical http adapters read the bearer token from the session cookie themselves.
+ */
+export async function getDoctorSession(): Promise<DoctorSession> {
+  return doctorSessionFrom(await authorizeRole("doctor", { locale: "en" }), isFixtureAdapter(), sessionHttp());
+}
+
+/**
+ * Doctor session for PAGES, on fe-b `requireRole("doctor")`: signed out -> login with `path`;
+ * incomplete workspace -> onboarding; wrong role -> own landing. Workspace exists but is not
+ * usable -> denied ("restricted" for a restricted account, otherwise "forbidden").
+ */
+export async function requireDoctorSession(locale: Locale, path: string): Promise<{ ok: true; session: DoctorSession } | { ok: false; reason: "forbidden" | "restricted" }> {
+  const access = await requireRole("doctor", { locale, path });
+  if (access.kind === "denied") return { ok: false, reason: access.reason === "account_restricted" ? "restricted" : "forbidden" };
+  return { ok: true, session: doctorSessionFrom(access, isFixtureAdapter(), sessionHttp()) };
+}
+/** Bearer token from the httpOnly session cookie, read per call; origin from APP_ORIGIN only. */
+function sessionHttp(): HttpOptions {
+  const raw = process.env.APP_ORIGIN;
+  let baseUrl: string | undefined;
+  try {
+    baseUrl = raw ? new URL(raw).origin : undefined;
+  } catch {
+    baseUrl = undefined;
+  }
+  return { getAccessToken: async () => readAccessToken(await cookies()), ...(baseUrl ? { baseUrl } : {}) };
 }

@@ -15,7 +15,7 @@ const versionSchema = z.number().int().positive();
  */
 export async function markNotificationReadAction(id: string, expectedVersion: number): Promise<ApiResult<{ version: number }>> {
   if (!idSchema.safeParse(id).success || !versionSchema.safeParse(expectedVersion).success) return fail("validation");
-  if (getPatientSession().status !== "ok") return fail("unauthenticated");
+  if ((await getPatientSession()).status !== "ok") return fail("unauthenticated");
   try {
     const r = await patientNotificationsApi(process.env).markRead(id.toLowerCase(), { expectedVersion });
     return r.ok ? ok({ version: r.data.version }) : r;

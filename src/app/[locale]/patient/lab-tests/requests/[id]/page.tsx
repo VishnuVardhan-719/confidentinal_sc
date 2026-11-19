@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { RequestStatusView } from "@/components/service-requests/request-status";
 import { ServicesShell } from "@/components/service-requests/services-shell";
@@ -7,8 +7,9 @@ import { InlineError } from "@/components/shared/inline-error";
 import { PageHeader } from "@/components/shared/page-header";
 import { createLabOrdersApi } from "@/modules/lab-orders/api";
 import { labReportPresentation } from "@/modules/lab-orders/status";
-import { getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { requirePatientSession } from "@/modules/patient-dashboard/session";
 import { servicePatientApi } from "@/modules/service-requests/server";
+import { AccessDenied } from "@/components/auth/access-denied";
 import { cancelLabOrderAction } from "../../actions";
 
 export async function generateMetadata() {
@@ -24,7 +25,8 @@ export default async function LabOrderPage({ params }: PageProps<"/[locale]/pati
   const { locale: raw, id } = await params;
   await connection();
   const locale = toLocale(raw);
-  if (getPatientSession().status !== "ok") redirect(patientLoginRedirect(locale, `/${locale}/patient/lab-tests`));
+  const session = await requirePatientSession(locale, `/${locale}/patient/lab-tests`);
+  if (session.status !== "ok") return <AccessDenied reason={session.reason} />;
   const order = await createLabOrdersApi({ patient: servicePatientApi() }).get(id).catch(() => ({ ok: false as const, error: { code: "unavailable" as const } }));
   if (!order.ok && ["not_found", "validation", "forbidden"].includes(order.error.code)) notFound();
   const t = await getTranslations("services");

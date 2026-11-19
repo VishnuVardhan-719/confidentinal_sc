@@ -28,7 +28,7 @@ export default async function FamilyMemberPage({ params }: PageProps<"/[locale]/
   const { locale: raw, memberId } = await params;
   await connection();
   const locale = toLocale(raw);
-  const { api, synthetic } = familyPage(locale);
+  const { api, synthetic } = await familyPage(locale);
   const t = await getTranslations("patientAccount.family");
   const result = await api.get(memberId).catch(() => fail("unavailable"));
   redirectIfSignedOut(result, locale);

@@ -5,16 +5,16 @@ import { getFamilyMembersApi, type FamilyMember } from "@/modules/family-members
 import { getPatientSession } from "@/modules/patient-dashboard/session";
 
 /**
- * Family member mutations. Each call re-resolves the interim patient session and builds a fresh API;
+ * Family member mutations. Each call re-resolves the patient session (fe-b authorizeRole) and builds a fresh API;
  * the adapter (and the backend) re-validate input, ownership and versions. Nothing is logged.
  */
-function api() {
-  const session = getPatientSession();
+async function api() {
+  const session = await getPatientSession();
   return session.status === "ok" ? getFamilyMembersApi(process.env, session.fixtureActor) : null;
 }
 
-async function run<T>(fn: (a: NonNullable<ReturnType<typeof api>>) => Promise<ApiResult<T>>): Promise<ApiResult<T>> {
-  const a = api();
+async function run<T>(fn: (a: NonNullable<Awaited<ReturnType<typeof api>>>) => Promise<ApiResult<T>>): Promise<ApiResult<T>> {
+  const a = await api();
   if (!a) return fail("unauthenticated");
   try {
     return await fn(a);

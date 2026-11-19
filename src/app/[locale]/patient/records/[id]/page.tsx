@@ -17,8 +17,9 @@ import { Link } from "@/i18n/navigation";
 import { fail } from "@/lib/api/result";
 import type { Locale } from "@/lib/format";
 import { latestSigned } from "@/modules/clinical/types";
-import { getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { patientLoginRedirect, requirePatientSession } from "@/modules/patient-dashboard/session";
 import { getRecordsApi, patientRecordDetailSchema } from "@/modules/records";
+import { AccessDenied } from "@/components/auth/access-denied";
 import { requestMyRecordPdfLinkAction } from "../actions";
 
 export async function generateMetadata() {
@@ -38,9 +39,9 @@ export default async function PatientRecordPage({ params }: PageProps<"/[locale]
   const { locale: raw, id } = await params;
   await connection();
   const locale = toLocale(raw);
-  const session = getPatientSession();
+  const session = await requirePatientSession(locale, `/${locale}/patient/records`);
   // The return path is the list: a record id never travels through the login URL.
-  if (session.status !== "ok") redirect(patientLoginRedirect(locale, `/${locale}/patient/records`));
+  if (session.status !== "ok") return <AccessDenied reason={session.reason} />;
 
   const [t, tl] = await Promise.all([getTranslations("patient.record"), getTranslations("patient.records")]);
   const header = (reference?: string) => (
@@ -61,7 +62,7 @@ export default async function PatientRecordPage({ params }: PageProps<"/[locale]
     </div>
   );
   const unavailable = (
-    <PatientShell synthetic={session.synthetic}>
+    <PatientShell synthetic={session.synthetic} fixtureActor={session.fixtureActor}>
       {header()}
       <Notice tone="neutral" icon="lock">
         {t("notAvailable")}
@@ -81,7 +82,7 @@ export default async function PatientRecordPage({ params }: PageProps<"/[locale]
     const code = result.error.code;
     if (code === "forbidden" || code === "not_found" || code === "validation") return unavailable;
     return (
-      <PatientShell synthetic={session.synthetic}>
+      <PatientShell synthetic={session.synthetic} fixtureActor={session.fixtureActor}>
         {header()}
         {code === "gated" ? (
           <GateNotice feature="clinical">{tl("state.gated")}</GateNotice>
@@ -98,7 +99,7 @@ export default async function PatientRecordPage({ params }: PageProps<"/[locale]
   const record = parsed.data;
 
   return (
-    <PatientShell synthetic={session.synthetic}>
+    <PatientShell synthetic={session.synthetic} fixtureActor={session.fixtureActor}>
       {header(record.bookingReference)}
       <p className="text-sm text-muted">{t("readOnly")}</p>
       <IntlScope namespaces={["clinical"]}>

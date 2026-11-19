@@ -13,7 +13,8 @@ import { PatientShell } from "@/components/patient/patient-shell";
 import { Link } from "@/i18n/navigation";
 import { fail } from "@/lib/api/result";
 import type { Locale } from "@/lib/format";
-import { getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { patientLoginRedirect, requirePatientSession } from "@/modules/patient-dashboard/session";
+import { AccessDenied } from "@/components/auth/access-denied";
 import { getRecordsApi, patientRecordSummarySchema } from "@/modules/records";
 
 export async function generateMetadata() {
@@ -31,9 +32,9 @@ export default async function PatientRecordsPage({ params }: PageProps<"/[locale
   const { locale: raw } = await params;
   await connection();
   const locale = toLocale(raw);
-  const session = getPatientSession();
+  const session = await requirePatientSession(locale, `/${locale}/patient/records`);
   // Advisory UI guard; the records API authorizes every read independently.
-  if (session.status !== "ok") redirect(patientLoginRedirect(locale, `/${locale}/patient/records`));
+  if (session.status !== "ok") return <AccessDenied reason={session.reason} />;
 
   const [t, format] = await Promise.all([getTranslations("patient.records"), getFormatter()]);
   const ist = (iso: string) => format.dateTime(new Date(iso), { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" });
@@ -46,7 +47,7 @@ export default async function PatientRecordsPage({ params }: PageProps<"/[locale
   if (!result.ok) {
     const code = result.error.code;
     return (
-      <PatientShell synthetic={session.synthetic}>
+      <PatientShell synthetic={session.synthetic} fixtureActor={session.fixtureActor}>
         {header}
         {code === "gated" ? (
           <GateNotice feature="clinical">{t("state.gated")}</GateNotice>
@@ -66,7 +67,7 @@ export default async function PatientRecordsPage({ params }: PageProps<"/[locale
 
   if (items.length === 0) {
     return (
-      <PatientShell synthetic={session.synthetic}>
+      <PatientShell synthetic={session.synthetic} fixtureActor={session.fixtureActor}>
         {header}
         <EmptyState
           title={t("empty.title")}
@@ -82,7 +83,7 @@ export default async function PatientRecordsPage({ params }: PageProps<"/[locale
   }
 
   return (
-    <PatientShell synthetic={session.synthetic}>
+    <PatientShell synthetic={session.synthetic} fixtureActor={session.fixtureActor}>
       {header}
       <section aria-labelledby="records-list" className="grid gap-4">
         <h2 id="records-list" className="text-lg font-semibold text-ink">
