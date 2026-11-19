@@ -1,25 +1,25 @@
-import { ArrowRight, CalendarDays, LifeBuoy, Search, UserRound } from "lucide-react";
+import { ArrowRight, CalendarDays, FileText, LifeBuoy, Search, UserRound } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { AppShell, type ShellNavItem } from "@/components/shared/app-shell";
 import { EmptyState } from "@/components/shared/empty-state";
-import { FixtureNotice } from "@/components/shared/fixture-notice";
 import { InlineError } from "@/components/shared/inline-error";
 import { Notice } from "@/components/shared/notice";
-import { OfflineBanner } from "@/components/shared/offline-banner";
 import { PageHeader } from "@/components/shared/page-header";
 import { RetryAction } from "@/components/shared/retry-action";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { asTk, badgeFor } from "@/components/clinical/kit";
+import { NotificationList } from "@/components/patient/notification-list";
+import { PatientShell } from "@/components/patient/patient-shell";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/lib/format";
 import { createPatientApi } from "@/modules/patient/api";
 import { loadPatientDashboard, type DashboardBooking, type ProfilePrompt } from "@/modules/patient-dashboard/loader";
 import { authorizerFor, dashboardBookingsApi, getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { getNotificationsApi, unreadCount, type NotificationsApi } from "@/modules/notifications";
 import { createPaymentsApi } from "@/modules/payments/api";
 import { getRecordsApi } from "@/modules/records";
 
@@ -40,7 +40,7 @@ export default async function PatientDashboardPage({ params }: PageProps<"/[loca
   // Advisory UI guard; the module adapters and backend authorize every read independently.
   if (session.status !== "ok") redirect(patientLoginRedirect(locale, `/${locale}/patient/dashboard`));
 
-  const [t, tShell, tAll] = await Promise.all([getTranslations("patient.dashboard"), getTranslations("patient.shell"), getTranslations()]);
+  const [t, tAll] = await Promise.all([getTranslations("patient.dashboard"), getTranslations()]);
   const tk = asTk(tAll);
   const env = process.env;
   const d = await loadPatientDashboard(
@@ -55,18 +55,10 @@ export default async function PatientDashboardPage({ params }: PageProps<"/[loca
     new Date(),
   );
 
-  const nav: ShellNavItem[] = [
-    { href: "/patient/dashboard", label: tShell("nav.dashboard"), icon: "home", primary: true },
-    { href: "/doctors", label: tShell("nav.findDoctor"), icon: "stethoscope", primary: true },
-    { href: "/patient/bookings", label: tShell("nav.bookings"), icon: "calendar", primary: true },
-    { href: "/patient/profile", label: tShell("nav.profile"), icon: "user", primary: true },
-  ];
+  const notifications = getNotificationsApi(env, { fixtureActor: session.fixtureActor ?? undefined });
 
   return (
-    <AppShell workspaceLabel={tShell("workspace")} nav={nav}>
-      <div className="mx-auto grid w-full max-w-content gap-10">
-        {session.synthetic ? <FixtureNotice /> : null}
-        <OfflineBanner className="empty:hidden" />
+    <PatientShell synthetic={session.synthetic} fixtureActor={session.fixtureActor}>
         <PageHeader title={t("title")} description={t("description")} />
 
         <ProfileSection prompt={d.profile} />
@@ -109,9 +101,34 @@ export default async function PatientDashboardPage({ params }: PageProps<"/[loca
           )}
         </section>
 
+        <RecentNotifications api={notifications} />
+
         <QuickActions />
+    </PatientShell>
+  );
+}
+
+/** Latest three notifications; text from templates only (no PHI). Hidden when not connected. */
+async function RecentNotifications({ api }: { api: NotificationsApi }) {
+  const t = await getTranslations("patient.dashboard.notifications");
+  const r = await api.listMine();
+  if (!r.ok && r.error.code === "gated") return null;
+  return (
+    <section aria-labelledby="recent-notifications" className="grid gap-4">
+      <div className="flex items-end justify-between gap-4">
+        <SectionHeading id="recent-notifications" title={t("title")} size="md" />
+        <Link href="/patient/notifications" className="inline-flex min-h-target items-center text-forest underline-offset-4 hover:underline">
+          {r.ok && unreadCount(r.data) > 0 ? t("viewAllUnread", { count: unreadCount(r.data) }) : t("viewAll")}
+        </Link>
       </div>
-    </AppShell>
+      {!r.ok ? (
+        <InlineError code={r.error.code} action={r.error.code === "unavailable" ? <RetryAction /> : undefined} />
+      ) : r.data.length === 0 ? (
+        <p className="text-muted">{t("empty")}</p>
+      ) : (
+        <NotificationList items={r.data.slice(0, 3)} label={t("title")} />
+      )}
+    </section>
   );
 }
 
@@ -205,13 +222,14 @@ async function QuickActions() {
   const items: { href: string; title: string; hint: string; icon: ReactNode }[] = [
     { href: "/doctors", title: t("findDoctor"), hint: t("findDoctorHint"), icon: <Search aria-hidden className="size-5" /> },
     { href: "/patient/bookings", title: t("bookings"), hint: t("bookingsHint"), icon: <CalendarDays aria-hidden className="size-5" /> },
+    { href: "/patient/records", title: t("records"), hint: t("recordsHint"), icon: <FileText aria-hidden className="size-5" /> },
     { href: "/patient/profile", title: t("profile"), hint: t("profileHint"), icon: <UserRound aria-hidden className="size-5" /> },
     { href: "/emergency", title: t("emergency"), hint: t("emergencyHint"), icon: <LifeBuoy aria-hidden className="size-5" /> },
   ];
   return (
     <section aria-labelledby="quick-actions" className="grid gap-4">
       <SectionHeading id="quick-actions" title={t("title")} size="md" />
-      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((i) => (
           <li key={i.href}>
             <Link
