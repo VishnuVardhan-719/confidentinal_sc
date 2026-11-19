@@ -8,6 +8,7 @@
  */
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page } from "@playwright/test";
+import { signIn } from "./identity";
 
 export const LOCALE = "en";
 
@@ -94,11 +95,35 @@ export const COPY = {
 /** Strings from the synthetic fixtures that must never appear in URLs or browser storage. */
 export const PRIVATE_MARKERS = ["Fixture street", "+919000000000", "90000 00000", "482913", "fx-consent-1"];
 
-/** TODO(after auth merge): sign in through the fixture auth adapter as this synthetic persona. */
+/** Persona -> synthetic sign-in email (src/fixtures/identity/operations.ts). */
+export const PERSONA_EMAILS: Record<Persona, string> = {
+  labManager: "ops.lab.manager@example.invalid",
+  labCollectorA: "ops.lab.collector.a@example.invalid",
+  labCollectorB: "ops.lab.collector.b@example.invalid",
+  labReviewer: "ops.lab.reviewer@example.invalid",
+  multiLabManager: "ops.lab.multi@example.invalid",
+  ambulanceOperator: "ops.ambulance.operator@example.invalid",
+  driverA: "ops.ambulance.driver.a@example.invalid",
+  driverB: "ops.ambulance.driver.b@example.invalid",
+  agencyManager: "ops.care.manager@example.invalid",
+  caregiverA: "ops.care.a@example.invalid",
+  caregiverB: "ops.care.b@example.invalid",
+  independentCaregiver: "ops.care.independent@example.invalid",
+  adminVerifier: "ops.admin.verifier@example.invalid",
+  adminLead: "ops.admin.lead@example.invalid",
+  adminNoGrants: "ops.admin.nogrants@example.invalid",
+  adminOrgAuditor: "ops.admin.auditor@example.invalid",
+  contentEditor: "ops.content.editor@example.invalid",
+  contentPublisher: "ops.content.publisher@example.invalid",
+};
+
+/** Signs in through the fixture auth adapter as this synthetic persona, then lands on `next`. */
 export async function signInAs(page: Page, persona: Persona, next?: string): Promise<void> {
-  void PERSONAS[persona];
-  await page.goto(`/${LOCALE}/login${next ? `?next=${encodeURIComponent(next)}` : ""}`);
-  throw new Error("signInAs: wire to the fixture auth adapter once src/modules/auth is merged");
+  await signIn(page, PERSONA_EMAILS[persona], next);
+  // Load the target fresh: after the client-side sign-in redirect Next keeps the login page
+  // mounted but hidden (Activity), which duplicates landmarks and text for locators.
+  await page.goto(next ?? page.url(), { waitUntil: "domcontentloaded" });
+  if (next) await expect(page).toHaveURL((u) => u.pathname === next.split("?")[0]);
 }
 
 export async function expectFixtureNotice(page: Page): Promise<void> {

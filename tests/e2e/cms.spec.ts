@@ -13,7 +13,7 @@ const CMS = `/${LOCALE}/admin/cms`;
 
 test.describe.configure({ mode: "serial" });
 
-test.describe.fixme("CMS editor", () => {
+test.describe("CMS editor", () => {
   test("list shows locale versions and states per entry", async ({ page }) => {
     await signInAs(page, "contentEditor", CMS);
     await expectFixtureNotice(page);

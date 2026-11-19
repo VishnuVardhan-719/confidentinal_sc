@@ -21,7 +21,7 @@ import {
 
 const AD = `/${LOCALE}/admin`;
 
-test.describe.fixme("admin dashboard and navigation", () => {
+test.describe("admin dashboard and navigation", () => {
   test("lead admin sees only real queue counts and every assigned area", async ({ page }) => {
     await signInAs(page, "adminLead", `${AD}/dashboard`);
     await expectFixtureNotice(page);
@@ -46,7 +46,7 @@ test.describe.fixme("admin dashboard and navigation", () => {
   });
 });
 
-test.describe.fixme("booking operations", () => {
+test.describe("booking operations", () => {
   test("search accepts only a booking reference and shows booking and payment as separate badges", async ({ page }) => {
     await signInAs(page, "adminLead", `${AD}/bookings`);
     await page.getByLabel(COPY.searchReference).fill("Fixture Patient");
@@ -62,7 +62,7 @@ test.describe.fixme("booking operations", () => {
   });
 });
 
-test.describe.fixme("users, payments, support, audit, settings", () => {
+test.describe("users, payments, support, audit, settings", () => {
   test("admins cannot change their own grants", async ({ page }) => {
     await signInAs(page, "adminLead", `${AD}/users`);
     const self = page.getByRole("row", { name: /Fixture Admin Lead/ });

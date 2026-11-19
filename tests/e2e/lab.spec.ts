@@ -24,7 +24,7 @@ const ORDER_FAILED = labFixtures.orders.find((o) => o.id === "fx-lab-order-3")!;
 
 test.describe.configure({ mode: "serial" });
 
-test.describe.fixme("lab manager", () => {
+test.describe("lab manager", () => {
   test("dashboard shows real queue counts, branch status and the synthetic notice", async ({ page }) => {
     await signInAs(page, "labManager", `${L}/dashboard`);
     await expectFixtureNotice(page);
@@ -72,7 +72,7 @@ test.describe.fixme("lab manager", () => {
   });
 });
 
-test.describe.fixme("lab collector", () => {
+test.describe("lab collector", () => {
   test("sees only assigned jobs and records collection with a reason for failures", async ({ page }) => {
     await signInAs(page, "labCollectorA", `${L}/collections`);
     await expect(page.getByText(ORDER_SCHEDULED.reference)).toBeVisible();
@@ -93,7 +93,7 @@ test.describe.fixme("lab collector", () => {
   });
 });
 
-test.describe.fixme("lab reviewer", () => {
+test.describe("lab reviewer", () => {
   test("release is offered only for a reviewed report, and never for the uploader's own file", async ({ page }) => {
     await signInAs(page, "labReviewer", `${L}/reports`);
     const reviewedRow = page.getByRole("row", { name: /version 2/i });

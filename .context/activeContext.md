@@ -6,3 +6,10 @@ Lead = Claude (commits/push, integration, review). Task files: C:/Users/Yashwant
 Task: merge feat/fe2-b (64b916f) -> replace getOperationsSession/interim guards with requireRole -> un-fixme e2e admin-ops/ambulance/caretaker/lab/cms -> role-isolation browser test -> axe on each workspace -> tsc/lint/vitest/build/playwright -> commit.
 Progress:
 - [ ] merge fe2-b
+
+## fe-b (Kiro) PHASE4-E2, 2026-11-19
+- 6e70397: real guards (requireOperationsSession/authorizeOperationsSession in src/modules/admin/session.ts), ops personas in src/fixtures/identity/operations.ts.
+- Next: run ops e2e on 3350 (.context/run-e2e.ps1 uses root playwright.config.ts), role-isolation spec, axe.
+
+- Ops specs un-fixme'd; signInAs wired (support/operations.ts, hard reload after sign-in). Discovery copies (serial removed) in tests/e2e/zz-discover (DO NOT COMMIT; delete at end). First discovery: 26 fail / 15 pass desktop, list in .context/ops-e2e-discovery-desktop.txt.
+

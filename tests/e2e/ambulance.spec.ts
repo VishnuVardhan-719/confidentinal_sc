@@ -26,7 +26,7 @@ const DRIVER_B_TRIP = ambulanceFixtures.trips.find((t) => t.id === "fx-trip-2")!
 
 test.describe.configure({ mode: "serial" });
 
-test.describe.fixme("ambulance operator", () => {
+test.describe("ambulance operator", () => {
   test("dashboard shows real counts, credential expiry and no ETA language", async ({ page }) => {
     await signInAs(page, "ambulanceOperator", `${A}/dashboard`);
     await expectFixtureNotice(page);
@@ -61,7 +61,7 @@ test.describe.fixme("ambulance operator", () => {
   });
 });
 
-test.describe.fixme("ambulance driver", () => {
+test.describe("ambulance driver", () => {
   test("sees only the assigned current trip and one next step", async ({ page }) => {
     await signInAs(page, "driverA", `${A}/driver`);
     await expect(page.getByText(DRIVER_A_TRIP.reference)).toBeVisible();
@@ -80,7 +80,7 @@ test.describe.fixme("ambulance driver", () => {
   });
 });
 
-test.describe.fixme("emergency dispatch placeholder", () => {
+test.describe("emergency dispatch placeholder", () => {
   test("dispatch is unavailable and Call 112 is always visible as a tel: link", async ({ page }) => {
     await signInAs(page, "ambulanceOperator", `${A}/emergency`);
     await expect(page.getByText(COPY.dispatchUnavailable)).toBeVisible();

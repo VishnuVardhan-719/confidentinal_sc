@@ -24,7 +24,7 @@ const CLINICAL = /medication|injection|wound|catheter|vital signs|diagnos|prescr
 
 test.describe.configure({ mode: "serial" });
 
-test.describe.fixme("agency manager", () => {
+test.describe("agency manager", () => {
   test("services list rates per period and marks periods the backend does not support yet", async ({ page }) => {
     await signInAs(page, "agencyManager", `${C}/services`);
     await expectFixtureNotice(page);
@@ -51,7 +51,7 @@ test.describe.fixme("agency manager", () => {
   });
 });
 
-test.describe.fixme("caregiver", () => {
+test.describe("caregiver", () => {
   test("sees only own assignments and checks in with a server timestamp", async ({ page }) => {
     await signInAs(page, "caregiverA", `${C}/assignments`);
     await expect(page.getByText(ASG_A.reference)).toBeVisible();
@@ -77,7 +77,7 @@ test.describe.fixme("caregiver", () => {
   });
 });
 
-test.describe.fixme("independent caregiver", () => {
+test.describe("independent caregiver", () => {
   test("manages own services but has no staff page", async ({ page }) => {
     await signInAs(page, "independentCaregiver", `${C}/services`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
