@@ -145,3 +145,11 @@ Verification: tsc 0; lint 0; vitest 64 files 983/983; next build 0; Playwright o
 ## fe-q PHASE R10-C
 - Step 1: doctor-search.spec.ts on 3362 (build of b339b2c): 9 passed, 3 skipped (2 HTTP-adapter-only, 1 mobile-only on desktop), 0 failed.
 - Step 2 plan: public /lab-tests list + /lab-tests/[id] from lab-orders fixture (src/modules/lab is fe-e's member-scoped ops API, no public read); proposed GET /api/labs in REQUESTS.md.
+
+## TASK REPORT: PHASE R10-C (fe-q, feat/fe2-c) - DONE_VERIFIED
+1. doctor-search e2e (23067e9): 9 passed, 3 skipped (2 HTTP-adapter-only, 1 mobile-only), 0 failed.
+2. Public lab directory (d254385): /[locale]/lab-tests (GET filter by test name and city, lab cards with matching tests and prices, collection badges, empty/invalid/gated/error states with next actions) and /[locale]/lab-tests/[id] (tests with sample, preparation, report time and price; home/walk-in collection and fee; manual-acceptance note; "Request tests" to /patient/lab-tests/request; not-found state). Prices integer paise via formatPaise (en-IN grouping). FixtureNotice ("Synthetic data, not live"). pageMetadata canonical + hreflang; detail noindex. loading.tsx/error.tsx/layout.tsx per segment. Strings services.labDirectory en/te/hi.
+   Data: src/modules/lab is fe-e's member-scoped ops API with no public read, so it was not touched; the directory reads the lab-orders synthetic labs (src/modules/lab-orders/directory.ts, mine; added collectionOptions). HTTP adapter gated; GET /api/labs and /api/labs/:id proposed in docs/frontend/REQUESTS.md.
+   Tests: unit lab-directory.test.ts (5); e2e lab-directory.spec.ts (search/filter/detail/request link, canonical/hreflang/noindex, keyboard); a11y sweep +9 lab routes (incl. te/hi).
+3. Verification: lint 0; tsc 0; vitest 65 files 988/988; next build 0; Playwright on 3362 only (--workers=2): doctor-search + lab-directory + a11y-sweep-c + service-requests + booking-journey = 135 passed, 3 skipped, 0 failed.
+Open: sitemap.xml (fe-a) does not list /lab-tests yet; te/hi labDirectory strings need native review.
