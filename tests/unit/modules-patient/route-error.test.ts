@@ -17,7 +17,7 @@ describe("PatientRouteError", () => {
   it("shows friendly copy, a retry and a way home, never the raw error", () => {
     const retry = vi.fn();
     const error = Object.assign(new Error("TypeError: secret stack at db.query(patient_id=123)"), { digest: "abc123" });
-    render(h(NextIntlClientProvider, { locale: "en", messages: { errors, common }, timeZone: "Asia/Kolkata" }, h(PatientRouteError, { error, retry })));
+    render(h(NextIntlClientProvider, { locale: "en", messages: { errors, common }, timeZone: "Asia/Kolkata", children: h(PatientRouteError, { error, retry }) }));
     expect(screen.getByText("This page did not load")).toBeTruthy();
     expect(screen.queryByText(/secret stack|patient_id/)).toBeNull();
     expect(screen.getByText("Reference: abc123")).toBeTruthy();
