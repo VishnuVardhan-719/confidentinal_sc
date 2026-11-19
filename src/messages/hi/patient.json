@@ -1,7 +1,7 @@
 {
   "shell": {
     "workspace": "मरीज़",
-    "nav": { "dashboard": "सारांश", "findDoctor": "डॉक्टर खोजें", "bookings": "बुकिंग", "profile": "प्रोफ़ाइल", "healthProfile": "Health profile" }
+    "nav": { "dashboard": "सारांश", "findDoctor": "डॉक्टर खोजें", "bookings": "बुकिंग", "profile": "प्रोफ़ाइल", "healthProfile": "स्वास्थ्य प्रोफ़ाइल" }
   },
   "dashboard": {
     "title": "आपका सारांश",
@@ -89,132 +89,132 @@
     }
   },
   "bookings": {
-    "title": "Your bookings",
-    "description": "Every visit you have requested, with booking, payment and record status shown separately.",
+    "title": "आपकी बुकिंग",
+    "description": "आपकी अनुरोध की गई हर विज़िट यहाँ है। बुकिंग, भुगतान और रिकॉर्ड की स्थिति अलग-अलग दिखाई जाती है।",
     "filter": {
-      "label": "Filter bookings",
-      "all": "All",
-      "upcoming": "Upcoming",
-      "past": "Past",
-      "cancelled": "Cancelled or declined",
-      "scope": "Filters sort the bookings on this page. Use Next page to see more."
+      "label": "बुकिंग फ़िल्टर करें",
+      "all": "सभी",
+      "upcoming": "आने वाली",
+      "past": "पिछली",
+      "cancelled": "रद्द या अस्वीकृत",
+      "scope": "फ़िल्टर सिर्फ़ इस पेज की बुकिंग छाँटते हैं। और देखने के लिए अगला पेज खोलें।"
     },
     "empty": {
-      "title": "No bookings yet",
-      "body": "When you request a visit, it appears here with its status.",
-      "action": "Find a doctor",
-      "filterTitle": "No bookings under {filter} on this page",
-      "filterBody": "Other bookings on this page are under a different filter.",
-      "showAll": "Show all on this page",
-      "endTitle": "No more bookings",
-      "endBody": "You have reached the end of your bookings."
+      "title": "अभी कोई बुकिंग नहीं",
+      "body": "जब आप विज़िट का अनुरोध करेंगे, वह अपनी स्थिति के साथ यहाँ दिखेगी।",
+      "action": "डॉक्टर खोजें",
+      "filterTitle": "इस पेज पर {filter} में कोई बुकिंग नहीं",
+      "filterBody": "इस पेज की बाकी बुकिंग किसी दूसरे फ़िल्टर में हैं।",
+      "showAll": "इस पेज की सभी दिखाएँ",
+      "endTitle": "और कोई बुकिंग नहीं",
+      "endBody": "आपकी बुकिंग की सूची यहीं खत्म होती है।"
     },
     "pager": {
-      "label": "Booking pages",
-      "next": "Next page",
-      "first": "Back to first page",
-      "end": "End of your bookings"
+      "label": "बुकिंग पेज",
+      "next": "अगला पेज",
+      "first": "पहले पेज पर जाएँ",
+      "end": "आपकी बुकिंग यहीं खत्म"
     },
     "state": {
-      "denied": "You do not have access to these bookings.",
-      "gated": "Bookings are not connected yet."
+      "denied": "आपको इन बुकिंग को देखने की अनुमति नहीं है।",
+      "gated": "बुकिंग अभी जुड़ी नहीं है।"
     }
   },
   "booking": {
-    "title": "Booking details",
-    "crumbBookings": "Bookings",
-    "backToList": "Back to your bookings",
-    "asideLabel": "Fee and booking actions",
+    "title": "बुकिंग का विवरण",
+    "crumbBookings": "बुकिंग",
+    "backToList": "अपनी बुकिंग पर वापस जाएँ",
+    "asideLabel": "फ़ीस और बुकिंग से जुड़े काम",
     "state": {
-      "notFound": "This booking is not available. It may not exist, or it is not on your account.",
-      "gated": "Booking details are not connected yet."
+      "notFound": "यह बुकिंग उपलब्ध नहीं है। हो सकता है यह मौजूद न हो, या आपके खाते में न हो।",
+      "gated": "बुकिंग का विवरण अभी जुड़ा नहीं है।"
     },
     "status": {
-      "title": "Status",
-      "body": "Booking, visit, payment and clinical record are tracked separately. One does not imply another."
+      "title": "स्थिति",
+      "body": "बुकिंग, विज़िट, भुगतान और क्लिनिकल रिकॉर्ड अलग-अलग ट्रैक होते हैं। एक के होने से दूसरा अपने आप नहीं होता।"
     },
     "decision": {
-      "label": "Provider decision",
-      "readOnly": "Only the provider can accept or decline.",
-      "notSent": "Not sent yet",
-      "waiting": "Waiting for the provider",
-      "accepted": "Accepted by the provider",
-      "declined": "Declined by the provider",
-      "expired": "Expired without a reply",
-      "cancelled": "Booking cancelled",
-      "unknown": "Decision not available"
+      "label": "प्रदाता का निर्णय",
+      "readOnly": "सिर्फ़ प्रदाता ही स्वीकार या अस्वीकार कर सकते हैं।",
+      "notSent": "अभी भेजा नहीं गया",
+      "waiting": "प्रदाता के जवाब का इंतज़ार",
+      "accepted": "प्रदाता ने स्वीकार किया",
+      "declined": "प्रदाता ने अस्वीकार किया",
+      "expired": "जवाब न मिलने से समय सीमा खत्म",
+      "cancelled": "बुकिंग रद्द हुई",
+      "unknown": "निर्णय उपलब्ध नहीं"
     },
     "visit": {
-      "title": "Visit",
-      "when": "Date and time",
-      "range": "{start} to {end}",
-      "timeZone": "India time (IST)",
-      "provider": "Provider",
-      "providerUnavailable": "Provider details are not available right now.",
-      "category": "Service",
-      "pin": "Service PIN code"
+      "title": "विज़िट",
+      "when": "तारीख और समय",
+      "range": "{start} से {end} तक",
+      "timeZone": "भारतीय समय (IST)",
+      "provider": "प्रदाता",
+      "providerUnavailable": "प्रदाता का विवरण अभी उपलब्ध नहीं है।",
+      "category": "सेवा",
+      "pin": "सेवा का पिन कोड"
     },
     "timeline": {
-      "title": "Timeline",
-      "empty": "No updates yet.",
-      "unavailable": "The timeline is not available right now.",
+      "title": "टाइमलाइन",
+      "empty": "अभी कोई अपडेट नहीं।",
+      "unavailable": "टाइमलाइन अभी उपलब्ध नहीं है।",
       "actor": {
-        "you": "You",
-        "provider": "Provider",
-        "assigned": "Assigned staff",
-        "system": "SureCure Visit"
+        "you": "आप",
+        "provider": "प्रदाता",
+        "assigned": "नियुक्त स्टाफ़",
+        "system": "SureCure Visit सिस्टम"
       }
     },
     "fee": {
-      "title": "Fee",
-      "snapshot": "Price fixed by the provider when you booked. It does not change later."
+      "title": "फ़ीस",
+      "snapshot": "यह कीमत प्रदाता ने आपकी बुकिंग के समय तय की थी। यह बाद में नहीं बदलती।"
     },
     "payment": {
-      "unavailable": "Payment details are not available right now.",
-      "due": "Amount due",
-      "collected": "Collected",
-      "refunded": "Refunded",
+      "unavailable": "भुगतान का विवरण अभी उपलब्ध नहीं है।",
+      "due": "बकाया राशि",
+      "collected": "प्राप्त हुआ",
+      "refunded": "रिफ़ंड किया गया",
       "method": {
-        "pay_after": "Pay after the visit",
-        "online_test": "Online payment (test)"
+        "pay_after": "विज़िट के बाद भुगतान",
+        "online_test": "ऑनलाइन भुगतान (टेस्ट)"
       },
-      "separate": "Payment is tracked separately from the booking."
+      "separate": "भुगतान बुकिंग से अलग ट्रैक होता है।"
     },
     "manage": {
-      "title": "Manage booking"
+      "title": "बुकिंग प्रबंधित करें"
     },
     "cancel": {
-      "title": "Cancel",
-      "body": "You can cancel while the provider has not started the visit.",
-      "policyBody": "The provider has accepted. The cancellation policy you agreed to decides if you can still cancel.",
-      "serverDecides": "We send your request and the booking system checks it. It may say no if the booking has changed.",
-      "closed": "This booking can no longer be cancelled here.",
-      "trigger": "Cancel this booking",
-      "confirmTitle": "Cancel this booking?",
-      "confirmBody": "The provider will be told. To visit later you will need to book again.",
-      "ack": "I understand this cannot be undone.",
-      "confirm": "Yes, cancel booking",
-      "keep": "Keep booking",
-      "doneTitle": "Cancellation sent",
-      "doneBody": "The booking status will update shortly."
+      "title": "रद्द करें",
+      "body": "जब तक प्रदाता ने विज़िट शुरू नहीं की है, आप रद्द कर सकते हैं।",
+      "policyBody": "प्रदाता ने स्वीकार कर लिया है। आप अब भी रद्द कर सकते हैं या नहीं, यह आपकी मानी हुई रद्द करने की नीति तय करती है।",
+      "serverDecides": "हम आपका अनुरोध भेजते हैं और बुकिंग सिस्टम उसकी जाँच करता है। अगर बुकिंग बदल गई है तो वह मना कर सकता है।",
+      "closed": "यह बुकिंग अब यहाँ से रद्द नहीं की जा सकती।",
+      "trigger": "यह बुकिंग रद्द करें",
+      "confirmTitle": "यह बुकिंग रद्द करें?",
+      "confirmBody": "प्रदाता को सूचना दी जाएगी। बाद में विज़िट के लिए आपको फिर से बुक करना होगा।",
+      "ack": "मैं समझता/समझती हूँ कि इसे वापस नहीं लिया जा सकता।",
+      "confirm": "हाँ, बुकिंग रद्द करें",
+      "keep": "बुकिंग रहने दें",
+      "doneTitle": "रद्द करने का अनुरोध भेजा गया",
+      "doneBody": "बुकिंग की स्थिति जल्द अपडेट होगी।"
     },
     "reschedule": {
-      "title": "Reschedule",
-      "closed": "This booking can no longer be rescheduled.",
-      "gateTitle": "Rescheduling is not available yet",
-      "gateBody": "You can pick a time, but the request cannot be sent until rescheduling is connected. To change the time now, cancel and book again.",
-      "date": "Preferred date",
-      "dateHint": "India time (IST)",
-      "time": "Preferred time",
-      "timeHint": "Provider confirms the final time.",
-      "submit": "Request new time",
-      "sending": "Sending…",
-      "notSentTitle": "Not sent",
-      "notSentBody": "Rescheduling is not connected yet. Your booking has not changed.",
+      "title": "समय बदलें",
+      "closed": "इस बुकिंग का समय अब बदला नहीं जा सकता।",
+      "gateTitle": "समय बदलने की सुविधा अभी उपलब्ध नहीं",
+      "gateBody": "आप समय चुन सकते हैं, लेकिन यह सुविधा जुड़ने तक अनुरोध भेजा नहीं जा सकता। अभी समय बदलना हो तो रद्द करके फिर से बुक करें।",
+      "date": "पसंदीदा तारीख",
+      "dateHint": "भारतीय समय (IST)",
+      "time": "पसंदीदा समय",
+      "timeHint": "अंतिम समय प्रदाता तय करेंगे।",
+      "submit": "नए समय का अनुरोध करें",
+      "sending": "भेजा जा रहा है…",
+      "notSentTitle": "नहीं भेजा गया",
+      "notSentBody": "समय बदलने की सुविधा अभी जुड़ी नहीं है। आपकी बुकिंग नहीं बदली है।",
       "error": {
-        "date": "Enter a valid date.",
-        "time": "Enter a valid time.",
-        "past": "Choose a time in the future."
+        "date": "सही तारीख दर्ज करें।",
+        "time": "सही समय दर्ज करें।",
+        "past": "आगे का कोई समय चुनें।"
       }
     }
   }

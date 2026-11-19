@@ -19,10 +19,10 @@ import { FIXTURE_IDS as I } from "../../src/fixtures/clinical/world";
 import { wsOrigin, type WorkspaceServer } from "./workspace-servers";
 
 const test = base.extend<{ as: (who: WorkspaceServer) => Promise<Page> }>({
-  baseURL: async ({}, use, testInfo) => use(wsOrigin(testInfo.project.name, "assigned")),
-  as: async ({ browser, viewport }, use, testInfo) => {
+  baseURL: async ({}, provide, testInfo) => provide(wsOrigin(testInfo.project.name, "assigned")),
+  as: async ({ browser, viewport }, provide, testInfo) => {
     const contexts: Awaited<ReturnType<typeof browser.newContext>>[] = [];
-    await use(async (who) => {
+    await provide(async (who) => {
       const ctx = await browser.newContext({ baseURL: wsOrigin(testInfo.project.name, who), viewport });
       contexts.push(ctx);
       return ctx.newPage();

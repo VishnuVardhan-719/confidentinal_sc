@@ -1,3 +1,11 @@
+# fe-int PHASE4 state (session 2026-11-19T17:41:09)
+Task: merge e,a,b,c,p,d -> lint/vitest/build -> adopt real guards -> full Playwright on port 3320.
+- [x] merges done, tsc clean after each (HEAD 55a5541). Note: run `npx next typegen` before tsc (stale .next route types).
+- [ ] lint / vitest / build
+- [ ] guards (see fe2-e/.context/handoff-t3h.md)
+- [ ] playwright full suite
+
+---
 # fe-q (continuing fe-c3 PHASE4-C3) - 2026-11-19T00:36:45
 - Owner of task now: fe-q. State source: .context/handoff-t3j.md. WIP commit 7550c76 (booking-store).
 - Plan: data layer (store wiring, addAddress, reschedule, slots, visitReason) -> journey.ts server factory -> routes /patient/book, /patient/book/[id], /receipt -> strings -> e2e booking-journey.spec.ts -> lint/typecheck/test/build -> browser run port 3360 -> commit.
@@ -123,3 +131,4 @@ Progress:
 - Fast-forwarded feat/fe2-c 0331c6b -> feat/fe2-integration 1ac677e (ancestor, no conflicts) to get patient session (modules/patient-dashboard/session.ts), payments components, CSP.
 - Plan: wizard route /patient/book (8 steps) + request page /patient/book/[id] (pending/accepted/declined, payment pay-after, confirm ref, cancel, reschedule, request receipt). Process-wide synthetic store src/fixtures/marketplace/booking-store.ts (globalThis); synthetic doctor 2 declines, others accept after FIXTURE_PROVIDER_RESPONSE_MS. Slots fixture API; patient addAddress; createBooking optional visitReason; BookingsApi.reschedule (http gated).
 - E2E env: FRONTEND_ADAPTER=fixture APP_ENV=test FIXTURE_PATIENT_SESSION=self, PLAYWRIGHT_BASE_URL=http://localhost:3360.
+

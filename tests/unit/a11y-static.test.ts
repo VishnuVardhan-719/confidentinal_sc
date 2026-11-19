@@ -40,7 +40,7 @@ function pages(dir: string): string[] {
 }
 
 /** Components that render exactly one <h1>. */
-const H1_COMPONENTS = ["<PublicPageIntro", "<LegalDocument"];
+const H1_COMPONENTS = ["<PublicPageIntro", "<LegalDocument", "<DoctorSearchIntro", "<DoctorProfile"];
 
 /** Pages whose h1 comes from the localized not-found page (they only call notFound()). */
 const NOT_FOUND_ONLY = [path.join("[...rest]", "page.tsx")];
