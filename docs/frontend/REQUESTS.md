@@ -319,3 +319,9 @@ Contracts the patient booking journey uses that B01 / `docs/API_CONTRACTS.md` do
 - Read one / list own requests with separate booking state, payment state (pay after service) and record state (lab report released only by a reviewer; caretaker and ambulance have no clinical record).
 - Patient cancel with version check (`expectedVersion`), free until 2 hours before the start (synthetic, not an approved policy).
 - Ambulance: emergency dispatch stays a separate, disabled module. No ETA, tracking or distance quote until an approved contract exists.
+
+## 2026-11-19 - PHASE R10-C public lab directory (fe-q, feat/fe2-c)
+`src/modules/lab` (fe-e) is the member-scoped lab operations API; there is no public, signed-out read of labs and their tests. `/[locale]/lab-tests` and `/[locale]/lab-tests/[id]` use the synthetic lab-orders fixture (`src/modules/lab-orders/directory.ts`); the HTTP adapter returns `gated` until these exist:
+- `GET /api/labs?test=&city=` -> `{ items: LabListing[], cities: string[] }`. Published, verified, active labs only. `LabListing` = `{ id, name, area: { locality, city, pins[] }, collectionOptions: ("home" | "walk_in")[], collectionFeePaise, tests: [{ id, name, specimen, preparation, pricePaise, reportHours }] }`. Integer paise; no staff, phone or street address.
+- `GET /api/labs/:id` -> `LabListing`, 404 for unknown, unpublished or suspended labs.
+- `test` is a case-insensitive name match (2 to 60 characters); `city` is an exact city match.

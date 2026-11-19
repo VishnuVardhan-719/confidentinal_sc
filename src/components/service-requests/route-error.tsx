@@ -7,8 +7,8 @@ import { Notice } from "@/components/shared/notice";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 
-export type ServiceArea = "book" | "lab" | "care" | "ambulance";
-const HOME: Record<ServiceArea, string> = { book: "/doctors", lab: "/patient/lab-tests", care: "/patient/caretakers", ambulance: "/patient/ambulance" };
+export type ServiceArea = "book" | "lab" | "care" | "ambulance" | "labs";
+const HOME: Record<ServiceArea, string> = { book: "/doctors", lab: "/patient/lab-tests", care: "/patient/caretakers", ambulance: "/patient/ambulance", labs: "/lab-tests" };
 
 /**
  * Error boundary body for the patient booking and service-request routes. Never shows the raw error (only the

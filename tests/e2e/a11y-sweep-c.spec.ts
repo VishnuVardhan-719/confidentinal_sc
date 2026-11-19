@@ -26,7 +26,7 @@ async function sweep(page: Page, label: string) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), `${label}: horizontal scroll`).toBe(true);
   // No browser storage and only public filters or ids in the query string.
   expect(await page.evaluate(() => [localStorage.length, sessionStorage.length]), `${label}: browser storage used`).toEqual([0, 0]);
-  const keys = [...new URL(page.url()).searchParams.keys()].filter(key => !["providerId", "serviceId", "pin", "speciality", "sort", "showFull", "availability", "next"].includes(key));
+  const keys = [...new URL(page.url()).searchParams.keys()].filter(key => !["providerId", "serviceId", "pin", "speciality", "sort", "showFull", "availability", "next", "test", "city"].includes(key));
   expect(keys, `${label}: unexpected query parameters`).toEqual([]);
   // First Tab stop from the top of the page: it must be on screen and show a focus indicator.
   await page.evaluate(() => { (document.activeElement as HTMLElement | null)?.blur(); window.scrollTo(0, 0); });
@@ -58,6 +58,15 @@ const STATIC_ROUTES: [string, string, RegExp | string][] = [
   ["hi: doctors directory", "/hi/doctors", /./],
   ["te: doctor profile", "/te/doctors/00000000-0000-4000-8000-000000000001", "Synthetic doctor 1"],
   ["hi: doctor profile", "/hi/doctors/00000000-0000-4000-8000-000000000001", "Synthetic doctor 1"],
+  ["labs: directory", "/en/lab-tests", "Find a lab test"],
+  ["labs: test filter", "/en/lab-tests?test=blood", "Matching tests"],
+  ["labs: test and city", "/en/lab-tests?test=blood&city=Secunderabad", "1 lab"],
+  ["labs: invalid test", "/en/lab-tests?test=x", "Enter at least 2 characters of the test name."],
+  ["labs: no match", "/en/lab-tests?test=zzzz", "No lab matches these filters"],
+  ["labs: detail", "/en/lab-tests/00000000-0000-4000-8200-000000000001", "Tests offered"],
+  ["labs: unknown lab", "/en/lab-tests/00000000-0000-4000-8200-000000000099", "This lab is not listed"],
+  ["te: labs directory", "/te/lab-tests", "ల్యాబ్ పరీక్షను వెతకండి"],
+  ["hi: lab detail", "/hi/lab-tests/00000000-0000-4000-8200-000000000001", "उपलब्ध जाँचें"],
   ["book: no doctor", "/en/patient/book", "Choose a doctor first"],
   ["book: wizard", `/en/patient/book?${DOCTOR_1}`, "Request a visit with Synthetic doctor 1"],
   ["book: not bookable", `/en/patient/book?${DOCTOR_3}`, "This doctor cannot take requests right now"],

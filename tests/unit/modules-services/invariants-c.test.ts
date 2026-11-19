@@ -31,7 +31,7 @@ function sources(dir = SRC): string[] {
   });
 }
 const ALL = sources().map(file => ({ file: path.relative(SRC, file).replace(/\\/g, "/"), text: readFileSync(file, "utf8") }));
-const OWN = /^(app\/\[locale\]\/patient\/(book|lab-tests|caretakers|ambulance)|app\/\[locale\]\/\(public\)\/doctors|components\/(booking|service-requests|directory)|modules\/(service-requests|lab-orders|care-requests|ambulance-requests|bookings))\//;
+const OWN = /^(app\/\[locale\]\/patient\/(book|lab-tests|caretakers|ambulance)|app\/\[locale\]\/\(public\)\/(doctors|lab-tests)|components\/(booking|service-requests|directory)|modules\/(service-requests|lab-orders|care-requests|ambulance-requests|bookings))\//;
 
 describe("no private data in browser storage or URLs", () => {
   it("no source file reads or writes localStorage or sessionStorage", () => {
@@ -39,7 +39,7 @@ describe("no private data in browser storage or URLs", () => {
   });
 
   it("fe-c links and redirects carry only public ids and filters in the query string", () => {
-    const allowed = new Set(["providerId", "serviceId", "pin", "next", "speciality", "sort", "showFull", "availability", "queue"]);
+    const allowed = new Set(["providerId", "serviceId", "pin", "next", "speciality", "sort", "showFull", "availability", "queue", "test", "city"]);
     const offenders: string[] = [];
     for (const f of ALL.filter(item => OWN.test(item.file))) {
       for (const match of f.text.matchAll(/[?&]([a-zA-Z]+)=\$?\{?/g)) if (!allowed.has(match[1])) offenders.push(`${f.file}: ${match[1]}`);
