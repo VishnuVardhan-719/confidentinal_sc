@@ -29,7 +29,7 @@ export function RecordList<T>({
   const rest = columns.filter((c) => c !== primary);
   return (
     <>
-      <div className="hidden md:block">
+      <div className="hidden min-w-0 md:block">
         <Table label={label}>
           <TableHeader>
             <TableRow>
@@ -57,9 +57,10 @@ export function RecordList<T>({
             <div className="font-semibold text-ink">{primary.cell(row)}</div>
             <dl className="mt-3 grid gap-2">
               {rest.map((c) => (
-                <div key={c.key} className="grid grid-cols-[minmax(7rem,40%)_1fr] gap-2 text-sm">
+                // Label above value on phones: two columns left too little room for badges and references.
+                <div key={c.key} className="grid gap-0.5 text-sm sm:grid-cols-[minmax(7rem,40%)_minmax(0,1fr)] sm:gap-2">
                   <dt className="text-muted">{c.header}</dt>
-                  <dd className="min-w-0 text-ink">{c.cell(row)}</dd>
+                  <dd className="min-w-0 text-ink [overflow-wrap:anywhere]">{c.cell(row)}</dd>
                 </div>
               ))}
             </dl>
