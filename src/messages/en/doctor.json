@@ -42,7 +42,8 @@
     },
     "emergency": "Emergency? Call 112. Emergency help never waits for a code, booking or payment.",
     "age": "{age, plural, one {# year} other {# years}}",
-    "ageUnknown": "Age not shared"
+    "ageUnknown": "Age not shared",
+    "visitContext": "Visit and status"
   },
   "dashboard": {
     "title": "Overview",
@@ -149,7 +150,9 @@
       "arrivalVerified": "Code verified",
       "inConsultation": "In consultation",
       "completed": "Visit completed"
-    }
+    },
+    "notesLink": "Consultation notes",
+    "postVisit": "After the visit"
   },
   "arrival": {
     "title": "Confirm your arrival",

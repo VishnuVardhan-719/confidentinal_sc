@@ -139,7 +139,11 @@ test.describe("doctor guard and shell", () => {
     await expectSynthetic(page);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.getByRole("region", { name: /pending requests/i }).getByRole("listitem")).toHaveCount(1);
-    await expect(page.getByRole("region", { name: /today/i }).getByRole("listitem")).toHaveCount(2);
+    // Fixture times are relative to server start (today visit = +30 min), so near IST midnight one of
+    // the two can fall on tomorrow; the grouping itself is unit-tested (splitTodayUpcoming).
+    const todayCount = await page.getByRole("region", { name: /today/i }).getByRole("listitem").count();
+    expect(todayCount).toBeGreaterThanOrEqual(1);
+    expect(todayCount).toBeLessThanOrEqual(2);
     await expect(page.getByRole("link", { name: /continue consultation/i })).toHaveAttribute("href", path.consultation(I.bookingActive));
     await expectNoPhiInUrlOrStorage(page);
     await expectNoAxeViolations(page);
@@ -221,7 +225,8 @@ test.describe("DC02 arrival code form (booking: today)", () => {
   test("en route -> arrived -> numeric 6-digit code input with expiry and attempts", async ({ page }) => {
     await page.goto(path.visit(I.bookingToday));
     await page.getByRole("button", { name: LABEL.onTheWay }).click();
-    await expect(page.getByRole("button", { name: LABEL.arrived })).toBeVisible();
+    // Server round trip + refetch; the button shows "Please wait." meanwhile (slow shared machine).
+    await expect(page.getByRole("button", { name: LABEL.arrived })).toBeVisible({ timeout: 15_000 });
     await page.getByRole("button", { name: LABEL.arrived }).click();
     const input = page.getByLabel(LABEL.codeInput);
     await expect(input).toHaveAttribute("inputmode", "numeric");
@@ -408,8 +413,14 @@ test.describe("DC04-DC08 consultation editor (booking: active)", () => {
 test.describe("DC09-DC14 records, collection, facts, proof, photo, PDF", () => {
   test("DC10 collection is recorded separately and payment badge stays Due", async ({ page }) => {
     await page.goto(path.visit(I.bookingActive));
-    await page.getByLabel(LABEL.collectionMethod).selectOption("cash");
+    // Interact only after hydration: a controlled select changed before hydration is reset by React.
+    await page.waitForLoadState("networkidle");
     await page.getByLabel(LABEL.amount).fill("800");
+    const method = page.getByLabel(LABEL.collectionMethod);
+    await expect(async () => {
+      await method.selectOption("cash");
+      await expect(method).toHaveValue("cash", { timeout: 1000 });
+    }).toPass();
     await page.getByRole("button", { name: LABEL.recordCollection }).click();
     await expect(page.getByText(/collection recorded/i)).toBeVisible();
     await expect(page.getByText(/payment: due/i)).toBeVisible();

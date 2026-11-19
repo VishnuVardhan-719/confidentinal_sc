@@ -1,0 +1,68 @@
+{
+  "title": "Prescription draft",
+  "description": "Write the medicines you would prescribe for this completed visit, using fixed templates.",
+  "synthetic": "Synthetic data for testing only. Never enter real patient information.",
+  "gated": "Prescription drafts are switched off until clinical features are approved and enabled. Nothing here is saved or shown.",
+  "documentLabel": "Prescription",
+  "badge": { "none": "Not started", "draft": "Draft - not issued" },
+  "notIssued": {
+    "title": "Draft - not issued",
+    "body": "Issuing prescriptions is not available. This draft is not sent to the patient or to any pharmacy, and it is not a valid prescription."
+  },
+  "notCompleted": {
+    "title": "Prescription drafts open after the visit is completed",
+    "body": "You can draft a prescription once this booking is marked completed."
+  },
+  "editor": {
+    "title": "Medicines",
+    "intro": "Type each medicine name yourself; there is no drug list or suggestion. Choose form, schedule and instruction from the templates. Nothing is saved automatically.",
+    "add": "Add medicine",
+    "max": "A draft can hold up to {max} medicines.",
+    "save": "Save draft",
+    "unsaved": "Unsaved changes",
+    "notSaved": "Not saved yet",
+    "savedAt": "Draft saved {time}"
+  },
+  "item": {
+    "legend": "Medicine {n}",
+    "medicineName": "Medicine name",
+    "medicineNameHint": "As you would write it. No lookup is done.",
+    "form": "Form",
+    "strength": "Strength",
+    "strengthHint": "For example 500 mg or 5 ml.",
+    "schedule": "When to take",
+    "duration": "For how many days",
+    "durationHint": "Whole days, 1 to {max}.",
+    "instruction": "Instruction",
+    "choose": "Choose",
+    "remove": "Remove medicine {n}"
+  },
+  "form": { "tablet": "Tablet", "capsule": "Capsule", "syrup": "Syrup", "drops": "Drops", "ointment": "Ointment", "inhaler": "Inhaler", "other": "Other" },
+  "schedule": { "once_daily": "Once a day", "twice_daily": "Twice a day", "three_times_daily": "Three times a day", "at_bedtime": "At bedtime", "as_needed": "Only when needed" },
+  "instruction": { "after_food": "after food", "before_food": "before food", "with_water": "with water", "apply_thin_layer": "apply a thin layer", "none": "no extra instruction" },
+  "errors": {
+    "medicineName": "Enter the name of medicine {n}.",
+    "form": "Choose the form of medicine {n}.",
+    "strength": "Strength of medicine {n} must be 40 characters or fewer.",
+    "schedule": "Choose when to take medicine {n}.",
+    "duration": "Enter the number of days for medicine {n}, from 1 to {max}.",
+    "instruction": "Choose an instruction for medicine {n}.",
+    "noItems": "Add at least one medicine before saving."
+  },
+  "conflict": {
+    "title": "This draft changed somewhere else",
+    "body": "A newer version was saved or the draft was discarded. Reload to see the latest; your unsaved changes here will be lost.",
+    "reload": "Reload draft"
+  },
+  "discard": {
+    "action": "Discard draft",
+    "title": "Discard this prescription draft?",
+    "body": "The saved draft is deleted. This cannot be undone.",
+    "confirm": "Discard draft"
+  },
+  "preview": {
+    "title": "Saved draft",
+    "notIssued": "Draft - not issued. Not a valid prescription.",
+    "line": "{form}: {name}{strength}, {schedule} for {days} days{instruction}"
+  }
+}

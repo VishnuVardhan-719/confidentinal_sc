@@ -1,8 +1,6 @@
 {
   "status": { "unknown": "Status not recognised" },
-  "gate": {
-    "consultation": "Clinical features are not enabled yet. Nothing here is saved or shown until they are approved and switched on."
-  },
+  "gate": { "consultation": "Clinical features are not enabled yet. Nothing here is saved or shown until they are approved and switched on." },
   "synthetic": "Synthetic clinical data for testing only. Never enter real patient information.",
   "workspace": {
     "title": "Consultation",
@@ -245,11 +243,7 @@
       "surgery": "Past surgery",
       "note": "Note"
     },
-    "badge": {
-      "doctorVerified": "Doctor verified",
-      "patientEntered": "Patient entered",
-      "needsReview": "Needs review"
-    },
+    "badge": { "doctorVerified": "Doctor verified", "patientEntered": "Patient entered", "needsReview": "Needs review" },
     "select": "Select {kind} for confirmation",
     "evidence": "What did you review?",
     "evidenceHint": "For example: blood group card, discharge summary.",
@@ -300,7 +294,8 @@
     "expires": "Expires {time}",
     "revokedNote": "Previous proof revoked.",
     "notYet": "A proof can be created after the patient's code is verified.",
-    "qrPending": "QR display and the public check page are not connected yet. Share the proof code only if asked."
+    "qrPending": "QR display is not connected yet. Share the proof code only if asked; anyone can check it on the public check page.",
+    "checkLink": "Open the public check page"
   },
   "pdf": {
     "title": "PDF of the signed record",

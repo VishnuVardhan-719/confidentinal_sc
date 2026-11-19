@@ -1,0 +1,25 @@
+{
+  "title": "Check a proof of visit",
+  "description": "A proof of visit confirms only that a SureCure Visit doctor visit took place. It never shows the patient, their address or any health details.",
+  "gatedTitle": "Proof checks are not available yet",
+  "form": {
+    "title": "Check a code",
+    "label": "Proof code",
+    "hint": "The {length}-character code from the doctor. Spaces and dashes are ignored.",
+    "submit": "Check proof",
+    "required": "Enter the proof code.",
+    "invalid": "This is not a valid proof code. Check it and try again."
+  },
+  "result": {
+    "valid": { "title": "This proof is valid", "body": "A doctor visit took place on this date." },
+    "expired": { "title": "This proof has expired", "body": "Proofs work for a limited time. Ask the doctor or patient for a new one." },
+    "revoked": { "title": "This proof was withdrawn", "body": "The doctor replaced or cancelled this proof. Ask for the current one." },
+    "unknown": { "title": "We could not find this proof", "body": "Check the code for typing mistakes. A code that was never issued looks the same as a mistyped one." },
+    "date": "Date of visit",
+    "service": "Service",
+    "provider": "Doctor",
+    "category": { "doctor_visit": "Doctor home visit" },
+    "checkedCode": "Code checked:",
+    "limits": "This check shows nothing about the patient or their health."
+  }
+}

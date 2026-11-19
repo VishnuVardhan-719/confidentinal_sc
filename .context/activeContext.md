@@ -202,3 +202,10 @@ Scope: /patient/book/** (doctor booking), /patient/lab-tests/**, /patient/careta
 4. Fixes: the sweep found no a11y violations. The full regression found 3 test-only timing races (page answered before first render, slot taken by another test, slow profile load), fixed in the specs (this commit).
 Verification: tsc 0; lint 0; vitest 63 files 968/968; next build 0; Playwright on 3362 (--workers=2): a11y-sweep-c + service-requests + booking-journey + doctor-search = 89 passed, 3 skipped (HTTP-only/mobile-only), 0 failed.
 Open: te/hi errorPage strings need native review (REVIEW_NEEDED `services`). Public /doctors pages not in this sweep (not in the listed trees).
+
+- 68bfa44: doctor-workspace e2e 64/64 (ws-desktop-1280 + ws-mobile-390). Restart servers between runs (fixture world is mutated): Start-Process pwsh .context/restart-ws.ps1 [-NoBuild] then poll .context/restart.log for 'servers up'.
+- Next: patient records/notifications + patient-workspace.spec.ts, doctor availability schedule.
+
+- PHASE4-D3 DONE: doctor+patient workspace e2e 110/110, lint/tsc/vitest(374)/build green. Handoff: .context/handoff-fe-a.md. Open: overlap with feat/fe2-p 4aa02f8 (patient records/notifications).
+
+- PHASE R7-D (C:/Users/Yashwanth/.claude-scratch-tasks/PHASE-R7-D.md): task 1 DONE d1a06f4 (public /verify proof check). All ws e2e 130/130. Next: task 2 consultation notes (doctor/consultations/[bookingId]).

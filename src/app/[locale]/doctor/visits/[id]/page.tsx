@@ -1,5 +1,6 @@
 import { Phone, Siren } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -13,6 +14,7 @@ import { PageStateView } from "@/components/doctor/page-state-view";
 import { VisitNextStep } from "@/components/doctor/visit-actions";
 import { VisitProgress } from "@/components/doctor/visit-progress";
 import { isClinicalEnabled } from "@/modules/clinical/gate";
+import { Link } from "@/i18n/navigation";
 import { getDoctorApi } from "@/modules/doctor";
 import { loadVisitDetail } from "@/modules/doctor/loaders";
 import { describeBookingState, describeVisitPhase } from "@/modules/doctor/status";
@@ -108,6 +110,19 @@ export default async function DoctorVisitPage({ params }: PageProps<"/[locale]/d
           ) : (
             <PageStateView state={{ kind: "error", code: collection.error.code, retryable: collection.error.code === "unavailable" }} />
           )}
+
+          {clinicalOn && v.state === "completed" ? (
+            <section aria-labelledby="post-visit" className="grid gap-3">
+              <h2 id="post-visit" className="text-lg font-semibold text-ink">
+                {t("postVisit")}
+              </h2>
+              <div className="flex flex-wrap gap-3">
+                <Button asChild variant="secondary">
+                  <Link href={`/doctor/consultations/${v.bookingId}`}>{t("notesLink")}</Link>
+                </Button>
+              </div>
+            </section>
+          ) : null}
 
           {clinicalOn ? <ProofCard bookingId={v.bookingId} available={ATTENDED.has(v.phase)} issue={issueProofAction} revoke={revokeProofAction} /> : null}
         </div>

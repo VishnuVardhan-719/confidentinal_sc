@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { InlineError } from "@/components/shared/inline-error";
 import { Notice } from "@/components/shared/notice";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { Link } from "@/i18n/navigation";
 import type { ApiResult } from "@/lib/api/result";
 import { newIntentKey } from "@/modules/clinical/finalize-flow";
 import { msUntilProofExpiry, proofState } from "@/modules/records/logic";
@@ -96,6 +97,12 @@ export function ProofCard({
               <dt className="text-sm text-muted">{t("code")}</dt>
               <dd className="font-mono text-base break-all text-ink tabular">{proof.token}</dd>
               <dd className="text-sm text-muted tabular">{t("expires", { time: dateTime(proof.expiresAt) })}</dd>
+              <dd>
+                {/* Public check page (DC12): shows only date, service type and doctor name. */}
+                <Link href={`/verify/${proof.token}`} target="_blank" rel="noreferrer" className="inline-flex min-h-target items-center text-sm text-forest underline underline-offset-4">
+                  {t("checkLink")}
+                </Link>
+              </dd>
             </dl>
           ) : null}
           <div aria-live="polite">{note ? <Notice tone="info">{note}</Notice> : null}</div>

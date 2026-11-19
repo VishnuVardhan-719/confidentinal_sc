@@ -14,8 +14,8 @@ foreach ($b in $Branches) {
   "== $b $tip docs:$($docs.Count) json:$($json.Count) other: $($other -join ', ')"
   if ($other) { "STOP: resolve manually"; break }
   git add -A
-  npx tsc --noEmit 2>&1 | Select-Object -First 8
-  if ($LASTEXITCODE -ne 0) { "STOP: tsc failed"; break }
+  $tsc = npx tsc --noEmit 2>&1; $code = $LASTEXITCODE; $tsc | Select-Object -First 8
+  if ($code -ne 0) { "STOP: tsc failed (merge staged, not committed)"; break }
   git commit -q -m "Merge branch 'feat/fe2-$b' ($tip) into feat/fe2-integration" -m "Docs kept both sides; message JSON deep-merged. tsc clean." -m "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
   git log --oneline -1
 }
