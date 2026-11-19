@@ -138,7 +138,7 @@ export function BookingWizard({ doctor, members, addresses: initialAddresses, ac
       <Stepper steps={steps} />
       <section aria-labelledby="wizard-step-title" className="grid gap-6 rounded-lg border border-border bg-surface p-5 sm:p-8">
         <div className="grid gap-1">
-          <p className="text-sm font-medium text-muted">{t("stepOf", { current: Math.max(index, 0) + 1, total: VISIBLE.length })}</p>
+          {/* "Step n of 7" comes from the Stepper above (visible on phones, screen-reader text on wider screens). */}
           <h2 id="wizard-step-title" ref={headingRef} tabIndex={-1} className="font-display text-2xl font-medium text-ink focus:outline-none">
             {state.step === "result" ? t("result.title") : t(`${state.step}.title`)}
           </h2>

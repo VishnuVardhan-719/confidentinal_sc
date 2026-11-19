@@ -110,3 +110,7 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
 - Fast-forwarded feat/fe2-c 0331c6b -> feat/fe2-integration 1ac677e (ancestor, no conflicts) to get patient session (modules/patient-dashboard/session.ts), payments components, CSP.
 - Plan: wizard route /patient/book (8 steps) + request page /patient/book/[id] (pending/accepted/declined, payment pay-after, confirm ref, cancel, reschedule, request receipt). Process-wide synthetic store src/fixtures/marketplace/booking-store.ts (globalThis); synthetic doctor 2 declines, others accept after FIXTURE_PROVIDER_RESPONSE_MS. Slots fixture API; patient addAddress; createBooking optional visitReason; BookingsApi.reschedule (http gated).
 - E2E env: FRONTEND_ADAPTER=fixture APP_ENV=test FIXTURE_PATIENT_SESSION=self, PLAYWRIGHT_BASE_URL=http://localhost:3360.
+
+## fe-q PHASE4-C3 session 2
+- vitest 939/939, lint 0, build 0. Server 3360 started by me (pid in .context/server-3360.pid).
+- Writing tests/e2e/booking-journey.spec.ts; fixed duplicate 'Step n of 7' in wizard.

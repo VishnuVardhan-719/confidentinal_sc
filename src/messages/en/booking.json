@@ -267,7 +267,6 @@
     "missingDoctorBody": "Open a doctor's profile and press Book a visit to start a request.",
     "notBookableTitle": "This doctor cannot take requests right now",
     "notBookableBody": "The doctor has no open times or no listed visit area. Choose another doctor.",
-    "stepOf": "Step {current} of {total}",
     "continue": "Continue",
     "back": "Back",
     "retry": "Try again",
