@@ -114,3 +114,4 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
 ## fe-q PHASE4-C3 session 2
 - vitest 939/939, lint 0, build 0. Server 3360 started by me (pid in .context/server-3360.pid).
 - Writing tests/e2e/booking-journey.spec.ts; fixed duplicate 'Step n of 7' in wizard.
+- Servers still alive (mine, fe2-c): 3360 = node 18224 (parent chain 5328, started 17:32), 3361 = node 24188 (20:09). Netstat in this sandbox does not show listeners. Lead said do not kill by PID, so rebuilds go to a new port (3362).

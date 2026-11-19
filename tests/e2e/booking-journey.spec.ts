@@ -39,15 +39,15 @@ async function expectStep(page: Page, current: number, title: string) {
 
 const cont = (page: Page) => page.getByRole("button", { name: "Continue", exact: true });
 
-/** Pick a day and a time by position; `-1` means the last one. */
+/** Pick a day and a time by position; negative positions count from the end (`-1` is the last). */
 async function pickSlot(scope: Locator, day: number, time: number) {
   const days = scope.getByRole("group", { name: "Day", exact: true }).locator("label");
   await expect(days.first()).toBeVisible();
   const dayCount = await days.count();
-  await days.nth(day < 0 ? dayCount - 1 : Math.min(day, dayCount - 1)).click();
+  await days.nth(Math.max(0, Math.min(day < 0 ? dayCount + day : day, dayCount - 1))).click();
   const times = scope.getByRole("group", { name: /^Time on / }).locator("label");
   const timeCount = await times.count();
-  const chosen = times.nth(time < 0 ? timeCount - 1 : Math.min(time, timeCount - 1));
+  const chosen = times.nth(Math.max(0, Math.min(time < 0 ? timeCount + time : time, timeCount - 1)));
   await chosen.click();
   await expect(chosen.getByRole("radio")).toBeChecked();
 }
@@ -57,12 +57,14 @@ const column = (projectName: string) => (projectName === "mobile-390" ? 0 : -1);
 
 async function waitForAnswer(page: Page, title: string) {
   await expect(async () => {
-    await page.getByRole("button", { name: "Check for updates" }).click();
-    await expect(page.getByText(title, { exact: true })).toBeVisible({ timeout: 2_000 });
-  }).toPass({ timeout: 20_000 });
+    const refresh = page.getByRole("button", { name: "Check for updates" });
+    await expect(refresh).toBeEnabled({ timeout: 15_000 });
+    await refresh.click();
+    await expect(page.getByText(title, { exact: true })).toBeVisible({ timeout: 5_000 });
+  }).toPass({ timeout: 45_000 });
 }
 
-async function wizardThroughReview(page: Page, opts: { doctor: typeof DOCTOR_1; day: number; time: number; newAddress?: boolean; axe?: boolean }) {
+async function wizardThroughReview(page: Page, opts: { doctor: typeof DOCTOR_1; day: number; time: number; newAddress?: boolean; axe?: boolean; tag?: string }) {
   await expect(page.getByRole("heading", { level: 1, name: `Request a visit with ${opts.doctor.name}` })).toBeVisible();
   await expect(page.getByText("Synthetic data, not live").filter({ visible: true }).first()).toBeVisible();
 
@@ -83,16 +85,21 @@ async function wizardThroughReview(page: Page, opts: { doctor: typeof DOCTOR_1; 
   await expectStep(page, 3, "Where should the doctor visit?");
   if (opts.newAddress) {
     // Every saved address is outside this doctor's area, so the patient adds one in the covered PIN.
+    // The seeded saved addresses are outside this doctor's area. An address added by an earlier run in the
+    // same server process may already be covered (the store is shared), so only assert the error without one.
     await expect(page.getByText("Outside this doctor's visit area").first()).toBeVisible();
-    await cont(page).click();
-    await expect(page.getByText(/Choose an address in PIN \d{6}, or add one\./)).toBeVisible();
+    if (await page.getByRole("radio", { checked: true }).count() === 0) {
+      await cont(page).click();
+      await expect(page.getByText(/Choose an address in PIN \d{6}, or add one\./)).toBeVisible();
+    }
+    const locality = `Synthetic e2e colony ${opts.tag ?? ""}`.trim();
     await page.getByRole("button", { name: "Add a new address" }).click();
     await page.getByRole("button", { name: "Save address" }).click();
     await expect(page.getByLabel("Area or locality")).toBeFocused();
-    await page.getByLabel("Area or locality").fill("Synthetic e2e colony");
-    await page.getByLabel("City").fill("Hyderabad");
+    await page.getByLabel("Area or locality").fill(locality);
+    await page.getByLabel("City", { exact: true }).fill("Hyderabad");
     await page.getByRole("button", { name: "Save address" }).click();
-    await expect(page.getByRole("radio", { name: /Synthetic e2e colony/ }).first()).toBeChecked();
+    await expect(page.getByRole("radio", { name: new RegExp(`${locality}, Hyderabad, PIN 500032`) }).last()).toBeChecked();
   } else {
     await expect(page.getByRole("radio", { name: /Synthetic locality, Synthetic city, PIN 500001/ })).toBeChecked();
   }
@@ -130,23 +137,40 @@ async function wizardThroughReview(page: Page, opts: { doctor: typeof DOCTOR_1; 
   await expectFitsViewport(page);
 }
 
-async function send(page: Page) {
+/**
+ * Send the reviewed request. If another run took the slot first (the store is shared), the app must send the
+ * patient back to the time step with an explanation; the test then picks the next free time, like a patient would.
+ */
+async function send(page: Page, retime: { day: number; time: number }) {
   await page.getByRole("button", { name: "Send request" }).click();
   await expect(page.getByText("Confirm the details to send the request.")).toBeVisible();
   await page.getByRole("checkbox", { name: "These details are correct." }).check();
-  await page.getByRole("button", { name: "Send request" }).click();
-  await expect(page).toHaveURL(/\/en\/patient\/book\/[0-9a-f-]{36}$/);
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await page.getByRole("button", { name: "Send request" }).click();
+    const changed = page.getByText("That time is no longer available", { exact: true });
+    await expect(page.getByText("Request sent", { exact: true }).or(changed).first()).toBeVisible({ timeout: 15_000 });
+    if (!(await changed.isVisible())) break;
+    await expectStep(page, 4, "Choose a time");
+    await pickSlot(page.locator("main"), retime.day, retime.time === -1 ? -1 - attempt - 1 : attempt + 1);
+    await cont(page).click();
+    await cont(page).click();
+    await page.getByRole("checkbox", { name: "I accept the fee and the cancellation policy." }).check();
+    await cont(page).click();
+    await expectStep(page, 7, "Review and send");
+    await page.getByRole("checkbox", { name: "These details are correct." }).check();
+  }
+  await expect(page).toHaveURL(/\/en\/patient\/book\/[0-9a-f-]{36}$/, { timeout: 15_000 });
 }
 
 async function cancelRequest(page: Page) {
   await page.getByRole("button", { name: "Cancel request" }).click();
-  const dialog = page.getByRole("dialog", { name: "Cancel this booking?" });
+  const dialog = page.getByRole("alertdialog", { name: "Cancel this booking?" });
   await expect(dialog.getByRole("button", { name: "Cancel booking" })).toBeDisabled();
   await dialog.getByRole("radio", { name: "My plans changed" }).check();
   await dialog.getByRole("checkbox", { name: /I have read the cancellation terms/ }).check();
   await dialog.getByRole("button", { name: "Cancel booking" }).click();
   await expect(dialog).toBeHidden();
-  await expect(page.getByText("This request is cancelled", { exact: true })).toBeVisible();
+  await expect(page.getByText("This request is cancelled", { exact: true })).toBeVisible({ timeout: 15_000 });
 }
 
 test.describe("booking journey", () => {
@@ -164,7 +188,7 @@ test.describe("booking journey", () => {
     await expect(page).toHaveURL(new RegExp(`/en/patient/book\\?providerId=${DOCTOR_1.providerId}&serviceId=${DOCTOR_1.serviceId}$`));
 
     await wizardThroughReview(page, { doctor: DOCTOR_1, day: 1, time: col, axe: true });
-    await send(page);
+    await send(page, { day: 1, time: col });
 
     // Pending: honest waiting state, no reference yet, nothing charged.
     await expect(page.getByRole("heading", { level: 1, name: `Visit with ${DOCTOR_1.name}` })).toBeVisible();
@@ -199,8 +223,8 @@ test.describe("booking journey", () => {
     test.setTimeout(120_000);
     await page.goto(`/en/doctors/${DOCTOR_2.providerId}`);
     await page.getByRole("link", { name: "Request a visit" }).click();
-    await wizardThroughReview(page, { doctor: DOCTOR_2, day: 0, time: column(info.project.name), newAddress: true });
-    await send(page);
+    await wizardThroughReview(page, { doctor: DOCTOR_2, day: 0, time: column(info.project.name), newAddress: true, tag: `${info.project.name} ${Date.now()}` });
+    await send(page, { day: 0, time: column(info.project.name) });
     await expect(page.getByText(`Waiting for ${DOCTOR_2.name} to answer`)).toBeVisible();
     await waitForAnswer(page, `${DOCTOR_2.name} could not take this request`);
     await expect(page.getByText("You have not been charged. Choose another doctor or time.")).toBeVisible();
@@ -290,14 +314,22 @@ test.describe("booking journey, keyboard only", () => {
     await expectStep(page, 7, "Review and send");
     await tabTo(page, page.getByRole("checkbox", { name: "These details are correct." })); await page.keyboard.press("Space");
     await tabTo(page, page.getByRole("button", { name: "Send request" })); await page.keyboard.press("Enter");
-    await expect(page).toHaveURL(/\/en\/patient\/book\/[0-9a-f-]{36}$/);
+    await expect(page).toHaveURL(/\/en\/patient\/book\/[0-9a-f-]{36}$/, { timeout: 15_000 });
 
+    // Check for the doctor's answer from the keyboard, then cancel.
+    const refresh = page.getByRole("button", { name: "Check for updates" });
+    await expect(async () => {
+      await expect(refresh).toBeEnabled({ timeout: 15_000 });
+      await tabTo(page, refresh); await page.keyboard.press("Enter");
+      await expect(page.getByText(`${DOCTOR_1.name} accepted your request`, { exact: true })).toBeVisible({ timeout: 5_000 });
+    }).toPass({ timeout: 45_000 });
+    await expect(refresh).toBeEnabled({ timeout: 15_000 });
     await tabTo(page, page.getByRole("button", { name: "Cancel request" })); await page.keyboard.press("Enter");
-    const dialog = page.getByRole("dialog", { name: "Cancel this booking?" });
+    const dialog = page.getByRole("alertdialog", { name: "Cancel this booking?" });
     await expect(dialog).toBeVisible();
     await tabTo(page, dialog.getByRole("radio").first()); await page.keyboard.press("Space");
     await tabTo(page, dialog.getByRole("checkbox", { name: /I have read the cancellation terms/ })); await page.keyboard.press("Space");
     await tabTo(page, dialog.getByRole("button", { name: "Cancel booking" })); await page.keyboard.press("Enter");
-    await expect(page.getByText("This request is cancelled", { exact: true })).toBeVisible();
+    await expect(page.getByText("This request is cancelled", { exact: true })).toBeVisible({ timeout: 15_000 });
   });
 });
