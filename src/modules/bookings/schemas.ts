@@ -22,13 +22,17 @@ export const bookingSchema = z.object({
   doctorOperationalStatus: doctorOperationalStatusSchema.nullable(), synthetic: z.boolean(),
 });
 export type Booking = z.infer<typeof bookingSchema>;
-export const createBookingSchema = z.strictObject({ patientId: z.uuid(), serviceId: z.uuid(), addressId: z.uuid(), startAt: z.iso.datetime() });
+/** visitReason: optional short patient note (symptoms) for the provider; never logged or put in a URL. */
+export const createBookingSchema = z.strictObject({ patientId: z.uuid(), serviceId: z.uuid(), addressId: z.uuid(), startAt: z.iso.datetime(), visitReason: z.string().trim().max(240).optional() });
 export type CreateBooking = z.infer<typeof createBookingSchema>;
 export const decisionReasonSchema = z.enum(["patient_request", "provider_unavailable", "unable_to_service", "other"]);
 export const decisionSchema = z.strictObject({ expectedVersion: versionSchema, reason: decisionReasonSchema });
 export const acceptSchema = z.strictObject({ expectedVersion: versionSchema, resourceIds: z.array(z.uuid()).min(1).max(2).refine(ids => new Set(ids.map(id => id.toLowerCase())).size === ids.length) });
 export const bookingListSchema = z.strictObject({ providerId: z.uuid().optional(), limit: z.number().int().min(1).max(50).default(20), cursor: z.uuid().optional() });
 export type BookingList = z.input<typeof bookingListSchema>;
+/** Move a booking to a new slot. The provider must accept again, so the booking returns to REQUESTED. */
+export const rescheduleSchema = z.strictObject({ expectedVersion: versionSchema, startAt: z.iso.datetime() });
+export type BookingReschedule = z.infer<typeof rescheduleSchema>;
 export type BookingDecision = z.infer<typeof decisionSchema>;
 export type BookingAccept = z.infer<typeof acceptSchema>;
 export const bookingEventSchema = z.object({ id: z.uuid(), bookingId: z.uuid(), status: bookingStatusSchema, version: versionSchema,

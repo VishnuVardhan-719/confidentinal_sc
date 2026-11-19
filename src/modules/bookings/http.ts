@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createHttpClient, type HttpClient } from "@/lib/api/http";
 import { fail, ok } from "@/lib/api/result";
 import { versionSchema } from "@/modules/catalog/schemas";
-import { acceptSchema, bookingListSchema, bookingWireSchema, createBookingSchema, decisionSchema } from "./schemas";
+import { acceptSchema, bookingListSchema, bookingWireSchema, createBookingSchema, decisionSchema, rescheduleSchema } from "./schemas";
 import type { BookingsApi } from "./api";
 /** 409 remains conflict; never retry stale versions or optimistic booking mutations.
  * Refetch get(id), re-review changes and explicitly decide again. */
@@ -16,7 +16,9 @@ export function createBookingsHttpApi(http: HttpClient = createHttpClient()): Bo
     async create(input, idempotencyKey) {
       const parsed = createBookingSchema.safeParse(input);
       if (!parsed.success || !z.uuid().safeParse(idempotencyKey).success) return fail("validation");
-      return http.request("/api/bookings", z.object({ id: z.uuid() }), { method: "POST", body: parsed.data, idempotencyKey });
+      // B01 has no visit-reason field (REQUESTS.md); send only the inspected contract fields.
+      const { patientId, serviceId, addressId, startAt } = parsed.data;
+      return http.request("/api/bookings", z.object({ id: z.uuid() }), { method: "POST", body: { patientId, serviceId, addressId, startAt }, idempotencyKey });
     },
     async list(filters = {}) {
       const parsed = bookingListSchema.safeParse(filters);
@@ -34,5 +36,7 @@ export function createBookingsHttpApi(http: HttpClient = createHttpClient()): Bo
     decline: (id, value) => decision(id, value, decisionSchema, "decline"),
     cancel: (id, value) => decision(id, value, decisionSchema, "cancel"),
     async timeline(id) { return fail(z.uuid().safeParse(id).success ? "gated" : "validation"); },
+    /** No reschedule route exists on inspected B01 (REQUESTS.md); fail closed. */
+    async reschedule(id, value) { return fail(z.uuid().safeParse(id).success && rescheduleSchema.safeParse(value).success ? "gated" : "validation"); },
   };
 }

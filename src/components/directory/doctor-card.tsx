@@ -14,7 +14,7 @@ export function doctorInitials(name: string): string {
 /** Public booking entry: public IDs and the coarse PIN only. The wizard re-checks everything server-side. */
 export function doctorBookHref(doctor: Pick<DoctorResult, "providerId" | "serviceId" | "location">): string | null {
   if (!doctor.location) return null;
-  return "/patient/bookings/new?" + new URLSearchParams({ providerId: doctor.providerId, serviceId: doctor.serviceId, category: "doctor", pin: doctor.location.pin });
+  return "/patient/book?" + new URLSearchParams({ providerId: doctor.providerId, serviceId: doctor.serviceId });
 }
 
 /** Result card. Rating renders only when the server sends real aggregated reviews; there is no placeholder. */

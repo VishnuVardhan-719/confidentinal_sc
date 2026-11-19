@@ -1,7 +1,7 @@
 import type { ApiResult } from "@/lib/api/result";
 import { getAdapterMode } from "@/lib/api/mode";
 import type { FixtureEnvironment } from "@/lib/api/fixture";
-import type { Booking, BookingAccept, BookingDecision, BookingEvent, BookingList, CreateBooking } from "./schemas";
+import type { Booking, BookingAccept, BookingDecision, BookingEvent, BookingList, BookingReschedule, CreateBooking } from "./schemas";
 import { createBookingsHttpApi } from "./http";
 import { createBookingsFixtureApi } from "./fixture";
 export interface BookingsApi {
@@ -12,6 +12,7 @@ export interface BookingsApi {
   decline(id: string, input: BookingDecision): Promise<ApiResult<{ version: number }>>;
   cancel(id: string, input: BookingDecision): Promise<ApiResult<{ version: number }>>;
   timeline(id: string): Promise<ApiResult<{ items: BookingEvent[] }>>;
+  reschedule(id: string, input: BookingReschedule): Promise<ApiResult<{ version: number }>>;
 }
 export function createBookingsApi(env?: FixtureEnvironment): BookingsApi {
   return getAdapterMode(env) === "fixture" ? createBookingsFixtureApi({ env }) : createBookingsHttpApi();

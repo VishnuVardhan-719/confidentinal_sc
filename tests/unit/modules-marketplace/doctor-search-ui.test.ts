@@ -154,7 +154,7 @@ describe("DoctorResults", () => {
     expect(screen.getByText(booking.card.bookDisabledFull)).toBeTruthy();
     expect(screen.getByText(booking.card.bookDisabledLocation)).toBeTruthy();
     const book = screen.getAllByRole("link", { name: booking.card.book })[0].getAttribute("href")!;
-    expect(book).toMatch(/^\/patient\/bookings\/new\?providerId=[0-9a-f-]{36}&serviceId=[0-9a-f-]{36}&category=doctor&pin=\d{6}$/);
+    expect(book).toMatch(/^\/patient\/book\?providerId=[0-9a-f-]{36}&serviceId=[0-9a-f-]{36}$/);
     fireEvent.click(screen.getByRole("button", { name: booking.sort.fee_asc }));
     expect(push).toHaveBeenCalledWith("/doctors?sort=fee_asc&showFull=1");
     fireEvent.click(screen.getByRole("button", { name: booking.view.map }));

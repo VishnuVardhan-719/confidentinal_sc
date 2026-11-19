@@ -3,11 +3,12 @@ import { fail, ok } from "@/lib/api/result";
 import { syntheticBookable } from "@/fixtures/marketplace/providers";
 import { SYNTHETIC_POLICY_ID, syntheticAddresses, syntheticMembers, syntheticOverview } from "@/fixtures/marketplace/patient";
 import type { PatientApi } from "./api";
-import { offerRequestSchema } from "./schemas";
+import type { SyntheticMarketplaceStore } from "@/fixtures/marketplace/booking-store";
+import { newAddressSchema, offerRequestSchema } from "./schemas";
 
 export type PatientFixtureScenario = "complete" | "questionnaire_incomplete" | "no_addresses";
 const INCOMPLETE = ["pinnedLocation", "allergies"] as const;
-export function createPatientFixtureApi(options: { env?: FixtureEnvironment; scenario?: PatientFixtureScenario } = {}): PatientApi {
+export function createPatientFixtureApi(options: { env?: FixtureEnvironment; scenario?: PatientFixtureScenario; store?: SyntheticMarketplaceStore } = {}): PatientApi {
   const guard = fixtureGuard(options.env);
   return {
     async getOverview() {
@@ -18,7 +19,21 @@ export function createPatientFixtureApi(options: { env?: FixtureEnvironment; sce
       guard();
       return ok({ items: syntheticMembers(options.scenario === "questionnaire_incomplete" ? INCOMPLETE : []) });
     },
-    async listAddresses() { guard(); return ok({ items: options.scenario === "no_addresses" ? [] : syntheticAddresses() }); },
+    async listAddresses() {
+      guard();
+      if (options.store) return ok({ items: structuredClone(options.store.addresses) });
+      return ok({ items: options.scenario === "no_addresses" ? [] : syntheticAddresses() });
+    },
+    async addAddress(input) {
+      guard();
+      const parsed = newAddressSchema.safeParse(input);
+      if (!parsed.success) return fail("validation");
+      if (!options.store) return fail("gated");
+      if (options.store.addresses.length >= 10) return fail("conflict");
+      const id = crypto.randomUUID();
+      options.store.addresses.push({ id, ...parsed.data, synthetic: true });
+      return ok({ id });
+    },
     async getOffer(input) {
       guard();
       const parsed = offerRequestSchema.safeParse(input);

@@ -1,3 +1,7 @@
+# fe-q (continuing fe-c3 PHASE4-C3) - 2026-11-19T00:36:45
+- Owner of task now: fe-q. State source: .context/handoff-t3j.md. WIP commit 7550c76 (booking-store).
+- Plan: data layer (store wiring, addAddress, reschedule, slots, visitReason) -> journey.ts server factory -> routes /patient/book, /patient/book/[id], /receipt -> strings -> e2e booking-journey.spec.ts -> lint/typecheck/test/build -> browser run port 3360 -> commit.
+
 # Active SureCure Visit context
 
 ## E2E specs / branch tests / component needs — 2026-11-18
@@ -113,3 +117,9 @@ Progress:
 - Done: e2e helpers fixed; profile.spec 6/6 (desktop, before rule); 2 nav tests fixme; profile gate (src/modules/onboarding/profile-gate.ts + profile-gate-server.ts, 5 unit tests); REQUESTS R-FE06-01..09.
 - Next: COMPONENTS.md, REVIEW_NEEDED row, delete .playwright-mcp, final lint/typecheck/test/build, report DONE.
 - PHASE3-B (Kiro B): committed ed384ee; guard wrong-role -> own landing; getAccountSession (src/modules/auth/account-session.ts + server.ts); /patient/onboarding forwards to health-profile; role-isolation.test.ts; REQUESTS R-FE07-01..03. Pending: tsc, lint, identity vitest, one build, commit.
+
+## Active PHASE4-C3 (Kiro fe-c3) - 2026-11-19
+- Task: C:/Users/Yashwanth/.claude-scratch-tasks/PHASE4-common.md + PHASE4-C3.md. Doctor discovery + 22-step booking journey verified in browser (Playwright, port 3360). Commit on feat/fe2-c, never push. Don't touch src/app/[locale]/patient/bookings* (fe-p).
+- Fast-forwarded feat/fe2-c 0331c6b -> feat/fe2-integration 1ac677e (ancestor, no conflicts) to get patient session (modules/patient-dashboard/session.ts), payments components, CSP.
+- Plan: wizard route /patient/book (8 steps) + request page /patient/book/[id] (pending/accepted/declined, payment pay-after, confirm ref, cancel, reschedule, request receipt). Process-wide synthetic store src/fixtures/marketplace/booking-store.ts (globalThis); synthetic doctor 2 declines, others accept after FIXTURE_PROVIDER_RESPONSE_MS. Slots fixture API; patient addAddress; createBooking optional visitReason; BookingsApi.reschedule (http gated).
+- E2E env: FRONTEND_ADAPTER=fixture APP_ENV=test FIXTURE_PATIENT_SESSION=self, PLAYWRIGHT_BASE_URL=http://localhost:3360.
