@@ -39,6 +39,7 @@ async function DoctorShell({ children }: { children: ReactNode }) {
     { href: "/doctor/availability", label: t("nav.availability"), icon: "clipboard" },
     { href: "/doctor/services", label: t("nav.services"), icon: "stethoscope" },
     { href: "/doctor/profile", label: t("nav.profile"), icon: "user", primary: true },
+    { href: "/doctor/reviews", label: t("nav.reviews"), icon: "users" },
     { href: "/doctor/earnings", label: t("nav.earnings"), icon: "wallet" },
     { href: "/doctor/support", label: t("nav.support"), icon: "support" },
     { href: "/doctor/settings", label: t("nav.settings"), icon: "settings" },

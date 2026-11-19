@@ -10,7 +10,8 @@
       "profile": "Profile",
       "earnings": "Earnings",
       "support": "Support",
-      "settings": "Settings"
+      "settings": "Settings",
+      "reviews": "Reviews"
     }
   },
   "guard": {

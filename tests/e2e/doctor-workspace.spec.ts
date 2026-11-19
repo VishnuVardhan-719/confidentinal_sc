@@ -404,8 +404,13 @@ test.describe("DC04-DC08 consultation editor (booking: active)", () => {
     const field = page.getByLabel(LABEL.chiefComplaint);
     await field.focus();
     const bar = page.getByRole("toolbar", { name: /consultation actions/i });
-    const [f, b] = await Promise.all([field.boundingBox(), bar.boundingBox()]);
-    expect(f && b && f.y + f.height <= b.y).toBeTruthy();
+    // Poll: the step change scrolls the heading into view (smooth scroll), so measure once settled.
+    await expect
+      .poll(async () => {
+        const [f, b] = await Promise.all([field.boundingBox(), bar.boundingBox()]);
+        return !!(f && b && f.y + f.height <= b.y);
+      })
+      .toBe(true);
   });
 });
 
