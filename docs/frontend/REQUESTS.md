@@ -424,3 +424,10 @@ R-FE01-12 is resolved: with the ban lifted, all fe2-a browser specs ran against 
 avigation.spec.ts role walk and the two onboarding.spec.ts fixme tests on the integration branch.
 - AccountFrame should drop under role shells once the role layouts exist (one header per page).
 - Identity specs mutate shared fixture memory, so run each spec file against a freshly started server (admin-verification approves the lab that onboarding.spec expects under review).
+## 2026-11-19 - PHASE4-C3 booking journey (fe-q, feat/fe2-c)
+Contracts the patient booking journey uses that B01 / `docs/API_CONTRACTS.md` do not define. The HTTP adapter returns `gated` for each until agreed.
+- `visitReason` on create booking: optional free text, max 240 characters, visible only to the booked doctor. The HTTP create strips it today.
+- Reschedule: `POST /bookings/{id}/reschedule { version, startAt }`, returns the new version; status goes back to REQUESTED so the doctor accepts again; `conflict` on stale version or overlapping slot.
+- Open slots: `GET /providers/{providerId}/services/{serviceId}/slots` for the next 5 IST days, excluding slots that overlap active bookings of that provider.
+- Add patient address: `POST /patient/addresses { label, locality, city, pin }` returning the new id and the address list.
+- Cancel reason: the cancellation dialog reasons (`schedule_change`, `no_longer_needed`, `chose_other_provider`, `other`) need a mapping to `decisionReasonSchema`; the fixture always sends `patient_request`.

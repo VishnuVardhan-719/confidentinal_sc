@@ -15,6 +15,7 @@ import type payment from "../messages/en/payment.json";
 import type support from "../messages/en/support.json";
 import type errors from "../messages/en/errors.json";
 import type accessibility from "../messages/en/accessibility.json";
+import type services from "../messages/en/services.json";
 
 declare module "next-intl" {
   interface AppConfig {
@@ -36,6 +37,7 @@ declare module "next-intl" {
       support: typeof support;
       errors: typeof errors;
       accessibility: typeof accessibility;
+      services: typeof services;
     };
   }
 }

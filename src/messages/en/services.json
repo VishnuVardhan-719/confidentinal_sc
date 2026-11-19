@@ -1,0 +1,168 @@
+{
+  "nav": {
+    "labTests": "Lab tests",
+    "caretakers": "Caretakers",
+    "ambulance": "Ambulance transfer",
+    "workspace": "Patient"
+  },
+  "common": {
+    "pinLabel": "PIN code",
+    "pinHint": "6 digits, for example 500001.",
+    "pinError": "Enter a 6-digit PIN code that does not start with 0.",
+    "search": "Search",
+    "showAll": "Show all",
+    "results": "{count, plural, =0 {No providers} one {# provider} other {# providers}}",
+    "resultsIn": "{count, plural, =0 {No providers} one {# provider} other {# providers}} serving PIN {pin}",
+    "emptyTitle": "No providers serve this PIN yet",
+    "emptyBody": "Try another PIN or show all providers. Only providers who serve an area are listed for it.",
+    "serves": "Serves PIN {pins}",
+    "from": "From {price}",
+    "manual": "The provider accepts or declines each request by hand. Nothing is charged now.",
+    "notConnectedTitle": "This service is not connected yet",
+    "notConnectedBody": "Requests cannot be sent until the service is connected. No providers or prices are assumed.",
+    "back": "Back to providers",
+    "missingTitle": "Choose a provider first",
+    "missingBody": "Pick a provider from the list to start a request.",
+    "form": {
+      "patient": "Who is this for?",
+      "self": "Myself",
+      "family": "Family member",
+      "address": "Address",
+      "addressIntro": "{name} serves PIN {pins}.",
+      "addressLine": "{label}: {locality}, {city}, PIN {pin}",
+      "labels": {
+        "home": "Home",
+        "work": "Work",
+        "other": "Other"
+      },
+      "outside": "Outside this provider's area",
+      "noCoveredTitle": "None of your saved addresses is in this area",
+      "noCoveredBody": "Add an address from the doctor booking or your profile, or choose another provider.",
+      "time": "Date and time",
+      "loadingTimes": "Loading open times...",
+      "noTimesTitle": "No open times in the next 5 days",
+      "noTimesBody": "Choose another provider or try again later.",
+      "note": "Anything the provider should know? (optional)",
+      "noteHint": "Up to {max} characters. Do not add phone numbers, ID numbers or card details.",
+      "noteCount": "{count} of {max} characters",
+      "price": "Price",
+      "priceNote": "Set by the provider. The price is fixed when you send the request.",
+      "total": "Total",
+      "payment": "Payment",
+      "payAfter": "Pay the provider after the service",
+      "onlineDisabled": "Online payment is not available yet.",
+      "policyTitle": "Cancellation",
+      "policy": "Free to cancel up to 2 hours before the start. Sample policy for testing.",
+      "accept": "I accept the price and the cancellation policy.",
+      "send": "Send request",
+      "sending": "Sending...",
+      "retry": "Try again",
+      "conflictTitle": "Something changed",
+      "conflictBody": "The time or price changed while you were filling this in. Check the details and send again.",
+      "errors": {
+        "patient": "Choose who this is for.",
+        "address": "Choose an address in this provider's area.",
+        "startAt": "Choose a time.",
+        "policyAccepted": "Accept the price and the cancellation policy.",
+        "note": "Keep the note to 200 characters or fewer."
+      }
+    },
+    "status": {
+      "pageTitle": "Service request",
+      "reference": "Reference {reference}",
+      "noReference": "You get a reference number when the provider accepts.",
+      "back": "Back to providers",
+      "statusTitle": "Request status",
+      "statuses": "Statuses",
+      "booking": "Booking",
+      "payment": "Payment",
+      "updatedAt": "Last checked {time}",
+      "refresh": "Check for updates",
+      "details": "Request details",
+      "provider": "Provider",
+      "time": "Date and time",
+      "area": "Area",
+      "areaValue": "{locality}, {city}, PIN {pin}",
+      "lines": "Price",
+      "total": "Total",
+      "due": "Amount due",
+      "priceNote": "Fixed when you sent the request.",
+      "timeline": "History",
+      "actor": {
+        "patient": "By you",
+        "provider": "By the provider",
+        "system": "By SureCure Visit"
+      },
+      "changesTitle": "Cancel this request",
+      "cancel": "Cancel request",
+      "cancelled": "Request cancelled.",
+      "changesClosed": "Cancelling closes 2 hours before the start. Contact support if you need help.",
+      "policySummary": "Free to cancel up to 2 hours before the start. Sample policy for testing.",
+      "findAnother": "Find another provider",
+      "lead": {
+        "requested": {
+          "title": "Waiting for {name} to answer",
+          "body": "The provider reviews each request by hand. Their answer appears here. Use Check for updates to see it."
+        },
+        "confirmed": {
+          "title": "{name} accepted your request",
+          "body": "Your request is confirmed. Pay the provider after the service."
+        },
+        "declined": {
+          "title": "{name} could not take this request",
+          "body": "You have not been charged. Choose another provider or time."
+        },
+        "cancelled": {
+          "title": "This request is cancelled",
+          "body": "You have not been charged."
+        },
+        "completed": {
+          "title": "Service completed",
+          "body": "Thank you. Payment and records appear here once they are recorded."
+        },
+        "expired": {
+          "title": "This request has closed",
+          "body": "The provider did not answer in time. You have not been charged."
+        }
+      }
+    },
+    "filterLabel": "Filter providers by area"
+  },
+  "lab": {
+    "pageTitle": "Lab tests at home",
+    "description": "Choose a lab that serves your area. A collector comes to your address to take the sample.",
+    "requestTitle": "Request tests from {name}",
+    "requestDescription": "Choose tests and a collection time. The lab accepts or declines your request.",
+    "service": "Home sample collection",
+    "statusTitle": "Home sample collection with {name}",
+    "testsCount": "{count, plural, one {# test} other {# tests}}",
+    "tests": "Tests",
+    "testsHint": "Choose one or more tests.",
+    "testLine": "{specimen} sample. {preparation}",
+    "reportIn": "Report in about {hours} hours",
+    "specimen": {
+      "blood": "Blood",
+      "urine": "Urine"
+    },
+    "preparation": {
+      "fasting_10h": "Do not eat for 10 hours before. Water is fine.",
+      "morning_sample": "Use the first urine of the morning.",
+      "none": "No preparation needed."
+    },
+    "collectionFee": "Home collection",
+    "prepTitle": "Before the collection",
+    "prepAck": "I will follow the preparation shown for these tests.",
+    "report": {
+      "none": "No report yet",
+      "awaitingReview": "Report awaiting review"
+    },
+    "reportNote": "Reports are released only by the lab's reviewer and then appear in your Records.",
+    "errors": {
+      "testIds": "Choose at least one test.",
+      "preparationAcknowledged": "Confirm you will follow the preparation."
+    },
+    "request": "Request tests",
+    "recordTitle": "Report",
+    "prepEmpty": "Choose tests to see how to prepare."
+  }
+}

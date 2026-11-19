@@ -47,6 +47,9 @@ Change the table row to `reviewed by <name/role>, <date>` and list any strings c
 ## `booking` namespace (fe-c2, 2026-11-18): te unreviewed, hi unreviewed
 Doctor search, filters, LocationPicker, booking gate. Review first: `booking.search.symptoms.*` + `symptomHint` (clinical wording), `booking.gate.consentLabel/consentHint/healthUnverified` (consent), `booking.location.consent`, `booking.card.manualAcceptance`, `booking.profile.feeNote`.
 
+## `booking.wizard`, `booking.request`, `booking.receipt` (fe-q, PHASE4-C3, 2026-11-19): te unreviewed, hi unreviewed
+Booking wizard, request page and receipt. Machine-written by an agent. Review first: `booking.wizard.details.hint` (what not to write), `booking.wizard.paymentPolicy.*` and `booking.request.lead.*` (money and "not charged" wording), `booking.receipt.notInvoice` (legal wording), `booking.request.lead.declined.*`.
+
 ## Operations namespaces (Kiro E, FE13-FE17)
 
 | Namespace | te | hi | Priority notes |

@@ -58,7 +58,8 @@ export function RequestActions({ bookingId, version, providerId, serviceId, poli
     setBusy(true); setError(null);
     const result = await actions.reschedule(bookingId, version, slot.startAt).catch(() => ({ ok: false as const, error: { code: "unavailable" as const } }));
     setBusy(false);
-    if (!result.ok) { setError(result.error.code); return; }
+    // A conflict means the request changed (for example the doctor answered): load the latest version behind the form.
+    if (!result.ok) { setError(result.error.code); if (result.error.code === "conflict") router.refresh(); return; }
     setMoving(false); setDone("moved"); router.refresh();
   }
 
@@ -71,7 +72,7 @@ export function RequestActions({ bookingId, version, providerId, serviceId, poli
         <CancellationDialog policy={policy} trigger={<Button type="button" variant="secondary">{t("cancel")}</Button>}
           onConfirm={async () => {
             const result = await actions.cancel(bookingId, version).catch(() => ({ ok: false as const, error: { code: "unavailable" as const } }));
-            if (!result.ok) return { ok: false, code: result.error.code };
+            if (!result.ok) { if (result.error.code === "conflict") router.refresh(); return { ok: false, code: result.error.code }; }
             setDone("cancelled"); router.refresh();
             return { ok: true };
           }} />

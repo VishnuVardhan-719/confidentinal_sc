@@ -2,6 +2,9 @@ import { test, expect, scenario, categories, providerId, addressId, privateMarke
 
 // FE08 / FRONTEND_MASTER §§9,19,20. Scenario clock: 2026-11-18T00:00:00Z.
 // Removing fixme also requires a reviewed synthetic offer/consent prepare boundary.
+// PHASE4-C3: the doctor wizard is at /patient/book and its journey is covered by booking-journey.spec.ts;
+// these cases stay fixme (scenario runner, storage-state logins, /patient/bookings/new and non-doctor flows).
+
 test.use({ identity: "patient" });
 const steps = ["service", "patient", "location", "schedule", "details", "paymentPolicy", "review", "result"];
 async function currentStep(page, name) {
