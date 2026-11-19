@@ -16,11 +16,12 @@ import { PatientShell } from "@/components/patient/patient-shell";
 import { Link } from "@/i18n/navigation";
 import { fail } from "@/lib/api/result";
 import { formatPaise, type Locale } from "@/lib/format";
-import { getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { patientLoginRedirect, requirePatientSession } from "@/modules/patient-dashboard/session";
 import { createDoctorSearchApi } from "@/modules/providers/doctor-api";
 import type { DoctorResult } from "@/modules/providers/doctor-search";
 import { getSavedProvidersApi, MAX_SAVED_PROVIDERS, savedProviderSchema } from "@/modules/saved-providers";
 import { saveProviderAction, unsaveProviderAction } from "./actions";
+import { AccessDenied } from "@/components/auth/access-denied";
 import { SaveToggle } from "./_components/save-toggle";
 
 export async function generateMetadata() {
@@ -42,8 +43,8 @@ export default async function SavedProvidersPage({ params, searchParams }: PageP
   const flash = status === "saved" ? "savedNow" : status === "removed" ? "removedNow" : null;
   await connection();
   const locale = toLocale(raw);
-  const session = getPatientSession();
-  if (session.status !== "ok") redirect(patientLoginRedirect(locale, `/${locale}/patient/saved`));
+  const session = await requirePatientSession(locale, `/${locale}/patient/saved`);
+  if (session.status !== "ok") return <AccessDenied reason={session.reason} />;
 
   const [t, tb] = await Promise.all([getTranslations("patientAccount.saved"), getTranslations("booking.search.specialities")]);
   const saved = await getSavedProvidersApi(process.env, session.fixtureActor).list().catch(() => fail("unavailable"));

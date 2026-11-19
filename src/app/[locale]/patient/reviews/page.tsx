@@ -15,7 +15,8 @@ import { KeyedStatusBadge } from "@/components/shared/status-badge";
 import { PatientShell } from "@/components/patient/patient-shell";
 import { Link } from "@/i18n/navigation";
 import { fail } from "@/lib/api/result";
-import { getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { patientLoginRedirect, requirePatientSession } from "@/modules/patient-dashboard/session";
+import { AccessDenied } from "@/components/auth/access-denied";
 import { describeReviewStatus, getReviewsApi, reviewEligibility, type ReviewableVisit } from "@/modules/reviews";
 
 export async function generateMetadata() {
@@ -30,8 +31,8 @@ export default async function ReviewsPage({ params, searchParams }: PageProps<"/
   const { locale: raw } = await params;
   await connection();
   const locale = toLocale(raw);
-  const session = getPatientSession();
-  if (session.status !== "ok") redirect(patientLoginRedirect(locale, `/${locale}/patient/reviews`));
+  const session = await requirePatientSession(locale, `/${locale}/patient/reviews`);
+  if (session.status !== "ok") return <AccessDenied reason={session.reason} />;
   const [t, format, sp] = await Promise.all([getTranslations("patientAccount.reviews"), getFormatter(), searchParams]);
   const date = (iso: string) => format.dateTime(new Date(iso), { dateStyle: "medium", timeZone: "Asia/Kolkata" });
   const result = await getReviewsApi(process.env, session.fixtureActor).listVisits().catch(() => fail("unavailable"));

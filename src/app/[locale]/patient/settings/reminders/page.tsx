@@ -10,9 +10,10 @@ import { PageHeader } from "@/components/shared/page-header";
 import { RetryAction } from "@/components/shared/retry-action";
 import { PatientShell } from "@/components/patient/patient-shell";
 import { fail } from "@/lib/api/result";
-import { getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { patientLoginRedirect, requirePatientSession } from "@/modules/patient-dashboard/session";
 import { getReminderPrefsApi, reminderPrefsSchema } from "@/modules/reminder-prefs";
 import { saveReminderPrefsAction } from "./actions";
+import { AccessDenied } from "@/components/auth/access-denied";
 import { ReminderForm } from "./_components/reminder-form";
 
 export async function generateMetadata() {
@@ -27,8 +28,8 @@ export default async function ReminderSettingsPage({ params }: PageProps<"/[loca
   const { locale: raw } = await params;
   await connection();
   const locale = toLocale(raw);
-  const session = getPatientSession();
-  if (session.status !== "ok") redirect(patientLoginRedirect(locale, `/${locale}/patient/settings/reminders`));
+  const session = await requirePatientSession(locale, `/${locale}/patient/settings/reminders`);
+  if (session.status !== "ok") return <AccessDenied reason={session.reason} />;
   const [t, format] = await Promise.all([getTranslations("patientAccount.reminders"), getFormatter()]);
   const result = await getReminderPrefsApi(process.env, session.fixtureActor).get().catch(() => fail("unavailable"));
   if (!result.ok && result.error.code === "unauthenticated") redirect(patientLoginRedirect(locale, `/${locale}/patient/settings/reminders`));

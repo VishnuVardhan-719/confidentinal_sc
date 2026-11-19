@@ -13,9 +13,10 @@ import { RetryAction } from "@/components/shared/retry-action";
 import { PatientShell } from "@/components/patient/patient-shell";
 import { Link } from "@/i18n/navigation";
 import { fail } from "@/lib/api/result";
-import { getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
+import { patientLoginRedirect, requirePatientSession } from "@/modules/patient-dashboard/session";
 import { getReviewsApi, reviewEligibility } from "@/modules/reviews";
 import { submitReviewAction } from "../actions";
+import { AccessDenied } from "@/components/auth/access-denied";
 import { ReviewForm } from "../_components/review-form";
 
 export async function generateMetadata() {
@@ -30,8 +31,8 @@ export default async function WriteReviewPage({ params }: PageProps<"/[locale]/p
   const { locale: raw, bookingId } = await params;
   await connection();
   const locale = toLocale(raw);
-  const session = getPatientSession();
-  if (session.status !== "ok") redirect(patientLoginRedirect(locale, `/${locale}/patient/reviews`));
+  const session = await requirePatientSession(locale, `/${locale}/patient/reviews`);
+  if (session.status !== "ok") return <AccessDenied reason={session.reason} />;
   const [t, format] = await Promise.all([getTranslations("patientAccount.reviews"), getFormatter()]);
   const result = await getReviewsApi(process.env, session.fixtureActor).getVisit(bookingId).catch(() => fail("unavailable"));
   if (!result.ok && result.error.code === "unauthenticated") redirect(patientLoginRedirect(locale, `/${locale}/patient/reviews`));

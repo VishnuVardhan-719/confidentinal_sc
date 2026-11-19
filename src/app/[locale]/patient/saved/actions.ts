@@ -6,7 +6,7 @@ import { getSavedProvidersApi } from "@/modules/saved-providers";
 
 /** Save/unsave a doctor. Re-resolves the session each call; the adapter re-validates ids. Nothing is logged. */
 async function run<T>(fn: (api: ReturnType<typeof getSavedProvidersApi>) => Promise<ApiResult<T>>): Promise<ApiResult<T>> {
-  const session = getPatientSession();
+  const session = await getPatientSession();
   if (session.status !== "ok") return fail("unauthenticated");
   try {
     return await fn(getSavedProvidersApi(process.env, session.fixtureActor));
