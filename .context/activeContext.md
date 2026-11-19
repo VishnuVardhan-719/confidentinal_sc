@@ -164,6 +164,7 @@ Order: lab -> caretakers -> ambulance; commit per sub-task.
 
 - Ops specs un-fixme'd; signInAs wired (support/operations.ts, hard reload after sign-in). Discovery copies (serial removed) in tests/e2e/zz-discover (DO NOT COMMIT; delete at end). First discovery: 26 fail / 15 pass desktop, list in .context/ops-e2e-discovery-desktop.txt.
 
+<<<<<<< HEAD
 
 ## t4 (fe-p) records/notifications/public loading - in progress
 - Added patient/records (list, [id], actions), patient/notifications (page, actions, api.ts), PatientShell+dashboard nav, patient.json en/te/hi strings, (public) loading.tsx files + components/public/route-loading.tsx, tests/e2e/patient-records.spec.ts. Next: build, run e2e in 3 server modes, bookings e2e, commit, handoff-t4.md.
@@ -209,3 +210,6 @@ Open: te/hi errorPage strings need native review (REVIEW_NEEDED `services`). Pub
 - PHASE4-D3 DONE: doctor+patient workspace e2e 110/110, lint/tsc/vitest(374)/build green. Handoff: .context/handoff-fe-a.md. Open: overlap with feat/fe2-p 4aa02f8 (patient records/notifications).
 
 - PHASE R7-D (C:/Users/Yashwanth/.claude-scratch-tasks/PHASE-R7-D.md): task 1 DONE d1a06f4 (public /verify proof check). All ws e2e 130/130. Next: task 2 consultation notes (doctor/consultations/[bookingId]).
+=======
+- PHASE4-E2 done (b77fb24, ea568c8, b49844c): 5 ops specs + new role-isolation.spec pass on desktop-1280 and mobile-390 (lab also with FEATURE_CLINICAL=true); fixture ops clock, lab 'scheduled' queue, recollection reference, public stories/FAQ read CMS. Open: pre-existing soft 404 on /stories/<unknown>. Details: .context/handoff-fe-b-e2.md. zz-discover deleted.
+>>>>>>> feat/fe2-e
