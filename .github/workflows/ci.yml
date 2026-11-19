@@ -1,19 +1,95 @@
 name: ci
+
 on:
-  push:
-    branches: [main, develop]
   pull_request:
+  push:
+    branches:
+      - main
+      - develop
+      - "integ/**"
+      - "feat/**"
+      - "fix/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  verify:
+  app:
+    name: app (lint, typecheck, unit, build)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      # Non-secret placeholders. src/lib/env requires a URL and a non-empty anon key.
+      # Nothing here can reach a real project. SUPABASE_SERVICE_ROLE_KEY stays unset.
+      NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:58421"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "ci-placeholder-anon-key"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
         with:
-          node-version: 24
+          persist-credentials: false
+
+      # package.json has no engines field and there is no .nvmrc, so Node 22 is used.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
           cache: npm
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run build
+
+      - run: npm ci --no-audit --no-fund
+      - name: eslint
+        run: npm run lint
+      - name: tsc --noEmit (after next typegen)
+        run: npm run typecheck
+      - name: vitest run
+        run: npm test
+      - name: next build
+        run: npm run build
+
+  db:
+    name: db (migrations + pgTAP)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 3.2.0
+
+      # The SQL suites need Postgres, Auth (auth schema) and Storage (storage schema).
+      # Everything else is skipped to save start-up time.
+      - name: supabase start
+        run: >-
+          supabase start
+          -x studio,imgproxy,mailpit,edge-runtime,logflare,vector,realtime,postgres-meta,supavisor
+
+      - name: supabase db reset
+        run: supabase db reset
+
+      - name: supabase test db
+        run: supabase test db
+
+      - name: Collect Supabase logs
+        if: failure()
+        run: |
+          mkdir -p supabase-logs
+          supabase status > supabase-logs/status.txt 2>&1 || true
+          docker ps -a > supabase-logs/docker-ps.txt 2>&1 || true
+          for c in $(docker ps -a --format '{{.Names}}' | grep '^supabase_' || true); do
+            docker logs "$c" > "supabase-logs/$c.log" 2>&1 || true
+          done
+
+      - name: Upload Supabase logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: supabase-logs
+          path: supabase-logs/
+          retention-days: 7
+          if-no-files-found: ignore
