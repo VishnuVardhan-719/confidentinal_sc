@@ -83,7 +83,7 @@
     "title": "{feature} is not available yet",
     "body": "This part of SureCure Visit is switched off until its safety, legal and operational checks are complete. Nothing on this page will start it.",
     "features": {
-      "clinical": "Clinical records",
+      "clinical": "Clinical record keeping",
       "livePayments": "Online payment",
       "emergencyDispatch": "Emergency dispatch",
       "pharmacy": "Pharmacy",

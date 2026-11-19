@@ -41,7 +41,8 @@ export function Field({
     <div className={cn("grid gap-2", className)}>
       <label htmlFor={id} className="text-base font-semibold text-ink">
         {label}
-        {required ? null : <span className="ml-2 text-sm font-normal text-muted">{t("optional")}</span>}
+        {/* The space keeps the accessible name readable: "Temperature (optional)". */}
+        {required ? null : <> <span className="ml-1 text-sm font-normal text-muted">{t("optional")}</span></>}
       </label>
       {hint ? (
         <p id={hintId} className="-mt-1 text-sm text-muted">

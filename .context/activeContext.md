@@ -151,3 +151,10 @@ UI src/components/service-requests/*. New i18n namespace "services" (edits messa
 Synthetic: one declining provider per category; FIXTURE_PROVIDER_RESPONSE_MS delay; pay after service; ambulance = scheduled non-emergency only + 112 notice.
 Server: port 3362 (old 3360/3361 servers of mine still alive, not killed per lead).
 Order: lab -> caretakers -> ambulance; commit per sub-task.
+
+# activeContext (fe-a on fe2-d, PHASE4-D3)
+
+- Lint fix in tests/e2e/doctor-workspace.spec.ts done (fixture param `use` -> `provide`; axe call in dashboard test). eslint + tsc clean.
+- Next: run doctor e2e ws-desktop-1280 against servers from .context/ws-serve.mjs (E2E_PORT=3379), fix failures.
+- Then: patient-workspace.spec.ts, patient records/notifications, doctor availability schedule, te/hi, axe, commit.
+

@@ -23,8 +23,9 @@
   "common": {
     "loadError": "This section did not load.",
     "denied": "You do not have access to this visit. Only the assigned doctor can open it.",
-    "notFound": "We could not find this. It may have been removed or the link may be wrong.",
+    "notFound": "Not found. It may have been removed or the link may be wrong.",
     "lastUpdated": "Last updated {time}",
+    "offlineSince": "You are offline. Showing the status from {time}; it refreshes when you reconnect.",
     "refresh": "Refresh",
     "back": "Back",
     "bookingStatus": "Booking",
@@ -46,25 +47,15 @@
   "dashboard": {
     "title": "Overview",
     "description": "Your requests and visits, using times in India Standard Time.",
-    "active": {
-      "title": "Consultation in progress",
-      "continue": "Continue consultation"
-    },
+    "active": { "title": "Consultation in progress", "continue": "Continue consultation" },
     "requests": {
       "title": "Pending requests",
       "empty": "No requests are waiting for you.",
       "emptyBody": "When a patient chooses you, the request appears here for you to accept or decline.",
       "viewAll": "All requests"
     },
-    "today": {
-      "title": "Today",
-      "empty": "No visits today."
-    },
-    "upcoming": {
-      "title": "Upcoming",
-      "empty": "No upcoming visits.",
-      "viewAll": "All visits"
-    }
+    "today": { "title": "Today", "empty": "No visits today." },
+    "upcoming": { "title": "Upcoming", "empty": "No upcoming visits.", "viewAll": "All visits" }
   },
   "requests": {
     "title": "Requests",
@@ -150,11 +141,7 @@
       "service_started": "Consultation",
       "service_completed": "Completed"
     },
-    "stepState": {
-      "done": "done",
-      "current": "current",
-      "upcoming": "not yet"
-    },
+    "stepState": { "done": "done", "current": "current", "upcoming": "not yet" },
     "phase": {
       "scheduled": "Scheduled",
       "enRoute": "On the way",
@@ -180,13 +167,7 @@
     "verified": "Code verified. You can start the consultation.",
     "newCode": "A new code is on the patient's screen. The old code no longer works.",
     "loadError": "We could not load the code check. Refresh to try again.",
-    "challenge": {
-      "active": "Waiting for code",
-      "verified": "Verified",
-      "expired": "Expired",
-      "locked": "Locked",
-      "superseded": "Replaced"
-    },
+    "challenge": { "active": "Waiting for code", "verified": "Verified", "expired": "Expired", "locked": "Locked", "superseded": "Replaced" },
     "phase": {
       "enterCode": "Enter the code",
       "expired": "The code has expired. Request a new one.",
@@ -235,7 +216,16 @@
   "pages": {
     "availability": {
       "title": "Availability",
-      "body": "Setting your working hours here is not connected yet. Your availability is managed during onboarding and by SureCure Visit operations."
+      "body": "Your working hours are set during onboarding and by SureCure Visit operations. This page shows what is booked; it cannot change your hours.",
+      "description": "Your booked visits for the next 7 days, in India time.",
+      "editTitle": "Editing weekly hours is not connected yet",
+      "toRequests": "Review requests",
+      "pending": "{count, plural, one {# request is waiting for your answer.} other {# requests are waiting for your answer.}}",
+      "scheduleTitle": "Next 7 days",
+      "scheduleHint": "Only accepted visits take up your time. Requests appear here after you accept them.",
+      "today": "Today, {day}",
+      "free": "No visits booked",
+      "visitsOn": "Visits on {day}"
     },
     "services": {
       "title": "Services & fees",
@@ -246,18 +236,12 @@
       "body": "Your public profile and credentials are managed through onboarding and verification. Editing them here is not connected yet.",
       "onboarding": "Go to onboarding"
     },
-    "earnings": {
-      "title": "Earnings",
-      "body": "Payouts are not automated. Amounts you record as collected appear on each visit."
-    },
+    "earnings": { "title": "Earnings", "body": "Payouts are not automated. Amounts you record as collected appear on each visit." },
     "support": {
       "title": "Support",
       "body": "In-app support tickets are not connected yet. For an emergency call 112. For account help, use the contact page.",
       "contact": "Contact page"
     },
-    "settings": {
-      "title": "Settings",
-      "body": "Language can be changed from the menu. Other settings are not connected yet."
-    }
+    "settings": { "title": "Settings", "body": "Language can be changed from the menu. Other settings are not connected yet." }
   }
 }

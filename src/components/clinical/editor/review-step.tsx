@@ -113,7 +113,7 @@ export function MissingList({ missing, tk, onGo }: { missing: MissingFieldMeta[]
   if (missing.length === 0) return null;
   return (
     <section aria-labelledby="missing-title" className="grid gap-2 rounded-md border border-warning/40 bg-warning-surface p-4">
-      <h3 id="missing-title" className="font-semibold text-ink">
+      <h3 id="missing-title" tabIndex={-1} className="font-semibold text-ink outline-none">
         {t("missingTitle")}
       </h3>
       <ul aria-labelledby="missing-title" className="grid gap-1">

@@ -2,7 +2,7 @@
 
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { FormSection } from "@/components/shared/field";
@@ -31,7 +31,18 @@ import { CheckField, ChoiceField, DateField, LongTextField, NumberField, SelectF
 type StepProps<T> = { value: T; onChange: (v: T) => void; disabled?: boolean; idPrefix: string };
 
 // ---- Step 1 ----------------------------------------------------------------------------------
-export function VitalsForm({ value, onChange, disabled, idPrefix, warnings, tk }: StepProps<VitalsStep> & { warnings: VitalWarning[]; tk: Tk }) {
+/** A half-entered reading the editor must not silently drop when the doctor leaves the step. */
+export type IncompleteReading = { fieldId: string; message: string };
+
+export function VitalsForm({
+  value,
+  onChange,
+  disabled,
+  idPrefix,
+  warnings,
+  tk,
+  onIncomplete,
+}: StepProps<VitalsStep> & { warnings: VitalWarning[]; tk: Tk; onIncomplete?: (pending: IncompleteReading[]) => void }) {
   const t = useTranslations("clinical.vitals");
   const notMeasured = new Set(value.notMeasured ?? []);
   const nm = (key: VitalKey) => (
@@ -68,6 +79,15 @@ export function VitalsForm({ value, onChange, disabled, idPrefix, warnings, tk }
   const [bpDraft, setBpDraft] = useState<{ sys?: number; dia?: number }>(() => (bp ? { sys: bp.systolicMmHg, dia: bp.diastolicMmHg } : {}));
   const tempIncomplete = tempDraft.value !== undefined && !tempDraft.unit;
   const bpIncomplete = (bpDraft.sys === undefined) !== (bpDraft.dia === undefined);
+  const unitMsg = t("unitRequired");
+  const bpMsg = t("bpBoth");
+  const bpMissingId = bpDraft.sys === undefined ? `${idPrefix}-systolic` : `${idPrefix}-diastolic`;
+  useEffect(() => {
+    const pending: IncompleteReading[] = [];
+    if (tempIncomplete) pending.push({ fieldId: `${idPrefix}-temperatureUnit`, message: unitMsg });
+    if (bpIncomplete) pending.push({ fieldId: bpMissingId, message: bpMsg });
+    onIncomplete?.(pending);
+  }, [tempIncomplete, bpIncomplete, bpMissingId, idPrefix, unitMsg, bpMsg, onIncomplete]);
 
   const commitTemp = (next: { value?: number; unit?: "C" | "F" }) => {
     setTempDraft(next);

@@ -193,7 +193,9 @@ function ArrivalCodeForm({ bookingId, challenge: initial, actions }: { bookingId
 
   const minutes = Math.floor(view.secondsLeft / 60);
   const seconds = String(view.secondsLeft % 60).padStart(2, "0");
-  const errorText = error?.otp ? tk(OTP_ERROR_LABEL_KEYS[error.otp]) : undefined;
+  // When the challenge is locked the phase line already says "Too many attempts"; don't repeat it on the field.
+  const duplicatesPhase = error?.otp === "attempts_exhausted" && view.phase === "locked";
+  const errorText = error?.otp && !duplicatesPhase ? tk(OTP_ERROR_LABEL_KEYS[error.otp]) : undefined;
 
   return (
     <form onSubmit={submit} noValidate className="grid gap-5" aria-labelledby={`${fieldId}-title`}>

@@ -88,7 +88,7 @@ export function CollectionForm({
       </div>
       <p className="text-sm text-muted">{t("intro")}</p>
       {view.record ? (
-        <p className="font-medium text-ink tabular">
+        <p role="status" className="font-medium text-ink tabular">
           {t("recorded", { amount: money(view.record.amountPaise), method: tk(COLLECTION_METHOD_MAP[view.record.method].labelKey), time: dateTime(view.record.collectedAt) })}
         </p>
       ) : !canRecord ? (

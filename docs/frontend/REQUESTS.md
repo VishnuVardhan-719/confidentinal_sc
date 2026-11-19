@@ -431,3 +431,18 @@ Contracts the patient booking journey uses that B01 / `docs/API_CONTRACTS.md` do
 - Open slots: `GET /providers/{providerId}/services/{serviceId}/slots` for the next 5 IST days, excluding slots that overlap active bookings of that provider.
 - Add patient address: `POST /patient/addresses { label, locality, city, pin }` returning the new id and the address list.
 - Cancel reason: the cancellation dialog reasons (`schedule_change`, `no_longer_needed`, `chose_other_provider`, `other`) need a mapping to `decisionReasonSchema`; the fixture always sends `patient_request`.
+## R-FE-D-32 update (fe-d3, 2026-11-19) - browser e2e now run
+The restriction was lifted. `tests/e2e/doctor-workspace.spec.ts` (un-fixme'd) and the new `tests/e2e/patient-workspace.spec.ts` run in Chromium on the ws-desktop-1280 and ws-mobile-390 projects (ports 3370-3383): 110 passed, 0 failed (see .context/handoff-fe-a.md on feat/fe2-d).
+
+## R-FE-D-33 (fe-d3) - proof-of-visit QR and public check page
+No QR library is approved and there is no public verification route, so the proof card shows the proof code, expiry and an honest "QR display and the public check page are not connected yet" line. Needed: lead approval of a QR dependency (or server-rendered QR image) and a public `/verify/[token]` page backed by `RecordsApi.verifyProof` that shows no PHI.
+
+## R-FE-D-34 (fe-d3) - patient notifications contract
+`docs/API_CONTRACTS.md` has no notifications endpoint. `src/modules/notifications` holds kind + IDs + in-app path only (text comes from localized templates, so no PHI or free text can travel). Fixture adapter is synthetic; http adapter returns `gated` and the page says "not connected yet". Suggested contract: `GET /api/me/notifications` (newest first, `{ id, kind, createdAt, readAt, bookingReference, href }`), `POST /api/me/notifications/read` `{ ids }`.
+**Overlap:** feat/fe2-p 4aa02f8 also built `/patient/records*`, `/patient/notifications` and `src/modules/notifications` with a different API. Lead must pick one before integration.
+
+## R-FE-D-35 (fe-d3) - doctor weekly hours
+`/doctor/availability` now shows a read-only 7-day IST schedule built from `listVisits` (accepted/confirmed/in-progress only) and the pending request count. Editing weekly hours needs a backend contract (e.g. `GET/PUT /api/providers/me/availability` with versioned weekly windows and exceptions).
+
+## R-FE-D-36 (fe-d3) - te/hi strings to review
+Machine-written te/hi for: `patient.records.*`, `patient.notifications.*`, `patient.dashboard.notifications.*`, `patient.dashboard.actions.records*`, `patient.shell.nav.records|notifications`, `doctor.pages.availability.*`, `doctor.common.offlineSince`, `clinical.vitals.incompleteTitle`. Unchanged te/hi for edited en copy: `doctor.common.notFound`, `clinical.gate.consultation`, `clinical.collection.recorded`, `clinical.record.notFound`, `common.gate.features.clinical` (en now "Clinical record keeping").

@@ -1,7 +1,7 @@
 {
   "status": { "unknown": "Status not recognised" },
   "gate": {
-    "consultation": "Clinical records are switched off. Nothing here is saved or shown until clinical features are approved and enabled."
+    "consultation": "Clinical features are not enabled yet. Nothing here is saved or shown until they are approved and switched on."
   },
   "synthetic": "Synthetic clinical data for testing only. Never enter real patient information.",
   "workspace": {
@@ -63,6 +63,7 @@
     "unitC": "°C",
     "unitF": "°F",
     "unitRequired": "Choose a temperature unit.",
+    "incompleteTitle": "Finish or clear this reading before leaving the step",
     "unitPlaceholder": "Unit",
     "bloodPressure": "Blood pressure",
     "maxValue": "Enter a value up to {max}.",
@@ -192,7 +193,7 @@
     "noAmendments": "No amendments.",
     "versions": "Earlier versions",
     "showVersion": "Version {version}, signed {time}",
-    "notFound": "No signed record exists for this link. Drafts are never shown as records."
+    "notFound": "Not found. No signed record exists for this link, and drafts are never shown as records."
   },
   "amend": {
     "action": "Add amendment",
@@ -227,7 +228,7 @@
     "referenceHint": "Required for UPI. Letters, digits, spaces, / and - only.",
     "referenceRequired": "Enter the UPI reference.",
     "submit": "Record collection",
-    "recorded": "{amount} by {method} recorded {time}",
+    "recorded": "Collection recorded: {amount} by {method}, {time}",
     "notAvailable": "Collection can be recorded once the consultation has started."
   },
   "facts": {

@@ -1,7 +1,15 @@
 {
   "shell": {
     "workspace": "Patient",
-    "nav": { "dashboard": "Overview", "findDoctor": "Find a doctor", "bookings": "Bookings", "profile": "Profile", "healthProfile": "Health profile" }
+    "nav": {
+      "dashboard": "Overview",
+      "findDoctor": "Find a doctor",
+      "bookings": "Bookings",
+      "profile": "Profile",
+      "healthProfile": "Health profile",
+      "records": "Records",
+      "notifications": "Notifications"
+    }
   },
   "dashboard": {
     "title": "Your overview",
@@ -16,7 +24,12 @@
     "card": {
       "reference": "Ref {reference}",
       "noReference": "Reference pending",
-      "category": { "doctor": "Doctor visit", "lab": "Lab test", "ambulance": "Scheduled ambulance", "caretaker": "Caretaker" },
+      "category": {
+        "doctor": "Doctor visit",
+        "lab": "Lab test",
+        "ambulance": "Scheduled ambulance",
+        "caretaker": "Caretaker"
+      },
       "price": "Price {price}",
       "statuses": "Status",
       "booking": "Booking",
@@ -80,12 +93,20 @@
       "profile": "My profile",
       "profileHint": "Personal and health details",
       "emergency": "Emergency",
-      "emergencyHint": "Call 112. SureCure Visit does not dispatch emergency help."
+      "emergencyHint": "Call 112. SureCure Visit does not dispatch emergency help.",
+      "records": "My health records",
+      "recordsHint": "Signed records from your visits"
     },
     "state": {
       "denied": "You do not have access to these bookings.",
       "unavailable": "Bookings are not available right now.",
       "gated": "Bookings are not connected yet."
+    },
+    "notifications": {
+      "title": "Recent notifications",
+      "viewAll": "All notifications",
+      "viewAllUnread": "All notifications ({count} unread)",
+      "empty": "No notifications yet."
     }
   },
   "bookings": {
@@ -215,6 +236,66 @@
         "date": "Enter a valid date.",
         "time": "Enter a valid time.",
         "past": "Choose a time in the future."
+      }
+    }
+  },
+  "records": {
+    "title": "Health records",
+    "description": "Signed records from your visits. Drafts are never shown here.",
+    "listLabel": "Signed records",
+    "empty": "No signed records yet",
+    "emptyBody": "After a doctor signs the record of your visit, it appears here.",
+    "toBookings": "See my bookings",
+    "visitOn": "Visit on {date}",
+    "doctor": "Doctor: {name}",
+    "reference": "Ref {reference}",
+    "version": "Version {version}",
+    "signedOn": "Signed {date}",
+    "amended": "Amended",
+    "open": "Open record",
+    "openFor": "Open record for {reference}",
+    "denied": "You do not have access to these records.",
+    "detailTitle": "Health record",
+    "notFound": "Not found. This record may not exist or may not be signed yet.",
+    "readOnly": "This is the signed record. It cannot be changed here; your doctor adds any correction as a dated amendment."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "description": "Updates about your bookings and records. Notifications never include health details.",
+    "listLabel": "All notifications",
+    "unread": "Unread",
+    "unreadCount": "{count, plural, =0 {No unread notifications} one {# unread notification} other {# unread notifications}}",
+    "markAllRead": "Mark all as read",
+    "noReference": "your booking",
+    "empty": "No notifications yet",
+    "emptyBody": "Booking updates and record alerts appear here.",
+    "notConnected": "Notifications are not connected yet",
+    "notConnectedBody": "Check each booking for its latest status. This list starts once the notification service is connected.",
+    "kind": {
+      "booking_accepted": {
+        "title": "Booking accepted",
+        "body": "Your provider accepted booking {reference}.",
+        "action": "View booking"
+      },
+      "booking_declined": {
+        "title": "Booking declined",
+        "body": "Your provider could not take {reference}. You can choose another provider.",
+        "action": "View booking"
+      },
+      "visit_reminder": {
+        "title": "Visit reminder",
+        "body": "Your visit for {reference} is coming up. Keep your phone nearby for the arrival code.",
+        "action": "View booking"
+      },
+      "record_ready": {
+        "title": "Record ready",
+        "body": "The signed record for {reference} is ready to view.",
+        "action": "Open record"
+      },
+      "payment_due": {
+        "title": "Payment due",
+        "body": "Payment for {reference} is due. Online payment is not available yet; pay your provider as agreed.",
+        "action": "View booking"
       }
     }
   }
