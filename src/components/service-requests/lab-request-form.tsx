@@ -62,7 +62,7 @@ export function LabRequestForm({ provider, members, addresses, actions }: { prov
     <form className="grid gap-6" noValidate onSubmit={event => { event.preventDefault(); void state.submit(); }}>
       <FormErrors state={state} />
       <PatientChoice id={IDS.patient} members={members} value={patientId} onChange={setPatientId} error={state.errorFor(IDS.patient)} />
-      <AddressChoice id={IDS.address} providerName={provider.name} pins={provider.area.pins} addresses={addresses} value={addressId} onChange={setAddressId} error={state.errorFor(IDS.address)} />
+      <AddressChoice backHref="/patient/lab-tests" id={IDS.address} providerName={provider.name} pins={provider.area.pins} addresses={addresses} value={addressId} onChange={setAddressId} error={state.errorFor(IDS.address)} />
       <FormSection id={IDS.tests} title={t("lab.tests")} error={state.errorFor(IDS.tests)} describedBy={`${IDS.tests}-hint`}>
         <p id={`${IDS.tests}-hint`} className="text-sm text-muted">{t("lab.testsHint")}</p>
         {provider.tests.map(test => {
@@ -80,7 +80,7 @@ export function LabRequestForm({ provider, members, addresses, actions }: { prov
           );
         })}
       </FormSection>
-      <TimeChoice id={IDS.time} providerId={provider.id} load={actions.slots} reloadKey={reloadKey} value={slot} onChange={setSlot} error={state.errorFor(IDS.time)} />
+      <TimeChoice backHref="/patient/lab-tests" id={IDS.time} providerId={provider.id} load={actions.slots} reloadKey={reloadKey} value={slot} onChange={setSlot} error={state.errorFor(IDS.time)} />
       <Acknowledge id={IDS.prep} title={t("lab.prepTitle")} label={t("lab.prepAck")} checked={prep} onChange={setPrep} error={state.errorFor(IDS.prep)}>
         {preparations.length ? (
           <ul className="grid list-disc gap-1 pl-6 text-base text-ink">{preparations.map(key => <li key={key}>{t(`lab.preparation.${key}`)}</li>)}</ul>

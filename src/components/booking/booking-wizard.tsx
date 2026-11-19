@@ -6,6 +6,7 @@ import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNod
 import { Field } from "@/components/shared/field";
 import { InlineError } from "@/components/shared/inline-error";
 import { Notice } from "@/components/shared/notice";
+import { LinkAction } from "@/components/service-requests/link-action";
 import { Stepper, type StepItem } from "@/components/shared/stepper";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
@@ -334,7 +335,7 @@ function ScheduleStep({ slots, selected, onRetry, onContinue }: { slots: ApiResu
   const [error, setError] = useState(false);
   if (slots === null) return <p className="flex items-center gap-2 text-base text-muted" role="status"><Loader2 aria-hidden className="size-5 animate-spin" />{t("schedule.loading")}</p>;
   if (!slots.ok) return <InlineError code={slots.error.code} action={<Button type="button" variant="secondary" onClick={onRetry}>{t("retry")}</Button>} />;
-  if (slots.data.items.length === 0) return <Notice tone="neutral" title={t("schedule.emptyTitle")}>{t("schedule.emptyBody")}</Notice>;
+  if (slots.data.items.length === 0) return <Notice tone="neutral" title={t("schedule.emptyTitle")} action={<LinkAction href="/doctors">{t("backToSearch")}</LinkAction>}>{t("schedule.emptyBody")}</Notice>;
   const valid = slot && slots.data.items.some(item => item.startAt === slot.startAt);
   return (
     <div className="grid gap-6">

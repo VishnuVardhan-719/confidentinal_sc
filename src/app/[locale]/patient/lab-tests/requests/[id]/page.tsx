@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { RequestStatusView } from "@/components/service-requests/request-status";
 import { ServicesShell } from "@/components/service-requests/services-shell";
+import { LinkAction } from "@/components/service-requests/link-action";
 import { InlineError } from "@/components/shared/inline-error";
 import { PageHeader } from "@/components/shared/page-header";
 import { createLabOrdersApi } from "@/modules/lab-orders/api";
@@ -30,7 +31,7 @@ export default async function LabOrderPage({ params }: PageProps<"/[locale]/pati
   const order = await createLabOrdersApi({ patient: servicePatientApi() }).get(id).catch(() => ({ ok: false as const, error: { code: "unavailable" as const } }));
   if (!order.ok && ["not_found", "validation", "forbidden"].includes(order.error.code)) notFound();
   const t = await getTranslations("services");
-  if (!order.ok) return <ServicesShell><PageHeader title={t("common.status.pageTitle")} /><InlineError code={order.error.code} /></ServicesShell>;
+  if (!order.ok) return <ServicesShell><PageHeader title={t("common.status.pageTitle")} /><InlineError code={order.error.code} action={<><LinkAction href={`/patient/lab-tests/requests/${id}`}>{t("common.form.retry")}</LinkAction><LinkAction href="/patient/lab-tests" variant="quiet">{t("common.status.back")}</LinkAction></>} /></ServicesShell>;
   const o = order.data;
   return (
     <ServicesShell>

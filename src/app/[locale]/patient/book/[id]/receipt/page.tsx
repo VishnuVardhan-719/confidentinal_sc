@@ -36,7 +36,7 @@ export default async function BookingReceiptPage({ params }: PageProps<"/[locale
   if (!booking.ok && ["not_found", "validation", "forbidden"].includes(booking.error.code)) notFound();
   const t = await getTranslations("booking.receipt");
   const back = <Button asChild variant="quiet"><Link href={`/patient/book/${id}`}><ArrowLeft aria-hidden />{t("back")}</Link></Button>;
-  if (!booking.ok) return <PatientBookShell><div>{back}</div><PageHeader title={t("pageTitle")} /><InlineError code={booking.error.code} /></PatientBookShell>;
+  if (!booking.ok) return <PatientBookShell><div>{back}</div><PageHeader title={t("pageTitle")} /><InlineError code={booking.error.code} action={back} /></PatientBookShell>;
   const b = booking.data;
   const [payment, doctor] = await Promise.all([
     apis.payments.getSummary(b.id).catch(() => ({ ok: false as const, error: { code: "unavailable" as const } })),

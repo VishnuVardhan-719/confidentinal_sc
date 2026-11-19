@@ -190,3 +190,15 @@ Order: lab -> caretakers -> ambulance; commit per sub-task.
 - Step3 guards: IN PROGRESS. Step4 build+playwright port 3320: pending.
 - Step3 DONE 1ff7572: patient/doctor on requireRole/authorizeRole (requirePatientSession, requireDoctorSession), fixture-actors.ts, doctor_other account; tests/unit/integration/real-guards.test.ts. e2e specs still mention FIXTURE_PATIENT_SESSION (need sign-in now). Step4 next: build, serve :3320, smoke spec tests/e2e/integration-smoke.spec.ts, report docs/frontend/INTEGRATION_REPORT.md.
 - Step4 DONE: build exit0 (446 pages); smoke 84/84 on :3320 (390+1280, axe); fix ops min-w-0 (fleet overflow); report docs/frontend/INTEGRATION_REPORT.md. Server still running on 3320 (pid in .context/server-3320.pid). Pending for owners: per-branch e2e specs need sign-in instead of FIXTURE_*_SESSION; /en/lab-tests not built.
+- R6-C progress: lab data dff8a05, lab UI+e2e e4a2635 (10/10 e2e on dev server 3363). Next: caretakers, then ambulance. Dev server 3363 (mine, next dev).
+- Prod server for R6-C now on 3364 (3362 stale, 3363 dev wedged; none killed per lead rule).
+- R6-C DONE_VERIFIED at 5e40cda (see handoff-fe-q.md).
+
+## TASK REPORT: PHASE R8-C (fe-q, feat/fe2-c) - DONE_VERIFIED
+Scope: /patient/book/** (doctor booking), /patient/lab-tests/**, /patient/caretakers/**, /patient/ambulance/** and their components/modules.
+1. Loading and error states (c6644a2): error.tsx in all 12 owned segments via ServiceRouteError (no raw error, digest only, Try again + Back to list, 112 link first on ambulance; heading takes focus). loading.tsx added where missing (book/[id], book/[id]/receipt). Per-tree layout.tsx gives the boundaries the `services` messages. New keys services.errorPage.* en/te/hi.
+2. State audit (3860df9): every empty, error and gated state now has a next action (LinkAction): directory gated -> dashboard, directory error -> Try again + dashboard, request/status/receipt errors -> back/retry, no covered address / no open times / slots error -> Find another provider, doctor wizard empty times -> Back to doctors.
+3. a11y sweep (9606c5b): tests/e2e/a11y-sweep-c.spec.ts, 22 tests x 390/1280: 20 static route states (incl. te/hi), 3 created status pages, 3 form error states. axe wcag2a/aa/21aa no serious/critical, no horizontal scroll, first Tab stop visible ring and on screen. Unit: route-error.test.ts (2).
+4. Fixes: the sweep found no a11y violations. The full regression found 3 test-only timing races (page answered before first render, slot taken by another test, slow profile load), fixed in the specs (this commit).
+Verification: tsc 0; lint 0; vitest 63 files 968/968; next build 0; Playwright on 3362 (--workers=2): a11y-sweep-c + service-requests + booking-journey + doctor-search = 89 passed, 3 skipped (HTTP-only/mobile-only), 0 failed.
+Open: te/hi errorPage strings need native review (REVIEW_NEEDED `services`). Public /doctors pages not in this sweep (not in the listed trees).

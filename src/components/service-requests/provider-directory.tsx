@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Link } from "@/i18n/navigation";
 import type { ApiResult } from "@/lib/api/result";
 import { formatPaise, type Locale } from "@/lib/format";
+import { LinkAction } from "./link-action";
 import type { BaseProvider } from "@/modules/service-requests/core";
 
 /**
@@ -36,7 +37,9 @@ export async function ProviderDirectory<P extends BaseProvider>({ segment, resul
       </form>
 
       {!result.ok ? (
-        result.error.code === "gated" ? <Notice tone="neutral" title={t("notConnectedTitle")}>{t("notConnectedBody")}</Notice> : <InlineError code={result.error.code} />
+        result.error.code === "gated"
+          ? <Notice tone="neutral" title={t("notConnectedTitle")} action={<LinkAction href="/patient/dashboard">{t("toDashboard")}</LinkAction>}>{t("notConnectedBody")}</Notice>
+          : <InlineError code={result.error.code} action={<><LinkAction href={pin ? `${segment}?pin=${pin}` : segment}>{t("form.retry")}</LinkAction><LinkAction href="/patient/dashboard" variant="quiet">{t("toDashboard")}</LinkAction></>} />
       ) : (
         <section aria-labelledby="provider-results" className="grid gap-4">
           <h2 id="provider-results" className="text-lg font-semibold text-ink" aria-live="polite">

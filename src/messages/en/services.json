@@ -126,7 +126,8 @@
         }
       }
     },
-    "filterLabel": "Filter providers by area"
+    "filterLabel": "Filter providers by area",
+    "toDashboard": "Go to your dashboard"
   },
   "lab": {
     "pageTitle": "Lab tests at home",
@@ -164,5 +165,127 @@
     "request": "Request tests",
     "recordTitle": "Report",
     "prepEmpty": "Choose tests to see how to prepare."
+  },
+  "care": {
+    "pageTitle": "Caretakers at home",
+    "description": "Book one shift of non-clinical help at home from a caretaker or agency that serves your area.",
+    "request": "Request care",
+    "requestTitle": "Request care from {name}",
+    "requestDescription": "Choose the help you need, the start time and the hours. The caretaker accepts or declines your request.",
+    "statusTitle": "Home care with {name}",
+    "kind": {
+      "independent": "Independent caretaker",
+      "agency": "Care agency"
+    },
+    "languages": "Speaks {languages}",
+    "lang": {
+      "en": "English",
+      "te": "Telugu",
+      "hi": "Hindi"
+    },
+    "rate": "{price} per hour",
+    "hoursRange": "{min} to {max} hours per shift",
+    "tasks": "What help is needed?",
+    "tasksHint": "Choose everything that applies. Only help this provider offers is listed.",
+    "task": {
+      "companionship": "Company and conversation",
+      "mobility_help": "Help with walking and moving",
+      "meal_help": "Help with meals",
+      "personal_care": "Help with bathing and dressing",
+      "medicine_reminder": "Reminders to take medicines (reminding only)"
+    },
+    "hours": "How many hours?",
+    "hoursHint": "Between {min} and {max} hours, starting at the time you choose.",
+    "hoursValue": "{hours, plural, one {# hour} other {# hours}}",
+    "lineHours": "Care hours",
+    "scopeTitle": "What caretakers do",
+    "scopeBody": "Caretakers help with daily living. They do not give medical treatment, injections or medicines, and they do not diagnose. For medical needs, book a doctor.",
+    "scopeAck": "I understand caretakers give non-clinical help only.",
+    "recurring": "Regular or repeating care plans are not available yet. Request one shift at a time.",
+    "recordTitle": "Care record",
+    "record": {
+      "nonClinical": "Non-clinical, no medical record"
+    },
+    "recordNote": "Caretakers do not write medical records.",
+    "errors": {
+      "tasks": "Choose at least one kind of help.",
+      "hours": "Choose how many hours.",
+      "scopeAcknowledged": "Confirm you understand caretakers give non-clinical help only."
+    }
+  },
+  "ambulance": {
+    "pageTitle": "Scheduled ambulance transfer",
+    "description": "Book a planned, non-emergency transfer, for example going home from hospital or to a planned appointment.",
+    "request": "Request transfer",
+    "requestTitle": "Request a transfer from {name}",
+    "requestDescription": "Choose the vehicle, pickup, drop-off and time. The operator accepts or declines your request.",
+    "statusTitle": "Scheduled transfer with {name}",
+    "emergencyTitle": "Emergency? Call 112 now",
+    "emergencyCall": "Call 112",
+    "emergencyBody": "This page books scheduled, non-emergency transfers only. It cannot send an ambulance now. In an emergency, do not wait for a reply here.",
+    "noTracking": "No live tracking or arrival time is shown. The operator confirms the vehicle by hand.",
+    "vehicles": "Vehicles",
+    "vehicle": "Vehicle",
+    "vehicleHint": "Fares are fixed by the operator for transfers inside its area.",
+    "vehicleType": {
+      "patient_transport": "Patient transport with stretcher",
+      "wheelchair_van": "Wheelchair van",
+      "basic_life_support": "Basic life support ambulance"
+    },
+    "vehicleUnfit": "Cannot carry a stretcher",
+    "fare": "{price} per transfer",
+    "mobility": "How does the patient move?",
+    "mobilityValue": {
+      "walks": "Walks without help",
+      "wheelchair": "Uses a wheelchair",
+      "stretcher": "Needs a stretcher"
+    },
+    "pickup": "Pickup address",
+    "destination": "Drop-off",
+    "destinationKind": {
+      "hospital": "Hospital or clinic",
+      "home": "Home",
+      "other": "Other place"
+    },
+    "destinationName": "Name of the place (optional)",
+    "destinationNameHint": "For example, the hospital name. Do not add phone numbers.",
+    "locality": "Area or locality",
+    "city": "City",
+    "pin": "PIN code",
+    "destinationArea": "The drop-off must be in PIN {pins}.",
+    "companion": "Someone will travel with the patient",
+    "notEmergencyTitle": "This is not an emergency",
+    "notEmergency": "I confirm this is a planned transfer, not an emergency.",
+    "lineTransfer": "Scheduled transfer: {vehicle}",
+    "detailsVehicle": "Vehicle",
+    "detailsMobility": "Patient",
+    "detailsDestination": "Drop-off",
+    "detailsCompanion": "Companion",
+    "companionYes": "Yes",
+    "companionNo": "No",
+    "recordTitle": "Clinical record",
+    "record": {
+      "none": "No clinical record"
+    },
+    "recordNote": "A transfer does not create a medical record.",
+    "errors": {
+      "vehicleType": "Choose a vehicle that can carry the patient.",
+      "mobility": "Choose how the patient moves.",
+      "destination": "Enter the drop-off area, city and a 6-digit PIN in this operator's area.",
+      "notEmergency": "Confirm this is not an emergency. For emergencies call 112."
+    }
+  },
+  "errorPage": {
+    "title": "We could not load this page",
+    "body": "Nothing you sent has been changed. Try again, or go back and start from the list.",
+    "retry": "Try again",
+    "reference": "Reference for support: {digest}",
+    "back": {
+      "book": "Back to doctors",
+      "lab": "Back to lab tests",
+      "care": "Back to caretakers",
+      "ambulance": "Back to ambulance transfers"
+    },
+    "emergency": "Emergency? Call 112 now. Do not wait for this page."
   }
 }
