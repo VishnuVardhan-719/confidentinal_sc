@@ -57,9 +57,9 @@ export default async function LabRequestPage({ params, searchParams }: PageProps
       <PageHeader title={provider.ok ? t("lab.requestTitle", { name: provider.data.name }) : t("lab.pageTitle")} description={t("lab.requestDescription")} />
       {!provider.ok ? (
         provider.error.code === "not_found" ? <Notice tone="neutral" title={t("common.missingTitle")} action={back}>{t("common.missingBody")}</Notice>
-          : provider.error.code === "gated" ? <Notice tone="neutral" title={t("common.notConnectedTitle")}>{t("common.notConnectedBody")}</Notice>
-          : <InlineError code={provider.error.code} />
-      ) : !members.ok ? <InlineError code={members.error.code} /> : (
+          : provider.error.code === "gated" ? <Notice tone="neutral" title={t("common.notConnectedTitle")} action={back}>{t("common.notConnectedBody")}</Notice>
+          : <InlineError code={provider.error.code} action={back} />
+      ) : !members.ok ? <InlineError code={members.error.code} action={back} /> : (
         <IntlScope namespaces={["services", "booking"]}>
           <LabRequestForm provider={provider.data} members={members.data.items} addresses={addresses.ok ? addresses.data.items : []}
             actions={{ slots: labSlotsAction, create: createLabOrderAction }} />

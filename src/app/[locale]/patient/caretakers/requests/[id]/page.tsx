@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 import { RequestStatusView } from "@/components/service-requests/request-status";
 import { ServicesShell } from "@/components/service-requests/services-shell";
+import { LinkAction } from "@/components/service-requests/link-action";
 import { InlineError } from "@/components/shared/inline-error";
 import { PageHeader } from "@/components/shared/page-header";
 import { createCareRequestsApi } from "@/modules/care-requests/api";
@@ -28,7 +29,7 @@ export default async function CareRequestStatusPage({ params }: PageProps<"/[loc
   const found = await createCareRequestsApi({ patient: servicePatientApi() }).get(id).catch(() => ({ ok: false as const, error: { code: "unavailable" as const } }));
   if (!found.ok && ["not_found", "validation", "forbidden"].includes(found.error.code)) notFound();
   const t = await getTranslations("services");
-  if (!found.ok) return <ServicesShell><PageHeader title={t("common.status.pageTitle")} /><InlineError code={found.error.code} /></ServicesShell>;
+  if (!found.ok) return <ServicesShell><PageHeader title={t("common.status.pageTitle")} /><InlineError code={found.error.code} action={<><LinkAction href={`/patient/caretakers/requests/${id}`}>{t("common.form.retry")}</LinkAction><LinkAction href="/patient/caretakers" variant="quiet">{t("common.status.back")}</LinkAction></>} /></ServicesShell>;
   const r = found.data;
   const row = (label: string, value: string) => (
     <div className="grid gap-1 py-3 sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-4"><dt className="text-sm font-medium text-muted">{label}</dt><dd className="text-base text-ink">{value}</dd></div>

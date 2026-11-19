@@ -14,6 +14,7 @@ import type { ApiResult } from "@/lib/api/result";
 import { formatPaise, type Locale } from "@/lib/format";
 import type { PatientAddress, PatientMember } from "@/modules/patient/schemas";
 import type { RequestLine, RequestSlot } from "@/modules/service-requests/core";
+import { LinkAction } from "./link-action";
 
 export type RequestFormActions = {
   slots: (providerId: unknown) => Promise<ApiResult<{ items: RequestSlot[] }>>;
@@ -56,10 +57,11 @@ export function PatientChoice({ id, members, value, onChange, error }: { id: str
   );
 }
 
-export function AddressChoice({ id, title, providerName, pins, addresses, value, onChange, error }: {
-  id: string; title?: string; providerName: string; pins: readonly string[]; addresses: PatientAddress[]; value: string | null; onChange: (id: string) => void; error?: string;
+export function AddressChoice({ id, title, providerName, pins, addresses, value, onChange, error, backHref }: {
+  id: string; title?: string; providerName: string; pins: readonly string[]; addresses: PatientAddress[]; value: string | null; onChange: (id: string) => void; error?: string; backHref: string;
 }) {
   const t = useTranslations("services.common.form");
+  const ts = useTranslations("services.common.status");
   const name = useId();
   const covered = addresses.filter(address => pins.includes(address.pin));
   return (
@@ -77,16 +79,17 @@ export function AddressChoice({ id, title, providerName, pins, addresses, value,
           </label>
         );
       })}
-      {covered.length === 0 ? <Notice tone="warning" title={t("noCoveredTitle")}>{t("noCoveredBody")}</Notice> : null}
+      {covered.length === 0 ? <Notice tone="warning" title={t("noCoveredTitle")} action={<LinkAction href={backHref}>{ts("findAnother")}</LinkAction>}>{t("noCoveredBody")}</Notice> : null}
     </FormSection>
   );
 }
 
 /** Loads the provider's open times through a server action (advisory: the server re-checks on send). */
-export function TimeChoice({ id, providerId, load, reloadKey, value, onChange, error }: {
-  id: string; providerId: string; load: RequestFormActions["slots"]; reloadKey: number; value: RequestSlot | null; onChange: (slot: RequestSlot | null) => void; error?: string;
+export function TimeChoice({ id, providerId, load, reloadKey, value, onChange, error, backHref }: {
+  id: string; providerId: string; load: RequestFormActions["slots"]; reloadKey: number; value: RequestSlot | null; onChange: (slot: RequestSlot | null) => void; error?: string; backHref: string;
 }) {
   const t = useTranslations("services.common.form");
+  const ts = useTranslations("services.common.status");
   const [attempt, setAttempt] = useState(0);
   // Results are tagged with the request they answer, so a reload shows "loading" until its own answer arrives.
   const want = `${providerId}:${reloadKey}:${attempt}`;
@@ -103,8 +106,8 @@ export function TimeChoice({ id, providerId, load, reloadKey, value, onChange, e
   return (
     <FormSection id={id} title={t("time")} error={error}>
       {slots === null ? <p role="status" className="flex items-center gap-2 text-base text-muted"><Loader2 aria-hidden className="size-5 animate-spin" />{t("loadingTimes")}</p>
-        : !slots.ok ? <InlineError code={slots.error.code} action={<Button type="button" variant="secondary" onClick={() => setAttempt(n => n + 1)}>{t("retry")}</Button>} />
-        : items.length === 0 ? <Notice tone="neutral" title={t("noTimesTitle")}>{t("noTimesBody")}</Notice>
+        : !slots.ok ? <InlineError code={slots.error.code} action={<><Button type="button" variant="secondary" onClick={() => setAttempt(n => n + 1)}>{t("retry")}</Button><LinkAction href={backHref} variant="quiet">{ts("findAnother")}</LinkAction></>} />
+        : items.length === 0 ? <Notice tone="neutral" title={t("noTimesTitle")} action={<LinkAction href={backHref}>{ts("findAnother")}</LinkAction>}>{t("noTimesBody")}</Notice>
         : <SlotPicker idPrefix={id} slots={items} value={current} onChange={onChange} />}
     </FormSection>
   );

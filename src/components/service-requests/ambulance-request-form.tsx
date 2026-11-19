@@ -107,7 +107,7 @@ export function AmbulanceRequestForm({ provider, members, addresses, actions }: 
           );
         })}
       </FormSection>
-      <AddressChoice id={IDS.pickup} title={t("ambulance.pickup")} providerName={provider.name} pins={provider.area.pins} addresses={addresses} value={addressId} onChange={setAddressId} error={state.errorFor(IDS.pickup)} />
+      <AddressChoice backHref="/patient/ambulance" id={IDS.pickup} title={t("ambulance.pickup")} providerName={provider.name} pins={provider.area.pins} addresses={addresses} value={addressId} onChange={setAddressId} error={state.errorFor(IDS.pickup)} />
       <FormSection id={IDS.destination} title={t("ambulance.destination")} error={destError} describedBy={`${IDS.destination}-area`}>
         <p id={`${IDS.destination}-area`} className="text-base text-ink">{t("ambulance.destinationArea", { pins: provider.area.pins.join(", ") })}</p>
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("ambulance.destination")}>
@@ -133,7 +133,7 @@ export function AmbulanceRequestForm({ provider, members, addresses, actions }: 
           <span>{t("ambulance.companion")}</span>
         </label>
       </FormSection>
-      <TimeChoice id={IDS.time} providerId={provider.id} load={actions.slots} reloadKey={reloadKey} value={slot} onChange={setSlot} error={state.errorFor(IDS.time)} />
+      <TimeChoice backHref="/patient/ambulance" id={IDS.time} providerId={provider.id} load={actions.slots} reloadKey={reloadKey} value={slot} onChange={setSlot} error={state.errorFor(IDS.time)} />
       <Acknowledge id={IDS.emergency} title={t("ambulance.notEmergencyTitle")} label={t("ambulance.notEmergency")} checked={notEmergency} onChange={setNotEmergency} error={state.errorFor(IDS.emergency)}>
         <p className="text-sm text-muted">{t("ambulance.noTracking")}</p>
       </Acknowledge>

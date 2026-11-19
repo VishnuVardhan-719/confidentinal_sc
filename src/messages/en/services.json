@@ -126,7 +126,8 @@
         }
       }
     },
-    "filterLabel": "Filter providers by area"
+    "filterLabel": "Filter providers by area",
+    "toDashboard": "Go to your dashboard"
   },
   "lab": {
     "pageTitle": "Lab tests at home",

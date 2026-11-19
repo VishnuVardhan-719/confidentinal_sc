@@ -5,6 +5,7 @@ import { connection } from "next/server";
 import type { ReactNode } from "react";
 import { RefreshStatus, RequestActions } from "@/components/booking/request-actions";
 import { ReceiptLink } from "@/components/payments/document-link";
+import { LinkAction } from "@/components/service-requests/link-action";
 import { PaymentSummary } from "@/components/payments/payment-summary";
 import { FixtureNotice } from "@/components/shared/fixture-notice";
 import { InlineError } from "@/components/shared/inline-error";
@@ -68,7 +69,7 @@ export default async function BookingRequestPage({ params }: PageProps<"/[locale
   if (!booking.ok && ["not_found", "validation", "forbidden"].includes(booking.error.code)) notFound();
   const t = await getTranslations("booking.request");
   if (!booking.ok) {
-    return <PatientBookShell><PageHeader title={t("pageTitle")} /><InlineError code={booking.error.code} /></PatientBookShell>;
+    return <PatientBookShell><PageHeader title={t("pageTitle")} /><InlineError code={booking.error.code} action={<><LinkAction href={`/patient/book/${id}`}>{t("refresh")}</LinkAction><LinkAction href="/patient/dashboard" variant="quiet">{t("backToDashboard")}</LinkAction></>} /></PatientBookShell>;
   }
   const b = booking.data;
   const [timeline, payment, doctor] = await Promise.all([

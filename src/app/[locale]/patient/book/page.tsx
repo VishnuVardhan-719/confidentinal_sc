@@ -67,11 +67,11 @@ export default async function PatientBookPage({ params, searchParams }: PageProp
       {!doctor.ok ? (
         doctor.error.code === "not_found" || doctor.error.code === "validation"
           ? <Notice tone="neutral" title={t("missingDoctorTitle")} action={back}>{t("missingDoctorBody")}</Notice>
-          : <InlineError code={doctor.error.code} />
+          : <InlineError code={doctor.error.code} action={back} />
       ) : !usable || !doctor.data.location ? (
         <Notice tone="neutral" title={t("notBookableTitle")} action={back}>{t("notBookableBody")}</Notice>
       ) : !members.ok ? (
-        <InlineError code={members.error.code} />
+        <InlineError code={members.error.code} action={back} />
       ) : (
         <IntlScope namespaces={["booking"]}>
           <BookingWizard

@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { EmergencyBanner } from "@/components/service-requests/emergency-banner";
 import { RequestStatusView } from "@/components/service-requests/request-status";
 import { ServicesShell } from "@/components/service-requests/services-shell";
+import { LinkAction } from "@/components/service-requests/link-action";
 import { InlineError } from "@/components/shared/inline-error";
 import { PageHeader } from "@/components/shared/page-header";
 import { createAmbulanceRequestsApi } from "@/modules/ambulance-requests/api";
@@ -31,7 +32,7 @@ export default async function AmbulanceRequestStatusPage({ params }: PageProps<"
   const found = await createAmbulanceRequestsApi({ patient: servicePatientApi() }).get(id).catch(() => ({ ok: false as const, error: { code: "unavailable" as const } }));
   if (!found.ok && ["not_found", "validation", "forbidden"].includes(found.error.code)) notFound();
   const t = await getTranslations("services");
-  if (!found.ok) return <ServicesShell><EmergencyBanner /><PageHeader title={t("common.status.pageTitle")} /><InlineError code={found.error.code} /></ServicesShell>;
+  if (!found.ok) return <ServicesShell><EmergencyBanner /><PageHeader title={t("common.status.pageTitle")} /><InlineError code={found.error.code} action={<><LinkAction href={`/patient/ambulance/requests/${id}`}>{t("common.form.retry")}</LinkAction><LinkAction href="/patient/ambulance" variant="quiet">{t("common.status.back")}</LinkAction></>} /></ServicesShell>;
   const r = found.data;
   const d = r.details;
   const row = (label: string, value: string) => (

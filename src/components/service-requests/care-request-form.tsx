@@ -63,7 +63,7 @@ export function CareRequestForm({ provider, members, addresses, actions }: { pro
       <FormErrors state={state} />
       <Notice tone="info" title={t("care.scopeTitle")}>{t("care.scopeBody")}</Notice>
       <PatientChoice id={IDS.patient} members={members} value={patientId} onChange={setPatientId} error={state.errorFor(IDS.patient)} />
-      <AddressChoice id={IDS.address} providerName={provider.name} pins={provider.area.pins} addresses={addresses} value={addressId} onChange={setAddressId} error={state.errorFor(IDS.address)} />
+      <AddressChoice backHref="/patient/caretakers" id={IDS.address} providerName={provider.name} pins={provider.area.pins} addresses={addresses} value={addressId} onChange={setAddressId} error={state.errorFor(IDS.address)} />
       <FormSection id={IDS.tasks} title={t("care.tasks")} error={state.errorFor(IDS.tasks)} describedBy={`${IDS.tasks}-hint`}>
         <p id={`${IDS.tasks}-hint`} className="text-sm text-muted">{t("care.tasksHint")}</p>
         {provider.tasks.map(task => {
@@ -77,7 +77,7 @@ export function CareRequestForm({ provider, members, addresses, actions }: { pro
           );
         })}
       </FormSection>
-      <TimeChoice id={IDS.time} providerId={provider.id} load={actions.slots} reloadKey={reloadKey} value={slot} onChange={setSlot} error={state.errorFor(IDS.time)} />
+      <TimeChoice backHref="/patient/caretakers" id={IDS.time} providerId={provider.id} load={actions.slots} reloadKey={reloadKey} value={slot} onChange={setSlot} error={state.errorFor(IDS.time)} />
       <div className="grid gap-2 rounded-lg border border-border bg-surface p-5 sm:p-6">
         <label htmlFor={hoursId} className="text-lg font-semibold text-ink">{t("care.hours")}</label>
         <p id={`${hoursId}-hint`} className="text-sm text-muted">{t("care.hoursHint", { min: provider.minHours, max: provider.maxHours })}</p>
