@@ -13,6 +13,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import type { ApiResult } from "@/lib/api/result";
 import { interpretCommand } from "@/modules/doctor/loaders";
 import { deriveChallengeView, OTP_ERROR_LABEL_KEYS } from "@/modules/doctor/otp";
+import { useHydrated } from "@/components/clinical/use-hydrated";
 import { otpCodeSchema, type ArrivalChallenge, type OtpErrorCode, type VerifyArrivalOutcome, type VersionResponse } from "@/modules/doctor/types";
 import type { VisitAction } from "@/modules/doctor/visit";
 import { outcomeMessageKey } from "./command-message";
@@ -142,6 +143,7 @@ function ArrivalCodeForm({ bookingId, challenge: initial, actions }: { bookingId
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const view = deriveChallengeView(challenge, now);
+  const hydrated = useHydrated();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -208,7 +210,7 @@ function ArrivalCodeForm({ bookingId, challenge: initial, actions }: { bookingId
       </div>
       <Field id={fieldId} label={t("codeLabel")} hint={t("codeHint")} required error={formatError ?? errorText}>
         {(control) => (
-          <OTPInput {...control} value={code} onValueChange={setCode} disabled={!view.canSubmit || busy} />
+          <OTPInput {...control} value={code} onValueChange={setCode} disabled={!view.canSubmit || busy || !hydrated} />
         )}
       </Field>
       <div aria-live="polite" className="grid gap-1 text-sm tabular">

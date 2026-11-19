@@ -12,6 +12,7 @@ import type { PhotoConsent, PhotoConsentInput, PhotoMeta } from "@/modules/recor
 import { CheckField, LongTextField } from "./editor/fields";
 import { badgeFor } from "./kit";
 import { useClinicalFormat } from "./use-format";
+import { useHydrated } from "./use-hydrated";
 
 /**
  * DC13 optional photo consent. Recording consent or a decline never requests the camera; no file
@@ -40,6 +41,7 @@ export function PhotoConsentPanel({
   const [fieldErrors, setFieldErrors] = useState<{ purpose?: string; confirm?: string }>({});
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const hydrated = useHydrated();
 
   async function send(input: PhotoConsentInput) {
     setBusy(true);
@@ -90,7 +92,7 @@ export function PhotoConsentPanel({
           <p className="text-sm text-muted">{t("uploadPending")}</p>
           {disabled ? null : (
             <div>
-              <Button variant="secondary" disabled={busy} onClick={() => send({ decision: "withdrawn" })}>
+              <Button variant="secondary" disabled={busy || !hydrated} onClick={() => send({ decision: "withdrawn" })}>
                 {busy ? tc("working") : t("withdraw")}
               </Button>
             </div>
@@ -101,10 +103,10 @@ export function PhotoConsentPanel({
           <LongTextField id={ids.purpose} label={t("purpose")} hint={t("purposeHint")} required rows={2} maxLength={500} value={purpose} onValue={setPurpose} error={fieldErrors.purpose} />
           <CheckField id={ids.confirm} label={t("patientConfirmed")} checked={confirmed} onChecked={setConfirmed} error={fieldErrors.confirm} />
           <div className="flex flex-wrap gap-3">
-            <Button variant="secondary" disabled={busy} onClick={giveConsent}>
+            <Button variant="secondary" disabled={busy || !hydrated} onClick={giveConsent}>
               {t("recordConsent")}
             </Button>
-            <Button variant="quiet" disabled={busy} onClick={() => send({ decision: "decline" })}>
+            <Button variant="quiet" disabled={busy || !hydrated} onClick={() => send({ decision: "decline" })}>
               {t("decline")}
             </Button>
           </div>

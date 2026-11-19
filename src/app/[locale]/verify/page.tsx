@@ -20,7 +20,9 @@ export default async function VerifyEntryPage({ params, searchParams }: PageProp
     if (code) redirect(`/${locale}/verify/${code}`);
   }
   const t = await getTranslations("verify.form");
-  const error = typed === undefined ? undefined : typed.trim() === "" ? t("required") : t("invalid");
+  // `error` comes from /verify/check (no-JS path); a bare ?code= is still accepted for old links.
+  const flagged = sp.error === "required" || sp.error === "invalid" ? sp.error : undefined;
+  const error = flagged ? t(flagged) : typed === undefined ? undefined : typed.trim() === "" ? t("required") : t("invalid");
   return (
     <VerifyPageFrame>
       {/* Never echo an invalid code back into the field or URL beyond what the user typed. */}

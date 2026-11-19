@@ -72,7 +72,7 @@ test.describe("proof check: entry", () => {
     await codeField(page).fill("not a code");
     await codeField(page).press("Enter");
     await expect(main(page).getByText(/not a valid proof code/i)).toBeVisible();
-    await expect(page).toHaveURL(/\/en\/verify\?code=/);
+    await expect(page).toHaveURL(/\/en\/verify\?error=invalid&code=/);
     await expectNoAxeViolations(page);
   });
 

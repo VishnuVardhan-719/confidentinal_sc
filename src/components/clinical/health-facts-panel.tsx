@@ -16,6 +16,7 @@ import type { ConfirmFactsInput, CorrectFactInput, HealthFactView } from "@/modu
 import { CheckField, LongTextField, TextField } from "./editor/fields";
 import { badgeFor } from "./kit";
 import { useClinicalFormat } from "./use-format";
+import { useHydrated } from "./use-hydrated";
 
 /**
  * DC11 health fact review. Only facts the clinician selects are confirmed, with stated evidence;
@@ -48,6 +49,7 @@ export function HealthFactsPanel({
   const [apiError, setApiError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const hydrated = useHydrated();
   const [correcting, setCorrecting] = useState<string | null>(null);
 
   const kindLabel = (k: HealthFactView["kind"]) => t(`kind.${k}`);
@@ -101,7 +103,7 @@ export function HealthFactsPanel({
                       <Checkbox
                         id={checkboxId}
                         className="mt-0.5"
-                        disabled={disabled}
+                        disabled={disabled || !hydrated}
                         aria-label={t("select", { kind: kindLabel(f.kind) })}
                         checked={selected.has(f.factId)}
                         onCheckedChange={(c) => setSelected((s) => {
@@ -164,7 +166,7 @@ export function HealthFactsPanel({
               {apiError ? <InlineError code={apiError} /> : null}
               <div aria-live="polite">{done ? <Notice tone="info">{done}</Notice> : null}</div>
               <div>
-                <Button type="submit" variant="secondary" disabled={busy} aria-busy={busy}>
+                <Button type="submit" variant="secondary" disabled={busy || !hydrated} aria-busy={busy}>
                   {busy ? tc("working") : t("confirm")}
                 </Button>
               </div>
