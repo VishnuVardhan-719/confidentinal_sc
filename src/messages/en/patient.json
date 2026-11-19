@@ -1,7 +1,15 @@
 {
   "shell": {
     "workspace": "Patient",
-    "nav": { "dashboard": "Overview", "findDoctor": "Find a doctor", "bookings": "Bookings", "profile": "Profile", "healthProfile": "Health profile" }
+    "nav": {
+      "dashboard": "Overview",
+      "findDoctor": "Find a doctor",
+      "bookings": "Bookings",
+      "profile": "Profile",
+      "healthProfile": "Health profile",
+      "records": "Records",
+      "notifications": "Notifications"
+    }
   },
   "dashboard": {
     "title": "Your overview",
@@ -16,7 +24,12 @@
     "card": {
       "reference": "Ref {reference}",
       "noReference": "Reference pending",
-      "category": { "doctor": "Doctor visit", "lab": "Lab test", "ambulance": "Scheduled ambulance", "caretaker": "Caretaker" },
+      "category": {
+        "doctor": "Doctor visit",
+        "lab": "Lab test",
+        "ambulance": "Scheduled ambulance",
+        "caretaker": "Caretaker"
+      },
       "price": "Price {price}",
       "statuses": "Status",
       "booking": "Booking",
@@ -216,6 +229,50 @@
         "time": "Enter a valid time.",
         "past": "Choose a time in the future."
       }
+    }
+  },
+  "records": {
+    "title": "Your health records",
+    "description": "Signed visit records from your doctors. Drafts are never shown here.",
+    "list": {
+      "label": "{count, plural, one {# signed record} other {# signed records}}",
+      "scope": "Only records your doctor has signed appear here. A record can be amended later; earlier versions are kept."
+    },
+    "row": {
+      "visit": "Visit on {time}",
+      "doctor": "Signed by {name}",
+      "reference": "Booking {reference}",
+      "version": "Version {version}",
+      "lastSigned": "last signed {time}",
+      "amended": "Amended",
+      "open": "View record"
+    },
+    "empty": {
+      "title": "No signed records yet",
+      "body": "After a doctor signs the record of your visit, it appears here.",
+      "action": "View your bookings"
+    },
+    "state": {
+      "denied": "You do not have access to these records.",
+      "gated": "Health records are switched off. Nothing is shown here until clinical features are approved and enabled."
+    }
+  },
+  "record": {
+    "title": "Visit record",
+    "reference": "Booking {reference}",
+    "readOnly": "This is the signed record. Only your doctor can amend it, and every earlier version is kept.",
+    "asideLabel": "Record download",
+    "backToList": "Back to records",
+    "notAvailable": "This record is not available. It may not exist, it may not be signed yet, or it is not on your account."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "description": "Updates about your requests, bookings and payments. They show what happened and when, never health details.",
+    "state": {
+      "denied": "You do not have access to these notifications.",
+      "gatedTitle": "Notifications are not available yet",
+      "gated": "In-app notifications are not connected yet. Your bookings page always shows the latest status.",
+      "gatedAction": "Go to your bookings"
     }
   }
 }

@@ -1,7 +1,15 @@
 {
   "shell": {
     "workspace": "రోగి",
-    "nav": { "dashboard": "సారాంశం", "findDoctor": "డాక్టర్‌ను వెతకండి", "bookings": "బుకింగ్‌లు", "profile": "ప్రొఫైల్", "healthProfile": "Health profile" }
+    "nav": {
+      "dashboard": "సారాంశం",
+      "findDoctor": "డాక్టర్‌ను వెతకండి",
+      "bookings": "బుకింగ్‌లు",
+      "profile": "ప్రొఫైల్",
+      "healthProfile": "ఆరోగ్య ప్రొఫైల్",
+      "records": "రికార్డులు",
+      "notifications": "నోటిఫికేషన్లు"
+    }
   },
   "dashboard": {
     "title": "మీ సారాంశం",
@@ -16,7 +24,12 @@
     "card": {
       "reference": "రిఫరెన్స్ {reference}",
       "noReference": "రిఫరెన్స్ ఇంకా రాలేదు",
-      "category": { "doctor": "డాక్టర్ సందర్శన", "lab": "ల్యాబ్ పరీక్ష", "ambulance": "షెడ్యూల్ చేసిన అంబులెన్స్", "caretaker": "కేర్‌టేకర్" },
+      "category": {
+        "doctor": "డాక్టర్ సందర్శన",
+        "lab": "ల్యాబ్ పరీక్ష",
+        "ambulance": "షెడ్యూల్ చేసిన అంబులెన్స్",
+        "caretaker": "కేర్‌టేకర్"
+      },
       "price": "ధర {price}",
       "statuses": "స్థితి",
       "booking": "బుకింగ్",
@@ -89,133 +102,177 @@
     }
   },
   "bookings": {
-    "title": "Your bookings",
-    "description": "Every visit you have requested, with booking, payment and record status shown separately.",
+    "title": "మీ బుకింగ్‌లు",
+    "description": "మీరు అభ్యర్థించిన ప్రతి విజిట్; బుకింగ్, చెల్లింపు, రికార్డు స్థితులు వేర్వేరుగా చూపబడతాయి.",
     "filter": {
-      "label": "Filter bookings",
-      "all": "All",
-      "upcoming": "Upcoming",
-      "past": "Past",
-      "cancelled": "Cancelled or declined",
-      "scope": "Filters sort the bookings on this page. Use Next page to see more."
+      "label": "బుకింగ్‌లను ఫిల్టర్ చేయండి",
+      "all": "అన్నీ",
+      "upcoming": "రాబోయేవి",
+      "past": "గతంలోనివి",
+      "cancelled": "రద్దు లేదా తిరస్కరించబడినవి",
+      "scope": "ఫిల్టర్లు ఈ పేజీలోని బుకింగ్‌లను మాత్రమే వర్గీకరిస్తాయి. మరిన్నింటి కోసం తదుపరి పేజీని ఉపయోగించండి."
     },
     "empty": {
-      "title": "No bookings yet",
-      "body": "When you request a visit, it appears here with its status.",
-      "action": "Find a doctor",
-      "filterTitle": "No bookings under {filter} on this page",
-      "filterBody": "Other bookings on this page are under a different filter.",
-      "showAll": "Show all on this page",
-      "endTitle": "No more bookings",
-      "endBody": "You have reached the end of your bookings."
+      "title": "ఇంకా బుకింగ్‌లు లేవు",
+      "body": "మీరు విజిట్ అభ్యర్థించినప్పుడు, అది దాని స్థితితో ఇక్కడ కనిపిస్తుంది.",
+      "action": "డాక్టర్‌ను కనుగొనండి",
+      "filterTitle": "ఈ పేజీలో {filter} కింద బుకింగ్‌లు లేవు",
+      "filterBody": "ఈ పేజీలోని ఇతర బుకింగ్‌లు వేరే ఫిల్టర్ కింద ఉన్నాయి.",
+      "showAll": "ఈ పేజీలోనివన్నీ చూపించు",
+      "endTitle": "ఇంక బుకింగ్‌లు లేవు",
+      "endBody": "మీ బుకింగ్‌ల చివరికి చేరుకున్నారు."
     },
     "pager": {
-      "label": "Booking pages",
-      "next": "Next page",
-      "first": "Back to first page",
-      "end": "End of your bookings"
+      "label": "బుకింగ్ పేజీలు",
+      "next": "తదుపరి పేజీ",
+      "first": "మొదటి పేజీకి తిరిగి",
+      "end": "మీ బుకింగ్‌లు ఇక్కడితో ముగిశాయి"
     },
     "state": {
-      "denied": "You do not have access to these bookings.",
-      "gated": "Bookings are not connected yet."
+      "denied": "ఈ బుకింగ్‌లను చూసే అనుమతి మీకు లేదు.",
+      "gated": "బుకింగ్‌లు ఇంకా కనెక్ట్ కాలేదు."
     }
   },
   "booking": {
-    "title": "Booking details",
-    "crumbBookings": "Bookings",
-    "backToList": "Back to your bookings",
-    "asideLabel": "Fee and booking actions",
+    "title": "బుకింగ్ వివరాలు",
+    "crumbBookings": "బుకింగ్‌లు",
+    "backToList": "మీ బుకింగ్‌లకు తిరిగి వెళ్ళండి",
+    "asideLabel": "ఫీజు మరియు బుకింగ్ చర్యలు",
     "state": {
-      "notFound": "This booking is not available. It may not exist, or it is not on your account.",
-      "gated": "Booking details are not connected yet."
+      "notFound": "ఈ బుకింగ్ అందుబాటులో లేదు. ఇది లేకపోవచ్చు, లేదా మీ ఖాతాలో లేకపోవచ్చు.",
+      "gated": "బుకింగ్ వివరాలు ఇంకా కనెక్ట్ కాలేదు."
     },
     "status": {
-      "title": "Status",
-      "body": "Booking, visit, payment and clinical record are tracked separately. One does not imply another."
+      "title": "స్థితి",
+      "body": "బుకింగ్, విజిట్, చెల్లింపు, క్లినికల్ రికార్డు వేర్వేరుగా ట్రాక్ చేయబడతాయి. ఒకటి మరొకదాన్ని సూచించదు."
     },
     "decision": {
-      "label": "Provider decision",
-      "readOnly": "Only the provider can accept or decline.",
-      "notSent": "Not sent yet",
-      "waiting": "Waiting for the provider",
-      "accepted": "Accepted by the provider",
-      "declined": "Declined by the provider",
-      "expired": "Expired without a reply",
-      "cancelled": "Booking cancelled",
-      "unknown": "Decision not available"
+      "label": "ప్రొవైడర్ నిర్ణయం",
+      "readOnly": "ప్రొవైడర్ మాత్రమే అంగీకరించగలరు లేదా తిరస్కరించగలరు.",
+      "notSent": "ఇంకా పంపలేదు",
+      "waiting": "ప్రొవైడర్ కోసం వేచి ఉంది",
+      "accepted": "ప్రొవైడర్ అంగీకరించారు",
+      "declined": "ప్రొవైడర్ తిరస్కరించారు",
+      "expired": "సమాధానం లేకుండా గడువు ముగిసింది",
+      "cancelled": "బుకింగ్ రద్దయింది",
+      "unknown": "నిర్ణయం అందుబాటులో లేదు"
     },
     "visit": {
-      "title": "Visit",
-      "when": "Date and time",
-      "range": "{start} to {end}",
-      "timeZone": "India time (IST)",
-      "provider": "Provider",
-      "providerUnavailable": "Provider details are not available right now.",
-      "category": "Service",
-      "pin": "Service PIN code"
+      "title": "విజిట్",
+      "when": "తేదీ మరియు సమయం",
+      "range": "{start} నుండి {end} వరకు",
+      "timeZone": "భారత కాలమానం (IST)",
+      "provider": "ప్రొవైడర్",
+      "providerUnavailable": "ప్రొవైడర్ వివరాలు ప్రస్తుతం అందుబాటులో లేవు.",
+      "category": "సేవ",
+      "pin": "సేవ పిన్ కోడ్"
     },
     "timeline": {
-      "title": "Timeline",
-      "empty": "No updates yet.",
-      "unavailable": "The timeline is not available right now.",
+      "title": "టైమ్‌లైన్",
+      "empty": "ఇంకా అప్‌డేట్‌లు లేవు.",
+      "unavailable": "టైమ్‌లైన్ ప్రస్తుతం అందుబాటులో లేదు.",
       "actor": {
-        "you": "You",
-        "provider": "Provider",
-        "assigned": "Assigned staff",
+        "you": "మీరు",
+        "provider": "ప్రొవైడర్",
+        "assigned": "కేటాయించిన సిబ్బంది",
         "system": "SureCure Visit"
       }
     },
     "fee": {
-      "title": "Fee",
-      "snapshot": "Price fixed by the provider when you booked. It does not change later."
+      "title": "ఫీజు",
+      "snapshot": "మీరు బుక్ చేసినప్పుడు ప్రొవైడర్ నిర్ణయించిన ధర. ఇది తర్వాత మారదు."
     },
     "payment": {
-      "unavailable": "Payment details are not available right now.",
-      "due": "Amount due",
-      "collected": "Collected",
-      "refunded": "Refunded",
+      "unavailable": "చెల్లింపు వివరాలు ప్రస్తుతం అందుబాటులో లేవు.",
+      "due": "చెల్లించాల్సిన మొత్తం",
+      "collected": "వసూలైంది",
+      "refunded": "తిరిగి చెల్లించబడింది",
       "method": {
-        "pay_after": "Pay after the visit",
-        "online_test": "Online payment (test)"
+        "pay_after": "విజిట్ తర్వాత చెల్లించండి",
+        "online_test": "ఆన్‌లైన్ చెల్లింపు (పరీక్ష)"
       },
-      "separate": "Payment is tracked separately from the booking."
+      "separate": "చెల్లింపు బుకింగ్ నుండి వేరుగా ట్రాక్ చేయబడుతుంది."
     },
     "manage": {
-      "title": "Manage booking"
+      "title": "బుకింగ్ నిర్వహణ"
     },
     "cancel": {
-      "title": "Cancel",
-      "body": "You can cancel while the provider has not started the visit.",
-      "policyBody": "The provider has accepted. The cancellation policy you agreed to decides if you can still cancel.",
-      "serverDecides": "We send your request and the booking system checks it. It may say no if the booking has changed.",
-      "closed": "This booking can no longer be cancelled here.",
-      "trigger": "Cancel this booking",
-      "confirmTitle": "Cancel this booking?",
-      "confirmBody": "The provider will be told. To visit later you will need to book again.",
-      "ack": "I understand this cannot be undone.",
-      "confirm": "Yes, cancel booking",
-      "keep": "Keep booking",
-      "doneTitle": "Cancellation sent",
-      "doneBody": "The booking status will update shortly."
+      "title": "రద్దు",
+      "body": "ప్రొవైడర్ విజిట్ ప్రారంభించనంత వరకు మీరు రద్దు చేయవచ్చు.",
+      "policyBody": "ప్రొవైడర్ అంగీకరించారు. మీరు ఇంకా రద్దు చేయగలరా అనేది మీరు అంగీకరించిన రద్దు విధానం నిర్ణయిస్తుంది.",
+      "serverDecides": "మేము మీ అభ్యర్థనను పంపుతాము, బుకింగ్ సిస్టమ్ దాన్ని తనిఖీ చేస్తుంది. బుకింగ్ మారి ఉంటే అది తిరస్కరించవచ్చు.",
+      "closed": "ఈ బుకింగ్‌ను ఇక్కడ ఇక రద్దు చేయలేరు.",
+      "trigger": "ఈ బుకింగ్‌ను రద్దు చేయండి",
+      "confirmTitle": "ఈ బుకింగ్‌ను రద్దు చేయాలా?",
+      "confirmBody": "ప్రొవైడర్‌కు తెలియజేయబడుతుంది. తర్వాత విజిట్ కావాలంటే మళ్ళీ బుక్ చేయాలి.",
+      "ack": "దీన్ని వెనక్కి తీసుకోలేమని నాకు అర్థమైంది.",
+      "confirm": "అవును, బుకింగ్ రద్దు చేయండి",
+      "keep": "బుకింగ్ ఉంచండి",
+      "doneTitle": "రద్దు అభ్యర్థన పంపబడింది",
+      "doneBody": "బుకింగ్ స్థితి త్వరలో అప్‌డేట్ అవుతుంది."
     },
     "reschedule": {
-      "title": "Reschedule",
-      "closed": "This booking can no longer be rescheduled.",
-      "gateTitle": "Rescheduling is not available yet",
-      "gateBody": "You can pick a time, but the request cannot be sent until rescheduling is connected. To change the time now, cancel and book again.",
-      "date": "Preferred date",
-      "dateHint": "India time (IST)",
-      "time": "Preferred time",
-      "timeHint": "Provider confirms the final time.",
-      "submit": "Request new time",
-      "sending": "Sending…",
-      "notSentTitle": "Not sent",
-      "notSentBody": "Rescheduling is not connected yet. Your booking has not changed.",
+      "title": "సమయం మార్చండి",
+      "closed": "ఈ బుకింగ్ సమయాన్ని ఇక మార్చలేరు.",
+      "gateTitle": "సమయం మార్చడం ఇంకా అందుబాటులో లేదు",
+      "gateBody": "మీరు సమయాన్ని ఎంచుకోవచ్చు, కానీ ఈ సదుపాయం కనెక్ట్ అయ్యే వరకు అభ్యర్థన పంపబడదు. ఇప్పుడే సమయం మార్చాలంటే, రద్దు చేసి మళ్ళీ బుక్ చేయండి.",
+      "date": "ఇష్టమైన తేదీ",
+      "dateHint": "భారత కాలమానం (IST)",
+      "time": "ఇష్టమైన సమయం",
+      "timeHint": "చివరి సమయాన్ని ప్రొవైడర్ నిర్ధారిస్తారు.",
+      "submit": "కొత్త సమయం అభ్యర్థించండి",
+      "sending": "పంపుతోంది…",
+      "notSentTitle": "పంపబడలేదు",
+      "notSentBody": "సమయం మార్చే సదుపాయం ఇంకా కనెక్ట్ కాలేదు. మీ బుకింగ్ మారలేదు.",
       "error": {
-        "date": "Enter a valid date.",
-        "time": "Enter a valid time.",
-        "past": "Choose a time in the future."
+        "date": "సరైన తేదీ నమోదు చేయండి.",
+        "time": "సరైన సమయం నమోదు చేయండి.",
+        "past": "భవిష్యత్తులోని సమయాన్ని ఎంచుకోండి."
       }
+    }
+  },
+  "records": {
+    "title": "మీ ఆరోగ్య రికార్డులు",
+    "description": "మీ డాక్టర్లు సంతకం చేసిన విజిట్ రికార్డులు. డ్రాఫ్ట్‌లు ఇక్కడ ఎప్పుడూ చూపబడవు.",
+    "list": {
+      "label": "{count, plural, one {# సంతకం చేసిన రికార్డు} other {# సంతకం చేసిన రికార్డులు}}",
+      "scope": "మీ డాక్టర్ సంతకం చేసిన రికార్డులు మాత్రమే ఇక్కడ కనిపిస్తాయి. రికార్డును తర్వాత సవరించవచ్చు; పాత వెర్షన్లు భద్రంగా ఉంటాయి."
+    },
+    "row": {
+      "visit": "{time} న విజిట్",
+      "doctor": "{name} సంతకం చేశారు",
+      "reference": "బుకింగ్ {reference}",
+      "version": "వెర్షన్ {version}",
+      "lastSigned": "చివరి సంతకం {time}",
+      "amended": "సవరించబడింది",
+      "open": "రికార్డు చూడండి"
+    },
+    "empty": {
+      "title": "ఇంకా సంతకం చేసిన రికార్డులు లేవు",
+      "body": "డాక్టర్ మీ విజిట్ రికార్డుపై సంతకం చేసిన తర్వాత, అది ఇక్కడ కనిపిస్తుంది.",
+      "action": "మీ బుకింగ్‌లు చూడండి"
+    },
+    "state": {
+      "denied": "ఈ రికార్డులను చూసే అనుమతి మీకు లేదు.",
+      "gated": "ఆరోగ్య రికార్డులు ఆపివేయబడ్డాయి. క్లినికల్ ఫీచర్లు ఆమోదించి ప్రారంభించే వరకు ఇక్కడ ఏమీ చూపబడదు."
+    }
+  },
+  "record": {
+    "title": "విజిట్ రికార్డు",
+    "reference": "బుకింగ్ {reference}",
+    "readOnly": "ఇది సంతకం చేసిన రికార్డు. మీ డాక్టర్ మాత్రమే దీన్ని సవరించగలరు, ప్రతి పాత వెర్షన్ భద్రంగా ఉంటుంది.",
+    "asideLabel": "రికార్డు డౌన్‌లోడ్",
+    "backToList": "రికార్డులకు తిరిగి వెళ్ళండి",
+    "notAvailable": "ఈ రికార్డు అందుబాటులో లేదు. ఇది లేకపోవచ్చు, ఇంకా సంతకం కాకపోవచ్చు, లేదా మీ ఖాతాలో లేకపోవచ్చు."
+  },
+  "notifications": {
+    "title": "నోటిఫికేషన్లు",
+    "description": "మీ అభ్యర్థనలు, బుకింగ్‌లు, చెల్లింపుల గురించి అప్‌డేట్‌లు. ఏమి జరిగిందో, ఎప్పుడు జరిగిందో మాత్రమే చూపిస్తాయి, ఆరోగ్య వివరాలు ఎప్పుడూ కాదు.",
+    "state": {
+      "denied": "ఈ నోటిఫికేషన్లను చూసే అనుమతి మీకు లేదు.",
+      "gatedTitle": "నోటిఫికేషన్లు ఇంకా అందుబాటులో లేవు",
+      "gated": "యాప్‌లో నోటిఫికేషన్లు ఇంకా కనెక్ట్ కాలేదు. తాజా స్థితి ఎప్పుడూ మీ బుకింగ్‌ల పేజీలో కనిపిస్తుంది.",
+      "gatedAction": "మీ బుకింగ్‌లకు వెళ్ళండి"
     }
   }
 }

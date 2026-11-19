@@ -10,6 +10,7 @@ const ROOT = path.join(SRC, "messages");
 /** Keys whose value is intentionally identical in every locale (brand, endonyms, templates). */
 const SAME_IN_ALL_LOCALES = new Set([
   "common.brand",
+  "patient.booking.timeline.actor.system",
   "common.meta.titleTemplate",
   "common.locales.en",
   "common.locales.te",

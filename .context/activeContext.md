@@ -99,3 +99,7 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
 - At f18d7cb: lint exit0, vitest 35 files/617 pass, build exit0 (138 pages). No integration fixes needed.
 
 2026-11-18 (fe-d): patient dashboard built (/[locale]/patient/dashboard, modules/patient-dashboard, patient.json en/te/hi, fe2-c modules vendored byte-identical, REQUESTS R-FE-D-31). CodeRabbit 0f4b8da fixes 1-7 done + coderabbit-0f4b8da.test.ts. Browser e2e deferred (R-FE-D-32). lint/typecheck/build clean, 363/363 tests. Committed on feat/fe2-d at orchestrator request.
+
+## t4 (fe-p) records/notifications/public loading - in progress
+- Added patient/records (list, [id], actions), patient/notifications (page, actions, api.ts), PatientShell+dashboard nav, patient.json en/te/hi strings, (public) loading.tsx files + components/public/route-loading.tsx, tests/e2e/patient-records.spec.ts. Next: build, run e2e in 3 server modes, bookings e2e, commit, handoff-t4.md.
+
