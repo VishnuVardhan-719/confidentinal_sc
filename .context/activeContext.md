@@ -119,3 +119,33 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
 - NEXT: saved-providers (/patient/saved), then reviews (/patient/reviews), then reminder-prefs (/patient/settings/reminders).
 - Port 3380 is still held by fe2-d's server; use 3384.
 - DONE saved-providers 20f0f2c, reviews 275c9da (records e2e expect timeout 15s). NEXT reminder-prefs (/patient/settings/reminders): channels sms/whatsapp/email, quiet hours IST (may span midnight), version-checked save, FIXTURE_REMINDERS_SCENARIO.
+
+## TASK REPORT: PHASE R8-P (fe-p, feat/fe2-p, port 3384), 2026-11-19
+Status: DONE_VERIFIED (steps 1 to 4). Stopped; awaiting the lead.
+
+Commits (not pushed):
+- 1e1df00 nav: PatientShell and dashboard nav link to Family, Saved doctors, Reviews and Reminders (en/te/hi). AppShell gains additive `bookmark` and `star` icons.
+- 1be71ac loading.tsx and error.tsx added to family/new, family/[memberId] and reviews/[bookingId]. Every fe-p patient segment now has both.
+  - PatientRouteError shows the localized copy, Try again, a home link, and the digest only (never the raw error).
+  - Gated and denied states on bookings, family, notifications, records, reviews, saved and reminders offer "Go to your overview" (`patient.shell.toDashboard`).
+  - Detail and not-found states already had back links. InlineError shows localized copy by code, plus a retry.
+- 8f7ca31 fix: typing of the route-error unit test (the build typechecks tests).
+- 459ef05 tests/e2e/a11y-sweep-p.spec.ts, covering 13 routes in both projects (mobile-390, desktop-1280):
+  - axe WCAG 2.1 A/AA: no serious or critical violations
+  - no horizontal scroll
+  - visible focus ring on the first Tab stop
+  - nav reachability of the four R7 pages from the dashboard and the shell
+
+Verification:
+- tsc 0, eslint 0, vitest 64 files / 995 tests pass, build 0.
+- Playwright via `pwsh .context/fep-e2e-all.ps1` (single server on 3384, restarted per mode), all patient specs plus the sweep:
+  - seeded: 96 passed
+  - empty: 66 passed
+  - guest: 12 passed
+  - 0 failed in every mode
+- Step 4: the sweep found no serious or critical issues, no overflow and no missing focus ring, so there was nothing to fix. The feature specs also assert zero axe violations of any impact on their main pages.
+
+Limitations / notes:
+- The sweep checks English only; te/hi axe runs are in each feature spec.
+- The sweep asserts serious and critical axe impacts only, as briefed. Minor and moderate impacts on the dashboard and detail pages are not asserted by the sweep.
+- Port 3380 is still held by fe2-d's server; everything ran on 3384. My server is stopped.
