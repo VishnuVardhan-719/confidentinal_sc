@@ -108,3 +108,13 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
 - Brief: C:/Users/Yashwanth/.claude-scratch-tasks/PHASE-R7-P.md. Order: family-members, saved-providers, reviews, reminder-prefs. One new message namespace 'patientAccount' (registered in src/i18n/messages.ts). No contracts -> http adapters gated + REQUESTS.md. Don't edit PatientShell/nav: list nav links in REQUESTS.md.
 - Fixture store: process-wide on globalThis keyed by patientId (persists across requests). FIXTURE_FAMILY_SCENARIO=empty for empty state.
 
+
+## R7-P progress (2026-11-19)
+- DONE family-members: ecf6f05. tsc 0, lint 0, vitest 60 files/965 pass, e2e all modes on 3384: on 42, off 24, guest 6 (records+bookings+family).
+- Patterns to reuse for the next sub-tasks:
+  - module layout src/modules/family-members (fixture store on globalThis keyed by patientId; validate fn returns field codes; http gated)
+  - routes src/app/[locale]/patient/family (_lib.ts guard, actions.ts, _components client form with ErrorSummary, IntlScope ["patientAccount"])
+  - messages via .context/r7-messages.mjs <section> reading .context/r7-<section>.json (en/te/hi)
+  - e2e spec pattern tests/e2e/patient-family.spec.ts; add new spec to .context/fep-e2e-all.ps1
+- NEXT: saved-providers (/patient/saved), then reviews (/patient/reviews), then reminder-prefs (/patient/settings/reminders).
+- Port 3380 is still held by fe2-d's server; use 3384.
