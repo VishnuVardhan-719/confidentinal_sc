@@ -44,11 +44,8 @@ with a NULL-actor event and audit row, is idempotent, and lets the owner edit ag
 
 Public contract change: `GET /api/catalog` rows and cursor carry `provider_reference`
 instead of the provider UUID, and `GET /api/catalog/:id` takes the reference.
-Known gap, not fixed here because it needs a B01 function change: `GET
-/api/availability` (`list_slots(p_provider_id uuid, ...)`) still requires the provider
-UUID, which public search no longer returns. A patient can book by `serviceId`, but
-cannot list slots from search results until B01 accepts the reference or derives the
-provider from the service.
+`GET /api/availability` accepts the provider `provider_reference` (migration
+20261117001300), so slots can be listed from search results.
 
 ## C01 Kiro review fixes — current handoff, 17 November 2026
 
