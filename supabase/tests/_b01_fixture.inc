@@ -34,3 +34,5 @@ insert into public.patient_addresses(id,patient_id,line1,locality,pin_code,conta
 insert into public.resources(id,kind,person_profile_id) values ('b6000000-0000-4000-8000-000000000001','person','b1000000-0000-4000-8000-000000000002');
 insert into public.availability_rules(provider_id,resource_id,weekday,local_start,local_end,effective_from,effective_to)
  select 'b3000000-0000-4000-8000-000000000001','b6000000-0000-4000-8000-000000000001',d,'00:00','23:59',current_date,current_date+365 from generate_series(0,6) d;
+-- P5 shared engine (20261117001550) seeds every gate off (OD-5); built suites run with them on.
+update booking_private.feature_gates set state='on';
