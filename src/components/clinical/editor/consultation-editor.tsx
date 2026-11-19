@@ -135,7 +135,12 @@ export function ConsultationEditor({
   async function sign() {
     setShowErrors(true);
     setSignMessage(null);
-    if (missing.length > 0) return setSignMessage({ tone: "danger", text: t("review.fieldsMissing") });
+    if (missing.length > 0) {
+      setSignMessage({ tone: "danger", text: t("review.fieldsMissing") });
+      // Error-summary pattern: move focus to the list of missing details so it is read first.
+      document.getElementById("missing-title")?.focus();
+      return;
+    }
     if (!ack) return setSignMessage({ tone: "danger", text: t("review.ackRequired") });
     if (!canFinalize(auto.draft)) return setSignMessage({ tone: "warning", text: t("review.saveFirst") });
     setSigning(true);

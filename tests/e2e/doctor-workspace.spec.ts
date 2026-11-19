@@ -75,6 +75,8 @@ const LABEL = {
   provisional: "Provisional",
   uncertainty: "Uncertainty or next steps",
   noMedicine: "No medicine prescribed",
+  prescribe: "Prescribe medicines",
+  removeMedicines: "Remove medicines",
   addMedicine: "Add medicine",
   medicineName: "Medicine name",
   allergyReview: "I have reviewed the patient's known allergies",
@@ -161,13 +163,13 @@ test.describe("DC01 assigned doctor access", () => {
   test("other doctor gets the denied state for a known visit ID and no patient data", async ({ as }) => {
     const page = await as("other");
     await page.goto(path.visit(I.bookingToday));
-    await expect(page.getByText(LABEL.denied)).toBeVisible();
+    await expect(page.getByRole("main").getByText(LABEL.denied)).toBeVisible();
     for (const m of PHI_MARKERS) await expect(page.getByText(m)).toHaveCount(0);
   });
 
   test("malformed visit ID renders not-found without a fetch", async ({ page }) => {
     await page.goto(`${D}/visits/not..an..id`);
-    await expect(page.getByText(LABEL.notFound)).toBeVisible();
+    await expect(page.getByRole("main").getByText(LABEL.notFound)).toBeVisible();
   });
 
   test("pre-accept request shows locality/PIN, price and respond-by, never name/phone/address", async ({ page }) => {
@@ -230,9 +232,13 @@ test.describe("DC02 arrival code form (booking: today)", () => {
   test("after the attempt limit the form locks and offers a new code only", async ({ page }) => {
     await page.goto(path.visit(I.bookingToday));
     const input = page.getByLabel(LABEL.codeInput);
-    for (let i = 0; i < 4; i++) {
+    // Wrong codes until the server locks the challenge; each attempt waits for the previous response.
+    const verify = page.getByRole("button", { name: LABEL.verify });
+    for (let i = 0; i < 6 && (await input.isEnabled()); i++) {
       await input.fill("999999");
-      await page.getByRole("button", { name: LABEL.verify }).click();
+      await verify.click();
+      await expect(verify).not.toHaveAttribute("aria-busy", "true");
+      await expect(input).toHaveValue("");
     }
     await expect(page.getByText(/too many attempts/i)).toBeVisible();
     await expect(input).toBeDisabled();
@@ -242,7 +248,7 @@ test.describe("DC02 arrival code form (booking: today)", () => {
   test("other doctor cannot open the code form for this visit", async ({ as }) => {
     const page = await as("other");
     await page.goto(path.visit(I.bookingToday));
-    await expect(page.getByText(LABEL.denied)).toBeVisible();
+    await expect(page.getByRole("main").getByText(LABEL.denied)).toBeVisible();
     await expect(page.getByLabel(LABEL.codeInput)).toHaveCount(0);
   });
   // Successful verification needs the patient's code from the patient view (REQUESTS.md #20).
@@ -324,7 +330,8 @@ test.describe("DC04-DC08 consultation editor (booking: active)", () => {
     await step(page, LABEL.steps[1]).click();
     await page.getByLabel(LABEL.chiefComplaint).fill("Synthetic edit from first tab");
     await expect(draftStatus(page)).toHaveText(LABEL.draftStatus.conflict, { timeout: 5000 });
-    const dialog = page.getByRole("dialog");
+    // Shown inline as an alert next to the editor (not a modal), listing the changed steps.
+    const dialog = page.getByRole("alert").filter({ has: page.getByRole("button", { name: LABEL.keepMine }) });
     await expect(dialog).toContainText(/assessment/i);
     await dialog.getByRole("button", { name: LABEL.keepMine }).click();
     await expect(draftStatus(page)).toHaveText(LABEL.draftStatus.saved, { timeout: 5000 });
@@ -343,12 +350,15 @@ test.describe("DC04-DC08 consultation editor (booking: active)", () => {
   test("DC08 no-medicine is valid; a medicine line needs a name and allergy review; switching back confirms discard", async ({ page }) => {
     await page.goto(path.consultation(I.bookingActive));
     await step(page, LABEL.steps[2]).click();
+    // Prescribing is an explicit decision before any medicine line can be added.
+    await page.getByRole("radio", { name: LABEL.prescribe }).check();
     await page.getByRole("button", { name: LABEL.addMedicine }).click();
     await page.getByLabel(LABEL.medicineName).first().fill("Synthetic medicine");
     await expect(page.getByLabel(LABEL.allergyReview)).not.toBeChecked();
-    await page.getByRole("radio", { name: LABEL.noMedicine }).check();
+    // With a line present the radio asks first, so it is clicked (not checked) and confirmed.
+    await page.getByRole("radio", { name: LABEL.noMedicine }).click();
     await expect(page.getByRole("alertdialog")).toContainText(/1 medicine/i);
-    await page.getByRole("alertdialog").getByRole("button", { name: LABEL.confirm }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: LABEL.removeMedicines }).click();
     await expect(page.getByLabel(LABEL.medicineName)).toHaveCount(0);
   });
 
@@ -356,9 +366,13 @@ test.describe("DC04-DC08 consultation editor (booking: active)", () => {
     await page.goto(path.consultation(I.bookingActive));
     await step(page, LABEL.steps[4]).click();
     await page.getByRole("button", { name: LABEL.sign }).click();
-    await expect(page.getByRole("alert")).toBeVisible();
-    await page.getByRole("alert").getByRole("link").first().click();
-    await expect(page.locator(":focus")).toHaveAttribute("id", /^(assessment|prescription|care)-/);
+    await expect(page.getByText(/some required details are missing/i)).toBeVisible();
+    const summary = page.getByRole("region", { name: /complete these before signing/i });
+    await expect(summary.getByRole("heading")).toBeFocused();
+    await summary.getByRole("button").first().click();
+    // Focus lands on the missing field itself (editor ids are prefixed "cx-"), not the step heading.
+    await expect(page.locator(":focus")).toHaveAttribute("id", /^cx-/);
+    expect(await page.evaluate(() => document.activeElement?.tagName)).toMatch(/INPUT|TEXTAREA|SELECT|FIELDSET|BUTTON/);
   });
 
   test("mobile 360px: sticky actions never cover the focused field or the error summary", async ({ page }) => {
@@ -435,7 +449,7 @@ test.describe("DC09-DC14 records, collection, facts, proof, photo, PDF", () => {
 
   test("DC09 a draft consultation is not reachable through the record route", async ({ page }) => {
     await page.goto(path.record(I.consultationActive));
-    await expect(page.getByText(LABEL.notFound)).toBeVisible();
+    await expect(page.getByRole("main").getByText(LABEL.notFound)).toBeVisible();
   });
 });
 
@@ -467,7 +481,10 @@ test.describe("DC07 signing (booking: active, last)", () => {
     await page.getByRole("radio", { name: LABEL.provisional }).check();
     await page.getByLabel(LABEL.uncertainty).fill("Synthetic: review if symptoms persist");
     await step(page, LABEL.steps[2]).click();
-    await page.getByRole("radio", { name: LABEL.noMedicine }).check();
+    await page.getByRole("radio", { name: LABEL.noMedicine }).click();
+    const discard = page.getByRole("alertdialog");
+    if (await discard.isVisible().catch(() => false)) await discard.getByRole("button", { name: LABEL.removeMedicines }).click();
+    await expect(page.getByRole("radio", { name: LABEL.noMedicine })).toBeChecked();
     await step(page, LABEL.steps[3]).click();
     await page.getByRole("radio", { name: LABEL.followUpNotRequired }).check();
     await page.getByRole("button", { name: LABEL.saveDraft }).click();
