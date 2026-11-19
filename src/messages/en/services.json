@@ -30,7 +30,11 @@
       "address": "Address",
       "addressIntro": "{name} serves PIN {pins}.",
       "addressLine": "{label}: {locality}, {city}, PIN {pin}",
-      "labels": { "home": "Home", "work": "Work", "other": "Other" },
+      "labels": {
+        "home": "Home",
+        "work": "Work",
+        "other": "Other"
+      },
       "outside": "Outside this provider's area",
       "noCoveredTitle": "None of your saved addresses is in this area",
       "noCoveredBody": "Add an address from the doctor booking or your profile, or choose another provider.",
@@ -84,7 +88,11 @@
       "due": "Amount due",
       "priceNote": "Fixed when you sent the request.",
       "timeline": "History",
-      "actor": { "patient": "By you", "provider": "By the provider", "system": "By SureCure Visit" },
+      "actor": {
+        "patient": "By you",
+        "provider": "By the provider",
+        "system": "By SureCure Visit"
+      },
       "changesTitle": "Cancel this request",
       "cancel": "Cancel request",
       "cancelled": "Request cancelled.",
@@ -92,14 +100,33 @@
       "policySummary": "Free to cancel up to 2 hours before the start. Sample policy for testing.",
       "findAnother": "Find another provider",
       "lead": {
-        "requested": { "title": "Waiting for {name} to answer", "body": "The provider reviews each request by hand. Their answer appears here. Use Check for updates to see it." },
-        "confirmed": { "title": "{name} accepted your request", "body": "Your request is confirmed. Pay the provider after the service." },
-        "declined": { "title": "{name} could not take this request", "body": "You have not been charged. Choose another provider or time." },
-        "cancelled": { "title": "This request is cancelled", "body": "You have not been charged." },
-        "completed": { "title": "Service completed", "body": "Thank you. Payment and records appear here once they are recorded." },
-        "expired": { "title": "This request has closed", "body": "The provider did not answer in time. You have not been charged." }
+        "requested": {
+          "title": "Waiting for {name} to answer",
+          "body": "The provider reviews each request by hand. Their answer appears here. Use Check for updates to see it."
+        },
+        "confirmed": {
+          "title": "{name} accepted your request",
+          "body": "Your request is confirmed. Pay the provider after the service."
+        },
+        "declined": {
+          "title": "{name} could not take this request",
+          "body": "You have not been charged. Choose another provider or time."
+        },
+        "cancelled": {
+          "title": "This request is cancelled",
+          "body": "You have not been charged."
+        },
+        "completed": {
+          "title": "Service completed",
+          "body": "Thank you. Payment and records appear here once they are recorded."
+        },
+        "expired": {
+          "title": "This request has closed",
+          "body": "The provider did not answer in time. You have not been charged."
+        }
       }
-    }
+    },
+    "filterLabel": "Filter providers by area"
   },
   "lab": {
     "pageTitle": "Lab tests at home",
@@ -113,7 +140,10 @@
     "testsHint": "Choose one or more tests.",
     "testLine": "{specimen} sample. {preparation}",
     "reportIn": "Report in about {hours} hours",
-    "specimen": { "blood": "Blood", "urine": "Urine" },
+    "specimen": {
+      "blood": "Blood",
+      "urine": "Urine"
+    },
     "preparation": {
       "fasting_10h": "Do not eat for 10 hours before. Water is fine.",
       "morning_sample": "Use the first urine of the morning.",
@@ -122,11 +152,17 @@
     "collectionFee": "Home collection",
     "prepTitle": "Before the collection",
     "prepAck": "I will follow the preparation shown for these tests.",
-    "report": { "none": "No report yet", "awaitingReview": "Report awaiting review" },
+    "report": {
+      "none": "No report yet",
+      "awaitingReview": "Report awaiting review"
+    },
     "reportNote": "Reports are released only by the lab's reviewer and then appear in your Records.",
     "errors": {
       "testIds": "Choose at least one test.",
       "preparationAcknowledged": "Confirm you will follow the preparation."
-    }
+    },
+    "request": "Request tests",
+    "recordTitle": "Report",
+    "prepEmpty": "Choose tests to see how to prepare."
   }
 }
