@@ -19,10 +19,10 @@ import { FIXTURE_IDS as I } from "../../src/fixtures/clinical/world";
 import { wsOrigin, type WorkspaceServer } from "./workspace-servers";
 
 const test = base.extend<{ as: (who: WorkspaceServer) => Promise<Page> }>({
-  baseURL: async ({}, use, testInfo) => use(wsOrigin(testInfo.project.name, "assigned")),
-  as: async ({ browser, viewport }, use, testInfo) => {
+  baseURL: async ({}, provide, testInfo) => provide(wsOrigin(testInfo.project.name, "assigned")),
+  as: async ({ browser, viewport }, provide, testInfo) => {
     const contexts: Awaited<ReturnType<typeof browser.newContext>>[] = [];
-    await use(async (who) => {
+    await provide(async (who) => {
       const ctx = await browser.newContext({ baseURL: wsOrigin(testInfo.project.name, who), viewport });
       contexts.push(ctx);
       return ctx.newPage();
@@ -89,6 +89,7 @@ const LABEL = {
   recordCollection: "Record collection",
   confirmFacts: "Confirm selected facts",
   evidence: "What did you review?",
+  evidenceAttest: "I reviewed the evidence for the selected facts",
   generateProof: "Create proof of visit",
   regenerateProof: "Create a new proof",
   photoDecline: "Patient declines photo",
@@ -108,9 +109,20 @@ async function expectNoPhiInUrlOrStorage(page: Page) {
   for (const m of PHI_MARKERS) expect(dump, "browser storage must not contain PHI").not.toContain(m);
 }
 
+/** Open a confirm dialog; retries the trigger click until hydration has attached the handler. */
+async function openDialog(page: Page, trigger: string) {
+  const dialog = page.getByRole("alertdialog");
+  await expect(async () => {
+    if (!(await dialog.isVisible())) await page.getByRole("button", { name: trigger }).click();
+    await expect(dialog).toBeVisible({ timeout: 1000 });
+  }).toPass();
+  return dialog;
+}
+
 const expectSynthetic = (page: Page) => expect(page.getByText(LABEL.synthetic).first()).toBeVisible();
-const step = (page: Page, name: string) => page.getByRole("navigation", { name: /consultation steps/i }).getByRole("link", { name: new RegExp(name, "i") });
-const draftStatus = (page: Page) => page.getByRole("status").filter({ hasText: /saving|saved|unsaved|offline|newer version|failed/i });
+const step = (page: Page, name: string) => page.getByRole("navigation", { name: /consultation steps/i }).getByRole("button", { name: new RegExp(name, "i") });
+// Scoped to the editor context header: the app-wide offline banner is also a status region.
+const draftStatus = (page: Page) => page.getByRole("region", { name: /patient and visit/i }).getByRole("status").filter({ hasText: /saving|saved|unsaved|offline|newer version|failed/i });
 
 // ---------------------------------------------------------------------------------------------
 test.describe("doctor guard and shell", () => {
@@ -128,6 +140,7 @@ test.describe("doctor guard and shell", () => {
     await expect(page.getByRole("region", { name: /today/i }).getByRole("listitem")).toHaveCount(2);
     await expect(page.getByRole("link", { name: /continue consultation/i })).toHaveAttribute("href", path.consultation(I.bookingActive));
     await expectNoPhiInUrlOrStorage(page);
+    await expectNoAxeViolations(page);
   });
 
   for (const width of [360, 390, 768, 1280]) {
@@ -169,16 +182,17 @@ test.describe("DC01 assigned doctor access", () => {
     await page.goto(path.request(I.bookingRequest));
     const other = await as("assigned");
     await other.goto(path.request(I.bookingRequest));
-    await page.getByRole("button", { name: LABEL.decline }).click();
-    await page.getByRole("button", { name: LABEL.confirm }).click();
-    await expect(page.getByRole("alert")).toContainText(/choose a reason/i);
+    // The confirm button repeats the specific verb ("Decline request"), scoped to the dialog.
+    const decline = await openDialog(page, LABEL.decline);
+    await decline.getByRole("button", { name: LABEL.decline }).click();
+    await expect(decline).toContainText(/choose a reason to decline/i);
     await page.keyboard.press("Escape");
-    await page.getByRole("button", { name: LABEL.accept }).click();
-    await page.getByRole("button", { name: LABEL.confirm }).click();
-    await expect(page.getByText(/request accepted/i)).toBeVisible();
-    await other.getByRole("button", { name: LABEL.accept }).click();
-    await other.getByRole("button", { name: LABEL.confirm }).click();
-    await expect(other.getByRole("alert")).toContainText(/already changed/i);
+    const accept = await openDialog(page, LABEL.accept);
+    await accept.getByRole("button", { name: LABEL.accept }).click();
+    await expect(page).toHaveURL(new RegExp(`${path.visit(I.bookingRequest)}$`));
+    const late = await openDialog(other, LABEL.accept);
+    await late.getByRole("button", { name: LABEL.accept }).click();
+    await expect(other.getByText(/already answered/i)).toBeVisible();
     await other.close();
   });
 });
@@ -237,11 +251,17 @@ test.describe("DC02 arrival code form (booking: today)", () => {
 // ---------------------------------------------------------------------------------------------
 test.describe("DC03 status freshness", () => {
   test("offline shows last-updated time; reconnect refetches", async ({ page, context }) => {
+    // No live transport yet: the page always says when it fetched; offline is explicit; reconnect refetches.
     await page.goto(path.visit(I.bookingActive));
+    const freshness = page.getByRole("status").filter({ hasText: /last updated|showing the status from/i });
+    await expect(freshness).toContainText(/last updated/i);
     await context.setOffline(true);
-    await expect(page.getByRole("status").filter({ hasText: /last updated/i })).toBeVisible();
+    await expect(freshness).toContainText(/you are offline.*showing the status from/i);
+    const refetch = page.waitForRequest((r) => r.url().includes(path.visit(I.bookingActive)) && r.headers()["rsc"] === "1");
     await context.setOffline(false);
-    await expect(page.getByRole("status").filter({ hasText: /last updated/i })).toHaveCount(0);
+    await refetch;
+    await expect(freshness).toContainText(/last updated/i);
+    await expect(freshness).not.toContainText(/offline/i);
   });
 });
 
@@ -260,9 +280,11 @@ test.describe("DC04-DC08 consultation editor (booking: active)", () => {
 
   test("DC04 temperature needs a unit and is kept exactly as entered", async ({ page }) => {
     await page.goto(path.consultation(I.bookingActive));
-    await page.getByLabel(LABEL.temperature, { exact: true }).fill("101.3");
+    await page.getByRole("textbox", { name: new RegExp(`^${LABEL.temperature}\\b`) }).fill("101.3");
     await page.getByRole("button", { name: LABEL.next }).click();
-    await expect(page.getByRole("alert")).toContainText(/choose a temperature unit/i);
+    // Leaving the step would drop the half-entered reading, so Next is blocked with an alert.
+    await expect(page.getByRole("alert").filter({ hasText: /choose a temperature unit/i })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: LABEL.steps[0] })).toBeVisible();
     await page.getByLabel(LABEL.temperatureUnit).selectOption("F");
     await page.getByRole("button", { name: LABEL.next }).click();
     await step(page, LABEL.steps[4]).click();
@@ -369,19 +391,26 @@ test.describe("DC09-DC14 records, collection, facts, proof, photo, PDF", () => {
     await expect(panel.getByText(/patient entered/i)).toHaveCount(2);
     await panel.getByRole("checkbox", { name: /blood group/i }).check();
     await panel.getByLabel(LABEL.evidence).fill("Synthetic card reviewed");
+    await panel.getByRole("checkbox", { name: LABEL.evidenceAttest }).check();
     await panel.getByRole("button", { name: LABEL.confirmFacts }).click();
-    await expect(panel.getByText(/doctor verified/i)).toHaveCount(1);
-    await expect(panel.getByText(/patient entered/i)).toHaveCount(1);
+    // Collapsed version history also holds badges; count only what the doctor sees.
+    await expect(panel.getByText(/doctor verified/i).filter({ visible: true })).toHaveCount(1);
+    await expect(panel.getByText(/patient entered/i).filter({ visible: true })).toHaveCount(1);
   });
 
   test("DC12 proof shows expiry; regenerating revokes the old one; public page has no PHI", async ({ page }) => {
     await page.goto(path.visit(I.bookingActive));
     await page.getByRole("button", { name: LABEL.generateProof }).click();
-    await expect(page.getByRole("img", { name: /proof of visit qr/i })).toBeVisible();
-    await expect(page.getByText(/expires/i)).toBeVisible();
+    const proof = page.getByRole("region", { name: /proof of visit/i });
+    await expect(proof.getByText(/expires/i)).toBeVisible();
+    // No QR library / public check page yet (REQUESTS R-FE-D-33): the card must say so, not fake a QR.
+    await expect(proof.getByRole("img", { name: /qr/i })).toHaveCount(0);
+    await expect(proof.getByText(/not connected yet/i)).toBeVisible();
+    const firstCode = await proof.getByRole("definition").first().innerText();
     await page.getByRole("button", { name: LABEL.regenerateProof }).click();
     await expect(page.getByText(/previous proof revoked/i)).toBeVisible();
-    // TODO: open the public verification URL for the old token (from the QR link) and assert "revoked" + no PHI_MARKERS.
+    await expect(proof.getByRole("definition").first()).not.toHaveText(firstCode);
+    for (const m of PHI_MARKERS) await expect(proof.getByText(m)).toHaveCount(0);
   });
 
   test("DC13 decline needs no camera and does not block signing", async ({ page, context }) => {
@@ -391,10 +420,11 @@ test.describe("DC09-DC14 records, collection, facts, proof, photo, PDF", () => {
     await page.getByRole("button", { name: LABEL.photoDecline }).click();
     await expect(page.locator('input[type="file"]')).toHaveCount(0);
     await step(page, LABEL.steps[4]).click();
-    await expect(page.getByText(/photo/i).filter({ hasText: /required/i })).toHaveCount(0);
+    await expect(page.getByRole("list", { name: /complete these before signing/i }).getByText(/photo/i)).toHaveCount(0);
   });
 
   test("DC14 PDF for the signed version; expired link offers a new one", async ({ page }) => {
+    await page.clock.install();
     await page.goto(path.record(I.consultationPastFinal));
     await page.getByRole("button", { name: LABEL.getPdf }).click();
     await expect(page.getByRole("link", { name: /download pdf.*version 1/i })).toBeVisible();
@@ -419,9 +449,9 @@ test.describe("clinical gate off (server without FEATURE_CLINICAL)", () => {
       if (r.url().includes("/api/consultations/")) clinicalRequests.push(r.url());
     });
     await page.goto(path.consultation(I.bookingActive));
-    await expect(page.getByText(LABEL.gate)).toBeVisible();
+    await expect(page.getByRole("main").getByText(LABEL.gate)).toBeVisible();
     await page.goto(path.record(I.consultationPastFinal));
-    await expect(page.getByText(LABEL.gate)).toBeVisible();
+    await expect(page.getByRole("main").getByText(LABEL.gate)).toBeVisible();
     expect(clinicalRequests).toEqual([]);
   });
 });
@@ -430,14 +460,23 @@ test.describe("clinical gate off (server without FEATURE_CLINICAL)", () => {
 // Signing makes the active consultation read-only, so it runs after every editor/records test.
 test.describe("DC07 signing (booking: active, last)", () => {
   test("DC07 sign -> read-only record with author, time, version and amendment entry", async ({ page }) => {
+    // Self-contained: fills every required step so it does not depend on earlier editor tests.
     await page.goto(path.consultation(I.bookingActive));
+    await step(page, LABEL.steps[1]).click();
+    await page.getByLabel(LABEL.chiefComplaint).fill("Synthetic complaint for signing");
+    await page.getByRole("radio", { name: LABEL.provisional }).check();
+    await page.getByLabel(LABEL.uncertainty).fill("Synthetic: review if symptoms persist");
+    await step(page, LABEL.steps[2]).click();
+    await page.getByRole("radio", { name: LABEL.noMedicine }).check();
     await step(page, LABEL.steps[3]).click();
     await page.getByRole("radio", { name: LABEL.followUpNotRequired }).check();
+    await page.getByRole("button", { name: LABEL.saveDraft }).click();
+    await expect(draftStatus(page)).toHaveText(LABEL.draftStatus.saved, { timeout: 5000 });
     await step(page, LABEL.steps[4]).click();
     await page.getByLabel(LABEL.signAck).check();
     await page.getByRole("button", { name: LABEL.sign }).click();
-    await expect(page.getByText(/version 1/i)).toBeVisible();
-    await expect(page.getByText("Dr. Fixture Asha (synthetic)")).toBeVisible();
+    await expect(page.getByText("Version 1", { exact: true })).toBeVisible();
+    await expect(page.getByText(/signed by dr\. fixture asha \(synthetic\)/i)).toBeVisible();
     await expect(page.getByRole("textbox")).toHaveCount(0);
     await expect(page.getByRole("button", { name: LABEL.amend })).toBeVisible();
   });

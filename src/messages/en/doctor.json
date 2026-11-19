@@ -23,8 +23,9 @@
   "common": {
     "loadError": "This section did not load.",
     "denied": "You do not have access to this visit. Only the assigned doctor can open it.",
-    "notFound": "We could not find this. It may have been removed or the link may be wrong.",
+    "notFound": "Not found. It may have been removed or the link may be wrong.",
     "lastUpdated": "Last updated {time}",
+    "offlineSince": "You are offline. Showing the status from {time}; it refreshes when you reconnect.",
     "refresh": "Refresh",
     "back": "Back",
     "bookingStatus": "Booking",

@@ -2,13 +2,13 @@ import { Phone, Siren } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { PageHeader } from "@/components/shared/page-header";
-import { RetryAction } from "@/components/shared/retry-action";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { CollectionForm } from "@/components/clinical/collection-form";
 import { badgeFor } from "@/components/clinical/kit";
 import { ProofCard } from "@/components/clinical/proof-card";
 import { getClinicalFormat } from "@/components/clinical/server-format";
 import { guardDoctorPage } from "@/components/doctor/guard";
+import { FreshnessStatus } from "@/components/doctor/freshness-status";
 import { PageStateView } from "@/components/doctor/page-state-view";
 import { VisitNextStep } from "@/components/doctor/visit-actions";
 import { VisitProgress } from "@/components/doctor/visit-progress";
@@ -69,6 +69,8 @@ export default async function DoctorVisitPage({ params }: PageProps<"/[locale]/d
             <StatusBadge {...badgeFor(describeBookingState(v.state), f.tk)} />
             <span className="sr-only">{tc("visitStatus")}:</span>
             <StatusBadge {...badgeFor(describeVisitPhase(v.phase), f.tk)} />
+            {/* Payment is its own state, never derived from booking/visit/collection (DC10). */}
+            <StatusBadge tone={v.paymentState === "PAID" ? "success" : "neutral"} icon={v.paymentState === "PAID" ? undefined : "clock"} label={`${tc("paymentStatus")}: ${tc(`paymentState.${v.paymentState}`)}`} />
             <span className="text-muted tabular">{t("reference", { reference: v.publicReference })}</span>
           </span>
         }
@@ -79,10 +81,7 @@ export default async function DoctorVisitPage({ params }: PageProps<"/[locale]/d
           <h2 id="visit-progress" className="text-lg font-semibold text-ink">
             {t("progress")}
           </h2>
-          <p role="status" className="flex items-center gap-3 text-sm text-muted tabular">
-            {tc("lastUpdated", { time: f.time(fetchedAt.toISOString()) })}
-            <RetryAction label={tc("refresh")} />
-          </p>
+          <FreshnessStatus time={f.time(fetchedAt.toISOString())} />
         </div>
         <VisitProgress phase={v.phase} />
       </section>

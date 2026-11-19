@@ -2,7 +2,7 @@
 
 import { AlertTriangle, ArrowLeft, ArrowRight, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { InlineError } from "@/components/shared/inline-error";
@@ -35,7 +35,7 @@ import { badgeFor } from "../kit";
 import { useClinicalFormat } from "../use-format";
 import { CheckField } from "./fields";
 import { ClinicalSummary, MissingList } from "./review-step";
-import { AssessmentForm, CareForm, PrescriptionForm, VitalsForm } from "./step-forms";
+import { AssessmentForm, CareForm, PrescriptionForm, VitalsForm, type IncompleteReading } from "./step-forms";
 
 export type EditorActions = {
   save: (consultationId: string, input: SaveDraftRequest) => Promise<ApiResult<SaveDraftResponse>>;
@@ -106,7 +106,23 @@ export function ConsultationEditor({
     target?.scrollIntoView({ block: "start" });
   }, [step]);
 
-  const goTo = (s: ClinicalStepId) => setStep(s);
+  // DC04: a half-entered reading (temperature without unit, one BP side) lives only in the vitals
+  // form; leaving the step would drop it silently, so the doctor must finish or clear it first.
+  const vitalsPending = useRef<IncompleteReading[]>([]);
+  const [leaveBlocked, setLeaveBlocked] = useState<IncompleteReading[] | null>(null);
+  const onVitalsIncomplete = useCallback((pending: IncompleteReading[]) => {
+    vitalsPending.current = pending;
+    if (pending.length === 0) setLeaveBlocked(null);
+  }, []);
+  const goTo = (s: ClinicalStepId) => {
+    if (step === "vitals" && s !== "vitals" && vitalsPending.current.length > 0) {
+      setLeaveBlocked(vitalsPending.current);
+      document.getElementById(vitalsPending.current[0].fieldId)?.focus();
+      return;
+    }
+    setLeaveBlocked(null);
+    setStep(s);
+  };
   const goToMissing = (m: MissingFieldMeta) => {
     setShowErrors(true);
     pendingFocus.current = `${idPrefix}-${m.focusId.replace(/^[a-z]+-/, "")}`;
@@ -248,7 +264,20 @@ export function ConsultationEditor({
             {tk(STEP_LABEL_KEYS[step])}
           </h2>
 
-          {step === "vitals" ? <VitalsForm idPrefix={idPrefix} value={content.vitals} disabled={disabled} warnings={warnings} tk={tk} onChange={(v) => edit(updateStep(content, "vitals", v))} /> : null}
+          {step === "vitals" && leaveBlocked && leaveBlocked.length > 0 ? (
+            <Notice tone="danger" role="alert" title={t("vitals.incompleteTitle")}>
+              <ul className="grid gap-1">
+                {leaveBlocked.map((p) => (
+                  <li key={p.fieldId}>
+                    <a href={`#${p.fieldId}`} className="underline underline-offset-4">
+                      {p.message}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </Notice>
+          ) : null}
+          {step === "vitals" ? <VitalsForm idPrefix={idPrefix} value={content.vitals} disabled={disabled} warnings={warnings} tk={tk} onIncomplete={onVitalsIncomplete} onChange={(v) => edit(updateStep(content, "vitals", v))} /> : null}
           {step === "assessment" ? <AssessmentForm idPrefix={idPrefix} value={content.assessment} disabled={disabled} errors={errorMap} onChange={(v) => edit(updateStep(content, "assessment", v))} /> : null}
           {step === "prescription" ? (
             <>

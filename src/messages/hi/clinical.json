@@ -65,6 +65,7 @@
     "unitC": "°C (सेल्सियस)",
     "unitF": "°F (फ़ारेनहाइट)",
     "unitRequired": "तापमान की इकाई चुनें।",
+    "incompleteTitle": "इस चरण से आगे जाने से पहले यह रीडिंग पूरी करें या हटाएँ",
     "unitPlaceholder": "इकाई",
     "bloodPressure": "ब्लड प्रेशर",
     "maxValue": "{max} तक का मान दर्ज करें।",
