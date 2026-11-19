@@ -113,7 +113,7 @@ function Hero() {
           </div>
           <p className="flex items-center gap-2 text-base text-muted">
             <Phone aria-hidden className="size-4 text-danger" />
-            <Link href="/emergency" className="underline decoration-border-strong underline-offset-4 hover:text-ink">
+            <Link href="/emergency" className="inline-flex min-h-target items-center underline decoration-border-strong underline-offset-4 hover:text-ink">
               {t("note")}
             </Link>
           </p>
