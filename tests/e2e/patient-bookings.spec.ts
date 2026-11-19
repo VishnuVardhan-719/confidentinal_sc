@@ -24,7 +24,7 @@ test.describe("patient bookings (signed-in synthetic patient)", () => {
   test("list shows the synthetic notice, filters, a booking row and separate badges", async ({ page }) => {
     await page.goto("/en/patient/bookings");
     await expect(page.getByRole("heading", { level: 1, name: "Your bookings" })).toBeVisible();
-    await expect(page.getByText("Synthetic data, not live")).toBeVisible();
+    await expect(page.getByRole("main").getByText("Synthetic data, not live")).toBeVisible();
     const filters = page.getByRole("navigation", { name: "Filter bookings" });
     await expect(filters.getByRole("link", { name: /^All/ })).toHaveAttribute("aria-current", "page");
     const row = page.getByRole("listitem").filter({ has: page.getByRole("link", { name: "View booking" }) });
@@ -90,7 +90,7 @@ test.describe("patient bookings (signed-in synthetic patient)", () => {
 
   test("reschedule is clearly gated and nothing is sent", async ({ page }) => {
     await page.goto(`/en/patient/bookings/${BOOKING}`);
-    await expect(page.getByText("Rescheduling is not available yet")).toBeVisible();
+    await expect(page.getByRole("main").getByText("Rescheduling is not available yet")).toBeVisible();
     await page.getByRole("button", { name: "Request new time" }).click();
     await expect(page.getByText("Enter a valid date.")).toBeVisible();
     await page.getByLabel("Preferred date").fill("2000-01-15");
@@ -107,7 +107,8 @@ test.describe("patient bookings (signed-in synthetic patient)", () => {
   test("an unknown or malformed id shows a privacy-safe not-available state", async ({ page }) => {
     for (const id of ["00000000-0000-4000-8000-000000000099", "not-a-booking"]) {
       await page.goto(`/en/patient/bookings/${id}`);
-      await expect(page.getByText("This booking is not available. It may not exist, or it is not on your account.")).toBeVisible();
+      // Scoped to main: while the response streams, React briefly holds a hidden copy outside main.
+      await expect(page.getByRole("main").getByText("This booking is not available. It may not exist, or it is not on your account.")).toBeVisible();
       await expect(page.getByRole("button", { name: "Cancel this booking" })).toHaveCount(0);
     }
   });
@@ -123,8 +124,12 @@ test.describe("patient bookings (signed-in synthetic patient)", () => {
   test("nav links to the dashboard, profile and health profile", async ({ page, isMobile }) => {
     await page.goto("/en/patient/bookings");
     if (isMobile || (page.viewportSize()?.width ?? 1280) < 1024) {
-      const menu = page.getByRole("button", { name: /menu|navigation/i }).first();
-      if (await menu.isVisible()) await menu.click();
+      const menu = page.getByRole("button", { name: "Open menu" });
+      // Retry until hydrated: a click before hydration does not open the sheet.
+      await expect(async () => {
+        if (!(await page.getByRole("dialog").isVisible())) await menu.click();
+        await expect(page.getByRole("dialog")).toBeVisible({ timeout: 1000 });
+      }).toPass();
     }
     for (const [name, href] of [["Overview", "/en/patient/dashboard"], ["Profile", "/en/patient/profile"], ["Health profile", "/en/patient/health-profile"]]) {
       await expect(page.getByRole("link", { name, exact: true }).first()).toHaveAttribute("href", href);

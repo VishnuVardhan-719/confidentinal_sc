@@ -240,10 +240,14 @@
     }
   },
   "records": {
-    "title": "Health records",
-    "description": "Signed records from your visits. Drafts are never shown here.",
+    "title": "Your health records",
+    "description": "Signed visit records from your doctors. Drafts are never shown here.",
     "listLabel": "Signed records",
-    "empty": "No signed records yet",
+    "empty": {
+      "title": "No signed records yet",
+      "body": "After a doctor signs the record of your visit, it appears here.",
+      "action": "View your bookings"
+    },
     "emptyBody": "After a doctor signs the record of your visit, it appears here.",
     "toBookings": "See my bookings",
     "visitOn": "Visit on {date}",
@@ -257,7 +261,24 @@
     "denied": "You do not have access to these records.",
     "detailTitle": "Health record",
     "notFound": "Not found. This record may not exist or may not be signed yet.",
-    "readOnly": "This is the signed record. It cannot be changed here; your doctor adds any correction as a dated amendment."
+    "readOnly": "This is the signed record. It cannot be changed here; your doctor adds any correction as a dated amendment.",
+    "list": {
+      "label": "{count, plural, one {# signed record} other {# signed records}}",
+      "scope": "Only records your doctor has signed appear here. A record can be amended later; earlier versions are kept."
+    },
+    "row": {
+      "visit": "Visit on {time}",
+      "doctor": "Signed by {name}",
+      "reference": "Booking {reference}",
+      "version": "Version {version}",
+      "lastSigned": "last signed {time}",
+      "amended": "Amended",
+      "open": "View record"
+    },
+    "state": {
+      "denied": "You do not have access to these records.",
+      "gated": "Health records are switched off. Nothing is shown here until clinical features are approved and enabled."
+    }
   },
   "notifications": {
     "title": "Notifications",
@@ -297,6 +318,20 @@
         "body": "Payment for {reference} is due. Online payment is not available yet; pay your provider as agreed.",
         "action": "View booking"
       }
+    },
+    "state": {
+      "denied": "You do not have access to these notifications.",
+      "gatedTitle": "Notifications are not available yet",
+      "gated": "In-app notifications are not connected yet. Your bookings page always shows the latest status.",
+      "gatedAction": "Go to your bookings"
     }
+  },
+  "record": {
+    "title": "Visit record",
+    "reference": "Booking {reference}",
+    "readOnly": "This is the signed record. Only your doctor can amend it, and every earlier version is kept.",
+    "asideLabel": "Record download",
+    "backToList": "Back to records",
+    "notAvailable": "This record is not available. It may not exist, it may not be signed yet, or it is not on your account."
   }
 }

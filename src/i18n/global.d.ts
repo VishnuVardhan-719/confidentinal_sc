@@ -4,6 +4,7 @@ import type publicMessages from "../messages/en/public.json";
 import type auth from "../messages/en/auth.json";
 import type onboarding from "../messages/en/onboarding.json";
 import type patient from "../messages/en/patient.json";
+import type patientAccount from "../messages/en/patientAccount.json";
 import type doctor from "../messages/en/doctor.json";
 import type lab from "../messages/en/lab.json";
 import type ambulance from "../messages/en/ambulance.json";
@@ -26,6 +27,7 @@ declare module "next-intl" {
       auth: typeof auth;
       onboarding: typeof onboarding;
       patient: typeof patient;
+      patientAccount: typeof patientAccount;
       doctor: typeof doctor;
       lab: typeof lab;
       ambulance: typeof ambulance;

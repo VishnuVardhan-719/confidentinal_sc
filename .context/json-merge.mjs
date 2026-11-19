@@ -2,7 +2,10 @@
 // Usage: node .context/json-merge.mjs <prefer: ours|theirs> <file...>
 import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
-const [prefer, ...files] = process.argv.slice(2);
+const [preferArg, ...files] = process.argv.slice(2);
+// "theirs-except:a,b" prefers theirs except for leaves under the listed top-level keys.
+const [prefer, exceptList] = preferArg.split(":");
+const except = new Set((exceptList ?? "").split(",").filter(Boolean));
 const show = (stage, f) => JSON.parse(execFileSync("git", ["show", `:${stage}:${f}`], { encoding: "utf8" }));
 const isObj = (v) => v && typeof v === "object" && !Array.isArray(v);
 function merge(a, b, path, conflicts) {
@@ -13,7 +16,9 @@ function merge(a, b, path, conflicts) {
     else if (isObj(a[k]) && isObj(v)) out[k] = merge(a[k], v, p, conflicts);
     else if (JSON.stringify(a[k]) !== JSON.stringify(v)) {
       conflicts.push(p);
-      out[k] = prefer === "theirs" ? v : a[k];
+      const top = p.split(".")[0];
+      const useTheirs = prefer === "theirs" || (prefer === "theirs-except" && !except.has(top));
+      out[k] = useTheirs ? v : a[k];
     }
   }
   return out;

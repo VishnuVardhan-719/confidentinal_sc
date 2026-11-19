@@ -1,0 +1,70 @@
+{
+  "family": {
+    "title": "Family members",
+    "description": "People you book visits for, such as a parent or child. Only you can see this list.",
+    "add": "Add family member",
+    "listLabel": "{count, plural, one {# family member} other {# family members}}",
+    "relation": {
+      "spouse": "Spouse or partner",
+      "child": "Child",
+      "parent": "Parent",
+      "sibling": "Brother or sister",
+      "grandparent": "Grandparent",
+      "other": "Other relation"
+    },
+    "age": "{age, plural, =0 {Under 1 year} one {# year} other {# years}}",
+    "born": "Born {date}",
+    "edit": "Edit",
+    "editLabel": "Edit {name}",
+    "limit": "You can add up to {max} family members.",
+    "empty": {
+      "title": "No family members added",
+      "body": "Add a parent, child or other relative to book visits for them."
+    },
+    "flash": {
+      "added": "Family member added.",
+      "updated": "Changes saved.",
+      "removed": "Family member removed."
+    },
+    "state": {
+      "denied": "You do not have access to this list.",
+      "gated": "Family members are not connected yet. Nothing here is saved.",
+      "notFound": "This family member is not available. They may have been removed, or they are not on your account."
+    },
+    "form": {
+      "newTitle": "Add a family member",
+      "editTitle": "Edit family member",
+      "intro": "Only the details needed to book for them. Health details are never asked for here.",
+      "name": "Full name",
+      "nameHint": "As it should appear on a booking.",
+      "relationLabel": "Relation to you",
+      "relationPlaceholder": "Choose a relation",
+      "dob": "Date of birth",
+      "dobHint": "Used to show age to the provider you choose.",
+      "save": "Save family member",
+      "saveChanges": "Save changes",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "back": "Back to family members",
+      "errors": {
+        "name_required": "Enter their full name.",
+        "name_too_long": "Use 80 characters or fewer.",
+        "name_invalid": "Use letters, spaces, dots, apostrophes or hyphens only.",
+        "relation_required": "Choose how they are related to you.",
+        "dob_required": "Enter their date of birth.",
+        "dob_invalid": "Enter a real date.",
+        "dob_future": "Date of birth cannot be in the future.",
+        "dob_too_old": "Check the year; that is more than 120 years ago."
+      },
+      "conflict": "This family member changed in another window. Reload the page to see the latest details.",
+      "limitReached": "You already have the most family members allowed."
+    },
+    "remove": {
+      "trigger": "Remove family member",
+      "title": "Remove {name}?",
+      "body": "They will no longer appear when you book. Past bookings for them are not changed.",
+      "confirm": "Yes, remove",
+      "keep": "Keep"
+    }
+  }
+}
