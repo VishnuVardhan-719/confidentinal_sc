@@ -190,7 +190,7 @@ export const shown = (locator: Locator): Locator => locator.filter({ visible: tr
 
 /** One record of a RecordList that contains `text`: the table row on desktop, the card on mobile. */
 export function record(scope: Page | Locator, text: string | RegExp): Locator {
-  return shown(scope.locator("tr, ul[aria-label] > li").filter({ hasText: text }));
+  return shown(scope.locator("tr, ul[aria-label] > li, :scope > li").filter({ hasText: text }));
 }
 
 /** A RecordList by its accessible label (table region on desktop, card list on mobile). */
@@ -205,3 +205,16 @@ export async function confirmDialog(page: Page, action: string | RegExp): Promis
 
 /** The toast region, where a confirmed server action reports its outcome. */
 export const notifications = (page: Page): Locator => page.getByRole("region", { name: /notifications/i });
+
+/**
+ * The workspace navigation. Below lg it sits in the "Open menu" sheet, so open that first;
+ * otherwise a hidden link would make `toHaveCount(0)` pass for the wrong reason.
+ */
+export async function workspaceNavigation(page: Page): Promise<Locator> {
+  const menu = page.getByRole("button", { name: /^open menu$/i });
+  if (await menu.isVisible()) {
+    await menu.click();
+    return page.getByRole("dialog").getByRole("navigation", { name: /^workspace$/i });
+  }
+  return page.getByRole("navigation", { name: /^workspace$/i });
+}

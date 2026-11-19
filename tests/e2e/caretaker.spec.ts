@@ -24,15 +24,26 @@ const C = `/${LOCALE}/caretaker`;
 const ASG_A = caretakerFixtures.assignments.find((a) => a.id === "fx-care-asg-1")!;
 const ASG_B = caretakerFixtures.assignments.find((a) => a.id === "fx-care-asg-2")!;
 const CLINICAL = /medication|injection|wound|catheter|vital signs|diagnos|prescri/i;
+/** Copy that would offer clinical work (the scope note "They do not give medicines..." is allowed). */
+const CLINICAL_OFFER = /(give|giving|administer|offer)s? (medication|injection|wound care)|vital signs|diagnos|prescri/i;
 
 test.describe.configure({ mode: "serial" });
 
 test.describe("agency manager", () => {
+  test("dashboard shows real counts and the synthetic notice", async ({ page }) => {
+    await signInAs(page, "agencyManager", `${C}/dashboard`);
+    await expectFixtureNotice(page);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.getByTestId("metric-pending")).toHaveText(/\d/);
+    await expect(page.locator("main")).not.toContainText(CLINICAL_OFFER);
+    await expectAxeClean(page);
+  });
+
   test("services list rates per period and marks periods the backend does not support yet", async ({ page }) => {
     await signInAs(page, "agencyManager", `${C}/services`);
     await expectFixtureNotice(page);
     await expect(shown(page.getByText("₹300.00 per hour"))).toBeVisible(); // 30000 paise per hour
-    await expect(shown(page.locator("li", { hasText: /per week/i }))).toContainText(COPY.notSupportedYet);
+    await expect(shown(page.getByText(/per week/i))).toContainText(COPY.notSupportedYet);
     // The page states the non-clinical scope once ("They do not give medicines, injections...");
     // no service, task or action may offer clinical work.
     await expect(shown(page.locator("table, ul[aria-label]"))).not.toContainText(CLINICAL);

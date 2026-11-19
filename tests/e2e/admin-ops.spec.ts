@@ -20,6 +20,7 @@ import {
   recordList,
   shown,
   signInAs,
+  workspaceNavigation,
 } from "./support/operations";
 
 const AD = `/${LOCALE}/admin`;
@@ -29,10 +30,11 @@ test.describe("admin dashboard and navigation", () => {
     await signInAs(page, "adminLead", `${AD}/dashboard`);
     await expectFixtureNotice(page);
     await expect(page.getByTestId("queue-providerReviews")).toHaveText(/1/);
-    for (const name of [/bookings/i, /payments/i, /support/i, /content/i, /audit/i, /settings/i]) {
-      await expect(page.getByRole("navigation").getByRole("link", { name })).toBeVisible();
-    }
     await expectAxeClean(page);
+    const nav = await workspaceNavigation(page);
+    for (const name of [/bookings/i, /payments/i, /support/i, /content/i, /audit/i, /settings/i]) {
+      await expect(nav.getByRole("link", { name })).toBeVisible();
+    }
   });
 
   test("an admin with no grants gets the empty state and denied pages", async ({ page }) => {
@@ -44,8 +46,9 @@ test.describe("admin dashboard and navigation", () => {
 
   test("an org-scoped auditor sees audit only", async ({ page }) => {
     await signInAs(page, "adminOrgAuditor", `${AD}/dashboard`);
-    await expect(page.getByRole("navigation").getByRole("link", { name: /audit/i })).toBeVisible();
-    await expect(page.getByRole("navigation").getByRole("link", { name: /payments/i })).toHaveCount(0);
+    const nav = await workspaceNavigation(page);
+    await expect(nav.getByRole("link", { name: /audit/i })).toBeVisible();
+    await expect(nav.getByRole("link", { name: /payments/i })).toHaveCount(0);
   });
 });
 
