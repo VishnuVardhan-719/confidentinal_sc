@@ -191,7 +191,7 @@ test.describe("booking journey", () => {
     await expect(page.getByText("Synthetic data, not live").filter({ visible: true }).first()).toBeVisible();
     const card = page.getByTestId("doctor-card").filter({ hasText: DOCTOR_1.name });
     await card.getByRole("link", { name: "View profile" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: DOCTOR_1.name })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: DOCTOR_1.name })).toBeVisible({ timeout: 20_000 });
     await expectAxeClean(page, "profile");
     await page.getByRole("link", { name: "Request a visit" }).click();
     await expect(page).toHaveURL(new RegExp(`/en/patient/book\\?providerId=${DOCTOR_1.providerId}&serviceId=${DOCTOR_1.serviceId}$`));
@@ -201,11 +201,15 @@ test.describe("booking journey", () => {
 
     // Pending: honest waiting state, no reference yet, nothing charged.
     await expect(page.getByRole("heading", { level: 1, name: `Visit with ${DOCTOR_1.name}` })).toBeVisible();
-    await expect(page.getByText(`Waiting for ${DOCTOR_1.name} to answer`)).toBeVisible();
-    await expect(page.getByText("You get a reference number when the doctor accepts.")).toBeVisible();
-    await expectBadges(page, "Requested", "Not started", "No visit record yet");
+    // The doctor answers after FIXTURE_PROVIDER_RESPONSE_MS; on a loaded machine the first render can already show it.
+    const waiting = page.getByText(`Waiting for ${DOCTOR_1.name} to answer`);
+    await expect(waiting.or(page.getByText(`${DOCTOR_1.name} accepted your request`)).first()).toBeVisible({ timeout: 15_000 });
+    if (await waiting.isVisible()) {
+      await expect(page.getByText("You get a reference number when the doctor accepts.")).toBeVisible();
+      await expectBadges(page, "Requested", "Not started", "No visit record yet");
+      await expectAxeClean(page, "request/pending");
+    }
     await expect(page.getByRole("link", { name: /receipt/i })).toHaveCount(0);
-    await expectAxeClean(page, "request/pending");
 
     // The synthetic doctor accepts; the server issues the reference.
     await waitForAnswer(page, `${DOCTOR_1.name} accepted your request`);

@@ -324,6 +324,16 @@ test.describe("caretakers", () => {
     await tabTo(page, page.getByRole("checkbox", { name: "I understand caretakers give non-clinical help only." })); await page.keyboard.press("Space");
     await tabTo(page, page.getByRole("checkbox", { name: "I accept the price and the cancellation policy." })); await page.keyboard.press("Space");
     await tabTo(page, page.getByRole("button", { name: "Send request" })); await page.keyboard.press("Enter");
+    // If another run took this time, the form says so and keeps the answers: choose the next time by keyboard and send again.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const changed = page.getByText("Something changed", { exact: true });
+      await expect(page.getByRole("heading", { level: 1, name: /^Home care with/ }).or(changed).first()).toBeVisible({ timeout: 20_000 });
+      if (!(await changed.isVisible())) break;
+      await tabTo(page, timeGroup.getByRole("radio", { checked: true }).or(timeGroup.getByRole("radio").first()).first());
+      await page.keyboard.press("ArrowRight");
+      await tabTo(page, page.getByRole("checkbox", { name: "I accept the price and the cancellation policy." })); await page.keyboard.press("Space");
+      await tabTo(page, page.getByRole("button", { name: "Send request" })); await page.keyboard.press("Enter");
+    }
     await expect(page).toHaveURL(/\/en\/patient\/caretakers\/requests\/[0-9a-f-]{36}$/, { timeout: 20_000 });
     await expect(page.getByRole("button", { name: "Check for updates" })).toBeVisible({ timeout: 15_000 });
   });
