@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { pinSchema } from "./catalog";
+import { pinSchema, providerReferenceSchema } from "./catalog";
 
 export const versionSchema = z.number().int().positive().max(2_147_483_645);
 export const bookingRequestSchema = z.strictObject({ patientId: z.uuid(), serviceId: z.uuid(), addressId: z.uuid(), startAt: z.iso.datetime() });
@@ -12,7 +12,8 @@ export const acceptSchema = z.strictObject({ expectedVersion: versionSchema, res
   .refine(ids => new Set(ids).size === ids.length) });
 export const advanceSchema = z.strictObject({ expectedVersion: versionSchema });
 export const listBookingsSchema = z.strictObject({ providerId: z.uuid().optional(), limit: z.coerce.number().int().min(1).max(50).default(20), cursor: z.uuid().optional() });
-export const availabilitySchema = z.strictObject({ provider: z.uuid(), service: z.uuid(), date: z.iso.date() });
+// provider is the public reference from search; the provider UUID never leaves the server.
+export const availabilitySchema = z.strictObject({ provider: providerReferenceSchema, service: z.uuid(), date: z.iso.date() });
 
 export const rescheduleSchema = z.strictObject({ expectedVersion: versionSchema, startAt: z.iso.datetime() });
 export const resourceSchema = z.strictObject({ providerId: z.uuid(), kind: z.enum(["person", "vehicle"]), personProfileId: z.uuid().optional(),

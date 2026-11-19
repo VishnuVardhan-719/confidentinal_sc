@@ -7,6 +7,6 @@ export async function GET(request: Request) {
   return endpoint(async () => {
     const { db } = await session(request);
     const v = query(request, availabilitySchema);
-    return json({ slots: await bookingCommand(db, "list_slots", { p_provider_id: v.provider, p_service_id: v.service, p_date: v.date }), advisory: true });
+    return json({ slots: await bookingCommand(db, "list_slots", { p_provider_reference: v.provider, p_service_id: v.service, p_date: v.date }), advisory: true });
   });
 }
