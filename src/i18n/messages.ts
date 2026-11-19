@@ -21,6 +21,7 @@ export const NAMESPACES = [
   "support",
   "errors",
   "accessibility",
+  "verify",
 ] as const;
 
 export type Namespace = (typeof NAMESPACES)[number];
@@ -48,6 +49,7 @@ const loaders: Record<AppLocale, Record<Namespace, Loader>> = {
     support: () => import("../messages/en/support.json"),
     errors: () => import("../messages/en/errors.json"),
     accessibility: () => import("../messages/en/accessibility.json"),
+    verify: () => import("../messages/en/verify.json"),
   },
   te: {
     common: () => import("../messages/te/common.json"),
@@ -66,6 +68,7 @@ const loaders: Record<AppLocale, Record<Namespace, Loader>> = {
     support: () => import("../messages/te/support.json"),
     errors: () => import("../messages/te/errors.json"),
     accessibility: () => import("../messages/te/accessibility.json"),
+    verify: () => import("../messages/te/verify.json"),
   },
   hi: {
     common: () => import("../messages/hi/common.json"),
@@ -84,6 +87,7 @@ const loaders: Record<AppLocale, Record<Namespace, Loader>> = {
     support: () => import("../messages/hi/support.json"),
     errors: () => import("../messages/hi/errors.json"),
     accessibility: () => import("../messages/hi/accessibility.json"),
+    verify: () => import("../messages/hi/verify.json"),
   },
 };
 

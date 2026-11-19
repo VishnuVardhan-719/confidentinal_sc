@@ -4,8 +4,8 @@ import { WS_PROJECTS, WS_SERVERS, wsEnv, wsPort } from "./tests/e2e/workspace-se
 const PORT = Number(process.env.E2E_PORT ?? 3200);
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${PORT}`;
 
-/** Doctor/patient workspace specs talk to their own synthetic fixture servers (tests/e2e/workspace-servers.ts). */
-const WORKSPACE_SPECS = /(doctor|patient)-workspace\.spec\.ts$/;
+/** Doctor/patient workspace (and proof-check, consultation, reviews) specs talk to their own synthetic fixture servers (tests/e2e/workspace-servers.ts). */
+const WORKSPACE_SPECS = /(doctor-workspace|patient-workspace|proof-check|doctor-consultation|doctor-reviews)\.spec\.ts$/;
 const mobile = { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 }, hasTouch: true };
 const desktop = { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } };
 
