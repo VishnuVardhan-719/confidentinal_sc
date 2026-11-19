@@ -149,3 +149,39 @@ Limitations / notes:
 - The sweep checks English only; te/hi axe runs are in each feature spec.
 - The sweep asserts serious and critical axe impacts only, as briefed. Minor and moderate impacts on the dashboard and detail pages are not asserted by the sweep.
 - Port 3380 is still held by fe2-d's server; everything ran on 3384. My server is stopped.
+
+## TASK REPORT: PHASE R8-P2 (fe-p, feat/fe2-p, port 3384), 2026-11-19
+Status: DONE_VERIFIED. Stopped; awaiting the lead.
+
+Commits (not pushed):
+- fd37da2 Step 1: review edit/withdraw and the admin review-moderation queue.
+  - Patient side:
+    - `/patient/reviews/[bookingId]/edit` (loading/error included). Editing sends the review back to moderation and is version-checked.
+    - Rejected reviews show the moderator's fixed-copy reason.
+    - Withdraw needs confirmation and is final: no edit, no new review.
+  - Admin side: `/admin/reviews` behind the new proposed capability `review:moderate` (nav item "Review moderation").
+    - Filters (waiting, published, not published) are URL state.
+    - Publish, or decline with a required reason; conflict handling.
+    - No patient identity and no ids in URLs.
+  - Modules: the fixture adapters span every synthetic patient plus a seeded queue owner; the http adapters are gated.
+  - Fixture-only synthetic moderator in `src/modules/admin/session.ts`: `FIXTURE_ADMIN_SESSION=moderator` (server env, fixture mode, refused in production). Needs lead review (REQUESTS R-FE-P-R8-1).
+  - en/te/hi strings. Contracts: R-FE-P-R7-3 (amended), R-FE-P-R8-1.
+- 328390d Step 2: the a11y sweep now fails on moderate issues on the dashboard and detail pages (STRICT_ROUTES), and sweeps the notification inbox in te and hi (strict). The review edit page was added.
+  - Finding fixed: the review Edit link failed label-in-name (WCAG 2.5.3) in en/te/hi.
+  - New unit test enforces label-in-name for every aria-labelled control string in all locales.
+
+Step 3 verification (after both commits):
+- `npm run lint` 0; `npm run typecheck` 0; vitest 65 files / 1006 tests pass; `npm run build` 0 (382 pages).
+- fe-p e2e via `pwsh .context/fep-e2e-all.ps1` (one server on 3384, restarted per mode; all patient specs, the a11y sweep and the moderation spec):
+  - seeded: 116 passed
+  - empty: 66 skipped / 74 passed
+  - guest: 14 passed
+  - 0 failed
+- Shared public.spec + a11y.spec (guest server): 106 passed, 13 failed. All 13 are the known te@1280 header overflow (12px). It is fixed on feat/fe2-a (9027669, 305e48d) and not yet merged into fe2-p; not caused by this phase.
+
+Known limitations:
+- No backend contracts; the http adapters are gated.
+- No audit-log view for moderation decisions (the backend must audit).
+- Moderation cannot undo a decision.
+- The fixture review store is shared per server: run the review specs once per server start (the script restarts it).
+- te/hi are machine-written (REVIEW_NEEDED.md).
