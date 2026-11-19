@@ -273,5 +273,18 @@
       "destination": "Enter the drop-off area, city and a 6-digit PIN in this operator's area.",
       "notEmergency": "Confirm this is not an emergency. For emergencies call 112."
     }
+  },
+  "errorPage": {
+    "title": "We could not load this page",
+    "body": "Nothing you sent has been changed. Try again, or go back and start from the list.",
+    "retry": "Try again",
+    "reference": "Reference for support: {digest}",
+    "back": {
+      "book": "Back to doctors",
+      "lab": "Back to lab tests",
+      "care": "Back to caretakers",
+      "ambulance": "Back to ambulance transfers"
+    },
+    "emergency": "Emergency? Call 112 now. Do not wait for this page."
   }
 }
