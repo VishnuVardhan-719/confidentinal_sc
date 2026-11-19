@@ -1,4 +1,5 @@
 import { getFormatter, getTranslations } from "next-intl/server";
+import { DashboardAction } from "@/components/patient/dashboard-action";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { GateNotice } from "@/components/shared/gate-notice";
@@ -42,9 +43,9 @@ export default async function ReminderSettingsPage({ params }: PageProps<"/[loca
       />
       {!result.ok ? (
         result.error.code === "gated" ? (
-          <GateNotice reason="contract_pending">{t("state.gated")}</GateNotice>
+          <GateNotice reason="contract_pending" action={<DashboardAction />}>{t("state.gated")}</GateNotice>
         ) : result.error.code === "forbidden" ? (
-          <Notice tone="neutral" icon="lock" title={t("state.denied")} />
+          <Notice tone="neutral" icon="lock" title={t("state.denied")} action={<DashboardAction />} />
         ) : (
           <InlineError code={result.error.code} action={<RetryAction />} />
         )

@@ -13,7 +13,8 @@
       "saved": "Saved doctors",
       "reviews": "Reviews",
       "reminders": "Reminders"
-    }
+    },
+    "toDashboard": "Go to your overview"
   },
   "dashboard": {
     "title": "Your overview",

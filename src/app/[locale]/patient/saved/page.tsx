@@ -1,5 +1,6 @@
 import { ArrowRight, Stethoscope } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { DashboardAction } from "@/components/patient/dashboard-action";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
@@ -59,9 +60,9 @@ export default async function SavedProvidersPage({ params, searchParams }: PageP
     const code = saved.error.code;
     return shell(
       code === "gated" ? (
-        <GateNotice reason="contract_pending">{t("state.gated")}</GateNotice>
+        <GateNotice reason="contract_pending" action={<DashboardAction />}>{t("state.gated")}</GateNotice>
       ) : code === "forbidden" ? (
-        <Notice tone="neutral" icon="lock" title={t("state.denied")} />
+        <Notice tone="neutral" icon="lock" title={t("state.denied")} action={<DashboardAction />} />
       ) : (
         <InlineError code={code} action={<RetryAction />} />
       ),

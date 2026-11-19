@@ -1,5 +1,6 @@
 import { ArrowRight, FileCheck2 } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
+import { DashboardAction } from "@/components/patient/dashboard-action";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Button } from "@/components/ui/button";
@@ -49,9 +50,9 @@ export default async function PatientRecordsPage({ params }: PageProps<"/[locale
       <PatientShell synthetic={session.synthetic}>
         {header}
         {code === "gated" ? (
-          <GateNotice feature="clinical">{t("state.gated")}</GateNotice>
+          <GateNotice feature="clinical" action={<DashboardAction />}>{t("state.gated")}</GateNotice>
         ) : code === "forbidden" || code === "not_found" ? (
-          <Notice tone="neutral" icon="lock" title={t("state.denied")} />
+          <Notice tone="neutral" icon="lock" title={t("state.denied")} action={<DashboardAction />} />
         ) : (
           <InlineError code={code} action={code === "unavailable" || code === "rate_limited" ? <RetryAction /> : undefined} />
         )}
