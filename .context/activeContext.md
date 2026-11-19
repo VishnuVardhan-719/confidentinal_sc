@@ -153,3 +153,9 @@ Verification: tsc 0; lint 0; vitest 64 files 983/983; next build 0; Playwright o
    Tests: unit lab-directory.test.ts (5); e2e lab-directory.spec.ts (search/filter/detail/request link, canonical/hreflang/noindex, keyboard); a11y sweep +9 lab routes (incl. te/hi).
 3. Verification: lint 0; tsc 0; vitest 65 files 988/988; next build 0; Playwright on 3362 only (--workers=2): doctor-search + lab-directory + a11y-sweep-c + service-requests + booking-journey = 135 passed, 3 skipped, 0 failed.
 Open: sitemap.xml (fe-a) does not list /lab-tests yet; te/hi labDirectory strings need native review.
+
+## PAUSED STATE (R9-C2 adversarial review of fe2-int, paused for shutdown)
+- Done: read-only review of fe2-int HEAD 02dc8bf; findings written to docs/frontend/ADVERSARIAL_REVIEW.md (1 HIGH, 1 MEDIUM, 2 LOW; guards, storage, logs, fixture-in-production, i18n keys and hard-coded strings checked clean). No fe2-int files edited.
+- Half-done: check fixture constants imported by non-fixture modules (beyond app/components); review fe2-int's 15 uncommitted changes after they are committed.
+- Next steps: `git -C C:/Users/Yashwanth/fe2-int log --oneline -1` (new HEAD?), rerun scans: `node .context/i18n-audit.cjs`, `node .context/str-audit.cjs`, `node .context/act-audit.cjs`, `node .context/helpers.cjs`; `git -C ../fe2-int grep -n 'from "@/fixtures' HEAD -- src/modules | grep -v fixture`; finalize the doc and write the TASK REPORT.
+- No servers running (none started for this task).
