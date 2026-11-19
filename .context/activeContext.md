@@ -41,3 +41,5 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
 - Next: patient records/notifications + patient-workspace.spec.ts, doctor availability schedule.
 
 - PHASE4-D3 DONE: doctor+patient workspace e2e 110/110, lint/tsc/vitest(374)/build green. Handoff: .context/handoff-fe-a.md. Open: overlap with feat/fe2-p 4aa02f8 (patient records/notifications).
+
+- PHASE R7-D (C:/Users/Yashwanth/.claude-scratch-tasks/PHASE-R7-D.md): task 1 DONE d1a06f4 (public /verify proof check). All ws e2e 130/130. Next: task 2 consultation notes (doctor/consultations/[bookingId]).
