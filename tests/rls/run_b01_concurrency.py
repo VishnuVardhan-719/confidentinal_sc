@@ -30,6 +30,10 @@ def args(db=None, user="postgres"):
 PATIENT = "b1000000-0000-4000-8000-000000000001"
 DOCTOR = "b1000000-0000-4000-8000-000000000002"
 RESOURCE = "b6000000-0000-4000-8000-000000000001"
+# The first transaction holds its locks this long. Each barrier poll is a `docker exec`,
+# which can take several seconds on Docker Desktop, so a short hold lets the winner
+# commit before the barrier sees the loser waiting.
+HOLD_SECONDS = 20
 
 
 def claims(actor):
@@ -61,7 +65,7 @@ def race(first_actor, first, second_actor, second, expected_state):
 
     def start(index, actor, statement):
         text = "set application_name='" + apps[index] + "';begin;set local role authenticated;" + claims(actor) + statement
-        text += ("select pg_sleep(5);" if index == 0 else "") + "commit;"
+        text += ("select pg_sleep(" + str(HOLD_SECONDS) + ");" if index == 0 else "") + "commit;"
         proc = subprocess.Popen([base.DOCKER, *args(), "-v", "VERBOSITY=verbose"], stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         processes.append(proc)
@@ -70,7 +74,7 @@ def race(first_actor, first, second_actor, second, expected_state):
         return proc
 
     def barrier(proc, app, condition):
-        deadline = time.monotonic() + 12
+        deadline = time.monotonic() + HOLD_SECONDS + 7
         while sql("select count(*) from pg_stat_activity where datname=current_database() and application_name='" + app + "' and " + condition + ";").strip() != "1":
             if proc.poll() is not None:
                 raise RuntimeError("Race failed before barrier: " + proc.stderr.read()[-1800:])
@@ -83,7 +87,7 @@ def race(first_actor, first, second_actor, second, expected_state):
         barrier(a, apps[0], "wait_event='PgSleep'")
         b = start(1, second_actor, second)
         barrier(b, apps[1], "wait_event_type='Lock'")
-        results = [p.wait(timeout=15) for p in processes]
+        results = [p.wait(timeout=HOLD_SECONDS + 10) for p in processes]
         errors = [p.stderr.read() for p in processes]
         if results[0] != 0 or results[1] == 0 or expected_state not in errors[1]:
             raise RuntimeError("Wrong race outcome: " + str(results) + str(errors)[-2500:])
@@ -120,6 +124,24 @@ def concurrency():
     if sql("select count(*) from public.booking_events where booking_id='" + d + "' and to_state='cancelled';").strip() != "1":
         raise RuntimeError("Concurrent cancels produced duplicate events")
     print("PASS: concurrent cancels create exactly one cancellation event", flush=True)
+    # Q01-T02: the same doctor accepts the same booking twice at once with the same version.
+    e = create_request(8)
+    race(DOCTOR, accept(e), DOCTOR, accept(e), "40001")
+    if sql("select state || ':' || version from public.bookings where id='" + e + "';").strip() != "confirmed:4":
+        raise RuntimeError("Double accept left the wrong state/version")
+    if sql("select count(*) from public.booking_events where booking_id='" + e + "' and to_state='accepted';").strip() != "1":
+        raise RuntimeError("Double accept produced duplicate acceptance events")
+    if sql("select count(*) from public.resource_reservations rr join public.booking_assignments a on a.id=rr.assignment_id where a.booking_id='" + e + "' and rr.status='active';").strip() != "1":
+        raise RuntimeError("Double accept produced duplicate reservations")
+    print("PASS: concurrent double accept; one confirmed, one 40001; one acceptance event and one reservation", flush=True)
+    # Sequential replay after the race: still stale, still no new event.
+    replay = subprocess.run([base.DOCKER, *args(), "-v", "VERBOSITY=verbose"], input="begin;set local role authenticated;" + claims(DOCTOR) + accept(e) + "commit;",
+                            capture_output=True, text=True, timeout=60)
+    if replay.returncode == 0 or "40001" not in replay.stderr:
+        raise RuntimeError("Sequential accept replay was not rejected as stale")
+    if sql("select count(*) from public.booking_events where booking_id='" + e + "';").strip() != "3":
+        raise RuntimeError("Sequential accept replay wrote an event")
+    print("PASS: sequential accept replay gets 40001 and writes no event", flush=True)
 
 
 def main():

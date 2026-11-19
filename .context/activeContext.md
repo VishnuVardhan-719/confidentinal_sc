@@ -1,5 +1,15 @@
 # Active SureCure Visit context
 
+## P01a application checkpoint (2026-11-19)
+
+- Current task authority: `C:/tmp/scv_logs/codex_p01app.txt`, narrowed by the owner's later scope correction relayed from Claude: ONLY P01a section 7/12 application adapters. D-14 option A applies. P01b webhook/order/checkout/HMAC/gateway reconciliation, paymentsTestMode and Razorpay env entries are excluded. No such code was implemented.
+- Worktree `C:/SURECUREVISIT/.worktrees/codex-p01app`, branch `feat/P01-app-layer`, base `integ/all` at `f549ad3`. Commit/push explicitly authorized only for this feature branch. No migration, DB/Docker command, installation, other-worktree edit or release operation.
+- Implemented default-off `payAfter` / `FEATURE_PAY_AFTER`, strict Zod inputs for all 14 P01a RPCs, typed service with scoped/sanitized errors and string paise, and 14 bearer-session route adapters. Authoritative authorization, atomic balances, versions, paid gate and durable idempotency await SQL.
+- Verification: route type generation exit 0; standalone tsc exit 0; changed-file ESLint exit 0; full Vitest 228 passed/1 skipped (75 P01a tests). Fresh read-only review: no Critical/Important findings; deferred Minor is non-money response-shape validation after SQL contracts finalize. Default Turbopack build failed on the dependency junction; Webpack failed on denied existing Geist font downloads. Build remains unverified. Vitest must use `npx.cmd --no-install vitest run --configLoader runner --cache=false` to avoid junction cache writes. Do not install dependencies.
+- Implementation/handoff is prepared for the explicitly authorized feature-branch commit/push; use branch HEAD and remote ref for its final SHA. Integration, SQL and release are not authorized by this task.
+- Exact RPC names/arguments, provisional return types/enums/cursors, API bodies, scope limits and evidence: `docs/handoffs/P01a_app_codex_2026-11-19.md`. Overall P01 remains IN_PROGRESS because SQL/RLS/worker scheduling/activation are pending; shared contract reserves `20261117002000..002099`, suites `070..089` and controls SQL authoring order.
+
+
 Master execution pack: v2.3 (setup done 2026-11-17; no app code; waiting for explicit start). Root `README.md` is the only master execution prompt. Heavy instructions remain in README/docs, not chat.
 
 Claude Code is the lead orchestrator and the only AI CLI directly controlled by the project owner. Claude coordinates Codex CLI and Kiro CLI through verified supported mechanisms. Antigravity and AI Dev Kit are removed. The owner initially directs both frontend and backend; the friend joins later for pending frontend/UI work.
