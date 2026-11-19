@@ -339,3 +339,15 @@ No endpoint exists. The http adapter (`src/modules/reviews/http.ts`) returns `ga
   - `422`: `fields: rating_required | text_too_short | text_too_long | text_contact`
 - The server must enforce completion, ownership and one review per booking. It also needs moderation before publishing (admin queue, not built), and a published rating aggregate for `doctorResultSchema.rating`.
 - Needs product confirmation: whether patients may edit or withdraw a pending review (not offered), the review window after completion (none enforced), and the contact/link filter rule.
+
+### R-FE-P-R7-4 Reminder preferences contract (owner: backend + notifications)
+No endpoint exists. The http adapter (`src/modules/reminder-prefs/http.ts`) returns `gated`. Proposed:
+- `GET /api/patient/reminder-preferences` -> `{ channels: { sms, whatsapp, email }, quietHours: { enabled, start "HH:MM", end "HH:MM" }, version, updatedAt }`. Quiet hours are IST wall-clock times and may span midnight; end is exclusive.
+- `PUT /api/patient/reminder-preferences` body `{ channels, quietHours, expectedVersion }`. Errors:
+  - `409`: version mismatch
+  - `422`: `fields: { quietStart|quietEnd: quiet_start_invalid|quiet_end_invalid|quiet_same }`
+- The sender (outbox) must apply these preferences server-side. `inQuietHours()` in `src/modules/reminder-prefs/status.ts` documents the intended rule.
+- Needs product confirmation:
+  - the defaults: SMS on, quiet hours 21:00-07:00 IST
+  - whether safety and critical booking messages bypass quiet hours (the UI says only visit reminders are affected)
+  - the WhatsApp/SMS consent and opt-in wording (TRAI/DLT)

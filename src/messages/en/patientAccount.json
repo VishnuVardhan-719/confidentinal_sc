@@ -158,5 +158,44 @@
         "text_contact": "Remove phone numbers, emails and links from your review."
       }
     }
+  },
+  "reminders": {
+    "title": "Reminder preferences",
+    "description": "Choose how we remind you about upcoming visits. Booking status always shows in your account, whatever you choose here.",
+    "channelsLegend": "Send visit reminders by",
+    "channelsHint": "Turn on any you want. With all off, you will only see reminders when you sign in.",
+    "channels": {
+      "sms": "SMS text message",
+      "whatsapp": "WhatsApp",
+      "email": "Email"
+    },
+    "channelHints": {
+      "sms": "To the mobile number on your account.",
+      "whatsapp": "Only if you use WhatsApp on that number.",
+      "email": "To the email on your account, if you added one."
+    },
+    "allOff": "All channels are off. You will not get visit reminders outside your account.",
+    "quietLegend": "Quiet hours",
+    "quietToggle": "Do not send reminders during quiet hours",
+    "quietHint": "Times are India time (IST). Quiet hours can run past midnight, for example 21:00 to 07:00.",
+    "quietStart": "Quiet from",
+    "quietEnd": "Quiet until",
+    "quietSummary": "No reminders from {start} to {end} IST.",
+    "quietOvernight": "This runs overnight into the next morning.",
+    "save": "Save preferences",
+    "saving": "Saving…",
+    "saved": "Preferences saved.",
+    "conflict": "These preferences changed in another window. Reload the page to see the latest, then try again.",
+    "reload": "Reload preferences",
+    "lastSaved": "Last saved {time}",
+    "errors": {
+      "quiet_start_invalid": "Enter a start time, for example 21:00.",
+      "quiet_end_invalid": "Enter an end time, for example 07:00.",
+      "quiet_same": "Start and end cannot be the same time."
+    },
+    "state": {
+      "denied": "You do not have access to these preferences.",
+      "gated": "Reminder preferences are not connected yet. Nothing here is saved."
+    }
   }
 }

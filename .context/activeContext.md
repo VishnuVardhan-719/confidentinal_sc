@@ -118,3 +118,4 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
   - e2e spec pattern tests/e2e/patient-family.spec.ts; add new spec to .context/fep-e2e-all.ps1
 - NEXT: saved-providers (/patient/saved), then reviews (/patient/reviews), then reminder-prefs (/patient/settings/reminders).
 - Port 3380 is still held by fe2-d's server; use 3384.
+- DONE saved-providers 20f0f2c, reviews 275c9da (records e2e expect timeout 15s). NEXT reminder-prefs (/patient/settings/reminders): channels sms/whatsapp/email, quiet hours IST (may span midnight), version-checked save, FIXTURE_REMINDERS_SCENARIO.

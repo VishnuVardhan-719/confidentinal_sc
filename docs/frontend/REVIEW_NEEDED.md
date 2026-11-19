@@ -37,3 +37,4 @@ These keys in `src/messages/te/patient.json` and `src/messages/hi/patient.json` 
 - Family relation labels (`patientAccount.family.relation.*`): check the wording for grandparent (te: "తాత లేదా అమ్మమ్మ", hi: "दादा-दादी या नाना-नानी").
 - te/hi machine-written: every key under `patientAccount.saved.*`.
 - te/hi machine-written: every key under `patientAccount.reviews.*` (including the star labels `form.ratingLabels.*`).
+- te/hi machine-written: every key under `patientAccount.reminders.*`.

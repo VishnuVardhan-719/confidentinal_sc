@@ -5,7 +5,10 @@
  * so the mobile project reviews 0201 and the desktop project reviews 0202 (run each mode once per server).
  */
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect as baseExpect, test, type Page } from "@playwright/test";
+
+// Redirects, client navigations and server actions on a shared, often loaded machine; 5 s was flaky.
+const expect = baseExpect.configure({ timeout: 15_000 });
 
 const MODE = process.env.E2E_FEP_MODE;
 const CLINICAL = process.env.E2E_FEP_CLINICAL;
