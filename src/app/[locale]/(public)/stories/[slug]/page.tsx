@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { RichText } from "@/components/content/rich-text";
 import { Container, PublicPageIntro } from "@/components/public/layout";
 import { getPublishedStory } from "@/components/public/stories-source";
+import { StoriesUnavailable } from "@/components/public/stories-unavailable";
 import { FixtureNotice } from "@/components/shared/fixture-notice";
 
 /** Only approved, published stories render; any other slug is not-found. */
@@ -14,8 +15,10 @@ export function generateStaticParams() {
 export default async function StoryPage({ params }: PageProps<"/[locale]/stories/[slug]">) {
   const { slug } = await params;
   const locale = await getLocale();
-  const story = await getPublishedStory(locale, slug);
-  if (!story) notFound();
+  const lookup = await getPublishedStory(locale, slug);
+  if (lookup.kind === "not_found") notFound();
+  if (lookup.kind === "gated") return <StoriesUnavailable />;
+  const story = lookup.story;
   const format = await getFormatter();
 
   return (

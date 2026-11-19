@@ -5,9 +5,9 @@ import type { RichTextDoc } from "@/modules/content/types";
 /**
  * Published stories/articles for the public site, read from the content module
  * (src/modules/content/public.ts). Only published snapshots are returned; drafts and
- * previews never leave the CMS. The http adapter has no CMS contract yet, so it returns
- * nothing and the pages show their empty / not-found state. The fixture adapter
- * (synthetic data, refused in production) returns synthetic entries with `fixture: true`,
+ * previews never leave the CMS. The http adapter has no CMS contract yet, so it reports
+ * `gated` and the pages show a "not available yet" state (HTTP 200, not a 404). The fixture
+ * adapter (synthetic data, refused in production) returns synthetic entries with `fixture: true`,
  * which the pages must mark with <FixtureNotice/>. Never add sample stories here.
  */
 export type PublishedStory = {
@@ -21,18 +21,26 @@ export type PublishedStory = {
 
 export type PublishedStoryDetail = PublishedStory & { body: RichTextDoc; fixture: boolean };
 
-export async function listPublishedStories(locale: AppLocale): Promise<{ stories: PublishedStory[]; fixture: boolean }> {
+export async function listPublishedStories(locale: AppLocale): Promise<{ stories: PublishedStory[]; fixture: boolean; gated: boolean }> {
   const result = await getPublishedStories(locale);
-  if (result.status !== "ok") return { stories: [], fixture: result.status === "empty" && result.fixture };
+  if (result.status !== "ok") return { stories: [], fixture: result.status === "empty" && result.fixture, gated: result.status === "gated" };
   return {
     stories: result.data.map((s) => ({ slug: s.slug, title: s.title, summary: s.summary, publishedAt: s.publishedAt, kind: "story" as const })),
     fixture: result.fixture,
+    gated: false,
   };
 }
 
-export async function getPublishedStory(locale: AppLocale, slug: string): Promise<PublishedStoryDetail | null> {
+export type StoryLookup = { kind: "ok"; story: PublishedStoryDetail } | { kind: "gated" } | { kind: "not_found" };
+
+/** `gated`: stories are not switched on for this backend yet; anything else not published is `not_found`. */
+export async function getPublishedStory(locale: AppLocale, slug: string): Promise<StoryLookup> {
   const result = await getPublishedContentStory(slug, locale);
-  if (result.status !== "ok") return null;
+  if (result.status === "gated") return { kind: "gated" };
+  if (result.status !== "ok") return { kind: "not_found" };
   const s = result.data;
-  return { slug: s.slug, title: s.title, summary: s.summary, publishedAt: s.publishedAt, kind: "story", body: s.body, fixture: result.fixture };
+  return {
+    kind: "ok",
+    story: { slug: s.slug, title: s.title, summary: s.summary, publishedAt: s.publishedAt, kind: "story", body: s.body, fixture: result.fixture },
+  };
 }

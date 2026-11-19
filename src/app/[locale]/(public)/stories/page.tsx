@@ -34,7 +34,11 @@ async function PublishedStoriesList() {
   const t = await getTranslations("public.storiesPage");
   const locale = await getLocale();
   const format = await getFormatter();
-  const { stories, fixture } = await listPublishedStories(locale);
+  const { stories, fixture, gated } = await listPublishedStories(locale);
+
+  if (gated) {
+    return <EmptyState icon="stories" title={t("gatedTitle")} description={t("gatedBody")} className="max-w-3xl" />;
+  }
 
   return (
     <div className="grid gap-6">

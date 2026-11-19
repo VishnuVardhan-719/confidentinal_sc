@@ -172,9 +172,11 @@ describe("public content helper", () => {
     expect(faq.status === "ok" && faq.data[0].servedLocale).toBe("en");
   });
 
-  it("maps the gated http adapter to empty (lists) and not_found (detail), never invented copy", async () => {
-    expect(await getPublishedStories("en", {})).toEqual({ status: "empty", fixture: false });
+  it("maps the gated http adapter to gated (stories list and detail) and empty (FAQ), never invented copy", async () => {
+    expect(await getPublishedStories("en", {})).toEqual({ status: "gated" });
     expect(await getPublishedFaq("te", {})).toEqual({ status: "empty", fixture: false });
-    expect(await getPublishedStory("anything", "en", {})).toEqual({ status: "not_found" });
+    expect(await getPublishedStory("anything", "en", {})).toEqual({ status: "gated" });
+    // Fixture mode still separates an unknown slug (404) from the gated backend.
+    expect(await getPublishedStory("no-such-story", "en", FX)).toEqual({ status: "not_found" });
   });
 });
