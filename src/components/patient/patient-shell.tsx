@@ -15,6 +15,10 @@ export async function PatientShell({ synthetic, children }: { synthetic: boolean
     { href: "/patient/records", label: t("nav.records"), icon: "file" },
     { href: "/patient/notifications", label: t("nav.notifications"), icon: "bell" },
     { href: "/patient/health-profile", label: t("nav.healthProfile"), icon: "clipboard" },
+    { href: "/patient/family", label: t("nav.family"), icon: "users" },
+    { href: "/patient/saved", label: t("nav.saved"), icon: "bookmark" },
+    { href: "/patient/reviews", label: t("nav.reviews"), icon: "star" },
+    { href: "/patient/settings/reminders", label: t("nav.reminders"), icon: "settings" },
   ];
   return (
     <AppShell workspaceLabel={t("workspace")} nav={nav}>

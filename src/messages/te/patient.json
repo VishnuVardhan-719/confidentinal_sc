@@ -8,7 +8,11 @@
       "profile": "ప్రొఫైల్",
       "healthProfile": "ఆరోగ్య ప్రొఫైల్",
       "records": "రికార్డులు",
-      "notifications": "నోటిఫికేషన్లు"
+      "notifications": "నోటిఫికేషన్లు",
+      "family": "కుటుంబం",
+      "saved": "సేవ్ చేసిన డాక్టర్లు",
+      "reviews": "సమీక్షలు",
+      "reminders": "రిమైండర్‌లు"
     }
   },
   "dashboard": {

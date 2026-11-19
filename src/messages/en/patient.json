@@ -8,7 +8,11 @@
       "profile": "Profile",
       "healthProfile": "Health profile",
       "records": "Records",
-      "notifications": "Notifications"
+      "notifications": "Notifications",
+      "family": "Family",
+      "saved": "Saved doctors",
+      "reviews": "Reviews",
+      "reminders": "Reminders"
     }
   },
   "dashboard": {

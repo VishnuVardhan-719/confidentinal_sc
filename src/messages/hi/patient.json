@@ -8,7 +8,11 @@
       "profile": "प्रोफ़ाइल",
       "healthProfile": "स्वास्थ्य प्रोफ़ाइल",
       "records": "रिकॉर्ड",
-      "notifications": "सूचनाएँ"
+      "notifications": "सूचनाएँ",
+      "family": "परिवार",
+      "saved": "सहेजे गए डॉक्टर",
+      "reviews": "समीक्षाएँ",
+      "reminders": "रिमाइंडर"
     }
   },
   "dashboard": {

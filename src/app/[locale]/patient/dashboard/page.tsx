@@ -63,6 +63,10 @@ export default async function PatientDashboardPage({ params }: PageProps<"/[loca
     { href: "/patient/records", label: tShell("nav.records"), icon: "file" },
     { href: "/patient/notifications", label: tShell("nav.notifications"), icon: "bell" },
     { href: "/patient/health-profile", label: tShell("nav.healthProfile"), icon: "clipboard" },
+    { href: "/patient/family", label: tShell("nav.family"), icon: "users" },
+    { href: "/patient/saved", label: tShell("nav.saved"), icon: "bookmark" },
+    { href: "/patient/reviews", label: tShell("nav.reviews"), icon: "star" },
+    { href: "/patient/settings/reminders", label: tShell("nav.reminders"), icon: "settings" },
   ];
 
   return (
