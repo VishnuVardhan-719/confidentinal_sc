@@ -28,7 +28,7 @@ const PRIMARY_LINKS = [
 ] as const;
 
 const navLinkClass =
-  "inline-flex min-h-target items-center rounded-md px-3 text-base font-medium whitespace-nowrap text-ink hover:bg-mist aria-[current=page]:text-forest aria-[current=page]:underline aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8";
+  "inline-flex min-h-target items-center rounded-md px-2.5 text-base font-medium whitespace-nowrap text-ink hover:bg-mist 2xl:px-3 aria-[current=page]:text-forest aria-[current=page]:underline aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8";
 
 /**
  * Public site header. `account`: undefined while the session loads, null when signed out, or the
@@ -44,9 +44,9 @@ export function PublicHeader({ account }: { account?: PublicAccount | null }) {
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-paper/95 backdrop-blur-sm supports-[backdrop-filter]:bg-paper/85">
       <div className="mx-auto flex h-16 max-w-content items-center gap-2 px-4 sm:px-6 xl:h-[4.5rem] lg:px-8">
-        <BrandLogo className="mr-auto xl:mr-6" />
+        <BrandLogo className="mr-auto xl:mr-3 2xl:mr-6" />
 
-        <nav aria-label={ta("mainNavigation")} className="hidden items-center gap-1 xl:flex">
+        <nav aria-label={ta("mainNavigation")} className="hidden items-center gap-0.5 xl:flex 2xl:gap-1">
           <DropdownMenu>
             <DropdownMenuTrigger className={cn(navLinkClass, "gap-1.5 data-[state=open]:bg-mist")}>
               {t("nav.services")}
@@ -79,11 +79,11 @@ export function PublicHeader({ account }: { account?: PublicAccount | null }) {
             className="inline-flex min-h-target items-center gap-2 rounded-md px-2.5 font-semibold whitespace-nowrap text-danger hover:bg-danger-surface"
           >
             <Phone aria-hidden className="size-4.5" />
-            <span className="hidden sm:inline">{t("nav.emergency")}</span>
-            <span className="sm:hidden" aria-hidden>
+            <span className="hidden sm:inline xl:hidden 2xl:inline">{t("nav.emergency")}</span>
+            <span className="sm:hidden xl:inline 2xl:hidden" aria-hidden>
               112
             </span>
-            <span className="sr-only sm:hidden">{t("nav.emergencyLong")}</span>
+            <span className="sr-only sm:hidden xl:inline 2xl:hidden">{t("nav.emergencyLong")}</span>
           </Link>
           <Link href="/#finder" className={cn(navLinkClass, "hidden gap-2 2xl:inline-flex")}>
             <MapPin aria-hidden className="size-4.5 text-forest" />

@@ -29,7 +29,7 @@ export function AccountActions({ account, variant }: { account: PublicAccount | 
 
   if (account === null || account.workspaces.length === 0) {
     return (
-      <div className={cn(mobile ? "grid gap-3" : "flex items-center gap-2")}>
+      <div className={cn(mobile ? "grid gap-3" : "flex items-center gap-1 whitespace-nowrap")}>
         {mobile ? null : (
           <Button asChild variant="quiet">
             <Link href={loginHref(pathname)}>{t("actions.signIn")}</Link>
@@ -76,7 +76,7 @@ export function AccountActions({ account, variant }: { account: PublicAccount | 
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 whitespace-nowrap">
       <Button asChild>
         <Link href={primary.href}>
           <LayoutDashboard aria-hidden />

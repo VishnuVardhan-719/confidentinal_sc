@@ -69,7 +69,10 @@ export function LocaleSwitcher({ variant = "menu", className }: { variant?: "men
         aria-label={`${ta("language")}: ${t(`locales.${current}`)}`}
       >
         <Languages aria-hidden className="size-4.5 text-forest" />
-        <span lang={current}>{t(`locales.${current}`)}</span>
+        {/* Compact at xl (long Telugu/Hindi nav labels); full name from 2xl. aria-label names it. */}
+        <span lang={current} className="max-2xl:sr-only">
+          {t(`locales.${current}`)}
+        </span>
         <ChevronDown aria-hidden className="size-4 text-muted" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

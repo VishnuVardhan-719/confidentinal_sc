@@ -42,7 +42,7 @@ const COLUMNS = [
   },
 ] as const;
 
-const linkClass = "inline-flex min-h-10 items-center text-base text-on-forest-muted underline-offset-4 hover:text-on-forest hover:underline focus-visible:outline-paper";
+const linkClass = "inline-flex min-h-target items-center text-base text-on-forest-muted underline-offset-4 hover:text-on-forest hover:underline focus-visible:outline-paper";
 
 /** Only working public pages are linked. Legal pages are labelled as drafts until approved. */
 export function Footer() {
@@ -50,7 +50,7 @@ export function Footer() {
   const ta = useTranslations("accessibility");
   return (
     <footer className="mt-auto bg-forest-strong text-on-forest">
-      <div className="mx-auto grid max-w-content gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[1.2fr_2fr] lg:px-8">
+      <div className="mx-auto grid max-w-content gap-10 px-4 py-10 sm:gap-12 sm:px-6 sm:py-14 lg:grid-cols-[1.2fr_2fr] lg:px-8">
         <div className="grid content-start gap-5">
           <BrandLogo tone="paper" className="focus-visible:outline-paper [&_rect]:fill-paper [&_path]:text-forest [&_circle]:fill-forest" />
           <p className="max-w-sm text-base text-on-forest-muted">{t("footer.tagline")}</p>
@@ -62,10 +62,10 @@ export function Footer() {
             {t("footer.emergency")}
           </Link>
         </div>
-        <nav aria-label={ta("footerNavigation")} className="grid grid-cols-2 gap-8 sm:grid-cols-3 xl:grid-cols-5">
+        <nav aria-label={ta("footerNavigation")} className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 xl:grid-cols-5">
           <div className="grid content-start gap-3">
             <h2 className="text-sm font-semibold text-on-forest">{t("footer.columns.services")}</h2>
-            <ul className="grid">
+            <ul className="grid gap-0.5">
               {SERVICES.map((s) => (
                 <li key={s.key}>
                   <Link href={s.href} className={linkClass}>
@@ -78,7 +78,7 @@ export function Footer() {
           {COLUMNS.map((col) => (
             <div key={col.key} className="grid content-start gap-3">
               <h2 className="text-sm font-semibold text-on-forest">{t(`footer.columns.${col.key}`)}</h2>
-              <ul className="grid">
+              <ul className="grid gap-0.5">
                 {col.links.map((l) => (
                   <li key={l.key}>
                     <Link href={l.href} className={linkClass}>
