@@ -9,6 +9,7 @@ import { cn } from "@/components/ui/cn";
 import { ErrorSummary, type SummaryError } from "@/components/shared/error-summary";
 import { Field } from "@/components/shared/field";
 import { InlineError } from "@/components/shared/inline-error";
+import { Notice } from "@/components/shared/notice";
 import { Link, useRouter } from "@/i18n/navigation";
 import type { ApiResult } from "@/lib/api/result";
 import { validateReviewInput } from "@/modules/reviews/schemas";
@@ -18,13 +19,18 @@ import { RATINGS, REVIEW_ISSUES, REVIEW_TEXT_MAX, type Rating, type Review, type
  * Star rating (native radio group: arrow keys move, each option has a text label) plus review text.
  * Validates with the server's rules, focuses an ErrorSummary on failure, one idempotency key per intent.
  */
-export function ReviewForm({ bookingId, submit }: { bookingId: string; submit: (bookingId: string, input: unknown, key: string) => Promise<ApiResult<Review>> }) {
+type Props =
+  | { mode?: "new"; bookingId: string; submit: (bookingId: string, input: unknown, key: string) => Promise<ApiResult<Review>> }
+  | { mode: "edit"; bookingId: string; review: Pick<Review, "rating" | "text" | "version">; edit: (bookingId: string, input: unknown, version: number) => Promise<ApiResult<Review>> };
+
+export function ReviewForm(props: Props) {
+  const { bookingId } = props;
   const t = useTranslations("patientAccount.reviews.form");
   const router = useRouter();
   const base = useId();
   const ids: Record<ReviewField, string> = { rating: `${base}-rating-1`, text: `${base}-text` };
-  const [rating, setRating] = useState<Rating | null>(null);
-  const [text, setText] = useState("");
+  const [rating, setRating] = useState<Rating | null>(props.mode === "edit" ? props.review.rating : null);
+  const [text, setText] = useState(props.mode === "edit" ? props.review.text : "");
   const [errors, setErrors] = useState<SummaryError[]>([]);
   const [attempt, setAttempt] = useState(0);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -44,20 +50,25 @@ export function ReviewForm({ bookingId, submit }: { bookingId: string; submit: (
     if (!v.ok) return setErrors(toSummary(v.issues));
     setErrors([]);
     setBusy(true);
-    key.current ??= globalThis.crypto.randomUUID();
     try {
-      const r = await submit(bookingId, v.data, key.current);
+      let r: ApiResult<Review>;
+      if (props.mode === "edit") {
+        r = await props.edit(bookingId, v.data, props.review.version);
+      } else {
+        key.current ??= globalThis.crypto.randomUUID();
+        r = await props.submit(bookingId, v.data, key.current);
+      }
       if (!r.ok) {
         const fields = r.error.fields ?? {};
         const issues = (["rating", "text"] as const)
           .filter((f) => (REVIEW_ISSUES as readonly string[]).includes(fields[f] ?? ""))
           .map((f) => ({ field: f, code: fields[f] as ReviewIssue }));
         if (r.error.code === "validation" && issues.length > 0) setErrors(toSummary(issues));
-        else setApiError(r.error.code);
+        else setApiError(r.error.code === "conflict" && props.mode === "edit" ? "review_conflict" : r.error.code);
         return;
       }
       key.current = null;
-      router.push("/patient/reviews?status=sent");
+      router.push(`/patient/reviews?status=${props.mode === "edit" ? "edited" : "sent"}`);
       router.refresh();
     } catch {
       setApiError("unavailable");
@@ -122,10 +133,10 @@ export function ReviewForm({ bookingId, submit }: { bookingId: string; submit: (
           </>
         )}
       </Field>
-      {apiError ? <InlineError code={apiError} /> : null}
+      {apiError === "review_conflict" ? <Notice tone="warning">{t("conflict")}</Notice> : apiError ? <InlineError code={apiError} /> : null}
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" disabled={busy} aria-busy={busy}>
-          {busy ? t("sending") : t("submit")}
+          {busy ? t("sending") : props.mode === "edit" ? t("resubmit") : t("submit")}
         </Button>
         <Button asChild variant="quiet">
           <Link href="/patient/reviews">{t("cancel")}</Link>

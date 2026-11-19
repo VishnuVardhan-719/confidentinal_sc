@@ -41,7 +41,8 @@
     "support": "सहायता कतार",
     "cms": "सामग्री",
     "audit": "ऑडिट लॉग",
-    "settings": "सेटिंग्स"
+    "settings": "सेटिंग्स",
+    "reviews": "समीक्षा जाँच"
   },
   "status": {
     "unknown": "स्थिति पहचानी नहीं गई",
@@ -101,16 +102,37 @@
     "safety": "मरीज़ की सुरक्षा"
   },
   "capability": {
-    "provider": { "verify": "प्रदाताओं की समीक्षा" },
-    "coverage": { "verify": "सेवा क्षेत्रों की समीक्षा" },
-    "security": { "audit": "ऑडिट लॉग देखना" },
-    "membership": { "admin": "एडमिन प्रबंधन" },
-    "booking": { "operate": "बुकिंग संचालन" },
-    "payment": { "read": "भुगतान देखना" },
-    "refund": { "approve": "रिफ़ंड स्वीकृत करना" },
-    "support": { "operate": "सहायता कतार" },
-    "settings": { "read": "सेटिंग्स देखना" },
-    "content": { "edit": "सामग्री संपादित करना", "publish": "सामग्री प्रकाशित करना" }
+    "provider": {
+      "verify": "प्रदाताओं की समीक्षा"
+    },
+    "coverage": {
+      "verify": "सेवा क्षेत्रों की समीक्षा"
+    },
+    "security": {
+      "audit": "ऑडिट लॉग देखना"
+    },
+    "membership": {
+      "admin": "एडमिन प्रबंधन"
+    },
+    "booking": {
+      "operate": "बुकिंग संचालन"
+    },
+    "payment": {
+      "read": "भुगतान देखना"
+    },
+    "refund": {
+      "approve": "रिफ़ंड स्वीकृत करना"
+    },
+    "support": {
+      "operate": "सहायता कतार"
+    },
+    "settings": {
+      "read": "सेटिंग्स देखना"
+    },
+    "content": {
+      "edit": "सामग्री संपादित करना",
+      "publish": "सामग्री प्रकाशित करना"
+    }
   },
   "scope": {
     "global": "सभी संगठन",
@@ -150,7 +172,10 @@
     "description": "फ़ीचर गेट वैसे जैसे सर्वर देखता है। ये केवल स्वीकृत रिलीज़ प्रक्रिया से बदलते हैं, इस स्क्रीन से कभी नहीं।",
     "gateOn": "चालू",
     "gateOff": "बंद",
-    "columns": { "gate": "फ़ीचर", "state": "स्थिति" },
+    "columns": {
+      "gate": "फ़ीचर",
+      "state": "स्थिति"
+    },
     "gate": {
       "clinical": "चिकित्सा रिकॉर्ड और लैब रिपोर्ट जारी करना",
       "livePayments": "लाइव ऑनलाइन भुगतान",
@@ -193,12 +218,24 @@
     "exceptionsTitle": "खुली समस्याएँ",
     "exceptionsEmptyTitle": "कोई खुली समस्या नहीं",
     "exceptionsEmptyBody": "विफल सौंपना या रुकी यात्राओं जैसी बुकिंग समस्याएँ यहाँ दिखेंगी।",
-    "columns": { "reference": "रेफ़रेंस", "category": "सेवा", "provider": "प्रदाता", "exception": "समस्या", "raised": "दर्ज होने का समय" }
+    "columns": {
+      "reference": "रेफ़रेंस",
+      "category": "सेवा",
+      "provider": "प्रदाता",
+      "exception": "समस्या",
+      "raised": "दर्ज होने का समय"
+    }
   },
   "users": {
     "title": "एडमिन और आमंत्रण",
     "description": "एडमिन पहुँच केवल आमंत्रण से मिलती है। आप अपनी पहुँच नहीं बदल सकते।",
-    "columns": { "name": "नाम", "status": "स्थिति", "mfa": "दो-चरणीय साइन इन", "grants": "पहुँच", "actions": "कार्य" },
+    "columns": {
+      "name": "नाम",
+      "status": "स्थिति",
+      "mfa": "दो-चरणीय साइन इन",
+      "grants": "पहुँच",
+      "actions": "कार्य"
+    },
     "mfaOn": "चालू",
     "mfaOff": "सेट नहीं",
     "self": "यह आप हैं",
@@ -216,7 +253,12 @@
     "done": "सहेजा गया। सूची अपडेट हो गई है।",
     "invitesTitle": "आमंत्रण",
     "invitesUnavailable": "आमंत्रण लोड नहीं हो सके।",
-    "inviteColumns": { "email": "ईमेल", "access": "पहुँच", "status": "स्थिति", "sent": "भेजने का समय" },
+    "inviteColumns": {
+      "email": "ईमेल",
+      "access": "पहुँच",
+      "status": "स्थिति",
+      "sent": "भेजने का समय"
+    },
     "inviteTitle": "एडमिन को आमंत्रित करें",
     "emailLabel": "कार्य ईमेल",
     "emailInvalid": "सही ईमेल पता लिखें।",
@@ -232,13 +274,28 @@
     "description": "भुगतान रिकॉर्ड, बुकिंग स्थिति से अलग। राशियाँ सर्वर से आती हैं।",
     "liveOff": "लाइव ऑनलाइन भुगतान बंद है। ऑनलाइन कोई कार्ड या UPI भुगतान नहीं लिया जा सकता।",
     "refundGated": "रिफ़ंड स्वीकृति अभी उपलब्ध नहीं है। इसके लिए स्वीकृत रिफ़ंड नीति और लाइव भुगतान खाता चाहिए।",
-    "columns": { "reference": "बुकिंग", "status": "स्थिति", "due": "बकाया", "collected": "प्राप्त", "outstanding": "शेष", "method": "तरीका", "reconciliation": "मिलान" },
+    "columns": {
+      "reference": "बुकिंग",
+      "status": "स्थिति",
+      "due": "बकाया",
+      "collected": "प्राप्त",
+      "outstanding": "शेष",
+      "method": "तरीका",
+      "reconciliation": "मिलान"
+    },
     "noMethod": "अभी भुगतान नहीं",
     "testMode": "टेस्ट मोड",
     "mismatch": "राशियों का मिलान नहीं हो रहा",
     "refundsTitle": "रिफ़ंड",
     "refundsUnavailable": "रिफ़ंड लोड नहीं हो सके।",
-    "refundColumns": { "reference": "बुकिंग", "status": "स्थिति", "requested": "अनुरोधित", "approved": "स्वीकृत", "policy": "नीति", "date": "अनुरोध की तारीख" },
+    "refundColumns": {
+      "reference": "बुकिंग",
+      "status": "स्थिति",
+      "requested": "अनुरोधित",
+      "approved": "स्वीकृत",
+      "policy": "नीति",
+      "date": "अनुरोध की तारीख"
+    },
     "notApproved": "स्वीकृत नहीं",
     "emptyTitle": "कोई भुगतान रिकॉर्ड नहीं",
     "emptyBody": "बुकिंग पर राशि बकाया होने के बाद भुगतान रिकॉर्ड यहाँ दिखेंगे।"
@@ -246,7 +303,15 @@
   "support": {
     "title": "सहायता कतार",
     "description": "ज़िम्मेदार और स्थिति के अनुसार टिकट। पहले प्रदाता जवाब देते हैं; हल न हुए टिकट प्लेटफ़ॉर्म को भेजे जाते हैं।",
-    "columns": { "reference": "टिकट", "priority": "प्राथमिकता", "status": "स्थिति", "owner": "ज़िम्मेदार", "booking": "बुकिंग", "opened": "खुलने का समय", "lastResponse": "आख़िरी जवाब" },
+    "columns": {
+      "reference": "टिकट",
+      "priority": "प्राथमिकता",
+      "status": "स्थिति",
+      "owner": "ज़िम्मेदार",
+      "booking": "बुकिंग",
+      "opened": "खुलने का समय",
+      "lastResponse": "आख़िरी जवाब"
+    },
     "none": "कोई नहीं",
     "emptyTitle": "कोई टिकट नहीं",
     "emptyBody": "सहायता टिकट यहाँ दिखेंगे।"
@@ -260,8 +325,20 @@
     "outcomeLabel": "परिणाम",
     "all": "सभी",
     "apply": "लागू करें",
-    "columns": { "time": "समय", "actor": "करने वाला", "action": "कार्य", "category": "क्षेत्र", "target": "रिकॉर्ड", "outcome": "परिणाम", "reason": "कारण" },
-    "outcome": { "success": "सफल", "denied": "अस्वीकृत", "conflict": "टकराव" },
+    "columns": {
+      "time": "समय",
+      "actor": "करने वाला",
+      "action": "कार्य",
+      "category": "क्षेत्र",
+      "target": "रिकॉर्ड",
+      "outcome": "परिणाम",
+      "reason": "कारण"
+    },
+    "outcome": {
+      "success": "सफल",
+      "denied": "अस्वीकृत",
+      "conflict": "टकराव"
+    },
     "category": {
       "verification": "सत्यापन",
       "coverage": "सेवा क्षेत्र",
@@ -273,7 +350,12 @@
       "security": "सुरक्षा",
       "settings": "सेटिंग्स"
     },
-    "actor": { "admin": "एडमिन", "provider_staff": "प्रदाता स्टाफ", "patient": "मरीज़", "system": "सिस्टम" },
+    "actor": {
+      "admin": "एडमिन",
+      "provider_staff": "प्रदाता स्टाफ",
+      "patient": "मरीज़",
+      "system": "सिस्टम"
+    },
     "emptyTitle": "कोई मेल खाती घटना नहीं",
     "emptyBody": "कोई दूसरा फ़िल्टर आज़माएँ।"
   },
@@ -293,8 +375,16 @@
     "newStory": "नई कहानी",
     "newFaq": "नया FAQ",
     "newPage": "नया पेज",
-    "columns": { "slug": "प्रविष्टि", "kind": "प्रकार", "locales": "भाषाएँ" },
-    "kind": { "story": "कहानी", "faq": "प्रश्नोत्तर", "page": "पेज" },
+    "columns": {
+      "slug": "प्रविष्टि",
+      "kind": "प्रकार",
+      "locales": "भाषाएँ"
+    },
+    "kind": {
+      "story": "कहानी",
+      "faq": "प्रश्नोत्तर",
+      "page": "पेज"
+    },
     "missing": "नहीं लिखा गया",
     "unpublishedChanges": "अप्रकाशित बदलाव",
     "emptyTitle": "अभी कोई सामग्री नहीं",
@@ -345,5 +435,46 @@
     "revisionsTitle": "संशोधन इतिहास",
     "revisionLine": "संशोधन {revision}",
     "noVersion": "इस भाषा का अभी कोई संस्करण नहीं है। बनाने के लिए ड्राफ़्ट सहेजें।"
+  },
+  "reviews": {
+    "title": "समीक्षा जाँच",
+    "description": "प्रकाशित होने से पहले मरीज़ों की समीक्षाएँ जाँचें। समीक्षाओं में केवल बुकिंग संदर्भ और प्रदाता दिखते हैं, मरीज़ कभी नहीं।",
+    "filterLabel": "समीक्षाएँ फ़िल्टर करें",
+    "filter": {
+      "pending_moderation": "प्रतीक्षा में",
+      "published": "प्रकाशित",
+      "rejected": "प्रकाशित नहीं"
+    },
+    "count": "{count, plural, =0 {कोई समीक्षा नहीं} one {# समीक्षा} other {# समीक्षाएँ}}",
+    "item": "{provider} · बुकिंग {reference}",
+    "submitted": "{date} को भेजी गई",
+    "stars": "{rating, plural, one {5 में से # स्टार} other {5 में से # स्टार}}",
+    "publish": "प्रकाशित करें",
+    "publishLabel": "बुकिंग {reference} की समीक्षा प्रकाशित करें",
+    "reject": "प्रकाशित न करें",
+    "rejectLabel": "बुकिंग {reference} की समीक्षा प्रकाशित न करें",
+    "rejectTitle": "यह समीक्षा प्रकाशित न करें?",
+    "rejectBody": "आपका चुना कारण मरीज़ को दिखेगा। वे समीक्षा बदलकर दोबारा भेज सकते हैं।",
+    "reasonLabel": "कारण",
+    "reasonPlaceholder": "कारण चुनें",
+    "reasons": {
+      "personal_info": "निजी या स्वास्थ्य विवरण हैं",
+      "not_about_service": "सेवा के बारे में नहीं",
+      "offensive": "आपत्तिजनक भाषा",
+      "spam": "विज्ञापन या स्पैम"
+    },
+    "confirmReject": "प्रकाशित न करें",
+    "cancel": "रद्द करें",
+    "working": "हो रहा है…",
+    "published": "समीक्षा प्रकाशित हुई।",
+    "rejected": "समीक्षा प्रकाशित नहीं हुई। मरीज़ को कारण दिखेगा।",
+    "reason": "कारण: {reason}",
+    "conflict": "इस समीक्षा पर पहले ही निर्णय हो चुका है या यह बदल गई है। सूची रीफ़्रेश कर दी गई है।",
+    "empty": {
+      "pending_moderation": "जाँच की प्रतीक्षा में कोई समीक्षा नहीं।",
+      "published": "अभी कोई प्रकाशित समीक्षा नहीं।",
+      "rejected": "कोई समीक्षा अस्वीकार नहीं हुई।"
+    },
+    "gated": "समीक्षा जाँच अभी जुड़ी नहीं है। यहाँ कुछ भी सहेजा नहीं जाता।"
   }
 }

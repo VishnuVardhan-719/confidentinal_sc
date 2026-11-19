@@ -27,6 +27,7 @@ export const PROPOSED_ADMIN_CAPABILITIES = [
   "settings:read",
   "content:edit",
   "content:publish",
+  "review:moderate",
 ] as const;
 
 export const ADMIN_CAPABILITIES = [...BACKEND_ADMIN_CAPABILITIES, ...PROPOSED_ADMIN_CAPABILITIES] as const;

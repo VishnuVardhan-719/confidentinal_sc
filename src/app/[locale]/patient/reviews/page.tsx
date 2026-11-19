@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { GateNotice } from "@/components/shared/gate-notice";
 import { InlineError } from "@/components/shared/inline-error";
+import { IntlScope } from "@/components/shared/intl-scope";
 import { Notice } from "@/components/shared/notice";
 import { PageHeader } from "@/components/shared/page-header";
 import { RetryAction } from "@/components/shared/retry-action";
@@ -16,7 +17,9 @@ import { PatientShell } from "@/components/patient/patient-shell";
 import { Link } from "@/i18n/navigation";
 import { fail } from "@/lib/api/result";
 import { getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
-import { describeReviewStatus, getReviewsApi, reviewEligibility, type ReviewableVisit } from "@/modules/reviews";
+import { canChangeReview, describeReviewStatus, getReviewsApi, reviewEligibility, type ReviewableVisit } from "@/modules/reviews";
+import { withdrawReviewAction } from "./actions";
+import { WithdrawReview } from "./_components/withdraw-review";
 
 export async function generateMetadata() {
   const t = await getTranslations("patientAccount.reviews");
@@ -33,6 +36,7 @@ export default async function ReviewsPage({ params, searchParams }: PageProps<"/
   const session = getPatientSession();
   if (session.status !== "ok") redirect(patientLoginRedirect(locale, `/${locale}/patient/reviews`));
   const [t, format, sp] = await Promise.all([getTranslations("patientAccount.reviews"), getFormatter(), searchParams]);
+  const flash = sp.status === "sent" ? "flash" : sp.status === "edited" ? "flashEdited" : sp.status === "withdrawn" ? "flashWithdrawn" : null;
   const date = (iso: string) => format.dateTime(new Date(iso), { dateStyle: "medium", timeZone: "Asia/Kolkata" });
   const result = await getReviewsApi(process.env, session.fixtureActor).listVisits().catch(() => fail("unavailable"));
   if (!result.ok && result.error.code === "unauthenticated") redirect(patientLoginRedirect(locale, `/${locale}/patient/reviews`));
@@ -40,9 +44,9 @@ export default async function ReviewsPage({ params, searchParams }: PageProps<"/
   const shell = (children: ReactNode) => (
     <PatientShell synthetic={session.synthetic}>
       <PageHeader title={t("title")} description={t("description")} />
-      {sp.status === "sent" ? (
+      {flash ? (
         <Notice tone="info" role="status">
-          {t("flash")}
+          {t(flash)}
         </Notice>
       ) : null}
       {children}
@@ -132,7 +136,25 @@ export default async function ReviewsPage({ params, searchParams }: PageProps<"/
                 </p>
                 <p className="whitespace-pre-line break-words text-ink">{v.review.text}</p>
                 {v.review.status === "pending_moderation" ? <p className="text-sm text-muted">{t("moderationNote")}</p> : null}
-                {v.review.status === "rejected" ? <p className="text-sm text-muted">{t("rejectedNote")}</p> : null}
+                {v.review.status === "rejected" ? (
+                  <p className="text-sm text-ink">
+                    <span className="font-semibold">{t("rejectedPrefix")}</span> {v.review.rejectionReason ? t(`rejectedReason.${v.review.rejectionReason}`) : t("rejectedNote")}
+                  </p>
+                ) : null}
+                {v.review.status === "withdrawn" ? <p className="text-sm text-muted">{t("withdrawnNote")}</p> : null}
+                {canChangeReview(v.review) ? (
+                  <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+                    <Button asChild variant="secondary">
+                      <Link href={`/patient/reviews/${v.bookingId}/edit`} aria-label={t("editLabel", { provider: v.providerDisplayName })}>
+                        <PenLine aria-hidden />
+                        {t("edit")}
+                      </Link>
+                    </Button>
+                    <IntlScope namespaces={["patientAccount"]}>
+                      <WithdrawReview bookingId={v.bookingId} provider={v.providerDisplayName} version={v.review.version} withdraw={withdrawReviewAction} />
+                    </IntlScope>
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>

@@ -113,7 +113,8 @@
     "status": {
       "pending_moderation": "Waiting for moderation",
       "published": "Published",
-      "rejected": "Not published"
+      "rejected": "Not published",
+      "withdrawn": "Withdrawn"
     },
     "moderationNote": "Waiting for moderation: only you can see this review until it is checked.",
     "rejectedNote": "This review was not published. It may break the review guidelines.",
@@ -129,7 +130,8 @@
       "gated": "Reviews are not connected yet. Nothing here is saved.",
       "notFound": "This visit is not available. It may not exist, or it is not on your account.",
       "notCompleted": "Only completed visits can be reviewed. You can review this visit after it is completed.",
-      "already": "You have already reviewed this visit. Each visit can have one review."
+      "already": "You have already reviewed this visit. Each visit can have one review.",
+      "cannotEdit": "This review was withdrawn and can no longer be changed."
     },
     "form": {
       "title": "Review your visit",
@@ -156,7 +158,31 @@
         "text_too_short": "Write at least 10 characters.",
         "text_too_long": "Use 1000 characters or fewer.",
         "text_contact": "Remove phone numbers, emails and links from your review."
-      }
+      },
+      "editTitle": "Edit your review",
+      "resubmit": "Send changes",
+      "conflict": "This review changed in another window. Go back to your reviews to see the latest version."
+    },
+    "edit": "Edit review",
+    "editLabel": "Edit your review for {provider}",
+    "editNote": "Editing sends the review back for moderation. It is hidden until it is checked again.",
+    "withdrawnNote": "You withdrew this review. It is not shown to anyone.",
+    "rejectedReason": {
+      "personal_info": "It included personal or health details.",
+      "not_about_service": "It was not about the service received.",
+      "offensive": "It used offensive language.",
+      "spam": "It looked like advertising or spam."
+    },
+    "rejectedPrefix": "Why it was not published:",
+    "flashEdited": "Your changes were sent and are waiting for moderation.",
+    "flashWithdrawn": "Your review was withdrawn.",
+    "withdraw": {
+      "trigger": "Withdraw",
+      "triggerLabel": "Withdraw your review for {provider}",
+      "title": "Withdraw this review?",
+      "body": "It will be hidden for good, and you will not be able to review this visit again.",
+      "confirm": "Yes, withdraw",
+      "keep": "Keep review"
     }
   },
   "reminders": {

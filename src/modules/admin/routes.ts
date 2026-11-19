@@ -5,7 +5,7 @@ import { ADMIN_CAPABILITIES, can, type AdminCapability, type AdminPrincipal } fr
  * Admin route -> capability map. `providers` and `coverage` pages are owned by
  * another agent; they appear here only so navigation is complete.
  */
-export const ADMIN_ROUTES = ["dashboard", "providers", "coverage", "bookings", "users", "payments", "support", "cms", "audit", "settings"] as const;
+export const ADMIN_ROUTES = ["dashboard", "providers", "coverage", "bookings", "users", "payments", "support", "reviews", "cms", "audit", "settings"] as const;
 export type AdminRoute = (typeof ADMIN_ROUTES)[number];
 
 export const ADMIN_ROUTE_CAPABILITIES: Record<AdminRoute, readonly AdminCapability[]> = {
@@ -16,6 +16,7 @@ export const ADMIN_ROUTE_CAPABILITIES: Record<AdminRoute, readonly AdminCapabili
   users: ["membership:admin"],
   payments: ["payment:read"],
   support: ["support:operate"],
+  reviews: ["review:moderate"],
   cms: ["content:edit", "content:publish"],
   audit: ["security:audit"],
   settings: ["settings:read"],

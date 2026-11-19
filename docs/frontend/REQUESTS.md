@@ -351,3 +351,17 @@ No endpoint exists. The http adapter (`src/modules/reminder-prefs/http.ts`) retu
   - the defaults: SMS on, quiet hours 21:00-07:00 IST
   - whether safety and critical booking messages bypass quiet hours (the UI says only visit reminders are affected)
   - the WhatsApp/SMS consent and opt-in wording (TRAI/DLT)
+
+## 2026-11-19 R8-P2 review edit/withdraw and moderation (fe-p, feat/fe2-p)
+
+### R-FE-P-R7-3 (amended) Patient review edit and withdraw
+- `PATCH /api/patient/reviews/:bookingId` body `{ rating, text, expectedVersion }`. The review returns to `pending_moderation` with `rejectionReason: null`. Errors: `409` on a version mismatch or a withdrawn review; `422` uses the same field codes as create.
+- `POST /api/patient/reviews/:bookingId/withdraw` body `{ expectedVersion }`. Sets `withdrawn`, which is final; the booking cannot be reviewed again.
+- Review DTO gains `rejectionReason (personal_info|not_about_service|offensive|spam|null)` and `version`.
+
+### R-FE-P-R8-1 Review moderation contract and capability (owner: backend + admin)
+- New proposed capability `review:moderate` (added to `PROPOSED_ADMIN_CAPABILITIES`) and admin route `/admin/reviews`.
+- `GET /api/admin/reviews?status=pending_moderation|published|rejected` -> items `{ reviewId, bookingReference, category, providerDisplayName, rating, text, status, submittedAt, rejectionReason, version }`. Items carry no patient identity.
+- `POST /api/admin/reviews/:reviewId/decision` body `{ decision: "publish" } | { decision: "reject", reason }` plus `expectedVersion`. Only `pending_moderation` reviews can be decided; anything else returns `409`. Every decision needs an audit entry.
+- Fixture-only moderator (needs lead review): `src/modules/admin/session.ts` returns a synthetic admin holding only `review:moderate`. It applies when `FIXTURE_ADMIN_SESSION=moderator` (server env) is set in fixture mode, and is refused in production. Remove it when the auth module is adopted.
+- The http adapters (`createReviewModerationHttpApi`, patient edit/withdraw) return `gated`.

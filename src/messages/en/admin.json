@@ -41,7 +41,8 @@
     "support": "Support queue",
     "cms": "Content",
     "audit": "Audit log",
-    "settings": "Settings"
+    "settings": "Settings",
+    "reviews": "Review moderation"
   },
   "status": {
     "unknown": "Status not recognised",
@@ -101,16 +102,37 @@
     "safety": "Patient safety"
   },
   "capability": {
-    "provider": { "verify": "Review providers" },
-    "coverage": { "verify": "Review coverage" },
-    "security": { "audit": "Read the audit log" },
-    "membership": { "admin": "Manage admins" },
-    "booking": { "operate": "Booking operations" },
-    "payment": { "read": "View payments" },
-    "refund": { "approve": "Approve refunds" },
-    "support": { "operate": "Support queue" },
-    "settings": { "read": "View settings" },
-    "content": { "edit": "Edit content", "publish": "Publish content" }
+    "provider": {
+      "verify": "Review providers"
+    },
+    "coverage": {
+      "verify": "Review coverage"
+    },
+    "security": {
+      "audit": "Read the audit log"
+    },
+    "membership": {
+      "admin": "Manage admins"
+    },
+    "booking": {
+      "operate": "Booking operations"
+    },
+    "payment": {
+      "read": "View payments"
+    },
+    "refund": {
+      "approve": "Approve refunds"
+    },
+    "support": {
+      "operate": "Support queue"
+    },
+    "settings": {
+      "read": "View settings"
+    },
+    "content": {
+      "edit": "Edit content",
+      "publish": "Publish content"
+    }
   },
   "scope": {
     "global": "All organizations",
@@ -150,7 +172,10 @@
     "description": "Feature gates as the server sees them. They change only through the approved release process, never from this screen.",
     "gateOn": "On",
     "gateOff": "Off",
-    "columns": { "gate": "Feature", "state": "State" },
+    "columns": {
+      "gate": "Feature",
+      "state": "State"
+    },
     "gate": {
       "clinical": "Clinical records and lab report release",
       "livePayments": "Live online payments",
@@ -193,12 +218,24 @@
     "exceptionsTitle": "Open exceptions",
     "exceptionsEmptyTitle": "No open exceptions",
     "exceptionsEmptyBody": "Booking exceptions such as failed handovers or interrupted trips appear here.",
-    "columns": { "reference": "Reference", "category": "Service", "provider": "Provider", "exception": "Exception", "raised": "Raised" }
+    "columns": {
+      "reference": "Reference",
+      "category": "Service",
+      "provider": "Provider",
+      "exception": "Exception",
+      "raised": "Raised"
+    }
   },
   "users": {
     "title": "Admins and invites",
     "description": "Admin access is by invitation only. You cannot change your own access.",
-    "columns": { "name": "Name", "status": "Status", "mfa": "Two-step sign-in", "grants": "Access", "actions": "Actions" },
+    "columns": {
+      "name": "Name",
+      "status": "Status",
+      "mfa": "Two-step sign-in",
+      "grants": "Access",
+      "actions": "Actions"
+    },
     "mfaOn": "On",
     "mfaOff": "Not set up",
     "self": "This is you",
@@ -216,7 +253,12 @@
     "done": "Saved. The list has been updated.",
     "invitesTitle": "Invitations",
     "invitesUnavailable": "Invitations could not be loaded.",
-    "inviteColumns": { "email": "Email", "access": "Access", "status": "Status", "sent": "Sent" },
+    "inviteColumns": {
+      "email": "Email",
+      "access": "Access",
+      "status": "Status",
+      "sent": "Sent"
+    },
     "inviteTitle": "Invite an admin",
     "emailLabel": "Work email",
     "emailInvalid": "Enter a valid email address.",
@@ -232,13 +274,28 @@
     "description": "Payment records, kept separate from booking status. Amounts come from the server.",
     "liveOff": "Live online payments are switched off. No card or UPI payment can be taken online.",
     "refundGated": "Refund approval is not available yet. It needs an approved refund policy and a live payment account.",
-    "columns": { "reference": "Booking", "status": "Status", "due": "Due", "collected": "Collected", "outstanding": "Outstanding", "method": "Method", "reconciliation": "Reconciliation" },
+    "columns": {
+      "reference": "Booking",
+      "status": "Status",
+      "due": "Due",
+      "collected": "Collected",
+      "outstanding": "Outstanding",
+      "method": "Method",
+      "reconciliation": "Reconciliation"
+    },
     "noMethod": "Not paid yet",
     "testMode": "Test mode",
     "mismatch": "Amounts do not reconcile",
     "refundsTitle": "Refunds",
     "refundsUnavailable": "Refunds could not be loaded.",
-    "refundColumns": { "reference": "Booking", "status": "Status", "requested": "Requested", "approved": "Approved", "policy": "Policy", "date": "Requested on" },
+    "refundColumns": {
+      "reference": "Booking",
+      "status": "Status",
+      "requested": "Requested",
+      "approved": "Approved",
+      "policy": "Policy",
+      "date": "Requested on"
+    },
     "notApproved": "Not approved",
     "emptyTitle": "No payment records",
     "emptyBody": "Payment records appear here once bookings have amounts due."
@@ -246,7 +303,15 @@
   "support": {
     "title": "Support queue",
     "description": "Tickets by owner and status. The provider answers first; unresolved tickets are escalated to the platform.",
-    "columns": { "reference": "Ticket", "priority": "Priority", "status": "Status", "owner": "Owner", "booking": "Booking", "opened": "Opened", "lastResponse": "Last response" },
+    "columns": {
+      "reference": "Ticket",
+      "priority": "Priority",
+      "status": "Status",
+      "owner": "Owner",
+      "booking": "Booking",
+      "opened": "Opened",
+      "lastResponse": "Last response"
+    },
     "none": "None",
     "emptyTitle": "No tickets",
     "emptyBody": "Support tickets appear here."
@@ -260,8 +325,20 @@
     "outcomeLabel": "Outcome",
     "all": "All",
     "apply": "Apply",
-    "columns": { "time": "Time", "actor": "Actor", "action": "Action", "category": "Area", "target": "Record", "outcome": "Outcome", "reason": "Reason" },
-    "outcome": { "success": "Succeeded", "denied": "Denied", "conflict": "Conflict" },
+    "columns": {
+      "time": "Time",
+      "actor": "Actor",
+      "action": "Action",
+      "category": "Area",
+      "target": "Record",
+      "outcome": "Outcome",
+      "reason": "Reason"
+    },
+    "outcome": {
+      "success": "Succeeded",
+      "denied": "Denied",
+      "conflict": "Conflict"
+    },
     "category": {
       "verification": "Verification",
       "coverage": "Coverage",
@@ -273,7 +350,12 @@
       "security": "Security",
       "settings": "Settings"
     },
-    "actor": { "admin": "Admin", "provider_staff": "Provider staff", "patient": "Patient", "system": "System" },
+    "actor": {
+      "admin": "Admin",
+      "provider_staff": "Provider staff",
+      "patient": "Patient",
+      "system": "System"
+    },
     "emptyTitle": "No events match",
     "emptyBody": "Try a different filter."
   },
@@ -293,8 +375,16 @@
     "newStory": "New story",
     "newFaq": "New FAQ",
     "newPage": "New page",
-    "columns": { "slug": "Entry", "kind": "Type", "locales": "Languages" },
-    "kind": { "story": "Story", "faq": "FAQ", "page": "Page" },
+    "columns": {
+      "slug": "Entry",
+      "kind": "Type",
+      "locales": "Languages"
+    },
+    "kind": {
+      "story": "Story",
+      "faq": "FAQ",
+      "page": "Page"
+    },
     "missing": "Not written",
     "unpublishedChanges": "Unpublished changes",
     "emptyTitle": "No content yet",
@@ -345,5 +435,46 @@
     "revisionsTitle": "Revision history",
     "revisionLine": "Revision {revision}",
     "noVersion": "This language has no version yet. Save a draft to create one."
+  },
+  "reviews": {
+    "title": "Review moderation",
+    "description": "Check patient reviews before they are published. Reviews show the booking reference and provider only, never the patient.",
+    "filterLabel": "Filter reviews",
+    "filter": {
+      "pending_moderation": "Waiting",
+      "published": "Published",
+      "rejected": "Not published"
+    },
+    "count": "{count, plural, =0 {No reviews} one {# review} other {# reviews}}",
+    "item": "{provider} · Booking {reference}",
+    "submitted": "Submitted {date}",
+    "stars": "{rating, plural, one {# star out of 5} other {# stars out of 5}}",
+    "publish": "Publish",
+    "publishLabel": "Publish the review for booking {reference}",
+    "reject": "Do not publish",
+    "rejectLabel": "Do not publish the review for booking {reference}",
+    "rejectTitle": "Do not publish this review?",
+    "rejectBody": "The patient sees the reason you choose. They can edit the review and send it again.",
+    "reasonLabel": "Reason",
+    "reasonPlaceholder": "Choose a reason",
+    "reasons": {
+      "personal_info": "Contains personal or health details",
+      "not_about_service": "Not about the service",
+      "offensive": "Offensive language",
+      "spam": "Advertising or spam"
+    },
+    "confirmReject": "Do not publish",
+    "cancel": "Cancel",
+    "working": "Working…",
+    "published": "Review published.",
+    "rejected": "Review not published. The patient will see the reason.",
+    "reason": "Reason: {reason}",
+    "conflict": "This review was already decided or changed. The list has been refreshed.",
+    "empty": {
+      "pending_moderation": "No reviews are waiting for moderation.",
+      "published": "No published reviews yet.",
+      "rejected": "No reviews have been turned down."
+    },
+    "gated": "Review moderation is not connected yet. Nothing here is saved."
   }
 }
