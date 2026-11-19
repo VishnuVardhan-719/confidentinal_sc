@@ -29,3 +29,17 @@ Commits: 4d939f1, a1da5e8, 0813f7b, ff65066, 0500117, e03fb45 (all with Co-Autho
 Steering (money): 0500117 replaces paise/100 + toFixed(2) in the lab catalogue editor with integer maths (paiseToRupeesString in components/admin/ops/format.ts; formatPaise passes the exact decimal string to the en-IN Intl formatter). No shared money helper exists on this branch, so the ops format module is the shared one here. Test money-format.test.ts.
 Verification: tsc 0, eslint 0, vitest 705/705, build 0. Regression: mobile-390 lab 9+1skip, ambulance 9, caretaker 8, admin-ops 9, cms 6; desktop lab 9+1skip. Server on 3350 stopped.
 Open: proxy story check queries content on every /stories/<slug> request (cheap in fixture; http adapter has no CMS contract yet so all story slugs 404 there, same as the page). te/hi strings still unreviewed.
+
+## PAUSED STATE (TASK R9-E, fe-b, shutdown 2026-11-19)
+Done (committed on feat/fe2-e, not pushed):
+- 7d04148 R9-E step 1: http/gated content -> /stories and /stories/<slug> show "Stories are not available yet" (HTTP 200); proxy 404s only real unknown slugs (fixture mode). Unit tests: stories-gated.test.ts, loaders.test.ts. Smoke on an http-mode server (port 3351): /en/stories 200, /en|te/stories/some-story 200 with the gated copy, /en/no-such-page 404; axe serious/critical none and no overflow at 390/1280.
+- Regression so far: tsc 0, eslint 0 errors (1 warning, not yet inspected), vitest 709/709, next build 0 (built after all R9-E source edits).
+Half-done (NOT run yet): R9-E step 2 Playwright regression.
+Next steps:
+1. `npx eslint .` and look at the 1 warning; fix if ours.
+2. From C:/Users/Yashwanth/fe2-e: `./.context/rebuild.ps1` (stops port 3350 and does a clean build), then for each project in desktop-1280 and mobile-390 and each spec in public, lab, ambulance, caretaker, admin-ops, cms, role-isolation, emergency-e:
+   `./.context/run-e2e.ps1 <project> tests/e2e/<spec>.spec.ts` (fresh server per spec file).
+   Then `./.context/run-e2e.ps1 desktop-1280 tests/e2e/a11y-sweep-e.spec.ts` (sets 390/1280 itself).
+   Lab clinical variant: set FEATURE_CLINICAL=true for both the server and Playwright (see handoff-fe-b-e2.md).
+3. Fix any failures, commit, then write the R9-E TASK REPORT here and in chat.
+Scripts in .context/*.ps1 are scratch (untracked, do not commit). Ports: 3350 (fixture), 3351 (http smoke only). All servers stopped.
