@@ -2,6 +2,8 @@ import { test, expect, scenario, categories, providerId, visitFixture, expectFit
 
 // FE07 / FRONTEND_MASTER §§5,9,19,20. All cases remain fixme until the routes,
 // shared selector contract and isolated fixture scenarios in README.md exist.
+// PHASE4-C3: the doctor directory is covered by doctor-search.spec.ts and booking-journey.spec.ts.
+
 scenario("directory.available", () => {
   for (const category of categories) {
     for (const width of [360, 390, 768, 1280]) {

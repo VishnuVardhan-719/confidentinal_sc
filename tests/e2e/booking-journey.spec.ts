@@ -37,6 +37,14 @@ async function expectStep(page: Page, current: number, title: string) {
   await expect(page.getByRole("heading", { level: 2, name: title })).toBeVisible();
 }
 
+/** Booking, payment and visit-record states are three separate badges. */
+async function expectBadges(page: Page, booking: string, payment: string, record: string) {
+  const list = page.getByLabel("Statuses");
+  await expect(list.getByRole("definition").nth(0)).toHaveText(booking);
+  await expect(list.getByRole("definition").nth(1)).toHaveText(payment);
+  await expect(list.getByRole("definition").nth(2)).toHaveText(record);
+}
+
 const cont = (page: Page) => page.getByRole("button", { name: "Continue", exact: true });
 
 /** Pick a day and a time by position; negative positions count from the end (`-1` is the last). */
@@ -194,6 +202,7 @@ test.describe("booking journey", () => {
     await expect(page.getByRole("heading", { level: 1, name: `Visit with ${DOCTOR_1.name}` })).toBeVisible();
     await expect(page.getByText(`Waiting for ${DOCTOR_1.name} to answer`)).toBeVisible();
     await expect(page.getByText("You get a reference number when the doctor accepts.")).toBeVisible();
+    await expectBadges(page, "Requested", "Not started", "No visit record yet");
     await expect(page.getByRole("link", { name: /receipt/i })).toHaveCount(0);
     await expectAxeClean(page, "request/pending");
 
@@ -201,6 +210,7 @@ test.describe("booking journey", () => {
     await waitForAnswer(page, `${DOCTOR_1.name} accepted your request`);
     await expect(page.getByText(/^Reference SCV-[0-9A-F]{6}$/)).toBeVisible();
     await expect(page.getByText("A receipt is issued after you pay the doctor.")).toBeVisible();
+    await expectBadges(page, "Confirmed", "Payment due", "No visit record yet");
     await expectAxeClean(page, "request/confirmed");
     await expectFitsViewport(page);
 
@@ -228,6 +238,7 @@ test.describe("booking journey", () => {
     await expect(page.getByText(`Waiting for ${DOCTOR_2.name} to answer`)).toBeVisible();
     await waitForAnswer(page, `${DOCTOR_2.name} could not take this request`);
     await expect(page.getByText("You have not been charged. Choose another doctor or time.")).toBeVisible();
+    await expectBadges(page, "Declined", "Not started", "No visit record yet");
     await expect(page.getByRole("button", { name: "Cancel request" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Choose a new time" })).toHaveCount(0);
     await expectAxeClean(page, "request/declined");
@@ -239,6 +250,7 @@ test.describe("booking journey", () => {
   test("receipt for a paid visit is provider-issued and not a tax invoice", async ({ page }) => {
     await page.goto(`/en/patient/book/${PAID_BOOKING}`);
     await expect(page.getByText("Visit completed", { exact: true })).toBeVisible();
+    await expectBadges(page, "Completed", "Paid", "Kept by the doctor");
     await expect(page.getByRole("button", { name: "Cancel request" })).toHaveCount(0);
     await expectAxeClean(page, "request/completed");
     const link = page.getByRole("link", { name: "Open receipt (opens in a new tab)" });
