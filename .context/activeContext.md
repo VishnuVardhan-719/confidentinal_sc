@@ -123,3 +123,5 @@ UI src/components/service-requests/*. New i18n namespace "services" (edits messa
 Synthetic: one declining provider per category; FIXTURE_PROVIDER_RESPONSE_MS delay; pay after service; ambulance = scheduled non-emergency only + 112 notice.
 Server: port 3362 (old 3360/3361 servers of mine still alive, not killed per lead).
 Order: lab -> caretakers -> ambulance; commit per sub-task.
+- R6-C progress: lab data dff8a05, lab UI+e2e e4a2635 (10/10 e2e on dev server 3363). Next: caretakers, then ambulance. Dev server 3363 (mine, next dev).
+- Prod server for R6-C now on 3364 (3362 stale, 3363 dev wedged; none killed per lead rule).

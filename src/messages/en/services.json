@@ -164,5 +164,52 @@
     "request": "Request tests",
     "recordTitle": "Report",
     "prepEmpty": "Choose tests to see how to prepare."
+  },
+  "care": {
+    "pageTitle": "Caretakers at home",
+    "description": "Book one shift of non-clinical help at home from a caretaker or agency that serves your area.",
+    "request": "Request care",
+    "requestTitle": "Request care from {name}",
+    "requestDescription": "Choose the help you need, the start time and the hours. The caretaker accepts or declines your request.",
+    "statusTitle": "Home care with {name}",
+    "kind": {
+      "independent": "Independent caretaker",
+      "agency": "Care agency"
+    },
+    "languages": "Speaks {languages}",
+    "lang": {
+      "en": "English",
+      "te": "Telugu",
+      "hi": "Hindi"
+    },
+    "rate": "{price} per hour",
+    "hoursRange": "{min} to {max} hours per shift",
+    "tasks": "What help is needed?",
+    "tasksHint": "Choose everything that applies. Only help this provider offers is listed.",
+    "task": {
+      "companionship": "Company and conversation",
+      "mobility_help": "Help with walking and moving",
+      "meal_help": "Help with meals",
+      "personal_care": "Help with bathing and dressing",
+      "medicine_reminder": "Reminders to take medicines (reminding only)"
+    },
+    "hours": "How many hours?",
+    "hoursHint": "Between {min} and {max} hours, starting at the time you choose.",
+    "hoursValue": "{hours, plural, one {# hour} other {# hours}}",
+    "lineHours": "Care hours",
+    "scopeTitle": "What caretakers do",
+    "scopeBody": "Caretakers help with daily living. They do not give medical treatment, injections or medicines, and they do not diagnose. For medical needs, book a doctor.",
+    "scopeAck": "I understand caretakers give non-clinical help only.",
+    "recurring": "Regular or repeating care plans are not available yet. Request one shift at a time.",
+    "recordTitle": "Care record",
+    "record": {
+      "nonClinical": "Non-clinical, no medical record"
+    },
+    "recordNote": "Caretakers do not write medical records.",
+    "errors": {
+      "tasks": "Choose at least one kind of help.",
+      "hours": "Choose how many hours.",
+      "scopeAcknowledged": "Confirm you understand caretakers give non-clinical help only."
+    }
   }
 }

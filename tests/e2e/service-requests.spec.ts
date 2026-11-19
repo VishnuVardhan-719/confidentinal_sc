@@ -232,3 +232,99 @@ test.describe("lab tests", () => {
     }).toPass({ timeout: 30_000 });
   });
 });
+
+test.describe("caretakers", () => {
+  test("discover: providers show kind, languages, help and hours; PIN filter", async ({ page }) => {
+    await page.goto("/en/patient/caretakers");
+    await expect(page.getByRole("heading", { level: 1, name: "Caretakers at home" })).toBeVisible();
+    await expect(page.getByTestId("service-provider-card")).toHaveCount(3);
+    await expect(page.getByTestId("service-provider-card").first()).toContainText("Independent caretaker");
+    await expect(page.getByTestId("service-provider-card").first()).toContainText("₹500.00");
+    await page.getByLabel("PIN code").fill("500032");
+    await page.getByRole("button", { name: "Search" }).click();
+    await expect(page.getByText("1 provider serving PIN 500032")).toBeVisible();
+    await expectAxeClean(page, "care/list");
+    await expectFitsViewport(page);
+  });
+
+  test("happy path: one non-clinical shift, caretaker accepts, patient cancels", async ({ page }, info) => {
+    test.setTimeout(150_000);
+    const col = column(info.project.name);
+    await page.goto("/en/patient/caretakers");
+    await page.getByRole("link", { name: "Request care: Synthetic caretaker 1" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Request care from Synthetic caretaker 1" })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/They do not give medical treatment, injections or medicines/).first()).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: /Help with bathing/ })).toHaveCount(0);
+    await page.getByRole("button", { name: "Send request" }).click();
+    const summary = page.getByRole("alert").filter({ hasText: /problem/ });
+    await expect(summary).toBeFocused();
+    await expect(summary).toContainText("Choose at least one kind of help.");
+    await expect(summary).toContainText("Choose how many hours.");
+    await expect(summary).toContainText("Confirm you understand caretakers give non-clinical help only.");
+    await page.getByRole("checkbox", { name: "Company and conversation" }).check();
+    await page.getByRole("checkbox", { name: /Reminders to take medicines/ }).check();
+    const timeGroup = page.getByRole("group", { name: "Date and time" });
+    await pickSlot(timeGroup, 1, col);
+    await page.getByLabel("How many hours?").selectOption("3");
+    await page.getByRole("checkbox", { name: "I understand caretakers give non-clinical help only." }).check();
+    await page.getByLabel(/Anything the provider should know/).fill(NOTE);
+    await expect(page.getByTestId("request-price")).toContainText("Care hours");
+    await expect(page.getByTestId("request-price")).toContainText("₹750.00");
+    await expect(page.getByText(/Regular or repeating care plans are not available yet/)).toBeVisible();
+    await page.getByRole("checkbox", { name: "I accept the price and the cancellation policy." }).check();
+    await expectNoPrivateDraft(page);
+    await expectAxeClean(page, "care/form");
+    await expectFitsViewport(page);
+    await sendWithRetry(page, timeGroup, { day: 1, time: col });
+    await expect(page).toHaveURL(/\/en\/patient\/caretakers\/requests\/[0-9a-f-]{36}$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Home care with Synthetic caretaker 1" })).toBeVisible();
+    await waitForAnswer(page, "Synthetic caretaker 1 accepted your request");
+    await expectBadges(page, "Confirmed", "Payment due", "Non-clinical, no medical record");
+    await expect(page.getByRole("region", { name: "Request details" })).toContainText("3 hours");
+    await expect(page.getByText("Company and conversation, Reminders to take medicines (reminding only)")).toBeVisible();
+    await expectAxeClean(page, "care/confirmed");
+    await expectFitsViewport(page);
+    await cancelRequest(page);
+    await expectBadges(page, "Cancelled", "Not started", "Non-clinical, no medical record");
+  });
+
+  test("decline path: the agency declines and nothing is due", async ({ page }, info) => {
+    test.setTimeout(150_000);
+    const col = column(info.project.name);
+    await page.goto("/en/patient/caretakers/request?providerId=00000000-0000-4000-8300-000000000002");
+    await expect(page.getByRole("heading", { level: 1, name: "Request care from Synthetic care agency 2" })).toBeVisible({ timeout: 20_000 });
+    await page.getByRole("checkbox", { name: /Help with bathing/ }).check();
+    const timeGroup = page.getByRole("group", { name: "Date and time" });
+    await pickSlot(timeGroup, 0, col);
+    await page.getByLabel("How many hours?").selectOption("4");
+    await page.getByRole("checkbox", { name: "I understand caretakers give non-clinical help only." }).check();
+    await page.getByRole("checkbox", { name: "I accept the price and the cancellation policy." }).check();
+    await sendWithRetry(page, timeGroup, { day: 0, time: col });
+    await waitForAnswer(page, "Synthetic care agency 2 could not take this request");
+    await expectBadges(page, "Declined", "Not started", "Non-clinical, no medical record");
+    await expect(page.getByRole("complementary", { name: "Price" })).toContainText("₹0.00");
+    await expectAxeClean(page, "care/declined");
+  });
+
+  test("keyboard only: request a care shift without a pointer", async ({ page }, info) => {
+    test.setTimeout(150_000);
+    const last = info.project.name !== "mobile-390";
+    await page.goto("/en/patient/caretakers/request?providerId=00000000-0000-4000-8300-000000000001");
+    await expect(page.getByRole("heading", { level: 1, name: "Request care from Synthetic caretaker 1" })).toBeVisible({ timeout: 20_000 });
+    await tabTo(page, page.getByRole("checkbox", { name: "Help with meals" })); await page.keyboard.press("Space");
+    const dayGroup = page.getByRole("group", { name: "Day", exact: true });
+    await tabTo(page, dayGroup.getByRole("radio").first());
+    await page.keyboard.press("ArrowRight"); await page.keyboard.press("ArrowRight"); await page.keyboard.press("ArrowRight");
+    const timeGroup = page.getByRole("group", { name: /^Time on / });
+    await tabTo(page, timeGroup.getByRole("radio").first()); await page.keyboard.press("Space");
+    if (last) await page.keyboard.press("ArrowLeft");
+    await tabTo(page, page.getByLabel("How many hours?"));
+    await page.keyboard.press("ArrowDown"); await page.keyboard.press("ArrowDown");
+    await expect(page.getByLabel("How many hours?")).not.toHaveValue("");
+    await tabTo(page, page.getByRole("checkbox", { name: "I understand caretakers give non-clinical help only." })); await page.keyboard.press("Space");
+    await tabTo(page, page.getByRole("checkbox", { name: "I accept the price and the cancellation policy." })); await page.keyboard.press("Space");
+    await tabTo(page, page.getByRole("button", { name: "Send request" })); await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/en\/patient\/caretakers\/requests\/[0-9a-f-]{36}$/, { timeout: 20_000 });
+    await expect(page.getByRole("button", { name: "Check for updates" })).toBeVisible({ timeout: 15_000 });
+  });
+});
