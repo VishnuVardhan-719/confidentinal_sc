@@ -93,17 +93,22 @@ select pg_temp.assert_true(public.get_booking(:'booking') ? 'address_snapshot','
 select pg_temp.expect_state(format('select public.advance_visit(%L,''service_completed'',4)',:'booking'),'55000','substate skip denied');
 select public.advance_visit(:'booking','en_route',4);
 select public.advance_visit(:'booking','arrived',5);
-select public.advance_visit(:'booking','service_started',6);
-select public.advance_visit(:'booking','service_completed',7);
+-- P5 DC02: the visit starts only after the doctor verifies the code the patient issues.
+select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000001"}',true);
+select public.issue_arrival_code(:'booking')->>'code' as arrival_code \gset
+select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000002"}',true);
+select pg_temp.assert_true((public.verify_arrival_code(:'booking',:'arrival_code',6)->>'version')::int=7,'arrival verified');
+select public.advance_visit(:'booking','service_started',7);
+select public.advance_visit(:'booking','service_completed',8);
 select pg_temp.assert_true(not booking_private.assigned(:'booking','doctor_visit'),'completed assignment loses operational scope');
 select pg_temp.assert_true(not (public.get_booking(:'booking') ? 'address_snapshot'),'completed provider detail hides address');
-select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',8)',:'booking'),'42501','completed cannot reopen');
+select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',9)',:'booking'),'42501','completed cannot reopen');
 reset role;
 select pg_temp.expect_state(format('update public.bookings set amount_paise=1 where id=%L',:'booking'),'55000','snapshot trigger blocks trusted mutation');
 select pg_temp.expect_state(format('delete from public.booking_events where booking_id=%L',:'booking'),'55000','events immutable even for owner');
 select pg_temp.assert_true((select count(*)=0 from public.resource_reservations where status='active'),'completion releases reservations');
-select pg_temp.assert_true((select count(*)=7 from public.booking_events where booking_id=:'booking'),'complete state/substate trail');
-select pg_temp.assert_true((select count(*)=7 from public.audit_events where target_id=:'booking'),'one audit per transition');
+select pg_temp.assert_true((select count(*)=8 from public.booking_events where booking_id=:'booking'),'complete state/substate trail');
+select pg_temp.assert_true((select count(*)=8 from public.audit_events where target_id=:'booking' and action<>'booking.arrival_code_issued'),'one audit per transition');
 select pg_temp.assert_true((select count(*)=0 from public.notification_outbox where payload::text like '%Synthetic%'),'outbox contains no contact data');
 select 'B01 booking assertions passed; fixtures rolled back' as result;
 \echo 1..1
