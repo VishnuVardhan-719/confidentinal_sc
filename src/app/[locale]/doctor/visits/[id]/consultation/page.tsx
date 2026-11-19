@@ -78,6 +78,8 @@ export default async function ConsultationPage({ params }: PageProps<"/[locale]/
   return (
     <div className="grid gap-10">
       {g.session.synthetic ? <p className="text-sm text-muted">{t("synthetic")}</p> : null}
+      {/* One h1 per page (a11y sweep): breadcrumb + title above the sticky editor context. */}
+      {header}
       <ConsultationEditor
         draft={data.draft}
         visit={data.visit}

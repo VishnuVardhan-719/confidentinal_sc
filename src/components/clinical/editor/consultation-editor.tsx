@@ -238,8 +238,9 @@ export function ConsultationEditor({
 
       <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)]">
         {/* Step rail (desktop) / compact stepper (mobile) */}
-        <nav aria-label={t("editor.steps")} className="lg:sticky lg:top-44 lg:self-start">
-          <ol className="flex gap-2 overflow-x-auto pb-1 lg:grid lg:gap-1 lg:overflow-visible">
+        <nav aria-label={t("editor.steps")} className="min-w-0 lg:sticky lg:top-44 lg:self-start">
+          {/* relative: keeps the sr-only step status spans inside the scroller (they are absolutely positioned). */}
+          <ol className="relative flex gap-2 overflow-x-auto pb-1 lg:grid lg:gap-1 lg:overflow-visible">
             {rail.map((r, i) => (
               <li key={r.id} className="shrink-0">
                 <button

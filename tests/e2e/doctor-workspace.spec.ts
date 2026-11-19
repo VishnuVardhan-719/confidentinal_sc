@@ -251,6 +251,8 @@ test.describe("DC02 arrival code form (booking: today)", () => {
     const input = page.getByLabel(LABEL.codeInput);
     // Wrong codes until the server locks the challenge; each attempt waits for the previous response.
     const verify = page.getByRole("button", { name: LABEL.verify });
+    // Controlled inputs stay disabled until hydration (R-FE-D-40).
+    await expect(input).toBeEnabled();
     for (let i = 0; i < 6 && (await input.isEnabled()); i++) {
       await input.fill("999999");
       await verify.click();
