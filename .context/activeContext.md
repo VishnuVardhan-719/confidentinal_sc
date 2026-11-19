@@ -36,3 +36,8 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
 - Next: run doctor e2e ws-desktop-1280 against servers from .context/ws-serve.mjs (E2E_PORT=3379), fix failures.
 - Then: patient-workspace.spec.ts, patient records/notifications, doctor availability schedule, te/hi, axe, commit.
 
+
+- 68bfa44: doctor-workspace e2e 64/64 (ws-desktop-1280 + ws-mobile-390). Restart servers between runs (fixture world is mutated): Start-Process pwsh .context/restart-ws.ps1 [-NoBuild] then poll .context/restart.log for 'servers up'.
+- Next: patient records/notifications + patient-workspace.spec.ts, doctor availability schedule.
+
+- PHASE4-D3 DONE: doctor+patient workspace e2e 110/110, lint/tsc/vitest(374)/build green. Handoff: .context/handoff-fe-a.md. Open: overlap with feat/fe2-p 4aa02f8 (patient records/notifications).

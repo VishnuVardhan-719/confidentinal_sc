@@ -221,7 +221,8 @@ test.describe("DC02 arrival code form (booking: today)", () => {
   test("en route -> arrived -> numeric 6-digit code input with expiry and attempts", async ({ page }) => {
     await page.goto(path.visit(I.bookingToday));
     await page.getByRole("button", { name: LABEL.onTheWay }).click();
-    await expect(page.getByRole("button", { name: LABEL.arrived })).toBeVisible();
+    // Server round trip + refetch; the button shows "Please wait." meanwhile (slow shared machine).
+    await expect(page.getByRole("button", { name: LABEL.arrived })).toBeVisible({ timeout: 15_000 });
     await page.getByRole("button", { name: LABEL.arrived }).click();
     const input = page.getByLabel(LABEL.codeInput);
     await expect(input).toHaveAttribute("inputmode", "numeric");
