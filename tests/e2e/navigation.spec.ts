@@ -18,7 +18,7 @@ async function expectRealPage(page: Page, href: string) {
  * Routes owned by other workstreams that are not on this branch (REQUESTS R-FE06-06, R-FE07-04):
  * public directory pages and role dashboards/bookings. Every other internal link must resolve.
  */
-const OWNED_ELSEWHERE = /^\/(en|te|hi)\/(doctors|labs|ambulances?|caretakers?|caregivers|services|search)(\/|$|\?)|^\/(en|te|hi)\/(patient|doctor|lab|ambulance|caretaker|admin)\/(dashboard|bookings)/;
+const OWNED_ELSEWHERE = /^\/(en|te|hi)\/(doctors|labs|lab-tests|ambulances?|caretakers?|caregivers|services|search)(\/|$|\?)|^\/(en|te|hi)\/(patient|doctor|lab|ambulance|caretaker|admin)\/(dashboard|bookings)/;
 
 async function internalLinks(page: Page): Promise<string[]> {
   const hrefs = await page.locator("a[href^='/']:visible").evaluateAll((as) => as.map((a) => a.getAttribute("href") ?? ""));
@@ -36,6 +36,9 @@ test.describe("navigation: auth and account pages", () => {
   test("signed-in chrome: My workspace, account pages and sign out all work", async ({ page }) => {
     await signIn(page, ACCOUNTS.patientNew, "/en/account/security");
     await expect(page).toHaveURL("/en/account/security");
+    // The page and its header stream in after the URL changes; wait for both before reading links.
+    await expect(visible(page.getByRole("button", { name: COPY.signOut }))).toBeVisible();
+    await expect(visible(page.getByRole("link", { name: COPY.myWorkspace }))).toBeVisible();
     const links = await internalLinks(page);
     expect(links).toContain("/en/patient/onboarding");
     for (const href of links) await expectRealPage(page, href);

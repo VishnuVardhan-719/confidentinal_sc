@@ -45,7 +45,7 @@ test.describe("review detail and decisions", () => {
   test("shows credential metadata; private document viewer is gated (no URL issued)", async ({ page }) => {
     await signIn(page, ACCOUNTS.verifier);
     await page.goto(`/en/admin/providers/${LAB}`, { waitUntil: "domcontentloaded" });
-    await expect(page.getByText(/licence/i)).toBeVisible();
+    await expect(visible(page.getByText(/licence/i))).toBeVisible();
     await page.getByRole("button", { name: /view document/i }).click();
     await expect(page.getByText(COPY.documentViewerGated)).toBeVisible();
     await expect(page.locator("iframe, embed, object")).toHaveCount(0);
@@ -124,12 +124,16 @@ test.describe("coverage management", () => {
 });
 
 test.describe("admin access control", () => {
-  test("non-admins are denied and see no queue data", async ({ page }) => {
+  test("non-admins are sent to their own landing and see no queue data", async ({ page }) => {
+    test.setTimeout(90_000); // three sign-ins and nine navigations
     for (const account of [ACCOUNTS.patientComplete, ACCOUNTS.doctorActive, ACCOUNTS.labOwner]) {
       await signIn(page, account);
+      // Wrong role: requireRole redirects to the account's own landing page.
+      const landing = new URL(page.url()).pathname;
+      expect(landing).not.toMatch(/^\/en\/admin/);
       for (const path of ["/en/admin/providers", `/en/admin/providers/${LAB}`, "/en/admin/coverage"]) {
         await page.goto(path, { waitUntil: "domcontentloaded" });
-        await expect(page.getByText(COPY.accessDenied)).toBeVisible();
+        await expect(page).toHaveURL(landing);
         await expect(page.getByText(/synthetic diagnostics/i)).toHaveCount(0);
       }
       await page.context().clearCookies();

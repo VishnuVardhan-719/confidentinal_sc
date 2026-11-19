@@ -6,6 +6,9 @@ import { useEffect, useRef } from "react";
 
 export type SummaryError = { fieldId: string; message: string };
 
+const FORM_CONTROL = "input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled])";
+const FOCUSABLE = `${FORM_CONTROL}, button:not([disabled]), [tabindex]:not([tabindex='-1'])`;
+
 /**
  * Lists form errors after a failed submit, takes focus so screen readers announce it, and links each
  * item to its field. Re-focuses whenever `focusKey` changes (e.g. a submit attempt counter).
@@ -43,8 +46,13 @@ export function ErrorSummary({ errors, focusKey }: { errors: SummaryError[]; foc
                 const el = document.getElementById(e.fieldId);
                 if (el) {
                   ev.preventDefault();
-                  el.focus();
-                  el.scrollIntoView({ block: "center" });
+                  // Group errors (fieldset, list editor) point at a non-focusable wrapper: focus its
+                  // first form control, else its first other focusable element.
+                  const target = el.matches(FOCUSABLE)
+                    ? el
+                    : (el.querySelector<HTMLElement>(FORM_CONTROL) ?? el.querySelector<HTMLElement>(FOCUSABLE) ?? el);
+                  target.focus();
+                  target.scrollIntoView({ block: "center" });
                 }
               }}
             >

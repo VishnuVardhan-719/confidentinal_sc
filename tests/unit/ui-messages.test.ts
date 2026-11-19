@@ -14,6 +14,8 @@ const SAME_IN_ALL_LOCALES = new Set([
   "common.locales.te",
   "common.locales.hi",
   "common.footer.columns.company",
+  // Pure placeholder pattern with no words to translate.
+  "onboarding.adminReview.decision.dialogTitle",
 ]);
 
 type Json = { [k: string]: string | Json };
