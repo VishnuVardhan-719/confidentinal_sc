@@ -7,7 +7,7 @@
 --  * doctor_visits.substate gains arrival_verified (DC02), absence_reported, interrupted;
 --  * doctor reason codes and their doctor pairs, added to the shared registry by insert only
 --    (contract §9.4: address_not_found, declined_at_door, doctor_unable, patient_requested_stop;
---    plus arrival_verified for DC02, which the contract table predates);
+--    plus arrival_verified and arrival_assisted for DC02, which the contract table predates);
 --  * doctor_private.guard_visit: substate edges, booking state and a matching event (design §4.3);
 --  * doctor_private.guard_doctor_booking: a doctor booking may enter in_progress only after the
 --    arrival code was verified. It never constrains terminal states, so the shared ops close
@@ -23,7 +23,8 @@ do $$ declare o text; begin
   'booking_private.replay(uuid,text,uuid,text)','booking_private.record_request(uuid,text,uuid,text,uuid,integer)',
   'booking_private.closeout_assignee(uuid)','booking_private.assignee_finish(uuid,text,text,uuid)',
   'booking_private.finish_assignments(uuid)','booking_private.open_exception(uuid,text,text)',
-  'booking_private.person_purpose(text)','booking_private.transition(uuid,text,text,uuid)'] loop
+  'booking_private.person_purpose(text)','booking_private.transition(uuid,text,text,uuid)',
+  'booking_private.ops_actor(uuid)','booking_private.gate_state(text)'] loop
   if to_regprocedure(o) is null then raise exception 'P5 doctor block requires shared function %',o; end if;
  end loop;
  foreach o in array array['booking_private.reason_codes','booking_private.category_reasons','booking_private.feature_gates',
@@ -42,13 +43,14 @@ alter table public.doctor_visits add constraint doctor_visits_substate_check che
  ('scheduled','en_route','arrived','arrival_verified','service_started','service_completed','absence_reported','interrupted'));
 
 insert into booking_private.reason_codes(code) values
- ('address_not_found'),('declined_at_door'),('doctor_unable'),('patient_requested_stop'),('arrival_verified')
+ ('address_not_found'),('declined_at_door'),('doctor_unable'),('patient_requested_stop'),('arrival_verified'),('arrival_assisted')
  on conflict do nothing;
--- arrival_verified follows arrived, so cancellation is already blocked; the flag is set so the
+-- arrival_verified and arrival_assisted (support-assisted fallback, 001630) follow arrived,
+-- so cancellation is already blocked; the flag is set so the
 -- table reads as the full cancellation rule (contract §9.4).
 insert into booking_private.category_reasons(category,code,blocks_cancel) values
  ('doctor','address_not_found',false),('doctor','declined_at_door',false),('doctor','doctor_unable',false),
- ('doctor','patient_requested_stop',false),('doctor','arrival_verified',true)
+ ('doctor','patient_requested_stop',false),('doctor','arrival_verified',true),('doctor','arrival_assisted',true)
  on conflict do nothing;
 
 -- Interruption codes by phase. Kept in one place so commands and guards agree.
@@ -82,7 +84,7 @@ declare b public.bookings; expected_state text; begin
  if b.state<>expected_state then raise exception using errcode='55000',message='invalid_transition'; end if;
  -- The command must have written the transition for this exact booking version first.
  if not exists(select 1 from public.booking_events e where e.booking_id=b.id and e.aggregate_version=b.version
-  and (e.reason=new.substate or (new.substate='interrupted' and e.reason=any(doctor_private.pre_start_reasons()||doctor_private.in_visit_reasons()))))
+  and (e.reason=new.substate or (new.substate='arrival_verified' and e.reason='arrival_assisted') or (new.substate='interrupted' and e.reason=any(doctor_private.pre_start_reasons()||doctor_private.in_visit_reasons()))))
  then raise exception using errcode='55000',message='invalid_transition'; end if;
  return new;
 end $$;

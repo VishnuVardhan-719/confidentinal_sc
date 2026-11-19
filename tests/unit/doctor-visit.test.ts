@@ -9,7 +9,11 @@ import { POST as absence } from "@/app/api/bookings/[id]/absence/route";
 import { POST as interrupt } from "@/app/api/bookings/[id]/interrupt/route";
 import { POST as arrivalCode } from "@/app/api/bookings/[id]/arrival-code/route";
 import { POST as verifyArrival } from "@/app/api/bookings/[id]/verify-arrival/route";
-import { interruptSchema, verifyArrivalSchema } from "@/lib/validation/booking";
+import { POST as openFallback } from "@/app/api/bookings/[id]/arrival-fallback/route";
+import { POST as confirmFallback } from "@/app/api/bookings/[id]/arrival-fallback/confirm/route";
+import { GET as visit } from "@/app/api/bookings/[id]/visit/route";
+import { GET as myVisits } from "@/app/api/doctor/visits/route";
+import { arrivalFallbackSchema, doctorVisitsQuerySchema, interruptSchema, verifyArrivalSchema } from "@/lib/validation/booking";
 
 const id = "10000000-0000-4000-8000-000000000001";
 const key = "20000000-0000-4000-8000-000000000002";
@@ -21,6 +25,7 @@ const keyed = [
   ["en-route", enRoute, { expectedVersion: 4 }], ["arrive", arrive, { expectedVersion: 4 }], ["start", start, { expectedVersion: 4 }],
   ["complete", complete, { expectedVersion: 4 }], ["absence", absence, { expectedVersion: 4 }],
   ["interrupt", interrupt, { expectedVersion: 4, reason: "doctor_unable" }], ["verify-arrival", verifyArrival, { expectedVersion: 4, code: "012345" }],
+  ["arrival-fallback", openFallback, { expectedVersion: 4, reason: "code_lockout" }], ["arrival-fallback/confirm", confirmFallback, { expectedVersion: 4 }],
 ] as const;
 
 beforeEach(() => {
@@ -81,13 +86,13 @@ describe("doctor visit routes", () => {
       expect(await res.json()).toEqual({ error: { code: "feature_unavailable" } });
     }
   });
-  it("arrival-code returns the code once with no-store and takes no input", async () => {
+  it("arrival-code passes the request key and returns the code with no-store", async () => {
     mock.rpc.mockResolvedValue({ data: { code: "012345", expires_at: "2027-01-01T04:05:00Z" }, error: null });
-    const res = await arrivalCode(post(undefined, {}), ctx);
+    const res = await arrivalCode(post(), ctx);
     expect(res.status).toBe(200);
     expect(res.headers.get("Cache-Control")).toBe("private, no-store");
     expect(await res.json()).toEqual({ code: "012345", expiresAt: "2027-01-01T04:05:00Z" });
-    expect(mock.rpc).toHaveBeenCalledWith("issue_arrival_code", { p_booking_id: id });
+    expect(mock.rpc).toHaveBeenCalledWith("issue_arrival_code", { p_booking_id: id, p_request_key: key });
   });
   it("verify-arrival returns the version on success and 422 with attempts left on a wrong code", async () => {
     mock.rpc.mockResolvedValueOnce({ data: { verified: true, version: 7 }, error: null });
@@ -105,7 +110,7 @@ describe("doctor visit routes", () => {
   it.each([["53300", 429], ["55000", 409], ["42501", 403], ["40001", 409], ["22023", 422], ["P0002", 404], ["XX000", 503]])
   ("maps %s to %i without the database message", async (code, status) => {
     mock.rpc.mockResolvedValue({ data: null, error: { code, message: "arrival_code_limit private detail" } });
-    const res = await arrivalCode(post(undefined, {}), ctx);
+    const res = await arrivalCode(post(), ctx);
     expect(res.status).toBe(status);
     expect(JSON.stringify(await res.json())).not.toContain("private detail");
   });
@@ -116,5 +121,58 @@ describe("doctor visit routes", () => {
       for (const [, handler, body] of keyed) expect((await handler(post(body), ctx)).status).not.toBe(404);
       expect(mock.rpc).toHaveBeenCalledTimes(keyed.length);
     } finally { vi.unstubAllEnvs(); }
+  });
+  it("arrival-code requires a key and an empty body before any database call", async () => {
+    expect((await arrivalCode(post(undefined, {}), ctx)).status).toBe(422);
+    expect((await arrivalCode(post({ code: "123456" }), ctx)).status).toBe(422);
+    expect((await arrivalCode(post({}), ctx)).status).toBe(422);
+    expect(mock.rpc).not.toHaveBeenCalled();
+  });
+  it("arrival fallback routes pass only the documented arguments", async () => {
+    mock.rpc.mockResolvedValueOnce({ data: { id: key, expires_at: "2027-01-01T04:10:00Z" }, error: null });
+    const opened = await openFallback(post({ expectedVersion: 6, reason: "code_unavailable" }), ctx);
+    expect(opened.status).toBe(201);
+    expect(await opened.json()).toEqual({ id: key, expiresAt: "2027-01-01T04:10:00Z" });
+    expect(mock.rpc).toHaveBeenLastCalledWith("open_arrival_fallback", { p_booking_id: id, p_expected_version: 6, p_reason: "code_unavailable", p_request_key: key });
+    mock.rpc.mockResolvedValueOnce({ data: 7, error: null });
+    const confirmed = await confirmFallback(post({ expectedVersion: 6 }), ctx);
+    expect(await confirmed.json()).toEqual({ version: 7 });
+    expect(mock.rpc).toHaveBeenLastCalledWith("confirm_arrival_fallback", { p_booking_id: id, p_expected_version: 6, p_request_key: key });
+    for (const reason of ["other", "doctor_request", "", "skip"]) expect(arrivalFallbackSchema.safeParse({ expectedVersion: 6, reason }).success).toBe(false);
+    expect((await openFallback(post({ expectedVersion: 6, reason: "code_lockout", approvedBy: "x" }), ctx)).status).toBe(422);
+    expect((await confirmFallback(post({ expectedVersion: 6, code: "123456" }), ctx)).status).toBe(422);
+    expect(mock.rpc).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("doctor read routes", () => {
+  const get = (url: string) => new Request(url, { method: "GET" });
+  it("visit reads the patient projection for the route id only", async () => {
+    mock.rpc.mockResolvedValue({ data: { id, state: "confirmed" }, error: null });
+    const res = await visit(get(`http://localhost/api/bookings/${id}/visit`), ctx);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(await res.json()).toEqual({ visit: { id, state: "confirmed" } });
+    expect(mock.rpc).toHaveBeenCalledWith("get_doctor_visit", { p_booking_id: id });
+    mock.rpc.mockResolvedValue({ data: null, error: { code: "P0002", message: "not_found" } });
+    expect((await visit(get(`http://localhost/api/bookings/${id}/visit`), ctx)).status).toBe(404);
+    expect((await visit(get("http://localhost/api/bookings/x/visit"), { params: Promise.resolve({ id: "not-a-uuid" }) })).status).toBe(422);
+  });
+  it("doctor visits passes the limit and the cursor pair", async () => {
+    mock.rpc.mockResolvedValue({ data: [], error: null });
+    const res = await myVisits(get("http://localhost/api/doctor/visits"));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ items: [] });
+    expect(mock.rpc).toHaveBeenLastCalledWith("list_my_doctor_visits", { p_limit: 20, p_after_start: null, p_after_id: null });
+    await myVisits(get(`http://localhost/api/doctor/visits?limit=5&afterStart=2027-01-01T04:00:00Z&afterId=${id}`));
+    expect(mock.rpc).toHaveBeenLastCalledWith("list_my_doctor_visits", { p_limit: 5, p_after_start: "2027-01-01T04:00:00Z", p_after_id: id });
+  });
+  it("doctor visits rejects bad limits, half cursors, unknown and repeated parameters", async () => {
+    for (const q of ["limit=0", "limit=51", "limit=x", "afterStart=2027-01-01T04:00:00Z", `afterId=${id}`,
+      "afterStart=yesterday&afterId=" + id, "providerId=" + id, "limit=5&limit=6"]) {
+      expect((await myVisits(get("http://localhost/api/doctor/visits?" + q))).status).toBe(422);
+    }
+    expect(mock.rpc).not.toHaveBeenCalled();
+    expect(doctorVisitsQuerySchema.safeParse({ afterStart: "2027-01-01T04:00:00Z", afterId: id }).success).toBe(true);
   });
 });

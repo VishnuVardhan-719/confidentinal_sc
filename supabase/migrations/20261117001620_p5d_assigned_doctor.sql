@@ -11,6 +11,7 @@
 --    for completion and in-visit interruption, through booking_private.assignee_finish, which
 --    opens the shared closed_while_ineligible exception when the assignee predicate fails.
 -- guard_booking, the transition matrix and the actor kinds are the shared block's (001560).
+-- Also here: the doctor self-dealing check at accept (below).
 begin;
 
 create function doctor_private.assignee(p_booking_id uuid) returns boolean
@@ -31,6 +32,24 @@ language sql volatile security definer set search_path='' as $$
   and a.status='active' and a.purpose='doctor_visit' and a.assigned_profile_id=auth.uid());
 $$;
 
+-- Self-dealing (design B-6, first half): a provider may not assign a doctor who is the
+-- patient (patients.self_profile_id) or who requested the booking. Category-scoped trigger on
+-- the accept transition (contract §1 rule 1, the same hook shape as care's accept_check in
+-- §7.2), so the shared accept_booking is not replaced. The built accept inserts the
+-- assignments before it moves the booking to `accepted`, so they are visible here. The
+-- second half of B-6 (overdue doctor is busy) is the shared reservation guard (§11).
+create function doctor_private.guard_doctor_accept() returns trigger language plpgsql security definer set search_path='' as $$
+begin
+ if exists(select 1 from public.booking_assignments a join public.patients pt on pt.id=old.patient_id
+  where a.booking_id=old.id and a.status='active' and a.assigned_profile_id is not null
+  and (a.assigned_profile_id=pt.self_profile_id or a.assigned_profile_id=old.requester_profile_id)) then
+  raise exception using errcode='42501',message='self_assignment'; end if;
+ return new;
+end $$;
+create trigger p5d_doctor_accept_guard before update on public.bookings for each row
+ when (old.category='doctor' and old.state='requested' and new.state='accepted') execute function doctor_private.guard_doctor_accept();
+
 revoke all on function doctor_private.assignee(uuid) from public, anon, authenticated, service_role;
 revoke all on function doctor_private.closeout(uuid) from public, anon, authenticated, service_role;
+revoke all on function doctor_private.guard_doctor_accept() from public, anon, authenticated, service_role;
 commit;

@@ -8,7 +8,9 @@ begin;
 -- 1. Catalog: definer, empty search_path, no anon/PUBLIC/service_role execution.
 do $$ declare f regprocedure; begin
  foreach f in array array['public.advance_visit(uuid,text,integer,uuid)','public.report_patient_absent(uuid,integer,uuid)',
-  'public.interrupt_doctor_visit(uuid,integer,text,uuid)','public.issue_arrival_code(uuid)','public.verify_arrival_code(uuid,text,integer,uuid)']::regprocedure[] loop
+  'public.interrupt_doctor_visit(uuid,integer,text,uuid)','public.issue_arrival_code(uuid,uuid)','public.verify_arrival_code(uuid,text,integer,uuid)',
+  'public.open_arrival_fallback(uuid,integer,text,uuid)','public.confirm_arrival_fallback(uuid,integer,uuid)',
+  'public.list_my_doctor_visits(integer,timestamptz,uuid)','public.get_doctor_visit(uuid)']::regprocedure[] loop
   perform pg_temp.assert_true((select prosecdef and exists(select 1 from unnest(proconfig) x where x in ('search_path=""','search_path=')) from pg_proc where oid=f),f||' definer with empty search path');
   perform pg_temp.assert_true(not has_function_privilege('anon',f,'EXECUTE'),f||' no guest execution');
   perform pg_temp.assert_true(not has_function_privilege('public',f,'EXECUTE'),f||' no PUBLIC execution');
@@ -27,7 +29,7 @@ select pg_temp.assert_true(not has_schema_privilege('authenticated','doctor_priv
  and not has_schema_privilege('anon','doctor_private','USAGE'),'doctor_private schema closed to API roles');
 do $$ declare r text; t text; begin
  foreach r in array array['anon','authenticated','service_role'] loop
-  foreach t in array array['doctor_private.arrival_challenges','doctor_private.arrival_key'] loop
+  foreach t in array array['doctor_private.arrival_challenges','doctor_private.arrival_key','doctor_private.verify_failures','doctor_private.arrival_fallbacks'] loop
    perform pg_temp.assert_true(not has_table_privilege(r,t,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'),r||' no privilege on '||t);
   end loop;
   perform pg_temp.assert_true(not has_table_privilege(r,'public.doctor_visits','INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER,REFERENCES'),r||' no writes on doctor_visits');
@@ -37,8 +39,8 @@ select pg_temp.assert_true((select array_agg(column_name::text order by column_n
  where table_schema='doctor_private' and table_name='arrival_challenges')
  =array['assignment_id','attempts','booking_id','code_hmac','doctor_profile_id','ended_at','expires_at','id','issued_at','issued_to_profile_id','salt','status'],
  'challenge table stores no plaintext code column');
-select pg_temp.assert_true((select count(*)=5 from booking_private.category_reasons where category='doctor'
- and code in ('address_not_found','declined_at_door','doctor_unable','patient_requested_stop','arrival_verified')),'doctor reason pairs registered');
+select pg_temp.assert_true((select count(*)=6 from booking_private.category_reasons where category='doctor'
+ and code in ('address_not_found','declined_at_door','doctor_unable','patient_requested_stop','arrival_verified','arrival_assisted')),'doctor reason pairs registered');
 select pg_temp.assert_true((select count(*)=7 from booking_private.category_reasons where category='doctor'
  and code in ('en_route','arrived','service_started','service_completed','absence_reported','unsafe_conditions','ended_for_emergency')),'shared doctor reason pairs present');
 select pg_temp.assert_true((select blocks_cancel from booking_private.category_reasons where category='doctor' and code='arrival_verified'),'arrival_verified blocks cancel');
@@ -55,15 +57,15 @@ select pg_temp.new_visit(6) as v7 \gset
 select pg_temp.new_visit(7) as v8 \gset
 select pg_temp.new_visit(8) as v9 \gset
 reset role;
-select pg_temp.move_into_window(x::uuid) from unnest(array[:'v1',:'v2',:'v3',:'v4',:'v5',:'v6',:'v7',:'v8',:'v9']) x;
+select pg_temp.move_into_window(x::uuid,(n-1)::integer) from unnest(array[:'v1',:'v2',:'v3',:'v4',:'v5',:'v6',:'v7',:'v8',:'v9']) with ordinality u(x,n);
 select pg_temp.assert_true((select count(*)=9 and bool_and(substate='scheduled') from public.doctor_visits
  where booking_id in (:'v1',:'v2',:'v3',:'v4',:'v5',:'v6',:'v7',:'v8',:'v9')),'accepted visits start scheduled');
 set local role authenticated;
 
 -- 3. DC01: wrong actors cannot drive any doctor command (v9, scheduled, in window).
 select set_config('p5d.v9',:'v9',true);
-do $$ declare u text; begin
- foreach u in array array['b1000000-0000-4000-8000-000000000001','b1000000-0000-4000-8000-000000000003','b1000000-0000-4000-8000-000000000005'] loop
+do $$ declare u uuid; begin
+ foreach u in array array['b1000000-0000-4000-8000-000000000001','b1000000-0000-4000-8000-000000000003','b1000000-0000-4000-8000-000000000005']::uuid[] loop
   perform pg_temp.as_user(u);
   perform pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4,gen_random_uuid())',current_setting('p5d.v9')),'42501',u||' en_route denied');
   perform pg_temp.expect_state(format('select public.report_patient_absent(%L,4,gen_random_uuid())',current_setting('p5d.v9')),'42501',u||' absence denied');
@@ -72,9 +74,9 @@ do $$ declare u text; begin
  end loop;
 end $$;
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000003');
-select pg_temp.expect_state(format('select public.issue_arrival_code(%L)',:'v9'),'42501','outsider cannot issue a code');
+select pg_temp.expect_state(format('select public.issue_arrival_code(%L,gen_random_uuid())',:'v9'),'42501','outsider cannot issue a code');
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000002');
-select pg_temp.expect_state(format('select public.issue_arrival_code(%L)',:'v9'),'42501','doctor cannot issue a code to themself');
+select pg_temp.expect_state(format('select public.issue_arrival_code(%L,gen_random_uuid())',:'v9'),'42501','doctor cannot issue a code to themself');
 select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4,null)',:'v9'),'22023','request key required');
 select pg_temp.expect_state(format('select public.advance_visit(%L,''paid'',4,gen_random_uuid())',:'v9'),'22023','unknown substate rejected before any lookup');
 select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000002","is_anonymous":true}',true);
@@ -114,25 +116,32 @@ select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',
 select pg_temp.expect_state(format('select public.cancel_booking(%L,5,''provider_unavailable'')',:'v1'),'55000','scheduler/doctor cannot cancel after en_route');
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
 select pg_temp.expect_state(format('select public.cancel_booking(%L,5,''patient_request'')',:'v1'),'55000','patient cannot cancel after en_route');
-select pg_temp.expect_state(format('select public.issue_arrival_code(%L)',:'v1'),'55000','no code before the doctor reports arrival');
+select pg_temp.expect_state(format('select public.issue_arrival_code(%L,gen_random_uuid())',:'v1'),'55000','no code before the doctor reports arrival');
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000002');
 select pg_temp.assert_true(public.advance_visit(:'v1','arrived',5,:'k_ar')=6,'arrived');
 select pg_temp.expect_state(format('select public.advance_visit(%L,''service_started'',6,gen_random_uuid())',:'v1'),'55000','cannot start before arrival is verified');
 select pg_temp.expect_state(format('select public.verify_arrival_code(%L,''123456'',6,gen_random_uuid())',:'v1'),'55000','verify without an issued code');
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
-select public.issue_arrival_code(:'v1') as issued1 \gset
+select gen_random_uuid() as k_is \gset
+select public.issue_arrival_code(:'v1',:'k_is') as issued1 \gset
 select (:'issued1'::jsonb)->>'code' as code1 \gset
 select lpad((((:'code1')::int+1)%1000000)::text,6,'0') as wrong1 \gset
 select pg_temp.assert_true(:'code1' ~ '^[0-9]{6}$','six digit code');
 select pg_temp.assert_true(((:'issued1'::jsonb)->>'expires_at')::timestamptz between now()+interval '4 minutes' and clock_timestamp()+interval '5 minutes','five minute validity');
-select pg_temp.expect_state(format('select public.issue_arrival_code(%L)',:'v1'),'53300','60 second cooldown between codes');
+select pg_temp.assert_true(public.issue_arrival_code(:'v1',:'k_is')=:'issued1'::jsonb,'issuance replay with the same key returns the same code (H3)');
+select pg_temp.expect_state(format('select public.issue_arrival_code(%L,gen_random_uuid())',:'v1'),'53300','60 second cooldown between codes');
+select pg_temp.expect_state(format('select public.issue_arrival_code(%L,%L)',gen_random_uuid(),:'k_is'),'40001','issuance key reused for another booking conflicts');
 select pg_temp.expect_state(format('select public.verify_arrival_code(%L,%L,6,gen_random_uuid())',:'v1',:'code1'),'42501','patient cannot verify their own code');
+select pg_temp.as_user('b1000000-0000-4000-8000-000000000002');
+select pg_temp.expect_state(format('select public.issue_arrival_code(%L,%L)',:'v1',:'k_is'),'42501','keys are per actor: the doctor gets an ordinary, denied issuance');
+select pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
 reset role;
 select pg_temp.assert_true((select count(*)=1 and bool_and(status='active' and attempts=0 and length(code_hmac)=32
  and position(convert_to(:'code1','UTF8') in code_hmac)=0 and doctor_profile_id='b1000000-0000-4000-8000-000000000002')
- from doctor_private.arrival_challenges where booking_id=:'v1'),'one hashed challenge bound to the assigned doctor');
-select pg_temp.assert_true((select count(*)=1 from public.audit_events where target_id=:'v1' and action='booking.arrival_code_issued'),'issuance audited');
+ from doctor_private.arrival_challenges where booking_id=:'v1'),'one hashed challenge bound to the assigned doctor; the replay issued nothing');
+select pg_temp.assert_true((select count(*)=1 from public.audit_events where target_id=:'v1' and action='booking.arrival_code_issued'),'issuance audited once');
 select pg_temp.assert_true((select count(*)=0 from public.notification_outbox where booking_id=:'v1' and payload::text like '%'||:'code1'||'%'),'outbox never carries the code');
+select pg_temp.assert_true((select count(*)=0 from public.idempotency_requests where request_hash like '%'||:'code1'||'%'),'replay ledger never carries the code');
 set local role authenticated;
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000003');
 select pg_temp.expect_state(format('select public.verify_arrival_code(%L,%L,6,gen_random_uuid())',:'v1',:'code1'),'42501','outsider with the right code denied');
@@ -140,17 +149,21 @@ select pg_temp.as_user('b1000000-0000-4000-8000-000000000002');
 select pg_temp.expect_state(format('select public.verify_arrival_code(%L,''12345'',6,gen_random_uuid())',:'v1'),'22023','five digits rejected');
 select pg_temp.expect_state(format('select public.verify_arrival_code(%L,''12a456'',6,gen_random_uuid())',:'v1'),'22023','non-digits rejected');
 select pg_temp.expect_state(format('select public.verify_arrival_code(%L,%L,5,gen_random_uuid())',:'v1',:'code1'),'40001','stale verify');
-select pg_temp.assert_true(public.verify_arrival_code(:'v1',:'wrong1',6,gen_random_uuid())='{"verified":false,"attempts_remaining":4}'::jsonb,'wrong code counted');
+select gen_random_uuid() as k_wr \gset
+select pg_temp.assert_true(public.verify_arrival_code(:'v1',:'wrong1',6,:'k_wr')='{"verified":false,"attempts_remaining":4}'::jsonb,'wrong code counted');
+select pg_temp.assert_true(public.verify_arrival_code(:'v1',:'wrong1',6,:'k_wr')='{"verified":false,"attempts_remaining":4}'::jsonb,'failed verification replays its outcome (M1)');
+select pg_temp.expect_state(format('select public.verify_arrival_code(%L,%L,6,%L)',:'v1',:'code1',:'k_wr'),'40001','a failed key cannot be reused with another code');
 reset role;
-select pg_temp.assert_true((select attempts=1 and status='active' from doctor_private.arrival_challenges where booking_id=:'v1'),'failed attempt persisted');
-select pg_temp.assert_true((select count(*)=1 from public.audit_events where target_id=:'v1' and action='booking.arrival_code_failed'),'failed attempt audited');
+select pg_temp.assert_true((select attempts=1 and status='active' from doctor_private.arrival_challenges where booking_id=:'v1'),'failed attempt persisted once');
+select pg_temp.assert_true((select count(*)=1 from public.audit_events where target_id=:'v1' and action='booking.arrival_code_failed'),'failed attempt audited once');
+select pg_temp.assert_true((select count(*)=1 from doctor_private.verify_failures where booking_id=:'v1'),'one failure record');
 select pg_temp.assert_true(pg_temp.sub(:'v1')='arrived' and (select version from public.bookings where id=:'v1')=6,'wrong code changes no booking state');
 set local role authenticated;
 select pg_temp.assert_true(public.verify_arrival_code(:'v1',:'code1',6,:'k_ve')='{"verified":true,"version":7}'::jsonb,'right code verifies');
 select pg_temp.assert_true(public.verify_arrival_code(:'v1',:'code1',6,:'k_ve')='{"verified":true,"version":7}'::jsonb,'verify replay returns the same result');
 select pg_temp.expect_state(format('select public.verify_arrival_code(%L,%L,6,%L)',:'v1',:'wrong1',:'k_ve'),'40001','verify key reused with another code conflicts');
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
-select pg_temp.expect_state(format('select public.issue_arrival_code(%L)',:'v1'),'55000','no new code after verification');
+select pg_temp.expect_state(format('select public.issue_arrival_code(%L,gen_random_uuid())',:'v1'),'55000','no new code after verification');
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000002');
 select pg_temp.expect_state(format('select public.verify_arrival_code(%L,%L,7,gen_random_uuid())',:'v1',:'code1'),'55000','consumed code cannot be reused');
 select pg_temp.assert_true(public.advance_visit(:'v1','service_started',7,:'k_st')=8,'service_started');
@@ -183,14 +196,14 @@ set local role authenticated;
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000002');
 select pg_temp.assert_true(public.advance_visit(:'v2','en_route',4,gen_random_uuid())=5 and public.advance_visit(:'v2','arrived',5,gen_random_uuid())=6,'v2 arrived');
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
-select public.issue_arrival_code(:'v2')->>'code' as c2a \gset
+select public.issue_arrival_code(:'v2',gen_random_uuid())->>'code' as c2a \gset
 reset role;
 select pg_temp.age_codes(:'v2',interval '6 minutes');
 set local role authenticated;
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000002');
 select pg_temp.expect_state(format('select public.verify_arrival_code(%L,%L,6,gen_random_uuid())',:'v2',:'c2a'),'55000','expired code rejected');
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
-select public.issue_arrival_code(:'v2')->>'code' as c2b \gset
+select public.issue_arrival_code(:'v2',gen_random_uuid())->>'code' as c2b \gset
 select lpad((((:'c2b')::int+1)%1000000)::text,6,'0') as w2b \gset
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000002');
 select pg_temp.assert_true((public.verify_arrival_code(:'v2',:'w2b',6,gen_random_uuid())->>'attempts_remaining')::int=4-n,'attempt '||(n+1)) from generate_series(0,3) n;
@@ -203,15 +216,15 @@ select pg_temp.assert_true((select count(*)=1 from public.audit_events where tar
 select pg_temp.age_codes(:'v2',interval '2 minutes');
 set local role authenticated;
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
-select pg_temp.assert_true(public.issue_arrival_code(:'v2') ? 'code','third code');
+select pg_temp.assert_true(public.issue_arrival_code(:'v2',gen_random_uuid()) ? 'code','third code');
 reset role;
 select pg_temp.age_codes(:'v2',interval '2 minutes');
 set local role authenticated;
-select pg_temp.assert_true(public.issue_arrival_code(:'v2') ? 'code','fourth code (third regeneration)');
+select pg_temp.assert_true(public.issue_arrival_code(:'v2',gen_random_uuid()) ? 'code','fourth code (third regeneration)');
 reset role;
 select pg_temp.age_codes(:'v2',interval '2 minutes');
 set local role authenticated;
-select pg_temp.expect_state(format('select public.issue_arrival_code(%L)',:'v2'),'53300','no fourth regeneration');
+select pg_temp.expect_state(format('select public.issue_arrival_code(%L,gen_random_uuid())',:'v2'),'53300','no fourth regeneration');
 select gen_random_uuid() as k_v2 \gset
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000002');
 select pg_temp.expect_state(format('select public.interrupt_doctor_visit(%L,6,''patient_requested_stop'',gen_random_uuid())',:'v2'),'22023','in-visit reason before start rejected');
@@ -254,11 +267,11 @@ select pg_temp.assert_true(public.advance_visit(:'v4','en_route',4,gen_random_uu
 select pg_temp.expect_state(format('select public.interrupt_doctor_visit(%L,5,null,gen_random_uuid())',:'v4'),'22023','null reason rejected');
 select pg_temp.assert_true(public.interrupt_doctor_visit(:'v4',5,'address_not_found',gen_random_uuid())=6,'pre-start interruption');
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
-select pg_temp.expect_state(format('select public.issue_arrival_code(%L)',:'v5'),'55000','no code while scheduled');
+select pg_temp.expect_state(format('select public.issue_arrival_code(%L,gen_random_uuid())',:'v5'),'55000','no code while scheduled');
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000002');
 select pg_temp.assert_true(public.advance_visit(:'v5','en_route',4,gen_random_uuid())=5 and public.advance_visit(:'v5','arrived',5,gen_random_uuid())=6,'v5 arrived');
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
-select public.issue_arrival_code(:'v5')->>'code' as c5 \gset
+select public.issue_arrival_code(:'v5',gen_random_uuid())->>'code' as c5 \gset
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000002');
 select pg_temp.assert_true((public.verify_arrival_code(:'v5',:'c5',6,gen_random_uuid())->>'version')::int=7
  and public.advance_visit(:'v5','service_started',7,gen_random_uuid())=8,'v5 started');
@@ -274,8 +287,8 @@ select pg_temp.as_user('b1000000-0000-4000-8000-000000000002');
 select pg_temp.assert_true(public.advance_visit(:'v6','en_route',4,gen_random_uuid())=5 and public.advance_visit(:'v6','arrived',5,gen_random_uuid())=6
  and public.advance_visit(:'v7','en_route',4,gen_random_uuid())=5 and public.advance_visit(:'v7','arrived',5,gen_random_uuid())=6,'v6 and v7 arrived');
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
-select public.issue_arrival_code(:'v6')->>'code' as c6 \gset
-select public.issue_arrival_code(:'v7')->>'code' as c7 \gset
+select public.issue_arrival_code(:'v6',gen_random_uuid())->>'code' as c6 \gset
+select public.issue_arrival_code(:'v7',gen_random_uuid())->>'code' as c7 \gset
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000002');
 select pg_temp.assert_true((public.verify_arrival_code(:'v6',:'c6',6,gen_random_uuid())->>'version')::int=7 and public.advance_visit(:'v6','service_started',7,gen_random_uuid())=8
  and (public.verify_arrival_code(:'v7',:'c7',6,gen_random_uuid())->>'version')::int=7 and public.advance_visit(:'v7','service_started',7,gen_random_uuid())=8,'v6 and v7 started');
