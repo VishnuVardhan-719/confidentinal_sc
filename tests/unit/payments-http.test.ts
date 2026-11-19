@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { IdentityError } from "@/lib/auth/identity";
 const mock = vi.hoisted(() => ({ rpc: vi.fn(), session: vi.fn() }));
 vi.mock("@/lib/auth/http", async original => ({ ...await original<typeof import("@/lib/auth/http")>(), session: mock.session }));
+vi.mock("next/server", async original => ({ ...await original<typeof import("next/server")>(), connection: async () => {} }));
 import { paymentRoute } from "@/lib/payments/http";
 
 const id = "10000000-0000-4000-8000-000000000001";
