@@ -1,3 +1,4 @@
+import { operationsNow } from "@/modules/admin/clock";
 import { fail, ok } from "@/lib/api/result";
 import { isEnabled } from "@/lib/feature-flags";
 import { getAuditApi } from "@/modules/audit";
@@ -32,7 +33,7 @@ import {
 
 /** Server-side route loaders for the admin area. The route guard has already checked the capability. */
 
-const clock = (ctx: AdminLoaderContext) => (ctx.now ? ctx.now() : new Date());
+const clock = (ctx: AdminLoaderContext) => (ctx.now ? ctx.now() : operationsNow(ctx.env));
 const api = (ctx: AdminLoaderContext) => getAdminApi({ env: ctx.env, principal: ctx.principal, now: ctx.now });
 
 /** Real queue counts only, for capabilities the principal holds. No invented totals. */

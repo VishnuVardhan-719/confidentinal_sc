@@ -13,7 +13,8 @@ import type {
   ReportDecisionInput,
 } from "./types";
 
-export type LabOrderQueue = "pending" | "today" | "processing" | "exceptions";
+/** `scheduled` lists every scheduled or in-progress collection on any day, so no confirmed order is missing from all queues. */
+export type LabOrderQueue = "pending" | "today" | "scheduled" | "processing" | "exceptions";
 
 /**
  * Typed lab module API. Two adapters: http (contracts, proposed) and fixture

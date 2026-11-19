@@ -1,6 +1,6 @@
 import type { ActionResult } from "./action-result";
 import type { AreaAccess, GuardSession, WorkspaceLoaderContext } from "./access";
-import { getOperationsSession, requestedWorkspaceKey } from "./session";
+import { authorizeOperationsSession, requestedWorkspaceKey } from "./session";
 import type { ProviderArea } from "./workspace";
 
 /**
@@ -11,7 +11,7 @@ export async function authorizeAreaAction(
   area: ProviderArea,
   decide: (session: GuardSession, workspaceKey: string | null) => AreaAccess,
 ): Promise<{ ok: true; ctx: WorkspaceLoaderContext } | { ok: false; result: ActionResult }> {
-  const [{ guard }, key] = await Promise.all([getOperationsSession(), requestedWorkspaceKey(area)]);
+  const [{ guard }, key] = await Promise.all([authorizeOperationsSession(area), requestedWorkspaceKey(area)]);
   const access = decide(guard, key);
   if (access.kind === "allowed") return { ok: true, ctx: { workspace: access.workspace } };
   if (access.kind === "unauthenticated") return { ok: false, result: { ok: false, code: "unauthenticated" } };

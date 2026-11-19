@@ -1,3 +1,4 @@
+import { operationsClock } from "@/modules/admin/clock";
 import { fail, ok, type ApiResult } from "@/lib/api/result";
 import { adminFixtures, adminPrincipals } from "@/fixtures/operations/admin";
 import { assertFixtureAllowed, cloneFixture, createReplayCache } from "@/fixtures/operations/guard";
@@ -40,7 +41,7 @@ export function createAdminFixtureApi(options: AdminFixtureOptions = {}): AdminA
   const env = options.env ?? process.env;
   assertFixtureAllowed(env);
   const principal = options.principal === undefined ? adminPrincipals.verifier : options.principal;
-  const now = options.now ?? (() => new Date());
+  const now = options.now ?? operationsClock(env);
   const data = options.store ?? createAdminFixtureStore();
   const once = createReplayCache();
 

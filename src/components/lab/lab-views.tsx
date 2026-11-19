@@ -231,7 +231,7 @@ export function LabStaffView({ result }: { result: LoaderResult<StaffRowVM[]> })
 // Orders
 // ---------------------------------------------------------------------------
 
-export const LAB_QUEUES: readonly LabOrderQueue[] = ["pending", "today", "processing", "exceptions"];
+export const LAB_QUEUES: readonly LabOrderQueue[] = ["pending", "today", "scheduled", "processing", "exceptions"];
 
 export function LabOrdersView({ result, queue }: { result: LoaderResult<{ rows: OrderRowVM[]; nextCursor: string | null }>; queue: LabOrderQueue }) {
   const t = useTranslations("lab.orders");
@@ -331,6 +331,7 @@ export function LabOrderDetailView({ result }: { result: LoaderResult<OrderDetai
                     labels={{
                       label: t("recollect"),
                       done: t("recollectDone"),
+                      doneWithReference: t.raw("recollectDoneWithReference") as string,
                       confirm: { title: t("recollectConfirmTitle"), description: t("recollectConfirmBody"), confirmLabel: t("recollect") },
                     }}
                   />

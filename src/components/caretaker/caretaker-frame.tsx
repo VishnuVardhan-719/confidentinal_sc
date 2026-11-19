@@ -25,7 +25,7 @@ const PRIMARY = ["dashboard", "requests", "assignments", "shifts"] as const;
 
 export async function CaretakerFrame({ children }: { children: ReactNode }) {
   const locale = await currentLocale();
-  const access = await providerAreaAccess("caretaker", (s, key) => decideCaretakerRoute(s, "dashboard", locale, caretakerPath(locale, "dashboard"), key));
+  const access = await providerAreaAccess("caretaker", (s, key) => decideCaretakerRoute(s, "dashboard", locale, caretakerPath(locale, "dashboard"), key), caretakerPath(locale, "dashboard"));
   if (access.kind === "unauthenticated") redirect(access.loginPath);
   if (access.kind === "denied") {
     return (
@@ -58,7 +58,7 @@ export async function CaretakerRouteGate({
   children: (ctx: WorkspaceLoaderContext, locale: AppLocale) => Promise<ReactNode> | ReactNode;
 }) {
   const locale = await currentLocale();
-  const access = await providerAreaAccess("caretaker", (s, key) => decideCaretakerRoute(s, route, locale, caretakerPath(locale, route), key));
+  const access = await providerAreaAccess("caretaker", (s, key) => decideCaretakerRoute(s, route, locale, caretakerPath(locale, route), key), caretakerPath(locale, route));
   if (access.kind === "unauthenticated") redirect(access.loginPath);
   if (access.kind !== "allowed") return <AccessDenied />;
   return <>{await children({ workspace: access.workspace }, locale)}</>;

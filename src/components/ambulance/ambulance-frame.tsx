@@ -40,7 +40,7 @@ async function Call112() {
 
 export async function AmbulanceFrame({ children }: { children: ReactNode }) {
   const locale = await currentLocale();
-  const access = await providerAreaAccess("ambulance", (s, key) => decideAmbulanceRoute(s, "dashboard", locale, ambulancePath(locale, "dashboard"), key));
+  const access = await providerAreaAccess("ambulance", (s, key) => decideAmbulanceRoute(s, "dashboard", locale, ambulancePath(locale, "dashboard"), key), ambulancePath(locale, "dashboard"));
   if (access.kind === "unauthenticated") redirect(access.loginPath);
   if (access.kind === "denied") {
     return (
@@ -79,7 +79,7 @@ export async function AmbulanceRouteGate({
   children: (ctx: WorkspaceLoaderContext, locale: AppLocale) => Promise<ReactNode> | ReactNode;
 }) {
   const locale = await currentLocale();
-  const access = await providerAreaAccess("ambulance", (s, key) => decideAmbulanceRoute(s, route, locale, ambulancePath(locale, route), key));
+  const access = await providerAreaAccess("ambulance", (s, key) => decideAmbulanceRoute(s, route, locale, ambulancePath(locale, route), key), ambulancePath(locale, route));
   if (access.kind === "unauthenticated") redirect(access.loginPath);
   if (access.kind !== "allowed") return <AccessDenied />;
   return <>{await children({ workspace: access.workspace }, locale)}</>;

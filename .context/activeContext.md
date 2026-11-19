@@ -158,3 +158,9 @@ Order: lab -> caretakers -> ambulance; commit per sub-task.
 - Next: run doctor e2e ws-desktop-1280 against servers from .context/ws-serve.mjs (E2E_PORT=3379), fix failures.
 - Then: patient-workspace.spec.ts, patient records/notifications, doctor availability schedule, te/hi, axe, commit.
 
+## fe-b (Kiro) PHASE4-E2, 2026-11-19
+- 6e70397: real guards (requireOperationsSession/authorizeOperationsSession in src/modules/admin/session.ts), ops personas in src/fixtures/identity/operations.ts.
+- Next: run ops e2e on 3350 (.context/run-e2e.ps1 uses root playwright.config.ts), role-isolation spec, axe.
+
+- Ops specs un-fixme'd; signInAs wired (support/operations.ts, hard reload after sign-in). Discovery copies (serial removed) in tests/e2e/zz-discover (DO NOT COMMIT; delete at end). First discovery: 26 fail / 15 pass desktop, list in .context/ops-e2e-discovery-desktop.txt.
+

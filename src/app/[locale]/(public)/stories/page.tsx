@@ -1,4 +1,6 @@
+import { connection } from "next/server";
 import { getFormatter, getLocale, getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { getPublishedStories } from "@/components/public/content-source";
 import { Container, PublicPageIntro } from "@/components/public/layout";
@@ -14,14 +16,29 @@ export function generateMetadata() {
 
 export default async function StoriesPage() {
   const t = await getTranslations("public.storiesPage");
+
+  return (
+    <>
+      <PublicPageIntro title={t("title")} lead={t("lead")} />
+      <Container className="grid gap-6 pb-20">
+        <Suspense fallback={null}>
+          <PublishedStoriesList />
+        </Suspense>
+      </Container>
+    </>
+  );
+}
+
+/** Published content can change at any time (CMS publish), so the list is read per request. */
+async function PublishedStoriesList() {
+  await connection();
+  const t = await getTranslations("public.storiesPage");
   const locale = await getLocale();
   const format = await getFormatter();
   const result = await getPublishedStories(locale);
 
   return (
     <>
-      <PublicPageIntro title={t("title")} lead={t("lead")} />
-      <Container className="grid gap-6 pb-20">
         {result.status === "ok" && result.fixture ? <FixtureNotice /> : null}
         {result.status === "ok" ? (
           <ul className="grid divide-y divide-border border-y border-border">
@@ -52,7 +69,6 @@ export default async function StoriesPage() {
             className="max-w-3xl"
           />
         )}
-      </Container>
     </>
   );
 }

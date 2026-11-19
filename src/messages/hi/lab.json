@@ -198,6 +198,7 @@
     "queues": {
       "pending": "निर्णय बाकी",
       "today": "आज",
+      "scheduled": "तय कलेक्शन",
       "processing": "प्रोसेसिंग",
       "exceptions": "समस्याएँ"
     },
@@ -246,7 +247,8 @@
     "recollect": "दोबारा कलेक्शन का अनुरोध करें",
     "recollectConfirmTitle": "दोबारा कलेक्शन का अनुरोध करें?",
     "recollectConfirmBody": "इससे उन्हीं जाँचों के लिए नया अनुरोध बनेगा। विफल ऑर्डर जैसा है वैसा रहेगा। कोई शुल्क अपने-आप नहीं जुड़ेगा।",
-    "recollectDone": "दोबारा कलेक्शन का अनुरोध बन गया।"
+    "recollectDone": "दोबारा कलेक्शन का अनुरोध बन गया।",
+    "recollectDoneWithReference": "दोबारा कलेक्शन का अनुरोध {reference} बन गया।"
   },
   "collections": {
     "title": "मेरे कलेक्शन",

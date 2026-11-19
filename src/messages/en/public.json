@@ -341,6 +341,7 @@
   "faqPage": {
     "title": "Frequently asked questions",
     "lead": "Short answers about using SureCure Visit. If your question is not here, see the contact page.",
+    "publishedTitle": "More questions",
     "searchLabel": "Search questions",
     "searchHint": "Type a word such as price, cancel or PIN",
     "resultsZero": "No questions match",

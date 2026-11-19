@@ -1,3 +1,4 @@
+import { operationsClock } from "@/modules/admin/clock";
 import { fail, ok, type ApiResult } from "@/lib/api/result";
 import { ambulanceActors, ambulanceFixtures } from "@/fixtures/operations/ambulance";
 import { assertFixtureAllowed, cloneFixture, createReplayCache } from "@/fixtures/operations/guard";
@@ -39,7 +40,7 @@ export function createAmbulanceFixtureApi(options: AmbulanceFixtureOptions = {})
   const env = options.env ?? process.env;
   assertFixtureAllowed(env);
   const actor: AmbulanceActor = options.actor ?? ambulanceActors.operator;
-  const now = options.now ?? (() => new Date());
+  const now = options.now ?? operationsClock(env);
   const data = options.store ?? createAmbulanceFixtureStore();
   const once = createReplayCache();
 

@@ -1,3 +1,4 @@
+import { operationsClock } from "@/modules/admin/clock";
 import { fail, ok, type ApiResult } from "@/lib/api/result";
 import { isEnabled } from "@/lib/feature-flags";
 import { assertFixtureAllowed, cloneFixture, createReplayCache } from "@/fixtures/operations/guard";
@@ -45,7 +46,7 @@ export function createLabFixtureApi(options: LabFixtureOptions = {}): LabApi {
   const env = options.env ?? process.env;
   assertFixtureAllowed(env);
   const actor: LabActor = options.actor ?? labActors.manager;
-  const now = options.now ?? (() => new Date());
+  const now = options.now ?? operationsClock(env);
   const data = options.store ?? createLabFixtureStore();
   const once = createReplayCache();
 
@@ -64,6 +65,8 @@ export function createLabFixtureApi(options: LabFixtureOptions = {}): LabApi {
           (order.substate === "scheduled" || order.substate === "collecting" || order.substate === "collected") &&
           kolkataDay(new Date(order.schedule.windowStart)) === kolkataDay(now())
         );
+      case "scheduled":
+        return order.substate === "scheduled" || order.substate === "collecting";
       case "processing":
         return order.substate === "collected" || order.substate === "processing_handoff";
       case "exceptions":

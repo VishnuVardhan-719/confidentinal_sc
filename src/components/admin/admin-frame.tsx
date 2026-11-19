@@ -26,7 +26,7 @@ const PRIMARY = ["dashboard", "bookings", "support", "cms"] as const;
 /** Admin layout body: capability-based navigation; no admin capability = denied. */
 export async function AdminFrame({ children }: { children: ReactNode }) {
   const locale = await currentLocale();
-  const principal = await adminPrincipal();
+  const principal = await adminPrincipal(adminPath(locale, "dashboard"));
   const access = decideAdminRoute(principal, "dashboard", locale, adminPath(locale, "dashboard"));
   if (access.kind === "unauthenticated") redirect(access.loginPath);
   if (access.kind === "denied") {
@@ -52,7 +52,7 @@ export async function AdminRouteGate({
   children: (ctx: AdminLoaderContext, locale: AppLocale) => Promise<ReactNode> | ReactNode;
 }) {
   const locale = await currentLocale();
-  const access = decideAdminRoute(await adminPrincipal(), route, locale, adminPath(locale, route));
+  const access = decideAdminRoute(await adminPrincipal(adminPath(locale, route)), route, locale, adminPath(locale, route));
   if (access.kind === "unauthenticated") redirect(access.loginPath);
   if (access.kind !== "allowed") return <AccessDenied />;
   return <>{await children({ principal: access.principal }, locale)}</>;

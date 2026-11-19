@@ -1,3 +1,4 @@
+import { operationsNow } from "@/modules/admin/clock";
 import { fail, ok } from "@/lib/api/result";
 import { metricFrom, toLoaderResult, type LoaderResult, type WorkspaceLoaderContext } from "@/modules/admin/access";
 import { belongsToWorkspace, toCareActor } from "@/modules/admin/workspace";
@@ -19,7 +20,7 @@ import {
 
 /** Server-side route loaders for the caretaker / agency area. */
 
-const clock = (ctx: WorkspaceLoaderContext) => (ctx.now ? ctx.now() : new Date());
+const clock = (ctx: WorkspaceLoaderContext) => (ctx.now ? ctx.now() : operationsNow(ctx.env));
 const api = (ctx: WorkspaceLoaderContext) => getCaretakerApi({ env: ctx.env, actor: toCareActor(ctx.workspace), now: ctx.now });
 
 /** Asia/Kolkata is a fixed UTC+05:30 offset (no DST). */
