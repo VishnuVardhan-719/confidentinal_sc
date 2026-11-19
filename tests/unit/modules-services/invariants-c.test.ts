@@ -157,3 +157,15 @@ describe("ambulance is scheduled transfer only", () => {
     expect(ui).toEqual([]);
   });
 });
+
+describe("no hard-coded English in fe-c components", () => {
+  it("JSX text and accessible-name attributes in fe-c .tsx files come from messages", () => {
+    const offenders: string[] = [];
+    for (const f of ALL.filter(item => OWN.test(item.file) && item.file.endsWith(".tsx"))) {
+      const code = f.text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+      for (const match of code.matchAll(/(?<![=-])>\s*([A-Za-z][A-Za-z ,.'!?-]{2,})\s*</g)) offenders.push(`${f.file}: text "${match[1].trim()}"`);
+      for (const match of code.matchAll(/\b(aria-label|title|placeholder|alt)="([A-Za-z][^"]*)"/g)) offenders.push(`${f.file}: ${match[1]}="${match[2]}"`);
+    }
+    expect(offenders).toEqual([]);
+  });
+});
