@@ -30,7 +30,7 @@
 | C01 | Verified catalog, services, pricing, PIN coverage and public discovery | Owner | Claude/Kiro/Codex by ticket | P0 | PENDING | No fake coverage/listings; public/private separation |
 | B01 | Shared booking engine, price snapshot, accept/decline/cancel, events | Owner | Codex implementation/review if assigned | P0 | PENDING | Atomic acceptance, idempotency, concurrency and actor-scope tests |
 | S01 | Doctor, lab, scheduled ambulance and caretaker workflows | Owner | Codex/Kiro by independent module | P1 | PENDING | One database-backed tested journey per enabled category |
-| P01 | Pay-after records, payment test mode, webhooks and reconciliation | Owner | Codex implementation/review if assigned | P1 | PENDING | Payment separate from booking; signature/dedupe tests |
+| P01 | Pay-after records, payment test mode, webhooks and reconciliation | Owner | Codex | P1 | IN_PROGRESS | P01a app: `feat/P01-app-layer`, base `f549ad3`; 75 payment unit tests, full suite 228 pass/1 skip; SQL/RLS pending. Owner correction selects D-14 option A; P01b excluded. [Contract and evidence](handoffs/P01a_app_codex_2026-11-19.md) |
 | U01 | Patient/provider/admin dashboards and responsive UI | Owner initially | Claude/Kiro/Codex by ticket | P1 | PENDING | Real APIs; loading/error/empty states; mobile/keyboard tests |
 | Q01 | Security, RLS, E2E, accessibility, performance and backup/restore | Owner | Codex/Kiro independent reviews | P0 | PENDING | Evidence recorded; no critical/high release blockers |
 | H01 | Friend frontend handover package | Owner/Claude | Claude prepares; friend executes later | P2 | IN_PROGRESS (draft: docs/HANDOFF_FRONTEND.md) | Branch, setup, contracts, pending UI tickets, tests and next actions |

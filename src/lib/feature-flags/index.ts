@@ -6,6 +6,7 @@ export const FEATURE_FLAGS = [
   "subscriptions",
   "gps",
   "automatedPayouts",
+  "payAfter",
 ] as const;
 
 export type FeatureFlag = (typeof FEATURE_FLAGS)[number];
@@ -18,6 +19,7 @@ const ENV_NAMES: Record<FeatureFlag, string> = {
   subscriptions: "FEATURE_SUBSCRIPTIONS",
   gps: "FEATURE_GPS",
   automatedPayouts: "FEATURE_AUTOMATED_PAYOUTS",
+  payAfter: "FEATURE_PAY_AFTER",
 };
 
 /** Server-side only. Every flag is OFF unless its env var is exactly "true". */
