@@ -23,6 +23,7 @@ export const NAMESPACES = [
   "accessibility",
   "verify",
   "consultationNotes",
+  "prescriptionDrafts",
 ] as const;
 
 export type Namespace = (typeof NAMESPACES)[number];
@@ -51,6 +52,7 @@ const loaders: Record<AppLocale, Record<Namespace, Loader>> = {
     errors: () => import("../messages/en/errors.json"),
     accessibility: () => import("../messages/en/accessibility.json"),
     verify: () => import("../messages/en/verify.json"),
+    prescriptionDrafts: () => import("../messages/en/prescriptionDrafts.json"),
     consultationNotes: () => import("../messages/en/consultationNotes.json"),
   },
   te: {
@@ -71,6 +73,7 @@ const loaders: Record<AppLocale, Record<Namespace, Loader>> = {
     errors: () => import("../messages/te/errors.json"),
     accessibility: () => import("../messages/te/accessibility.json"),
     verify: () => import("../messages/te/verify.json"),
+    prescriptionDrafts: () => import("../messages/te/prescriptionDrafts.json"),
     consultationNotes: () => import("../messages/te/consultationNotes.json"),
   },
   hi: {
@@ -91,6 +94,7 @@ const loaders: Record<AppLocale, Record<Namespace, Loader>> = {
     errors: () => import("../messages/hi/errors.json"),
     accessibility: () => import("../messages/hi/accessibility.json"),
     verify: () => import("../messages/hi/verify.json"),
+    prescriptionDrafts: () => import("../messages/hi/prescriptionDrafts.json"),
     consultationNotes: () => import("../messages/hi/consultationNotes.json"),
   },
 };

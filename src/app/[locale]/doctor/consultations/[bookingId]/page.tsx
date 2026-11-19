@@ -81,10 +81,25 @@ export default async function ConsultationNotesPage({ params }: PageProps<"/[loc
       </>,
     );
   }
-  if (note.data?.status === "signed_off") return frame(<>{context}<SignedNote note={note.data} /></>);
+  const rxLink = (
+    <div>
+      <Button asChild variant="secondary">
+        <Link href={`/doctor/consultations/${id}/prescription`}>{t("prescriptionLink")}</Link>
+      </Button>
+    </div>
+  );
+  if (note.data?.status === "signed_off")
+    return frame(
+      <>
+        {context}
+        {rxLink}
+        <SignedNote note={note.data} />
+      </>,
+    );
   return frame(
     <>
       {context}
+      {rxLink}
       <NoteEditor bookingId={id} initial={note.data} actions={{ save: saveNoteDraftAction, signOff: signOffNoteAction }} />
     </>,
   );

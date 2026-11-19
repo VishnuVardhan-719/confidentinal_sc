@@ -158,3 +158,107 @@ test.describe("consultation notes: te/hi", () => {
     });
   }
 });
+
+// ---------------------------------------------------------------------------------------------
+// R7-D task 3: prescription drafts (template-only, never issued)
+const rx = (id: string) => `/en/doctor/consultations/${id}/prescription`;
+
+test.describe("prescription draft: access and gate", () => {
+  test("another doctor is denied; flag off shows the gate; not-completed has no editor", async ({ page, as }) => {
+    const other = await as("other");
+    await other.goto(rx(I.bookingPast));
+    await expect(other.getByRole("main").getByText(/you do not have access/i)).toBeVisible();
+    const off = await as("gateOff");
+    await off.goto(rx(I.bookingPast));
+    await expect(off.getByRole("main").getByText(/prescription drafts are switched off/i)).toBeVisible();
+    await expect(off.getByRole("textbox")).toHaveCount(0);
+    await page.goto(rx(I.bookingActive));
+    await expect(page.getByText(/prescription drafts open after the visit is completed/i)).toBeVisible();
+    await expect(page.getByRole("textbox")).toHaveCount(0);
+    await expectNoAxeViolations(page);
+  });
+});
+
+test.describe("prescription draft: edit -> save -> discard (serial)", () => {
+  test.describe.configure({ mode: "serial" });
+
+  test("notes page links to the draft; page says Draft - not issued and offers no issue action", async ({ page }) => {
+    await page.goto(notes(I.bookingPast));
+    await expect(page.getByRole("link", { name: /prescription draft/i })).toHaveAttribute("href", rx(I.bookingPast));
+    await page.goto(rx(I.bookingPast));
+    await expect(page.getByRole("main").getByText("Draft - not issued").first()).toBeVisible();
+    await expect(badge(page, /^prescription$/i)).toHaveText(/not started/i);
+    await expect(page.getByRole("button", { name: /issue|send|sign/i })).toHaveCount(0);
+    await expectNoAxeViolations(page);
+    await expectTargetSize(page);
+    await expectNoHorizontalScroll(page);
+  });
+
+  test("saving an empty row shows a focused error summary that links to each field", async ({ page }) => {
+    await page.goto(rx(I.bookingPast));
+    await page.waitForLoadState("networkidle");
+    await page.getByRole("button", { name: /save draft/i }).click();
+    const summary = page.getByRole("alert").filter({ hasText: /enter the name of medicine 1/i });
+    await expect(summary).toBeFocused();
+    await expect(summary).toContainText(/choose the form of medicine 1/i);
+    await expect(summary).toContainText(/number of days for medicine 1/i);
+    await summary.getByRole("link", { name: /enter the name of medicine 1/i }).click();
+    await expect(page.getByRole("textbox", { name: /medicine name/i })).toBeFocused();
+    await expectNoAxeViolations(page);
+  });
+
+  test("keyboard: fill a medicine from templates, save, see the not-issued preview; storage stays clean", async ({ page }) => {
+    await page.goto(rx(I.bookingPast));
+    await page.waitForLoadState("networkidle");
+    await page.getByRole("textbox", { name: /medicine name/i }).focus();
+    await page.keyboard.type("Synthetic note text medicine");
+    await page.getByRole("combobox", { name: /^form/i }).selectOption("tablet");
+    await page.getByRole("textbox", { name: /strength/i }).fill("500 mg");
+    await page.getByRole("combobox", { name: /when to take/i }).selectOption("twice_daily");
+    await page.getByRole("textbox", { name: /how many days/i }).fill("5");
+    await page.getByRole("combobox", { name: /instruction/i }).selectOption("after_food");
+    await page.getByRole("button", { name: /save draft/i }).focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("status").filter({ hasText: /draft saved/i })).toBeVisible();
+    const preview = page.getByRole("region", { name: /saved draft/i });
+    await expect(preview).toContainText("Draft - not issued. Not a valid prescription.");
+    await expect(preview.getByRole("listitem")).toHaveText("Tablet: Synthetic note text medicine 500 mg, Twice a day for 5 days, after food");
+    await expectCleanStorage(page);
+    await page.reload();
+    await expect(page.getByRole("textbox", { name: /medicine name/i })).toHaveValue("Synthetic note text medicine");
+    await expect(badge(page, /^prescription$/i)).toHaveText(/draft - not issued/i);
+  });
+
+  test("add and remove medicines move focus sensibly", async ({ page }) => {
+    await page.goto(rx(I.bookingPast));
+    await page.waitForLoadState("networkidle");
+    await page.getByRole("button", { name: /add medicine/i }).click();
+    await expect(page.getByRole("group", { name: "Medicine 2" }).getByRole("textbox", { name: /medicine name/i })).toBeFocused();
+    await page.getByRole("button", { name: /remove medicine 2/i }).click();
+    await expect(page.getByRole("group", { name: "Medicine 2" })).toHaveCount(0);
+    await expect(page.getByRole("group", { name: "Medicine 1" }).getByRole("textbox", { name: /medicine name/i })).toBeFocused();
+  });
+
+  test("discard asks first, then removes the saved draft", async ({ page }) => {
+    await page.goto(rx(I.bookingPast));
+    await page.waitForLoadState("networkidle");
+    await page.getByRole("button", { name: /discard draft/i }).click();
+    const dialog = page.getByRole("alertdialog");
+    await expect(dialog).toContainText(/cannot be undone/i);
+    await dialog.getByRole("button", { name: /discard draft/i }).click();
+    await expect(badge(page, /^prescription$/i)).toHaveText(/not started/i);
+    await expect(page.getByRole("textbox", { name: /medicine name/i })).toHaveValue("");
+  });
+});
+
+test.describe("prescription draft: te/hi", () => {
+  for (const locale of ["te", "hi"] as const) {
+    test(`${locale}: translated, no raw keys, no overflow, axe clean`, async ({ page }) => {
+      await page.goto(`/${locale}/doctor/consultations/${I.bookingPast}/prescription`);
+      await expect(page.locator("html")).toHaveAttribute("lang", locale);
+      expect(await page.getByRole("main").innerText()).not.toMatch(/\b(prescriptionDrafts|consultationNotes|doctor|common)\.[a-zA-Z]+\.[a-zA-Z.]+/);
+      await expectNoHorizontalScroll(page);
+      await expectNoAxeViolations(page);
+    });
+  }
+});

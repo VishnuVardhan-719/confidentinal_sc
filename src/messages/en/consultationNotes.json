@@ -6,10 +6,7 @@
   "documentLabel": "Notes",
   "badge": { "none": "Not started", "draft": "Draft", "signed_off": "Signed off" },
   "backToVisit": "Back to the visit",
-  "notCompleted": {
-    "title": "Notes open after the visit is completed",
-    "body": "You can write consultation notes once this booking is marked completed."
-  },
+  "notCompleted": { "title": "Notes open after the visit is completed", "body": "You can write consultation notes once this booking is marked completed." },
   "sections": {
     "summary": { "label": "Visit summary", "hint": "Why the patient was seen and what you did." },
     "findings": { "label": "Findings", "hint": "What you observed or measured." },
@@ -46,5 +43,6 @@
     "version": "Version {version}",
     "readOnly": "These notes cannot be edited.",
     "empty": "Nothing recorded"
-  }
+  },
+  "prescriptionLink": "Prescription draft"
 }
