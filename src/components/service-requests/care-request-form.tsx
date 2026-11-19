@@ -77,7 +77,6 @@ export function CareRequestForm({ provider, members, addresses, actions }: { pro
           );
         })}
       </FormSection>
-      <TimeChoice backHref="/patient/caretakers" id={IDS.time} providerId={provider.id} load={actions.slots} reloadKey={reloadKey} value={slot} onChange={setSlot} error={state.errorFor(IDS.time)} />
       <div className="grid gap-2 rounded-lg border border-border bg-surface p-5 sm:p-6">
         <label htmlFor={hoursId} className="text-lg font-semibold text-ink">{t("care.hours")}</label>
         <p id={`${hoursId}-hint`} className="text-sm text-muted">{t("care.hoursHint", { min: provider.minHours, max: provider.maxHours })}</p>
@@ -90,6 +89,7 @@ export function CareRequestForm({ provider, members, addresses, actions }: { pro
         </select>
         <p className="text-sm text-muted">{t("care.recurring")}</p>
       </div>
+      <TimeChoice backHref="/patient/caretakers" hours={hours} id={IDS.time} providerId={provider.id} load={actions.slots} reloadKey={reloadKey} value={slot} onChange={setSlot} error={state.errorFor(IDS.time)} />
       <Acknowledge id={IDS.scope} title={t("care.scopeTitle")} label={t("care.scopeAck")} checked={scope} onChange={setScope} error={state.errorFor(IDS.scope)} />
       <NoteField id={IDS.note} value={note} onChange={setNote} error={state.errorFor(IDS.note)} />
       <PriceAndPolicy id={IDS.price} lines={lines} lineLabel={lineLabel} accepted={accepted} onAccept={setAccepted} error={state.errorFor(IDS.price)} slot={slot} />

@@ -117,8 +117,8 @@ test.describe("a11y sweep: fe-c routes", () => {
 
     await page.goto(`/en/patient/caretakers/request?providerId=${CARE(1)}`);
     await page.getByRole("checkbox", { name: "Company and conversation" }).check();
-    await pick();
     await page.getByLabel("How many hours?").selectOption("2");
+    await pick();
     await page.getByRole("checkbox", { name: "I understand caretakers give non-clinical help only." }).check();
     await send(/\/patient\/caretakers\/requests\//);
     await sweep(page, "care: status");

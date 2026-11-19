@@ -77,7 +77,8 @@ export type ProviderFilter = z.infer<typeof providerFilterSchema>;
 export interface ServiceRequestsApi<P extends BaseProvider, D> {
   listProviders(filter: ProviderFilter): Promise<ApiResult<{ items: P[]; synthetic: boolean }>>;
   getProvider(id: string): Promise<ApiResult<P>>;
-  slots(providerId: string): Promise<ApiResult<{ items: RequestSlot[] }>>;
+  /** Open start times. `durationMinutes` (when the request length is known) hides starts that cannot fit it. */
+  slots(providerId: string, durationMinutes?: number): Promise<ApiResult<{ items: RequestSlot[] }>>;
   create(input: unknown, idempotencyKey: string): Promise<ApiResult<{ id: string }>>;
   get(id: string): Promise<ApiResult<ServiceRequest<D>>>;
   list(): Promise<ApiResult<{ items: ServiceRequest<D>[] }>>;

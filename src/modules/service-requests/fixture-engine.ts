@@ -97,7 +97,7 @@ export function createServiceRequestsFixtureApi<P extends BaseProvider, I extend
   const busy = (providerId: string, startAt: string, endAt: string, exceptId?: string) =>
     [...store.records.values()].some(row => row.id !== exceptId && row.providerId === providerId && ACTIVE_STATUSES.includes(row.status) && overlaps(row.startAt, row.endAt, startAt, endAt));
 
-  function openSlots(provider: P): RequestSlot[] {
+  function openSlots(provider: P, minutes = spec.slotMinutes): RequestSlot[] {
     const nowMs = now().getTime();
     const items: RequestSlot[] = [];
     for (let day = 0; day < SLOT_DAYS; day++) {
@@ -106,10 +106,16 @@ export function createServiceRequestsFixtureApi<P extends BaseProvider, I extend
         const start = Date.parse(`${date}T${time}:00+05:30`);
         if (start < nowMs + LEAD_MS) continue;
         const slot = { startAt: new Date(start).toISOString(), endAt: new Date(start + spec.slotMinutes * 60_000).toISOString() };
-        if (!busy(provider.id, slot.startAt, slot.endAt)) items.push(slot);
+        if (!busy(provider.id, slot.startAt, new Date(start + Math.max(minutes, spec.slotMinutes) * 60_000).toISOString())) items.push(slot);
       }
     }
     return items;
+  }
+
+  /** Patients the signed-in account may see: itself and family members it may book for. Other records are "not found". */
+  async function ownedPatientIds(): Promise<Set<string> | null> {
+    const members = await options.patient.listMembers();
+    return members.ok ? new Set(members.data.items.filter(item => item.relation === "self" || item.canBook).map(item => item.patientId)) : null;
   }
 
   return {
@@ -125,10 +131,11 @@ export function createServiceRequestsFixtureApi<P extends BaseProvider, I extend
       const provider = providerById(id);
       return provider ? ok(structuredClone(provider) as P) : fail("not_found");
     },
-    async slots(providerId) {
+    async slots(providerId, durationMinutes) {
       guard(); tick();
+      if (durationMinutes !== undefined && (!Number.isInteger(durationMinutes) || durationMinutes < 1 || durationMinutes > 24 * 60)) return fail("validation");
       const provider = providerById(providerId);
-      return provider ? ok({ items: openSlots(provider) }) : fail("not_found");
+      return provider ? ok({ items: openSlots(provider, durationMinutes) }) : fail("not_found");
     },
     async create(input, idempotencyKey) {
       guard(); tick();
@@ -174,19 +181,25 @@ export function createServiceRequestsFixtureApi<P extends BaseProvider, I extend
     },
     async get(id) {
       guard(); tick();
+      const owned = await ownedPatientIds();
+      if (!owned) return fail("unavailable");
       const row = store.records.get(id.toLowerCase());
-      return row ? ok(structuredClone(row)) : fail("not_found");
+      return row && owned.has(row.patientId) ? ok(structuredClone(row)) : fail("not_found");
     },
     async list() {
       guard(); tick();
-      return ok({ items: structuredClone([...store.records.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt))) });
+      const owned = await ownedPatientIds();
+      if (!owned) return fail("unavailable");
+      return ok({ items: structuredClone([...store.records.values()].filter(row => owned.has(row.patientId)).sort((a, b) => b.createdAt.localeCompare(a.createdAt))) });
     },
     async cancel(id, input) {
       guard(); tick();
       const parsed = cancelRequestSchema.safeParse(input);
       if (!parsed.success) return fail("validation");
+      const owned = await ownedPatientIds();
+      if (!owned) return fail("unavailable");
       const row = store.records.get(id.toLowerCase());
-      if (!row) return fail("not_found");
+      if (!row || !owned.has(row.patientId)) return fail("not_found");
       if (row.version !== parsed.data.expectedVersion) return fail("conflict");
       if (cancelState(row, now().getTime()) !== "open") return fail("conflict");
       row.status = "CANCELLED"; row.version++;
@@ -205,7 +218,7 @@ export function createGatedServiceRequestsApi<P extends BaseProvider, D>(schema:
   return {
     listProviders: filter => gate(providerFilterSchema.safeParse(filter ?? {}).success),
     getProvider: id => gate(uuid.test(id)),
-    slots: providerId => gate(uuid.test(providerId)),
+    slots: (providerId, minutes) => gate(uuid.test(providerId) && (minutes === undefined || (Number.isInteger(minutes) && minutes > 0))),
     create: (input, key) => gate(schema.safeParse(input).success && uuid.test(key)),
     get: id => gate(uuid.test(id)),
     list: () => gate(true),

@@ -17,7 +17,7 @@ import type { RequestLine, RequestSlot } from "@/modules/service-requests/core";
 import { LinkAction } from "./link-action";
 
 export type RequestFormActions = {
-  slots: (providerId: unknown) => Promise<ApiResult<{ items: RequestSlot[] }>>;
+  slots: (providerId: unknown, hours?: unknown) => Promise<ApiResult<{ items: RequestSlot[] }>>;
   create: (input: unknown, idempotencyKey: unknown) => Promise<ApiResult<{ id: string }>>;
 };
 
@@ -85,21 +85,23 @@ export function AddressChoice({ id, title, providerName, pins, addresses, value,
 }
 
 /** Loads the provider's open times through a server action (advisory: the server re-checks on send). */
-export function TimeChoice({ id, providerId, load, reloadKey, value, onChange, error, backHref }: {
+export function TimeChoice({ id, providerId, load, reloadKey, value, onChange, error, backHref, hours }: {
   id: string; providerId: string; load: RequestFormActions["slots"]; reloadKey: number; value: RequestSlot | null; onChange: (slot: RequestSlot | null) => void; error?: string; backHref: string;
+  /** Length of the request in hours when the patient chose one; start times that cannot fit it are not offered. */
+  hours?: number | null;
 }) {
   const t = useTranslations("services.common.form");
   const ts = useTranslations("services.common.status");
   const [attempt, setAttempt] = useState(0);
   // Results are tagged with the request they answer, so a reload shows "loading" until its own answer arrives.
-  const want = `${providerId}:${reloadKey}:${attempt}`;
+  const want = `${providerId}:${reloadKey}:${attempt}:${hours ?? ""}`;
   const [loaded, setLoaded] = useState<{ key: string; result: ApiResult<{ items: RequestSlot[] }> } | null>(null);
   const slots = loaded?.key === want ? loaded.result : null;
   useEffect(() => {
     let live = true;
-    load(providerId).then(result => { if (live) setLoaded({ key: want, result }); }, () => { if (live) setLoaded({ key: want, result: { ok: false, error: { code: "unavailable" } } }); });
+    (hours ? load(providerId, hours) : load(providerId)).then(result => { if (live) setLoaded({ key: want, result }); }, () => { if (live) setLoaded({ key: want, result: { ok: false, error: { code: "unavailable" } } }); });
     return () => { live = false; };
-  }, [load, providerId, want]);
+  }, [load, providerId, hours, want]);
   const items = slots?.ok ? slots.data.items : [];
   const current = value && items.some(item => item.startAt === value.startAt) ? value : null;
   useEffect(() => { if (slots?.ok && value && !current) onChange(null); }, [slots, value, current, onChange]);
