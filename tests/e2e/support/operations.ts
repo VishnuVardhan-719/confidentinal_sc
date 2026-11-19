@@ -1,13 +1,17 @@
 /**
  * Shared helpers for the operations e2e specs (lab, ambulance, caretaker, admin ops, CMS).
  *
- * Specs are test.describe.fixme until their pages exist. When a page lands: wire `signInAs` to the
- * fixture auth adapter (src/modules/auth) and switch that suite to `test.describe`.
+ * `signInAs` signs in through the fixture auth adapter (src/fixtures/identity/operations.ts).
+ * The fixture state lives in server memory: specs that change data need a fresh server per spec file.
+ * The operations fixture clock starts at 2026-11-20T06:00Z (src/modules/admin/clock.ts), so
+ * stale quotes, the driver's current trip and "today" do not depend on the wall clock.
  *
  * Run (synthetic only): FRONTEND_ADAPTER=fixture APP_ENV=staging npx playwright test tests/e2e/<area>.spec.ts
+ * Lab report release needs a second run against a server started with FEATURE_CLINICAL=true
+ * (export it for both the server and Playwright).
  */
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 import { signIn } from "./identity";
 
 export const LOCALE = "en";
@@ -46,19 +50,20 @@ export type Persona = keyof typeof PERSONAS;
 export const COPY = {
   fixtureNotice: /synthetic data/i,
   accessDenied: /you do not have access/i,
-  notFound: /not found|could not be found/i,
+  notFound: /not found|could not be found|could not find/i,
   gated: /not available yet|currently unavailable|disabled/i,
   chooseWorkspace: /choose (an )?organi[sz]ation|choose (a )?workspace/i,
   switchWorkspace: /switch (organi[sz]ation|workspace)/i,
   call112: /call 112/i,
   dispatchUnavailable: /emergency dispatch is not available/i,
-  reasonRequired: /select a reason|reason is required/i,
-  errorSummary: /there (is|are) (a )?problems?/i,
+  // The placeholder option also reads "Select a reason", so match the error text only.
+  reasonRequired: /select a reason to continue|reason is required/i,
+  errorSummary: /there (is|are) (a )?problems?|fix \d+ problems? to continue/i,
   saved: /saved/i,
   // lab
   startCollection: /start collection/i,
   markCollected: /sample collected/i,
-  collectionFailed: /could not collect|collection failed/i,
+  collectionFailed: /could not collect|collection failed|collection could not be completed/i,
   requestRecollection: /request recollection/i,
   review: /^mark reviewed$|^review$/i,
   release: /^release( report)?$/i,
@@ -124,6 +129,21 @@ export async function signInAs(page: Page, persona: Persona, next?: string): Pro
   // mounted but hidden (Activity), which duplicates landmarks and text for locators.
   await page.goto(next ?? page.url(), { waitUntil: "domcontentloaded" });
   if (next) await expect(page).toHaveURL((u) => u.pathname === next.split("?")[0]);
+  await settle(page);
+}
+
+/**
+ * Waits until streamed Suspense content has been revealed. Until then React keeps the streamed
+ * markup in hidden `<div hidden id="S:n">` segments, so CSS/test-id locators briefly see two copies.
+ */
+export async function settle(page: Page): Promise<void> {
+  await page.waitForFunction(() => !document.querySelector("div[hidden][id^=\"S:\"]"), undefined, { timeout: 15_000 });
+}
+
+/** page.goto followed by `settle`. */
+export async function open(page: Page, path: string): Promise<void> {
+  await page.goto(path);
+  await settle(page);
 }
 
 export async function expectFixtureNotice(page: Page): Promise<void> {
@@ -161,3 +181,27 @@ export async function expectTouchTargets(page: Page): Promise<void> {
   );
   expect(small).toEqual([]);
 }
+
+/**
+ * Only the visible matches. RecordList renders every record twice (a table from md up and cards
+ * below md, one of them display:none), and text locators also see the hidden copy.
+ */
+export const shown = (locator: Locator): Locator => locator.filter({ visible: true });
+
+/** One record of a RecordList that contains `text`: the table row on desktop, the card on mobile. */
+export function record(scope: Page | Locator, text: string | RegExp): Locator {
+  return shown(scope.locator("tr, ul[aria-label] > li").filter({ hasText: text }));
+}
+
+/** A RecordList by its accessible label (table region on desktop, card list on mobile). */
+export function recordList(page: Page, label: string | RegExp): Locator {
+  return shown(page.getByLabel(label, { exact: typeof label === "string" }));
+}
+
+/** Confirms the open dialog. Confirm buttons repeat the action name (for example "Decline"), never a bare "Confirm". */
+export async function confirmDialog(page: Page, action: string | RegExp): Promise<void> {
+  await page.getByRole("alertdialog").getByRole("button", { name: action }).click();
+}
+
+/** The toast region, where a confirmed server action reports its outcome. */
+export const notifications = (page: Page): Locator => page.getByRole("region", { name: /notifications/i });

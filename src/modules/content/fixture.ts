@@ -1,3 +1,4 @@
+import { operationsClock } from "@/modules/admin/clock";
 import { fail, ok, type ApiResult } from "@/lib/api/result";
 import { adminPrincipals } from "@/fixtures/operations/admin";
 import { contentFixtures } from "@/fixtures/operations/content";
@@ -40,7 +41,7 @@ export function createContentFixtureApi(options: ContentFixtureOptions = {}): Co
   const env = options.env ?? process.env;
   assertFixtureAllowed(env);
   const principal = options.principal === undefined ? adminPrincipals.contentEditor : options.principal;
-  const now = options.now ?? (() => new Date());
+  const now = options.now ?? operationsClock(env);
   const store = options.store ?? createContentFixtureStore();
   const once = createReplayCache();
 

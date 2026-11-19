@@ -3,7 +3,7 @@
  * capability-based navigation, real dashboard metrics, booking ops search (read-only), admin
  * users/invites (no self-grant), payments vs pay-after, refunds gated, support queue, audit
  * redaction and scope, settings gate display. Provider review and coverage pages belong to fe2-b.
- * SKELETON: test.describe.fixme until the /[locale]/admin pages exist. Synthetic data only.
+ * Synthetic data only.
  *
  * Run: FRONTEND_ADAPTER=fixture APP_ENV=staging npx playwright test tests/e2e/admin-ops.spec.ts
  */
@@ -16,6 +16,9 @@ import {
   expectDenied,
   expectFixtureNotice,
   expectNoPrivateDataInUrlOrStorage,
+  record,
+  recordList,
+  shown,
   signInAs,
 } from "./support/operations";
 
@@ -51,7 +54,8 @@ test.describe("booking operations", () => {
     await signInAs(page, "adminLead", `${AD}/bookings`);
     await page.getByLabel(COPY.searchReference).fill("Fixture Patient");
     await page.getByRole("button", { name: COPY.search }).click();
-    await expect(page.getByText(COPY.invalidReference)).toBeVisible();
+    // Shown in the error summary and next to the field.
+    await expect(page.getByText(COPY.invalidReference).first()).toBeVisible();
     await page.getByLabel(COPY.searchReference).fill("SCV-BKG-900104");
     await page.getByRole("button", { name: COPY.search }).click();
     await expect(page.getByTestId("booking-status")).toContainText(/completed/i);
@@ -65,36 +69,39 @@ test.describe("booking operations", () => {
 test.describe("users, payments, support, audit, settings", () => {
   test("admins cannot change their own grants", async ({ page }) => {
     await signInAs(page, "adminLead", `${AD}/users`);
-    const self = page.getByRole("row", { name: /Fixture Admin Lead/ });
+    const self = record(page, /Fixture Admin Lead/);
+    await expect(self).toBeVisible();
     await expect(self.getByRole("button", { name: /suspend|edit scope/i })).toHaveCount(0);
-    const other = page.getByRole("row", { name: /Fixture Verifier/ });
+    const other = record(page, /Fixture Verifier/);
     await expect(other.getByRole("button", { name: /suspend/i })).toBeVisible();
   });
 
   test("pay-after collections are never shown as gateway payments and refund approval is gated", async ({ page }) => {
     await signInAs(page, "adminLead", `${AD}/payments`);
-    await expect(page.getByRole("row", { name: /#SCV-BKG-900313/ })).toContainText(/cash/i);
-    await expect(page.getByRole("row", { name: /#SCV-BKG-900313/ })).not.toContainText(COPY.gateway);
+    // The same booking also has a refund request in the separate Refunds list.
+    const payment = record(recordList(page, "Payments and refunds"), "#SCV-BKG-900313");
+    await expect(payment).toContainText(/cash/i);
+    await expect(payment).not.toContainText(COPY.gateway);
     await expect(page.getByText(COPY.refundGated)).toBeVisible();
     await expect(page.getByRole("button", { name: /approve refund/i })).toHaveCount(0);
   });
 
   test("support queue shows owner and status without SLA promises", async ({ page }) => {
     await signInAs(page, "adminLead", `${AD}/support`);
-    await expect(page.getByText("#SCV-SUP-900002")).toBeVisible();
+    await expect(shown(page.getByText("#SCV-SUP-900002"))).toBeVisible();
     await expect(page.locator("main")).not.toContainText(/24\/7|within \d+ (hours|minutes)/i);
   });
 
   test("audit list never shows secrets or contact data", async ({ page }) => {
     await signInAs(page, "adminLead", `${AD}/audit`);
-    await expect(page.getByRole("row").first()).toBeVisible();
+    await expect(shown(page.locator("tbody tr, ul[aria-label] > li")).first()).toBeVisible();
     const text = await page.locator("main").innerText();
     for (const marker of [...PRIVATE_MARKERS, "eyJhbGci", "Bearer"]) expect(text).not.toContain(marker);
   });
 
   test("settings display gates read-only", async ({ page }) => {
     await signInAs(page, "adminLead", `${AD}/settings`);
-    await expect(page.getByText(/emergency dispatch/i)).toBeVisible();
+    await expect(shown(page.getByText(/emergency dispatch/i))).toBeVisible();
     await expect(page.getByRole("switch")).toHaveCount(0);
     await expect(page.getByRole("checkbox")).toHaveCount(0);
   });

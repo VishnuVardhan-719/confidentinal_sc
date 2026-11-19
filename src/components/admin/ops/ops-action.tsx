@@ -14,6 +14,8 @@ export type OpsActionInput = { idempotencyKey: string; reason?: string };
 export type OpsActionLabels = {
   label: string;
   done: string;
+  /** Raw message with a `{reference}` token, used when the server returns the reference of a created record. */
+  doneWithReference?: string;
   confirm?: { title: string; description: string; confirmLabel: string };
   reason?: { label: string; placeholder: string; required: string; options: { value: string; label: string }[] };
 };
@@ -61,7 +63,8 @@ export function OpsAction({
       const r = await run({ idempotencyKey: key.current, ...(labels.reason ? { reason } : {}) });
       if (r.ok) {
         key.current = newKey();
-        toast({ title: labels.done, tone: "success" });
+        const title = r.reference && labels.doneWithReference ? labels.doneWithReference.replace("{reference}", r.reference) : labels.done;
+        toast({ title, tone: "success" });
         startTransition(() => router.refresh());
       }
       return r;

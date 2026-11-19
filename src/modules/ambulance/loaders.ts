@@ -1,3 +1,4 @@
+import { operationsNow } from "@/modules/admin/clock";
 import { fail, ok } from "@/lib/api/result";
 import { metricFrom, toLoaderResult, type LoaderResult, type WorkspaceLoaderContext } from "@/modules/admin/access";
 import { belongsToWorkspace, toAmbulanceActor } from "@/modules/admin/workspace";
@@ -22,7 +23,7 @@ import {
 
 /** Server-side route loaders for the ambulance area (scheduled transport only). */
 
-const clock = (ctx: WorkspaceLoaderContext) => (ctx.now ? ctx.now() : new Date());
+const clock = (ctx: WorkspaceLoaderContext) => (ctx.now ? ctx.now() : operationsNow(ctx.env));
 const api = (ctx: WorkspaceLoaderContext) => getAmbulanceApi({ env: ctx.env, actor: toAmbulanceActor(ctx.workspace), now: ctx.now });
 
 export async function loadAmbulanceDashboard(ctx: WorkspaceLoaderContext): Promise<LoaderResult<AmbulanceDashboardVM>> {

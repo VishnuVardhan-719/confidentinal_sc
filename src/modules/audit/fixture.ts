@@ -1,3 +1,4 @@
+import { operationsClock } from "@/modules/admin/clock";
 import { fail, ok } from "@/lib/api/result";
 import { adminPrincipals } from "@/fixtures/operations/admin";
 import { auditFixtures } from "@/fixtures/operations/audit";
@@ -17,7 +18,7 @@ export function createAuditFixtureApi(options: AuditFixtureOptions = {}): AuditA
   const env = options.env ?? process.env;
   assertFixtureAllowed(env);
   const principal = options.principal === undefined ? adminPrincipals.superAdmin : options.principal;
-  const now = options.now ?? (() => new Date());
+  const now = options.now ?? operationsClock(env);
   const events = cloneFixture(auditFixtures.rawEvents).map(redactAuditEvent);
 
   return {

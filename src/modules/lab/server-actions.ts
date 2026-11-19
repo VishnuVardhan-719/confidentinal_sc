@@ -58,7 +58,8 @@ export async function labRecollectionAction(bound: { orderId: string }, input: I
   if (!isId(bound?.orderId) || !isKey(input?.idempotencyKey)) return { ok: false, code: "validation" };
   const a = await api("orders");
   if (!a.ok) return a.result;
-  return toActionResult(await a.lab.requestRecollection({ orderId: bound.orderId, idempotencyKey: input.idempotencyKey }));
+  const result = await a.lab.requestRecollection({ orderId: bound.orderId, idempotencyKey: input.idempotencyKey });
+  return result.ok ? { ok: true, reference: result.data.newOrderReference } : toActionResult(result);
 }
 
 export async function labReportAction(

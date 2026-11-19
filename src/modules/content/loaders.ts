@@ -1,3 +1,4 @@
+import { operationsNow } from "@/modules/admin/clock";
 import { ok } from "@/lib/api/result";
 import { toLoaderResult, type AdminLoaderContext, type LoaderResult } from "@/modules/admin/access";
 import {
@@ -56,7 +57,7 @@ export async function loadContentEditor(ctx: AdminLoaderContext, entryId: string
   if (!result.ok) return toLoaderResult(result, cms.mode);
   const entry = result.data;
   const version = entry.locales[locale];
-  const now = ctx.now ? ctx.now() : new Date();
+  const now = ctx.now ? ctx.now() : operationsNow(ctx.env);
   return toLoaderResult(
     ok({
       id: entry.id,

@@ -198,6 +198,7 @@
     "queues": {
       "pending": "To decide",
       "today": "Today",
+      "scheduled": "Scheduled",
       "processing": "Processing",
       "exceptions": "Exceptions"
     },
@@ -246,7 +247,8 @@
     "recollect": "Request recollection",
     "recollectConfirmTitle": "Request a recollection?",
     "recollectConfirmBody": "This creates a new request for the same tests. The failed order stays as it is. No fee is added automatically.",
-    "recollectDone": "Recollection request created."
+    "recollectDone": "Recollection request created.",
+    "recollectDoneWithReference": "Recollection request {reference} created."
   },
   "collections": {
     "title": "My collections",
