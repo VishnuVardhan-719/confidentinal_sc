@@ -10,7 +10,10 @@
  * Without E2E_FEP_MODE the suite is skipped. Synthetic data only; fixture ids are not real records.
  */
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect as baseExpect, test, type Page } from "@playwright/test";
+
+// Client navigations and server actions stream on a shared, often loaded dev machine; 5 s was flaky.
+const expect = baseExpect.configure({ timeout: 15_000 });
 
 const MODE = process.env.E2E_FEP_MODE;
 const CLINICAL = process.env.E2E_FEP_CLINICAL;

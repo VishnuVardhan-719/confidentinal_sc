@@ -66,5 +66,136 @@
       "confirm": "Yes, remove",
       "keep": "Keep"
     }
+  },
+  "saved": {
+    "title": "Saved doctors",
+    "description": "Doctors you want to find again. Saving does not book a visit or share anything with the doctor.",
+    "savedLabel": "{count, plural, one {# saved doctor} other {# saved doctors}}",
+    "suggestLabel": "Doctors you can save",
+    "suggestBody": "Verified doctors from the directory. Save one to find it here later.",
+    "fee": "Fee {fee} per visit",
+    "noLocation": "Location not listed",
+    "view": "View profile",
+    "viewLabel": "View profile of {name}",
+    "save": "Save",
+    "saveLabel": "Save {name}",
+    "unsave": "Remove",
+    "unsaveLabel": "Remove {name} from saved",
+    "working": "Working…",
+    "savedNow": "Doctor saved.",
+    "removedNow": "Doctor removed from saved.",
+    "unlisted": "This doctor is no longer listed in the directory.",
+    "unlistedName": "Unlisted doctor",
+    "limit": "You can save up to {max} doctors. Remove one to save another.",
+    "empty": {
+      "title": "No saved doctors yet",
+      "body": "Save doctors you like so you can find them quickly next time.",
+      "action": "Find a doctor"
+    },
+    "suggestEmpty": "No more doctors to suggest right now.",
+    "state": {
+      "denied": "You do not have access to this list.",
+      "gated": "Saved doctors are not connected yet. Nothing here is saved.",
+      "directory": "Doctor details are not available right now. Your saved list is unchanged."
+    }
+  },
+  "reviews": {
+    "title": "Your reviews",
+    "description": "Review a visit after it is completed. Reviews are checked before anyone else can see them.",
+    "dueLabel": "{count, plural, one {# visit to review} other {# visits to review}}",
+    "doneLabel": "Your submitted reviews",
+    "visit": "{provider} · Booking {reference}",
+    "completed": "Completed {date}",
+    "write": "Write a review",
+    "writeLabel": "Write a review for {provider}",
+    "submittedOn": "Submitted {date}",
+    "stars": "{rating, plural, one {# star out of 5} other {# stars out of 5}}",
+    "status": {
+      "pending_moderation": "Waiting for moderation",
+      "published": "Published",
+      "rejected": "Not published"
+    },
+    "moderationNote": "Waiting for moderation: only you can see this review until it is checked.",
+    "rejectedNote": "This review was not published. It may break the review guidelines.",
+    "flash": "Thank you. Your review was sent and is waiting for moderation.",
+    "empty": {
+      "title": "No visits to review",
+      "body": "After a visit is completed, you can review it here.",
+      "action": "View your bookings"
+    },
+    "noneDue": "No completed visits are waiting for a review.",
+    "state": {
+      "denied": "You do not have access to these reviews.",
+      "gated": "Reviews are not connected yet. Nothing here is saved.",
+      "notFound": "This visit is not available. It may not exist, or it is not on your account.",
+      "notCompleted": "Only completed visits can be reviewed. You can review this visit after it is completed.",
+      "already": "You have already reviewed this visit. Each visit can have one review."
+    },
+    "form": {
+      "title": "Review your visit",
+      "intro": "Describe the service: punctuality, care and communication. Do not include health details, phone numbers, emails or links.",
+      "rating": "Overall rating",
+      "ratingHint": "Choose 1 to 5 stars.",
+      "ratingOption": "{rating, plural, one {# star} other {# stars}}: {label}",
+      "ratingLabels": {
+        "1": "Poor",
+        "2": "Fair",
+        "3": "Good",
+        "4": "Very good",
+        "5": "Excellent"
+      },
+      "text": "Your review",
+      "textHint": "Between 10 and 1000 characters.",
+      "count": "{count} of 1000 characters",
+      "submit": "Send review",
+      "sending": "Sending…",
+      "cancel": "Cancel",
+      "back": "Back to reviews",
+      "errors": {
+        "rating_required": "Choose a rating from 1 to 5 stars.",
+        "text_too_short": "Write at least 10 characters.",
+        "text_too_long": "Use 1000 characters or fewer.",
+        "text_contact": "Remove phone numbers, emails and links from your review."
+      }
+    }
+  },
+  "reminders": {
+    "title": "Reminder preferences",
+    "description": "Choose how we remind you about upcoming visits. Booking status always shows in your account, whatever you choose here.",
+    "channelsLegend": "Send visit reminders by",
+    "channelsHint": "Turn on any you want. With all off, you will only see reminders when you sign in.",
+    "channels": {
+      "sms": "SMS text message",
+      "whatsapp": "WhatsApp",
+      "email": "Email"
+    },
+    "channelHints": {
+      "sms": "To the mobile number on your account.",
+      "whatsapp": "Only if you use WhatsApp on that number.",
+      "email": "To the email on your account, if you added one."
+    },
+    "allOff": "All channels are off. You will not get visit reminders outside your account.",
+    "quietLegend": "Quiet hours",
+    "quietToggle": "Do not send reminders during quiet hours",
+    "quietHint": "Times are India time (IST). Quiet hours can run past midnight, for example 21:00 to 07:00.",
+    "quietStart": "Quiet from",
+    "quietEnd": "Quiet until",
+    "quietSummary": "No reminders from {start} to {end} IST.",
+    "quietOvernight": "This runs overnight into the next morning.",
+    "save": "Save preferences",
+    "saving": "Saving…",
+    "saved": "Preferences saved.",
+    "conflict": "These preferences changed in another window. Reload the page to see the latest, then try again.",
+    "reload": "Reload preferences",
+    "lastSaved": "Last saved {time}",
+    "errors": {
+      "quiet_start_invalid": "Enter a start time, for example 21:00.",
+      "quiet_end_invalid": "Enter an end time, for example 07:00.",
+      "quiet_same": "Start and end cannot be the same time."
+    },
+    "state": {
+      "denied": "You do not have access to these preferences.",
+      "gated": "Reminder preferences are not connected yet. Nothing here is saved."
+    }
   }
 }

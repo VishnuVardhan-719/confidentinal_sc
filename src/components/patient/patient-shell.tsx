@@ -28,6 +28,10 @@ export async function PatientShell({ synthetic, fixtureActor = null, children }:
     { href: "/patient/profile", label: t("nav.profile"), icon: "user", primary: true },
     { href: "/patient/health-profile", label: t("nav.healthProfile"), icon: "clipboard" },
     { href: "/doctors", label: t("nav.findDoctor"), icon: "stethoscope" },
+    { href: "/patient/family", label: t("nav.family"), icon: "users" },
+    { href: "/patient/saved", label: t("nav.saved"), icon: "bookmark" },
+    { href: "/patient/reviews", label: t("nav.reviews"), icon: "star" },
+    { href: "/patient/settings/reminders", label: t("nav.reminders"), icon: "settings" },
   ];
   return (
     <NextIntlClientProvider messages={pickNamespaces(messages, PATIENT_CLIENT_NAMESPACES)} timeZone="Asia/Kolkata">

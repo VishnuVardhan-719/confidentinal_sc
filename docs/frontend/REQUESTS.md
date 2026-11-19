@@ -482,3 +482,33 @@ Test notes: two doctor-workspace tests hardened (IST-midnight boundary on fixtur
 
 ## R-FE-D-38 (fe-a, R7-D task 3) - prescription drafts contract
 `/[locale]/doctor/consultations/[bookingId]/prescription` + `src/modules/prescription-drafts`: template-only (typed medicine name, no drug database or suggestions; fixed form / schedule / instruction templates; 1-90 days; max 10 lines), completed bookings only, `expectedVersion`, discard with confirmation, no autosave or browser storage. Status is always `draft`; there is no issue/send action and the page says "Draft - not issued ... not a valid prescription". Fixture only behind FEATURE_CLINICAL; http `gated`. Issuing needs owner approval (clinical production + legal e-prescription rules) and a backend contract. New namespace `prescriptionDrafts` (te/hi machine-written, need clinical-language review).
+### R-FE-P-R7-2 Saved providers contract (owner: backend)
+No endpoint exists. The http adapter (`src/modules/saved-providers/http.ts`) returns `gated`. Proposed:
+- `GET /api/patient/saved-providers` -> `{ items: { providerId, savedAt }[] }`
+- `PUT /api/patient/saved-providers/:providerId` (Idempotency-Key header): idempotent save. Returns 404 for an unknown or unlisted provider.
+- `DELETE /api/patient/saved-providers/:providerId`: idempotent remove.
+- Only ids are stored. The page reads names, specialities and fees from the public doctor directory on every visit, so suspended or unlisted doctors show as "no longer listed".
+- Needs product confirmation: the cap of 50 per account (`MAX_SAVED_PROVIDERS`), and whether a save button belongs on the doctor directory and profile pages (owned by fe2-c; not edited here).
+
+### R-FE-P-R7-3 Patient reviews contract (owner: backend + admin moderation)
+No endpoint exists. The http adapter (`src/modules/reviews/http.ts`) returns `gated`. Proposed:
+- `GET /api/patient/reviews/visits` -> `{ items: { bookingId, bookingReference, category, providerDisplayName, bookingState, completedAt, review | null }[] }`
+- `GET /api/patient/reviews/visits/:bookingId`
+- `POST /api/patient/reviews` (Idempotency-Key header) body `{ bookingId, rating 1..5, text 10..1000 }`. Returns `201` with `status: "pending_moderation"`. Errors:
+  - `403`: booking not completed or not owned
+  - `409`: already reviewed
+  - `422`: `fields: rating_required | text_too_short | text_too_long | text_contact`
+- The server must enforce completion, ownership and one review per booking. It also needs moderation before publishing (admin queue, not built), and a published rating aggregate for `doctorResultSchema.rating`.
+- Needs product confirmation: whether patients may edit or withdraw a pending review (not offered), the review window after completion (none enforced), and the contact/link filter rule.
+
+### R-FE-P-R7-4 Reminder preferences contract (owner: backend + notifications)
+No endpoint exists. The http adapter (`src/modules/reminder-prefs/http.ts`) returns `gated`. Proposed:
+- `GET /api/patient/reminder-preferences` -> `{ channels: { sms, whatsapp, email }, quietHours: { enabled, start "HH:MM", end "HH:MM" }, version, updatedAt }`. Quiet hours are IST wall-clock times and may span midnight; end is exclusive.
+- `PUT /api/patient/reminder-preferences` body `{ channels, quietHours, expectedVersion }`. Errors:
+  - `409`: version mismatch
+  - `422`: `fields: { quietStart|quietEnd: quiet_start_invalid|quiet_end_invalid|quiet_same }`
+- The sender (outbox) must apply these preferences server-side. `inQuietHours()` in `src/modules/reminder-prefs/status.ts` documents the intended rule.
+- Needs product confirmation:
+  - the defaults: SMS on, quiet hours 21:00-07:00 IST
+  - whether safety and critical booking messages bypass quiet hours (the UI says only visit reminders are affected)
+  - the WhatsApp/SMS consent and opt-in wording (TRAI/DLT)
