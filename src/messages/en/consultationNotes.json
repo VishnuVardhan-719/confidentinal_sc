@@ -1,0 +1,50 @@
+{
+  "title": "Consultation notes",
+  "description": "A short write-up of a completed visit. Save it as a draft, then sign it off when it is final.",
+  "synthetic": "Synthetic data for testing only. Never enter real patient information.",
+  "gated": "Consultation notes are switched off until clinical features are approved and enabled. Nothing here is saved or shown.",
+  "documentLabel": "Notes",
+  "badge": { "none": "Not started", "draft": "Draft", "signed_off": "Signed off" },
+  "backToVisit": "Back to the visit",
+  "notCompleted": {
+    "title": "Notes open after the visit is completed",
+    "body": "You can write consultation notes once this booking is marked completed."
+  },
+  "sections": {
+    "summary": { "label": "Visit summary", "hint": "Why the patient was seen and what you did." },
+    "findings": { "label": "Findings", "hint": "What you observed or measured." },
+    "advice": { "label": "Advice given", "hint": "What you told the patient to do." },
+    "followUp": { "label": "Follow-up", "hint": "When to review, or say that none is needed." }
+  },
+  "editor": {
+    "title": "Draft",
+    "intro": "Nothing is saved automatically. Use Save draft to keep your work; leaving with unsaved text asks first.",
+    "save": "Save draft",
+    "unsaved": "Unsaved changes",
+    "notSaved": "Not saved yet",
+    "savedAt": "Draft saved {time}"
+  },
+  "signOff": {
+    "title": "Sign off",
+    "intro": "After sign-off the notes are read-only. Visit summary and advice are required.",
+    "attest": "I confirm these notes are accurate and complete for this visit",
+    "action": "Sign off notes"
+  },
+  "errors": {
+    "required": "{section} is required.",
+    "tooLong": "{section} must be {max} characters or fewer.",
+    "attest": "Confirm the notes are accurate before signing off."
+  },
+  "conflict": {
+    "title": "These notes changed somewhere else",
+    "body": "Someone saved a newer version, or the notes were signed off. Reload to see the latest version; your unsaved text here will be lost.",
+    "reload": "Reload notes"
+  },
+  "signed": {
+    "title": "Signed-off notes",
+    "by": "Signed off by {name} on {time}",
+    "version": "Version {version}",
+    "readOnly": "These notes cannot be edited.",
+    "empty": "Nothing recorded"
+  }
+}

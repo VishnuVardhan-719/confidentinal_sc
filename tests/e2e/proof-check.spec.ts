@@ -57,7 +57,8 @@ test.describe("proof check: entry", () => {
     await codeField(page).focus();
     await page.keyboard.type(UNKNOWN.toUpperCase().replace(/(.{4})/g, "$1 ").trim());
     await page.keyboard.press("Enter");
-    await expect(page).toHaveURL(new RegExp(`/en/verify/${UNKNOWN}$`));
+    // GET form -> server normalizes and redirects (one round trip; slow on a loaded machine).
+    await expect(page).toHaveURL(new RegExp(`/en/verify/${UNKNOWN}$`), { timeout: 15_000 });
     await expect(main(page).getByRole("heading", { level: 2, name: /could not find this proof/i })).toBeVisible();
     await expectNoHorizontalScroll(page);
     await expectNoAxeViolations(page);

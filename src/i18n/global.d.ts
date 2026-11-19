@@ -16,6 +16,7 @@ import type support from "../messages/en/support.json";
 import type errors from "../messages/en/errors.json";
 import type accessibility from "../messages/en/accessibility.json";
 import type verify from "../messages/en/verify.json";
+import type consultationNotes from "../messages/en/consultationNotes.json";
 
 declare module "next-intl" {
   interface AppConfig {
@@ -38,6 +39,7 @@ declare module "next-intl" {
       errors: typeof errors;
       accessibility: typeof accessibility;
       verify: typeof verify;
+      consultationNotes: typeof consultationNotes;
     };
   }
 }

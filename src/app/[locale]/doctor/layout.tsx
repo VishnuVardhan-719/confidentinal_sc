@@ -10,7 +10,7 @@ import { pickNamespaces } from "@/i18n/messages";
 import { getDoctorSession } from "@/modules/doctor/session";
 
 /** Namespaces the doctor client islands need (the root provider ships only common/errors/accessibility). */
-const DOCTOR_CLIENT_NAMESPACES = ["common", "errors", "accessibility", "doctor", "clinical"] as const;
+const DOCTOR_CLIENT_NAMESPACES = ["common", "errors", "accessibility", "doctor", "clinical", "consultationNotes"] as const;
 
 export default function DoctorLayout({ children }: LayoutProps<"/[locale]/doctor">) {
   return (
