@@ -1,6 +1,7 @@
--- P5 doctor core: DC02 arrival code / Kiro / feat/S01-doctor-core / base 2470161.
+-- P5 doctor block: DC02 arrival code / Kiro / feat/S01-doctor-core / base integ/all f549ad3.
 -- Sources: docs/specs/BOOKING_AND_CONSULTATION.md (arrival OTP steps 1-6),
--- docs/CANONICAL_SCHEMA_DRAFT.md (challenge storage), docs/SOURCE_AUDIT_R01.md MR-20 (limits).
+-- docs/CANONICAL_SCHEMA_DRAFT.md (challenge storage), docs/SOURCE_AUDIT_R01.md MR-20 (limits),
+-- shared contract §10 (gate phases) and §13 (replay).
 -- The P5 design deferred DC02 to Phase 7 (DQ-07); this ticket's brief puts it in core.
 -- Flow: doctor reports `arrived` -> the patient (only) asks for a code -> the doctor types
 -- the code the patient reads out in person -> substate `arrival_verified` -> only then may
@@ -12,6 +13,12 @@
 -- attempts per code, 3 regenerations per visit (4 codes total), 60 s between codes.
 -- Comparison is constant time over the 32-byte digest. Wrong codes are counted and
 -- audited by returning a result instead of raising, so the count is not rolled back.
+-- Gate: both commands are the `start` phase (contract §10.1): allowed while the doctor gate
+-- is on or off for accepted work, refused while suspended.
+-- Replay: verify_arrival_code is keyed (contract §13, action p5.doctor.verify_arrival); only a
+-- successful verification is recorded, so a retried wrong code counts again. issue_arrival_code
+-- is deliberately not keyed: a replay could not return the code (no plaintext is kept), and a
+-- retry is a new code under the 60 s cooldown.
 -- Not built: the support-assisted two-party fallback (needs an approved procedure).
 begin;
 
@@ -43,6 +50,8 @@ create table doctor_private.arrival_challenges (
 );
 create unique index p5d_challenge_active on doctor_private.arrival_challenges(booking_id) where status='active';
 create index p5d_challenge_booking on doctor_private.arrival_challenges(booking_id,issued_at);
+alter table doctor_private.arrival_key enable row level security;
+alter table doctor_private.arrival_challenges enable row level security;
 
 create function doctor_private.guard_challenge() returns trigger language plpgsql security definer set search_path='' as $$
 begin
@@ -82,23 +91,24 @@ declare n bigint; begin
  return lpad((n%1000000)::text,6,'0');
 end $$;
 
--- Terminal doctor reports end the assignee's access. Reservations are released as the
--- built completion path does (design B-8 kept reservations are not in this ticket).
-create function doctor_private.end_visit(booking uuid) returns void language plpgsql security definer set search_path='' as $$
-begin
+-- Every doctor step that ends the visit or the doctor's access revokes a live code. Assignment
+-- and reservation handling is the shared finish_assignments/assignee_finish (contract §12).
+create function doctor_private.revoke_codes(booking uuid) returns void language sql security definer set search_path='' as $$
  update doctor_private.arrival_challenges set status='revoked',ended_at=clock_timestamp() where booking_id=booking and status='active';
- perform booking_private.release(booking);
-end $$;
+$$;
 
 -- Patient only. Returns the plaintext code once; the caller shows it to the patient.
 create function public.issue_arrival_code(p_booking_id uuid) returns jsonb
 language plpgsql security definer set search_path='' as $$
 declare actor uuid:=identity_private.require_actor(); b public.bookings; v public.doctor_visits; a public.booking_assignments;
  code text; salt bytea; expires timestamptz; begin
+ if p_booking_id is null then raise exception using errcode='22023',message='invalid_input'; end if;
  select * into b from public.bookings where id=p_booking_id;
  if not found or not booking_private.patient(b.patient_id,'booking:create') then raise exception using errcode='42501',message='forbidden'; end if;
+ perform booking_private.require_gate('doctor','start');
  select * into b from public.bookings where id=p_booking_id for update;
  if not booking_private.patient(b.patient_id,'booking:create') then raise exception using errcode='42501',message='forbidden'; end if;
+ perform booking_private.require_gate('doctor','start');
  if b.category<>'doctor' or b.state<>'confirmed' or clock_timestamp()>=b.end_at+interval '12 hours' then
   raise exception using errcode='55000',message='invalid_transition'; end if;
  select * into v from public.doctor_visits where booking_id=b.id for update;
@@ -110,7 +120,7 @@ declare actor uuid:=identity_private.require_actor(); b public.bookings; v publi
   raise exception using errcode='53300',message='arrival_code_limit'; end if;
  if exists(select 1 from doctor_private.arrival_challenges where booking_id=b.id and issued_at>clock_timestamp()-interval '60 seconds') then
   raise exception using errcode='53300',message='arrival_code_cooldown'; end if;
- update doctor_private.arrival_challenges set status='revoked',ended_at=clock_timestamp() where booking_id=b.id and status='active';
+ perform doctor_private.revoke_codes(b.id);
  code:=doctor_private.random_code(); salt:=extensions.gen_random_bytes(16); expires:=clock_timestamp()+interval '5 minutes';
  insert into doctor_private.arrival_challenges(booking_id,assignment_id,doctor_profile_id,issued_to_profile_id,salt,code_hmac,expires_at)
  values(b.id,a.id,a.assigned_profile_id,actor,salt,doctor_private.code_digest(salt,b.id,a.id,a.assigned_profile_id,code),expires);
@@ -120,24 +130,27 @@ end $$;
 
 -- Assigned doctor only. Success moves arrived -> arrival_verified and returns the new
 -- booking version. A wrong code returns verified=false with the attempts left.
-create function public.verify_arrival_code(p_booking_id uuid, p_code text, p_expected_version integer) returns jsonb
+create function public.verify_arrival_code(p_booking_id uuid, p_code text, p_expected_version integer, p_request_key uuid) returns jsonb
 language plpgsql security definer set search_path='' as $$
-declare actor uuid:=identity_private.require_actor(); b public.bookings; v public.doctor_visits; c doctor_private.arrival_challenges;
- result integer; begin
- select * into b from public.bookings where id=p_booking_id;
- if not found then raise exception using errcode='42501',message='forbidden'; end if;
- if doctor_private.replayed(b.id,p_expected_version,array['arrival_verified']) then
-  return jsonb_build_object('verified',true,'version',p_expected_version+1); end if;
- if not identity_private.is_assigned(b.id,'doctor_visit') then raise exception using errcode='42501',message='forbidden'; end if;
+declare actor uuid:=identity_private.require_actor(); h text; prior integer; b public.bookings; v public.doctor_visits;
+ c doctor_private.arrival_challenges; result integer; event uuid; begin
+ if p_booking_id is null or p_request_key is null or p_expected_version is null or p_expected_version not between 1 and 2147483646
+ or p_code is null or p_code !~ '^[0-9]{6}$' then raise exception using errcode='22023',message='invalid_input'; end if;
+ h:=booking_private.request_hash(jsonb_build_array(p_booking_id,p_code,p_expected_version));
+ select r.result_version into prior from booking_private.replay(actor,'p5.doctor.verify_arrival',p_request_key,h) r;
+ if prior is not null then return jsonb_build_object('verified',true,'version',prior); end if;
+ if not doctor_private.assignee(p_booking_id) then raise exception using errcode='42501',message='forbidden'; end if;
+ perform booking_private.require_gate('doctor','start');
  select * into b from public.bookings where id=p_booking_id for update;
  perform booking_private.lock_provider(b.provider_id);
  perform 1 from public.resources where id in(select resource_id from public.booking_assignments where booking_id=b.id and status='active') order by id for update;
- if not identity_private.is_assigned(b.id,'doctor_visit') then raise exception using errcode='42501',message='forbidden'; end if;
- if b.category<>'doctor' then raise exception using errcode='55000',message='invalid_transition'; end if;
- if p_expected_version is null or b.version<>p_expected_version then raise exception using errcode='40001',message='stale_version'; end if;
  select * into v from public.doctor_visits where booking_id=b.id for update;
- if not found or v.substate<>'arrived' then raise exception using errcode='55000',message='invalid_transition'; end if;
- if p_code is null or p_code !~ '^[0-9]{6}$' then raise exception using errcode='22023',message='invalid_input'; end if;
+ select r.result_version into prior from booking_private.replay(actor,'p5.doctor.verify_arrival',p_request_key,h) r;
+ if prior is not null then return jsonb_build_object('verified',true,'version',prior); end if;
+ if not doctor_private.assignee(b.id) then raise exception using errcode='42501',message='forbidden'; end if;
+ perform booking_private.require_gate('doctor','start');
+ if b.version<>p_expected_version then raise exception using errcode='40001',message='stale_version'; end if;
+ if v.booking_id is null or v.substate<>'arrived' then raise exception using errcode='55000',message='invalid_transition'; end if;
  select * into c from doctor_private.arrival_challenges where booking_id=b.id and status='active' for update;
  if not found or c.doctor_profile_id<>actor or c.assignment_id<>v.assignment_id then
   raise exception using errcode='55000',message='arrival_code_required'; end if;
@@ -152,15 +165,17 @@ declare actor uuid:=identity_private.require_actor(); b public.bookings; v publi
   return jsonb_build_object('verified',false,'attempts_remaining',5-(c.attempts+1));
  end if;
  update doctor_private.arrival_challenges set status='consumed',ended_at=clock_timestamp() where id=c.id;
- result:=booking_private.transition(b.id,'confirmed','arrival_verified');
+ result:=booking_private.transition(b.id,'confirmed','arrival_verified',p_request_key);
  update public.doctor_visits set substate='arrival_verified' where booking_id=b.id;
+ select e.id into event from public.booking_events e where e.booking_id=b.id and e.aggregate_version=result;
+ perform booking_private.record_request(actor,'p5.doctor.verify_arrival',p_request_key,h,event,result);
  return jsonb_build_object('verified',true,'version',result);
 end $$;
 
 revoke all on all functions in schema doctor_private from public, anon, authenticated, service_role;
 revoke all on all tables in schema doctor_private from public, anon, authenticated, service_role;
 revoke all on function public.issue_arrival_code(uuid) from public, anon, authenticated, service_role;
-revoke all on function public.verify_arrival_code(uuid,text,integer) from public, anon, authenticated, service_role;
+revoke all on function public.verify_arrival_code(uuid,text,integer,uuid) from public, anon, authenticated, service_role;
 grant execute on function public.issue_arrival_code(uuid) to authenticated;
-grant execute on function public.verify_arrival_code(uuid,text,integer) to authenticated;
+grant execute on function public.verify_arrival_code(uuid,text,integer,uuid) to authenticated;
 commit;
