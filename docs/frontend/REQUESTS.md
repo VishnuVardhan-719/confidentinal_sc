@@ -328,3 +328,14 @@ No endpoint exists. The http adapter (`src/modules/saved-providers/http.ts`) ret
 - `DELETE /api/patient/saved-providers/:providerId`: idempotent remove.
 - Only ids are stored. The page reads names, specialities and fees from the public doctor directory on every visit, so suspended or unlisted doctors show as "no longer listed".
 - Needs product confirmation: the cap of 50 per account (`MAX_SAVED_PROVIDERS`), and whether a save button belongs on the doctor directory and profile pages (owned by fe2-c; not edited here).
+
+### R-FE-P-R7-3 Patient reviews contract (owner: backend + admin moderation)
+No endpoint exists. The http adapter (`src/modules/reviews/http.ts`) returns `gated`. Proposed:
+- `GET /api/patient/reviews/visits` -> `{ items: { bookingId, bookingReference, category, providerDisplayName, bookingState, completedAt, review | null }[] }`
+- `GET /api/patient/reviews/visits/:bookingId`
+- `POST /api/patient/reviews` (Idempotency-Key header) body `{ bookingId, rating 1..5, text 10..1000 }`. Returns `201` with `status: "pending_moderation"`. Errors:
+  - `403`: booking not completed or not owned
+  - `409`: already reviewed
+  - `422`: `fields: rating_required | text_too_short | text_too_long | text_contact`
+- The server must enforce completion, ownership and one review per booking. It also needs moderation before publishing (admin queue, not built), and a published rating aggregate for `doctorResultSchema.rating`.
+- Needs product confirmation: whether patients may edit or withdraw a pending review (not offered), the review window after completion (none enforced), and the contact/link filter rule.

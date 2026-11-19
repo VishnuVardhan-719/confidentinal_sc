@@ -16,7 +16,7 @@ foreach ($m in @(@{ mode = "on"; fep = "session"; clin = "on" }, @{ mode = "off"
   $env:E2E_FEP_MODE = $m.fep
   $env:E2E_FEP_CLINICAL = $m.clin
   "=== mode $($m.mode)"
-  npx playwright test tests/e2e/patient-records.spec.ts tests/e2e/patient-bookings.spec.ts tests/e2e/patient-family.spec.ts tests/e2e/patient-saved.spec.ts --workers=2 --reporter=line 2>&1 | Select-String -Pattern "Error:|passed|failed|skipped|flaky"
+  npx playwright test tests/e2e/patient-records.spec.ts tests/e2e/patient-bookings.spec.ts tests/e2e/patient-family.spec.ts tests/e2e/patient-saved.spec.ts tests/e2e/patient-reviews.spec.ts --workers=2 --reporter=line 2>&1 | Select-String -Pattern "Error:|passed|failed|skipped|flaky"
 }
 Stop-Own
 "server stopped"
