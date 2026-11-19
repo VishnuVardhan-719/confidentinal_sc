@@ -164,7 +164,7 @@
       "conflict": "This review changed in another window. Go back to your reviews to see the latest version."
     },
     "edit": "Edit review",
-    "editLabel": "Edit your review for {provider}",
+    "editLabel": "Edit review for {provider}",
     "editNote": "Editing sends the review back for moderation. It is hidden until it is checked again.",
     "withdrawnNote": "You withdrew this review. It is not shown to anyone.",
     "rejectedReason": {

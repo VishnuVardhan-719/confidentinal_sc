@@ -1,7 +1,9 @@
 /**
  * fe-p R8 accessibility sweep over every patient route fe-p owns, in each browser project
  * (mobile-390 and desktop-1280):
- *   - axe (WCAG 2.1 A/AA): no serious or critical violations
+ *   - axe (WCAG 2.1 A/AA): no serious or critical violations; on the dashboard and detail pages
+ *     (STRICT_ROUTES) moderate violations fail too
+ *   - the notification inbox is also swept in te and hi
  *   - no horizontal scroll
  *   - the first Tab stop is visible and has a focus ring (outline >= 2px or a box-shadow ring)
  * Runs against a session-mode fixture server (E2E_FEP_MODE=session); with E2E_FEP_CLINICAL=on the
@@ -26,20 +28,38 @@ const ROUTES = [
   "/patient/saved",
   "/patient/reviews",
   "/patient/reviews/00000000-0000-4000-8000-0000000002a2",
+  "/patient/reviews/00000000-0000-4000-8000-0000000002a7/edit",
   "/patient/settings/reminders",
 ];
+
+/** Dashboard and detail pages: moderate axe issues fail as well as serious and critical ones. */
+const STRICT_ROUTES = new Set([
+  "/patient/dashboard",
+  "/patient/bookings/00000000-0000-4000-8000-000000000061",
+  "/patient/records/00000000-0000-4000-8000-000000000202",
+  "/patient/family/00000000-0000-4000-8000-0000000000f1",
+  "/patient/reviews/00000000-0000-4000-8000-0000000002a2",
+  "/patient/reviews/00000000-0000-4000-8000-0000000002a7/edit",
+]);
+
+const LOCALIZED: [string, string][] = [
+  ["te", "/patient/notifications"],
+  ["hi", "/patient/notifications"],
+];
+const failing = (route: string) => (STRICT_ROUTES.has(route) || route === "/patient/notifications" ? ["moderate", "serious", "critical"] : ["serious", "critical"]);
 
 test.describe("fe-p patient routes a11y sweep", () => {
   test.skip(MODE !== "session", "needs a session-mode fixture server");
 
-  for (const route of ROUTES) {
-    test(`a11y ${route}`, async ({ page }) => {
-      await page.goto(`/en${route}`);
+  for (const [locale, route] of [...ROUTES.map((r): [string, string] => ["en", r]), ...LOCALIZED]) {
+    test(`a11y ${locale}${route}`, async ({ page }) => {
+      await page.goto(`/${locale}${route}`);
+      await expect(page.locator("html")).toHaveAttribute("lang", locale);
       await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toBeVisible();
 
       const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
       const blocking = results.violations
-        .filter((v) => v.impact === "serious" || v.impact === "critical")
+        .filter((v) => failing(route).includes(v.impact ?? ""))
         .map((v) => `${v.impact} ${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`);
       expect(blocking).toEqual([]);
 

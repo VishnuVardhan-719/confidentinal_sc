@@ -30,7 +30,7 @@ test.describe("review edit and withdraw (signed-in, seeded)", () => {
     const card = submitted(page).getByRole("listitem").filter({ hasText: ref });
     await expect(card).toContainText("Not published");
     await expect(card).toContainText("Why it was not published: It was not about the service received.");
-    await card.getByRole("link", { name: `Edit your review for ${provider}` }).click();
+    await card.getByRole("link", { name: `Edit review for ${provider}` }).click();
     await expect(page).toHaveURL(new RegExp(`/en/patient/reviews/${id}/edit$`));
     const main = page.getByRole("main");
     await expect(main.getByRole("heading", { level: 1, name: "Edit your review" })).toBeVisible();
