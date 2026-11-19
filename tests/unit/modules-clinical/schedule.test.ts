@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { buildSchedule, istDayKey } from "@/modules/doctor/schedule";
+import type { AssignedVisitView } from "@/modules/doctor/types";
 
-const v = (id: string, at: string, state = "accepted") => ({ id, scheduledStartAt: at, state });
+const v = (id: string, at: string, state: AssignedVisitView["state"] = "accepted") => ({ id, scheduledStartAt: at, state });
 
 describe("doctor schedule (IST days)", () => {
   // 2026-11-19 20:00 UTC = 2026-11-20 01:30 IST, so "today" in IST is the 20th.

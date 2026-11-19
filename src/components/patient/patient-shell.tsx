@@ -1,10 +1,15 @@
-import { getTranslations } from "next-intl/server";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages, getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { AppShell, type ShellNavItem } from "@/components/shared/app-shell";
 import { FixtureNotice } from "@/components/shared/fixture-notice";
 import { OfflineBanner } from "@/components/shared/offline-banner";
 import type { FixtureActor } from "@/fixtures/clinical/world";
+import { pickNamespaces } from "@/i18n/messages";
 import { getNotificationsApi, unreadCount } from "@/modules/notifications";
+
+/** Namespaces the patient client islands need (record PDF panel, mark-read); root ships only common/errors/accessibility. */
+const PATIENT_CLIENT_NAMESPACES = ["common", "errors", "accessibility", "clinical", "patient"] as const;
 
 /**
  * Shared patient workspace frame (dashboard, records, notifications). Bookings and profile pages are
@@ -12,7 +17,7 @@ import { getNotificationsApi, unreadCount } from "@/modules/notifications";
  * server-derived; when notifications are not connected, no count is shown.
  */
 export async function PatientShell({ synthetic, fixtureActor, children }: { synthetic: boolean; fixtureActor: FixtureActor | null; children: ReactNode }) {
-  const t = await getTranslations("patient.shell");
+  const [t, messages] = await Promise.all([getTranslations("patient.shell"), getMessages()]);
   const notes = await getNotificationsApi(process.env, { fixtureActor: fixtureActor ?? undefined }).listMine();
   const unread = notes.ok ? unreadCount(notes.data) : 0;
   const nav: ShellNavItem[] = [
@@ -24,12 +29,14 @@ export async function PatientShell({ synthetic, fixtureActor, children }: { synt
     { href: "/doctors", label: t("nav.findDoctor"), icon: "stethoscope" },
   ];
   return (
-    <AppShell workspaceLabel={t("workspace")} nav={nav}>
-      <div className="mx-auto grid w-full max-w-content gap-10">
-        {synthetic ? <FixtureNotice /> : null}
-        <OfflineBanner className="empty:hidden" />
-        {children}
-      </div>
-    </AppShell>
+    <NextIntlClientProvider messages={pickNamespaces(messages, PATIENT_CLIENT_NAMESPACES)} timeZone="Asia/Kolkata">
+      <AppShell workspaceLabel={t("workspace")} nav={nav}>
+        <div className="mx-auto grid w-full max-w-content gap-10">
+          {synthetic ? <FixtureNotice /> : null}
+          <OfflineBanner className="empty:hidden" />
+          {children}
+        </div>
+      </AppShell>
+    </NextIntlClientProvider>
   );
 }

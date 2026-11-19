@@ -145,6 +145,20 @@ test.describe("doctor guard and shell", () => {
     await expectNoAxeViolations(page);
   });
 
+  test("availability: read-only 7-day IST schedule with booked visits and an honest edit notice", async ({ page }) => {
+    await page.goto(`${D}/availability`);
+    await expect(page.getByText(/editing weekly hours is not connected yet/i)).toBeVisible();
+    const schedule = page.getByRole("region", { name: /next 7 days/i });
+    await expect(schedule.getByRole("heading", { level: 3 })).toHaveCount(7);
+    await expect(schedule.getByRole("heading", { level: 3 }).first()).toHaveText(/^today/i);
+    await expect(schedule.getByRole("link", { name: /SYN-BKG-0102/ })).toHaveAttribute("href", path.visit(I.bookingToday));
+    // Requests are not on the schedule until accepted.
+    await expect(schedule.getByRole("link", { name: /requested/i })).toHaveCount(0);
+    await expect(schedule.getByRole("button")).toHaveCount(0);
+    await expectNoPhiInUrlOrStorage(page);
+    await expectNoAxeViolations(page);
+  });
+
   for (const width of [360, 390, 768, 1280]) {
     test(`dashboard has no horizontal scroll at ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 800 });
@@ -178,6 +192,7 @@ test.describe("DC01 assigned doctor access", () => {
     await expect(page.getByText("500001").first()).toBeVisible();
     await expect(page.getByText("₹800").first()).toBeVisible();
     for (const m of ["Fixture Patient A", "+910000000000", "Flat 0"]) await expect(page.getByText(m)).toHaveCount(0);
+    await expectNoAxeViolations(page);
   });
 
   test("decline requires a reason; accept in a second tab then conflicts", async ({ page, as }) => {
@@ -282,6 +297,7 @@ test.describe("DC04-DC08 consultation editor (booking: active)", () => {
     await expect(page.getByText("SYN-BKG-0106")).toBeVisible();
     await expect(page.getByRole("note").filter({ hasText: /allerg/i })).toBeVisible();
     await expect(draftStatus(page)).toHaveText(LABEL.draftStatus.saved);
+    await expectNoAxeViolations(page);
   });
 
   test("DC04 temperature needs a unit and is kept exactly as entered", async ({ page }) => {
@@ -397,6 +413,7 @@ test.describe("DC09-DC14 records, collection, facts, proof, photo, PDF", () => {
     await page.getByRole("button", { name: LABEL.recordCollection }).click();
     await expect(page.getByText(/collection recorded/i)).toBeVisible();
     await expect(page.getByText(/payment: due/i)).toBeVisible();
+    await expectNoAxeViolations(page);
   });
 
   test("DC11 facts show Patient entered until reviewed; only selected facts are confirmed", async ({ page }) => {
