@@ -111,6 +111,24 @@ export const FIXTURE_PROVIDER_DRAFTS: readonly ProviderOnboardingDraft[] = [
       coverage: { coveragePins: ["500001", "500002"] },
     },
   },
+  {
+    // lab.owner's application, in review: onboarding shows the status and no editor.
+    category: "lab",
+    providerId: FIXTURE_IDS.labProvider,
+    status: "under_review",
+    version: 7,
+    updatedAt: "2026-11-16T04:00:00Z",
+    sections: {
+      listing: { displayName: "Synthetic Diagnostics", description: "Synthetic lab profile for review screens." },
+      organization: {
+        ownership: "organization",
+        legalName: "Synthetic Diagnostics Pvt (fictional)",
+        brandName: "Synthetic Diagnostics",
+        managerName: "Synthetic Lab Owner E",
+        managerPhone: "+916000000001",
+      },
+    },
+  },
 ];
 
 /** SYNTHETIC coverage rows (placeholder PINs). Not real service availability. */

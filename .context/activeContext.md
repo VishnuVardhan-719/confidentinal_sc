@@ -135,3 +135,6 @@ Progress:
 - 305e48d header 2xl overflow fix (te 175px@1536). public+public-nav+a11y: 131 passed 0 failed before 1536 add; 1536 sweep 3/3.
 - Next: R8 usability audit te/hi 390/768/1280 via .context/fep2-audit.mjs, fix CSS/components, small commits, handoff-fe-p2.md.
 
+## Kiro fe-b, PHASE4 (2026-11-19)
+- Task A (fe2-b, port 3310): DONE, see handoff-kiro-b.md. Baseline run: 29 pass, 14 fail, 19 did not run. Root causes: spec locators; account page links read before streaming finished.
+- Task B (fe2-e, port 3350): PHASE4-E2. TODO

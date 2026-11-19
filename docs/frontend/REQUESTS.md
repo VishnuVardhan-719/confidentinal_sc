@@ -419,3 +419,8 @@ Per user rule, no Playwright/browser runs from agents. `tests/e2e/doctor-workspa
 ### R-FE01-14 (to lead) — browser e2e un-deferred and passing on feat/fe2-a
 R-FE01-12 is resolved: with the ban lifted, all fe2-a browser specs ran against `next start` (port 3330, --workers=1):
 `public.spec.ts` + `public-nav.spec.ts` 115 passed / 1 skipped (mobile-only test on desktop); `a11y.spec.ts` 16 passed / 16 skipped (runs once on the desktop project; covers 360/768/1024/1440 x en/te/hi, 200%/400% zoom, keyboard focus, headers); `perf.spec.ts` (E2E_PERF=1, mobile-390) 4 passed. Fix made during the run: Telugu/Hindi header overflowed by 12px at 1280 -> emergency link and language trigger are compact between xl and 2xl, account buttons stay on one line.
+### R-FE07-04 routes other workstreams own, skipped or fixme'd in identity e2e (Kiro B, PHASE4)
+- Not on feat/fe2-b, so identity e2e skips them: role dashboards and bookings (/{role}/dashboard, /patient/bookings*), /lab/orders, /doctors, /lab-tests (public chrome links to it; 404 on this branch). Re-run 
+avigation.spec.ts role walk and the two onboarding.spec.ts fixme tests on the integration branch.
+- AccountFrame should drop under role shells once the role layouts exist (one header per page).
+- Identity specs mutate shared fixture memory, so run each spec file against a freshly started server (admin-verification approves the lab that onboarding.spec expects under review).

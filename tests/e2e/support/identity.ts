@@ -50,7 +50,8 @@ export const COPY = {
   back: /^back$/i,
   submitReview: /submit for review/i,
   unknown: /^unknown$/i,
-  none: /^none$|no known/i,
+  // "None" answers are worded per step: "No known allergies", "No previous surgeries", "Not taking any medication".
+  none: /^none$|^no (known|previous) |^not taking/i,
   listed: /^yes, list them$|^listed$/i,
   approve: /^approve$/i,
   reject: /^reject$/i,

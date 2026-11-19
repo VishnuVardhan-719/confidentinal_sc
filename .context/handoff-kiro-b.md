@@ -1,39 +1,35 @@
-# Handoff: Kiro B (fe2-b, branch feat/fe2-b)
+# Handoff: Kiro B / fe-b (fe2-b, branch feat/fe2-b)
 
 ## Done (committed)
-- `ed384ee` auth pages, patient profile + health profile, profile gate (USER-REQ-1 A+D).
-- `64b916f` PHASE3-B: requireRole wrong role -> own landing; getAccountSession (`@/modules/auth/server`, shape in REQUESTS R-FE07-01); role-isolation unit tests; R-FE07-01..03 migration targets.
-- Checkpoint commit (this shutdown): remaining PHASE2-B pages, WIP, see below.
+- `ed384ee` auth pages, patient profile + health profile, profile gate.
+- `64b916f` role guards for all six roles (wrong role -> own landing), getAccountSession, role-isolation unit tests.
+- `015a4d6`, `a6fd92b` PHASE2-B pages checkpoint (questionnaire, provider onboarding, admin providers/coverage).
+- PHASE4 Task A (this pass): the 13 identity e2e failures fixed; see below.
 
-## In the checkpoint commit (built, partly e2e-verified)
-- Patient questionnaire `/[locale]/patient/(intake)/onboarding` (?step=, server-saved, review + consent + submit).
-- Provider onboarding `/{doctor,lab,ambulance,caretaker}/onboarding` via `src/components/onboarding/provider-onboarding.tsx` (start application, status + still needed, locked when not editable, documents step honest "upload unavailable", review preview + submit).
-- Admin `/admin/providers` (URL filters), `/admin/providers/[id]` (decisions in reason+confirm dialog, gated doc viewer), `/admin/coverage`.
-- New components: wizard-form, wizard-steps, wizard-actions, admin-decision, admin-filters, admin-states, onboarding-layout. New message keys `onboarding.{wizard,patientWizard,providerWizard,adminReview}` in en/te/hi (te/hi unreviewed).
-- e2e specs un-fixme'd (auth, onboarding, admin-verification, navigation).
-- Checks at checkpoint: tsc 0, lint 0, `npm run build` 0. Unit tests not re-run after the page work (last: 224/224 identity).
+## PHASE4 Task A: what changed
+App fixes (real bugs found by e2e):
+- `src/components/auth/auth-flow.tsx`: signup role choice was lost when switching Email / Mobile tab (uncontrolled RadioGroup per tab). Now controlled state shared by both tabs.
+- `src/components/shared/error-summary.tsx` (shared, fe-a area, needed for a real failure): summary links that point at a fieldset/list (e.g. medical conditions list) focused nothing. Now focus the first form control inside the group.
+- `src/components/auth/session-links.tsx`: "My workspace" link was `hidden` below 640 px, so mobile users had no way back to their workspace from account pages. Now icon-only with an sr-only label below `sm`.
+- `src/fixtures/identity/providers.ts`: lab.owner had a pending-review workspace but no application draft ("Nothing to show yet"). Added a synthetic under_review lab draft.
+Spec fixes (locators / changed behaviour):
+- Wrong role now redirects to own landing: auth, admin-verification, profile assert URL instead of the old denied page.
+- Alerts filtered by text (Next route announcer is also role=alert); radios by `^name`; phone by textbox role; "Call 112" exact; "None" answer regex covers per-step wording; error summary takes focus, then its link focuses the field (GOV.UK pattern).
+- Pages on other branches avoided: sign-out from /account/security, expiry check on /patient/profile, `/lab-tests` in OWNED_ELSEWHERE, dot-segment test tolerates an aborted navigation from the guard redirect.
+- `tests/unit/ui-messages.test.ts`: `onboarding.adminReview.decision.dialogTitle` ("{action}: {name}") allowed identical in all locales.
 
-## Last e2e run (desktop-1280, port 3310): 36 passed, 13 failed, 6 skipped, 13 did not run (serial)
-Known failures to fix (mostly spec locators, not app bugs):
-1. admin access control + profile "other roles" + auth "patient cannot open admin": still assert the old denied page in places; wrong role now redirects to own landing (assert URL instead).
-2. auth wrong-credentials: `getByRole("alert")` matches Next route announcer -> filter by text.
-3. auth sign-out: Sign out button not found on /en/account/security after signIn (check AccountFrame header / visible()).
-4. auth expired session: spec still on /en/patient/bookings in one place (regex replace missed it) -> use /en/patient/profile.
-5. signup: radio /patient/i also matches "Ambulance operator ... patients" -> exact names; phone label matches tabpanel -> getByRole("textbox").
-6. emergency: two links match /112/ -> name "Call 112" exact.
-7. navigation auth-pages walk: `/en/lab-tests` 404 (public chrome, fe-a) -> add to OWNED_ELSEWHERE + REQUESTS.
-8. onboarding "Unknown answers": `.check()` timed out at onboarding.spec.ts:43 (surgeries Listed radio) -> inspect screenshot in %TEMP%\scv-e2e-identity.
-Logs: `%TEMP%\scv-e2e-all.log`.
+## Test results (port 3310, `next build` + `next start`, fixture adapter)
+- e2e, each spec file on a freshly started server (fixture state is process memory):
+  - desktop-1280: admin-verification 10/10, auth 28/28, navigation 4 pass + 4 skipped (fixme: role walk, other branches), onboarding 14 pass + 2 fixme, profile 6/6.
+  - mobile-360: same counts, all passing.
+  - One desktop auth run under heavy machine load had 2 timeouts; rerun 28/28.
+- vitest 386/386, tsc 0, eslint 0, build 0.
 
-## Remaining
-- Fix the failures above, rerun e2e (desktop + mobile-360), run full vitest, axe/360px check of new pages.
-- REQUESTS: R-FE07-04 (other-workstream routes skipped in e2e: dashboards, bookings, /lab/orders, /doctors, /lab-tests), AccountFrame to drop under role shells.
-- COMPONENTS-identity.md: add new components.
+## Open
+- R-FE07-04 in docs/frontend/REQUESTS.md: other-workstream routes still skipped/fixme here; re-run on integration.
+- Root .gitignore `coverage/` also matches `src/app/[locale]/admin/coverage/` (files force-added). Lead: anchor the rule to `/coverage/`.
+- COMPONENTS-identity.md not yet updated for the new onboarding components.
 
-## Commands / ports
-- My port: 3310 (stopped). Start: `Start-Process cmd.exe -ArgumentList '/c','set FRONTEND_ADAPTER=fixture&& set APP_ENV=development&& npx next start -p 3310 > "%TEMP%\scv-fe2b-3310.log" 2>&1' -WorkingDirectory C:\Users\Yashwanth\fe2-b -WindowStyle Hidden`
-- e2e: `$env:E2E_PORT="3310"; npx playwright test --config tests/e2e/playwright.config.ts --project=desktop-1280 --workers=1` (needs a fresh server: fixture state is process memory).
-- Never push; never commit to develop/main.
-
-## Note
-- Root .gitignore `coverage/` also matches the route folder `src/app/[locale]/admin/coverage/`. Its files were force-added (git add -f). Lead: consider anchoring the rule to `/coverage/`.
+## Commands
+- Clean build: stop the 3310 server first; building under a running `next start` makes it serve 500 chunks.
+- Run: `$env:E2E_PORT="3310"; npx playwright test --config tests/e2e/playwright.config.ts --project=desktop-1280 --workers=1 <spec>` with a fresh server per spec file.

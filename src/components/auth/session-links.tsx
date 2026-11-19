@@ -17,10 +17,11 @@ export async function SessionLinks() {
   if (session.ok && session.data.kind === "authenticated") {
     return (
       <div className="flex items-center gap-2">
-        <Button asChild variant="secondary" className="hidden sm:inline-flex">
+        <Button asChild variant="secondary">
           <Link href={withoutLocale(landingPathFor(session.data.identity, locale))}>
             <LayoutDashboard aria-hidden />
-            {t("myWorkspace")}
+            {/* Icon-only below sm so the header fits 360 px; the name stays for assistive tech. */}
+            <span className="sr-only sm:not-sr-only">{t("myWorkspace")}</span>
           </Link>
         </Button>
         <SignOutButton locale={locale} label={t("signOut")} variant="quiet" />
