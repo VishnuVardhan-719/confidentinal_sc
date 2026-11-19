@@ -54,3 +54,18 @@ All fixture-only behind FEATURE_CLINICAL (off unless "true"); http adapters retu
 Evidence (final run): Playwright ws-desktop-1280 + ws-mobile-390, all workspace specs: 182 passed / 0 failed. tsc exit 0; npm run lint exit 0; vitest 26 files / 437 tests passed; npm run build passes.
 Shared edits: src/i18n/messages.ts + global.d.ts (namespaces verify, consultationNotes, prescriptionDrafts, doctorReviews), playwright.config.ts WORKSPACE_SPECS, doctor layout (client namespaces + Reviews nav), shared visit page (post-visit link), proof card (check link).
 Open: QR still not drawn (no approved library); reviews gated behind the clinical flag per the task file though not clinical; te/hi strings machine-written (REQUESTS R-FE-D-36..39); overlap with feat/fe2-p 4aa02f8 (patient records/notifications) still awaits a lead decision; tests hardened for load/time flakiness (redirect timeouts, IST-midnight count, hydration wait, sticky-bar poll).
+
+## PAUSED STATE (R8-D, fe-a on fe2-d, branch feat/fe2-d; never pushed)
+Done (committed):
+- Step 1 82d151c: fixture "today" visits anchored to the IST day (onIstDayOf) + shared world rolls timestamps when the IST day changes (rollWorld); unit tests tests/unit/modules-clinical/world-days.test.ts; doctor dashboard e2e back to strict count 2.
+- Step 2 34cf3aa: tests/e2e/hydration-race.spec.ts (holds JS chunks) reproduced the bug (3/3 controlled forms lost pre-hydration input); fix = src/components/clinical/use-hydrated.ts gating own controlled forms; /verify form now posts to route handler /[locale]/verify/check (HTTP 303, works without JS). Findings + proposed shared-control patch: docs/frontend/REQUESTS.md R-FE-D-40. 28/28 passed after the fix.
+Half-done (WIP commit, step 3 a11y sweep):
+- tests/e2e/a11y-sweep.spec.ts: every doctor route + /verify routes, en/te/hi, 390 + 1280, axe + one h1 + no overflow + no raw keys, plus denied and gate-off states.
+- Fixes from the sweep: consultation editor page now renders PageHeader (h1); step rail nav min-w-0 and ol `relative` (sr-only status spans caused ~350px horizontal overflow at 390px); DC02 lock test waits for the input to be enabled (inputs disabled until hydration).
+- Last full run before the fixes: 338 passed / 6 failed (those 6 are what the fixes address). The rerun after the fixes was interrupted by shutdown, so they are NOT verified yet. Also still to check: the "mobile 360px sticky actions" test failed once on mobile after the h1 header was added. Verify it passes now; if not, the header may push the field under the sticky toolbar (fix in the test's scroll or the layout).
+Next steps:
+1. Restart servers with a build: `Start-Process pwsh -ArgumentList '-NoProfile','-File','C:/Users/Yashwanth/fe2-d/.context/restart-ws.ps1' -WindowStyle Hidden -RedirectStandardOutput .context/restart.log`, then poll .context/restart.log for "servers up" (do not pipe the script; it hangs the tool shell).
+2. `$env:E2E_PORT='3379'; npx playwright test --project=ws-desktop-1280 --project=ws-mobile-390 --workers=2 --reporter=line` (restart servers before each full run; the fixture world is mutated).
+3. Fix any remaining sweep failures in own files; commit step 3 ("feat(r8-d3): a11y sweep ...").
+4. Step 4: `npx tsc --noEmit`, `npm run lint`, `npx vitest run`, `npm run build`, full e2e; then a TASK REPORT listing commits 82d151c, 34cf3aa, the step 3 commit, and the step 4 results.
+5. Stop servers on 3370-3383/3379 when done.
