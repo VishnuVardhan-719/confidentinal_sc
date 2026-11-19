@@ -115,3 +115,11 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
 - vitest 939/939, lint 0, build 0. Server 3360 started by me (pid in .context/server-3360.pid).
 - Writing tests/e2e/booking-journey.spec.ts; fixed duplicate 'Step n of 7' in wizard.
 - Servers still alive (mine, fe2-c): 3360 = node 18224 (parent chain 5328, started 17:32), 3361 = node 24188 (20:09). Netstat in this sandbox does not show listeners. Lead said do not kill by PID, so rebuilds go to a new port (3362).
+
+## fe-q PHASE-R6-C (started after badedf0)
+Plan: shared core src/modules/service-requests/{core,store,fixture-api,http-api}.ts; modules lab-orders, care-requests, ambulance-requests ({types,schemas,status,api,http,fixture,index}.ts) built on it.
+Routes src/app/[locale]/patient/{lab-tests,caretakers,ambulance}/{page,request/page,requests/[id]/page,actions}.tsx.
+UI src/components/service-requests/*. New i18n namespace "services" (edits messages.ts + global.d.ts, 2 lines each).
+Synthetic: one declining provider per category; FIXTURE_PROVIDER_RESPONSE_MS delay; pay after service; ambulance = scheduled non-emergency only + 112 notice.
+Server: port 3362 (old 3360/3361 servers of mine still alive, not killed per lead).
+Order: lab -> caretakers -> ambulance; commit per sub-task.
