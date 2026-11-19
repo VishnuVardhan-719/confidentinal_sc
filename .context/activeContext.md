@@ -13,3 +13,4 @@ Progress:
 
 - Ops specs un-fixme'd; signInAs wired (support/operations.ts, hard reload after sign-in). Discovery copies (serial removed) in tests/e2e/zz-discover (DO NOT COMMIT; delete at end). First discovery: 26 fail / 15 pass desktop, list in .context/ops-e2e-discovery-desktop.txt.
 
+- PHASE4-E2 done (b77fb24, ea568c8, b49844c): 5 ops specs + new role-isolation.spec pass on desktop-1280 and mobile-390 (lab also with FEATURE_CLINICAL=true); fixture ops clock, lab 'scheduled' queue, recollection reference, public stories/FAQ read CMS. Open: pre-existing soft 404 on /stories/<unknown>. Details: .context/handoff-fe-b-e2.md. zz-discover deleted.
