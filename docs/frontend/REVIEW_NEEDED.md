@@ -31,3 +31,7 @@ These keys in `src/messages/te/patient.json` and `src/messages/hi/patient.json` 
 - **Record detail privacy:** unknown, draft, other-patient and malformed ids all render the same "not available" state. A guest's login return path is `/patient/records`, never the record id.
 - **Notifications:** the http adapter has no in-app inbox contract and returns `gated`; the page says notifications are not available yet and links to bookings. The fixture inbox is not patient-scoped and is rebuilt on every request, so "Mark as read" does not persist after a reload. `FIXTURE_NOTIFICATION_SCENARIO=empty` (server env) shows the empty inbox.
 - **Public `loading.tsx`:** added only at `doctors/[id]` (that route already sat under `doctors/loading.tsx`). A group-level `(public)/loading.tsx` breaks the build: the `[...rest]` catch-all calls `notFound()` inside the boundary during prerender. Per-route `loading.tsx` on the static public pages (about, emergency, faq, terms and so on) makes the page show only the skeleton when JavaScript is off, which failed the no-JS e2e for `/hi/emergency` (tel:112) and `/en/faq`. Those were left out on purpose. Lead to confirm.
+
+## fe-p R7: patient account features (feat/fe2-p)
+- New namespace `patientAccount` (`src/messages/{en,te,hi}/patientAccount.json`). te/hi are machine-written and need native review: every key under `patientAccount.family.*`.
+- Family relation labels (`patientAccount.family.relation.*`): check the wording for grandparent (te: "తాత లేదా అమ్మమ్మ", hi: "दादा-दादी या नाना-नानी").

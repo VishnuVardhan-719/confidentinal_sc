@@ -302,3 +302,21 @@ Per user rule, no Playwright/browser runs from agents. `tests/e2e/doctor-workspa
 - Admin booking ops shows the raw booking state until the bookings module exports its status map (R-E13).
 - Lab, ambulance and caretaker billing and support pages, and caretaker availability, render a "not connected" notice. There is no contract for them yet.
 - Browser e2e for these areas is deferred by user rule: `tests/e2e/{lab,ambulance,caretaker,admin-ops,cms}.spec.ts` stay `test.describe.fixme` and are not run. Verification uses lint, typecheck, unit/jsdom tests and build only.
+
+## 2026-11-19 R7-P patient account features (fe-p, branch feat/fe2-p)
+
+### R-FE-P-R7-1 Family members contract (owner: backend)
+No endpoint in docs/API_CONTRACTS.md. The http adapter (`src/modules/family-members/http.ts`) returns `gated`. Proposed:
+- `GET /api/patient/family-members` -> `{ items: FamilyMember[] }`
+- `GET /api/patient/family-members/:id`
+- `POST /api/patient/family-members` (Idempotency-Key header) body `{ displayName, relation, dateOfBirth }`
+- `PATCH /api/patient/family-members/:id` body `{ ...fields, expectedVersion }`; `409` on a version mismatch
+- `DELETE /api/patient/family-members/:id?expectedVersion=n`
+- FamilyMember: `{ id uuid, displayName <=80, relation spouse|child|parent|sibling|grandparent|other, dateOfBirth YYYY-MM-DD, version, updatedAt }`. `422` returns `fields: { displayName|relation|dateOfBirth: name_required|name_too_long|name_invalid|relation_required|dob_required|dob_invalid|dob_future|dob_too_old }`.
+- Owner-only (RLS). A non-owned id returns 404, the same as an unknown one.
+- Needs product confirmation: the limit of 10 per account (`MAX_FAMILY_MEMBERS`), and guardian consent or invite flows for adult members (FRONTEND_MASTER "consent/invite or guardian flow"). The UI stores name, relation and DOB only, with no health data.
+
+### R-FE-P-R7-NAV Patient nav links (owner: fe2-d patient shell)
+fe-p must not edit `PatientShell` or the dashboard nav. Please add these links:
+- `/patient/family` (icon `users`, label: new `patient.shell.nav.family` key, "Family")
+- `/patient/saved`, `/patient/reviews` and `/patient/settings/reminders`: these pages are coming in R7-P.

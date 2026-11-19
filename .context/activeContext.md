@@ -103,3 +103,8 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
 ## t4 (fe-p) records/notifications/public loading - in progress
 - Added patient/records (list, [id], actions), patient/notifications (page, actions, api.ts), PatientShell+dashboard nav, patient.json en/te/hi strings, (public) loading.tsx files + components/public/route-loading.tsx, tests/e2e/patient-records.spec.ts. Next: build, run e2e in 3 server modes, bookings e2e, commit, handoff-t4.md.
 
+
+## R7-P (fe-p, fe2-p, port 3384) - started
+- Brief: C:/Users/Yashwanth/.claude-scratch-tasks/PHASE-R7-P.md. Order: family-members, saved-providers, reviews, reminder-prefs. One new message namespace 'patientAccount' (registered in src/i18n/messages.ts). No contracts -> http adapters gated + REQUESTS.md. Don't edit PatientShell/nav: list nav links in REQUESTS.md.
+- Fixture store: process-wide on globalThis keyed by patientId (persists across requests). FIXTURE_FAMILY_SCENARIO=empty for empty state.
+
