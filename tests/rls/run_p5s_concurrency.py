@@ -35,6 +35,11 @@ R_W1, R_W2 = "c6000000-0000-4000-8000-000000000001", "c6000000-0000-4000-8000-00
 R_V1, R_V2 = "c6000000-0000-4000-8000-000000000003", "c6000000-0000-4000-8000-000000000004"
 
 
+# The first transaction holds its locks this long so the barrier, which polls through
+# docker exec, sees the second one waiting even on a slow Docker host (as in run_b01).
+HOLD_SECONDS = 20
+
+
 def claims(actor):
     return "select set_config('request.jwt.claims','" + json.dumps({"sub": actor, "aal": "aal2", "role": "authenticated"}) + "',true);"
 
@@ -49,15 +54,17 @@ def as_command(actor):
     return "reset role;" + claims(actor)
 
 
-def race(first, second, expect_second):
+def race(first, second, expect_second, during=None):
     """first holds its locks (pg_sleep) while second blocks on a lock; then both finish.
-    expect_second is None (second must succeed) or the SQLSTATE it must fail with."""
+    expect_second is None (second must succeed) or the SQLSTATE it must fail with.
+    during() runs (autocommit) after second is seen waiting, before first commits.
+    Returns the second session's stderr."""
     apps = ["p5s_race_" + uuid.uuid4().hex[:10] for _ in range(2)]
     procs = []
 
     def start(index, statement):
         text = "set application_name='" + apps[index] + "';begin;" + statement
-        text += ("select pg_sleep(4);" if index == 0 else "") + "commit;"
+        text += ("select pg_sleep(" + str(HOLD_SECONDS) + ");" if index == 0 else "") + "commit;"
         proc = subprocess.Popen([base.DOCKER, *b01.args(), "-v", "VERBOSITY=verbose"], stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         procs.append(proc)
@@ -66,7 +73,7 @@ def race(first, second, expect_second):
         return proc
 
     def barrier(proc, app, condition):
-        deadline = time.monotonic() + 15
+        deadline = time.monotonic() + HOLD_SECONDS + 7
         while sql("select count(*) from pg_stat_activity where datname=current_database() and application_name='" + app + "' and " + condition + ";").strip() != "1":
             if proc.poll() is not None:
                 raise RuntimeError("Race failed before barrier: " + proc.stderr.read()[-1800:])
@@ -79,7 +86,9 @@ def race(first, second, expect_second):
         barrier(a, apps[0], "wait_event='PgSleep'")
         b = start(1, second)
         barrier(b, apps[1], "wait_event_type='Lock'")
-        codes = [p.wait(timeout=20) for p in procs]
+        if during:
+            during()
+        codes = [p.wait(timeout=HOLD_SECONDS + 60) for p in procs]
         errors = [p.stderr.read() for p in procs]
         if codes[0] != 0:
             raise RuntimeError("First transaction failed: " + errors[0][-1800:])
@@ -87,6 +96,7 @@ def race(first, second, expect_second):
             raise RuntimeError("Second transaction should have succeeded: " + errors[1][-1800:])
         if expect_second is not None and (codes[1] == 0 or expect_second not in errors[1]):
             raise RuntimeError("Wrong race outcome, expected " + expect_second + ": " + str(codes) + errors[1][-1800:])
+        return errors[1]
     finally:
         for proc in procs:
             if proc.poll() is None:
@@ -114,20 +124,31 @@ select pg_temp.p5_book('ambulance',pg_temp.p5_at(2),array['c6000000-0000-4000-80
 select pg_temp.p5_book('ambulance',pg_temp.p5_at(2,2),array['c6000000-0000-4000-8000-000000000002','c6000000-0000-4000-8000-000000000004']::uuid[]) as x2 \gset
 select pg_temp.p5_create('lab',pg_temp.p5_at(5)) as y \gset
 select pg_temp.p5_create('lab',pg_temp.p5_at(5,2)) as y2 \gset
+select pg_temp.p5_create('doctor',pg_temp.p5_at(6)) as g1 \gset
+select pg_temp.p5_create('doctor',pg_temp.p5_at(6,2)) as g2 \gset
+select pg_temp.p5_raw('lab','confirmed',now()+interval '1 day','c1000000-0000-4000-8000-000000000002') as e5 \gset
+select pg_temp.p5_raw('lab','confirmed',now()+interval '1 day','c1000000-0000-4000-8000-000000000003') as e6 \gset
+select pg_temp.as_user('c1000000-0000-4000-8000-000000000002');
+select booking_private.open_exception(:'e5','eligibility_lapsed','other') as ex5 \gset
+select pg_temp.as_user('c1000000-0000-4000-8000-000000000003');
+select booking_private.open_exception(:'e6','eligibility_lapsed','other') as ex6 \gset
+-- The scheduler may manage memberships in this scratch DB, for the membership races.
+update public.organization_members set scopes=scopes||array['members:read'] where profile_id='c1000000-0000-4000-8000-000000000001' and organization_id='c8000000-0000-4000-8000-000000000001';
 select pg_temp.p5_shift(:'x',now()-interval '10 minutes');
 select pg_temp.p5_shift(:'x2',now()-interval '10 minutes');
 select pg_temp.p5_step(:'x','c1000000-0000-4000-8000-000000000002','in_progress','other');
 select pg_temp.p5_step(:'x2','c1000000-0000-4000-8000-000000000003','in_progress','other');
 select 'E1='||:'e1'; select 'E2='||:'e2'; select 'E3='||:'e3'; select 'E4='||:'e4';
 select 'X='||:'x'; select 'X2='||:'x2'; select 'Y='||:'y'; select 'Y2='||:'y2';
+select 'G1='||:'g1'; select 'G2='||:'g2'; select 'EX5='||:'ex5'; select 'EX6='||:'ex6';
 """
 
 def concurrency():
     tests = ROOT / "supabase/tests"
     script = "begin;" + (tests / "_b01_fixture.inc").read_text() + (tests / "_p5s_fixture.inc").read_text() + SETUP + "commit;"
     out = sql(script)
-    ids = dict(re.findall(r"^(E1|E2|E3|E4|X2|X|Y2|Y)=([0-9a-f-]{36})$", out, re.M))
-    if len(ids) != 8:
+    ids = dict(re.findall(r"^(E1|E2|E3|E4|X2|X|Y2|Y|G1|G2|EX5|EX6)=([0-9a-f-]{36})$", out, re.M))
+    if len(ids) != 12:
         raise RuntimeError("Setup did not return every booking: " + str(sorted(ids)))
     print("PASS: synthetic P5 fixtures committed through the public staff-credential path", flush=True)
 
@@ -172,6 +193,30 @@ def concurrency():
     if scalar("select booking_private.resource_busy('" + R_W2 + "','" + ids["Y2"] + "')::text;") != "true":
         raise RuntimeError("Blocking exception opened after the accept does not mark the resource busy")
     print("PASS: blocking exception vs accept on one resource serialises on the resource lock in both orders", flush=True)
+
+    # Review H1: a gate switched off or suspended while accept waits on a resource is seen.
+    for booking, state in ((ids["G1"], "off"), (ids["G2"], "suspended")):
+        err = race("select 1 from public.resources where id='" + R_W1 + "' for update;",
+                   as_api(M) + accept.format(b=booking, r=R_W1), "55000",
+                   during=lambda s=state: sql("update booking_private.feature_gates set state='" + s + "' where key='doctor';"))
+        sql("update booking_private.feature_gates set state='on' where key='doctor';")
+        if "feature_unavailable" not in err:
+            raise RuntimeError("Accept under a " + state + " gate failed for the wrong reason: " + err[-800:])
+        if scalar("select state||':'||(select count(*) from public.booking_assignments a where a.booking_id=b.id) from public.bookings b where id='" + booking + "';") != "requested:0":
+            raise RuntimeError("Accept wrote work after the gate went " + state)
+    print("PASS: accept waiting on a resource sees the gate go off or suspended; nothing written", flush=True)
+
+    # Review H2: exception resolution serialises with membership changes on the organisation lock.
+    org = "c8000000-0000-4000-8000-000000000001"
+    invite = "select public.set_organization_member('" + org + "','{p}','staff','invited','{{}}'::text[],0);"
+    resolve = "select public.ops_resolve_exception('{e}',1,'resolved','{k}');"
+    race(as_api(M) + invite.format(p=OPS), as_api(OPS) + resolve.format(e=ids["EX5"], k=uuid.uuid4()), "42501")
+    if scalar("select status from public.booking_exceptions where id='" + ids["EX5"] + "';") != "open":
+        raise RuntimeError("Resolution committed by an actor who became a member first")
+    race(as_api(OPS_GLOBAL) + resolve.format(e=ids["EX6"], k=uuid.uuid4()), as_api(M) + invite.format(p=OPS_GLOBAL), None)
+    if scalar("select status||':'||resolved_by_profile_id from public.booking_exceptions where id='" + ids["EX6"] + "';") != "resolved:" + OPS_GLOBAL:
+        raise RuntimeError("Resolution before the membership change was not kept")
+    print("PASS: ops resolution vs membership invite serialises on the organisation lock in both orders", flush=True)
 
 
 CRON = re.compile(r"^.*(\bpg_cron\b|\bcron\.|\bSCHEMA cron\b).*$", re.M | re.I)

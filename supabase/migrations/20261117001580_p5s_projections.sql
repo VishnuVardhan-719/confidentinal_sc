@@ -1,7 +1,7 @@
 -- P5 shared engine 4/5 / Kiro / feat/P5-shared-engine / base integ/all f549ad3.
 -- Contract §8.3-§8.5 (P5-06, P5-12): exact get_booking key sets, one audited contact
 -- RPC for assignees and ops, base-table SELECT revoked. Requires 001550-001570.
--- OD-3 yes (ops contact only with an open exception or an escalatable booking),
+-- OD-3 yes (ops contact only while the booking has an open exception, in any state, or is escalatable),
 -- OD-4 no (schedulers see the PIN only), OD-9 no (assignees see no amount).
 begin;
 
@@ -34,7 +34,8 @@ declare b public.bookings; begin
  select * into b from public.bookings where id=p_booking_id;
  if not found then return null; end if;
  if identity_private.is_assigned(b.id,booking_private.person_purpose(b.category)) then return 'assignee'; end if;
- if booking_private.ops_actor(b.id) and booking_private.escalatable(b.id) then return 'ops'; end if;
+ if booking_private.ops_actor(b.id) and (exists(select 1 from public.booking_exceptions e where e.booking_id=b.id and e.status='open')
+  or booking_private.escalatable(b.id)) then return 'ops'; end if;
  return null;
 end $$;
 

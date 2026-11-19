@@ -115,6 +115,32 @@ do $$ declare c text; b uuid; res uuid[]; extra text[]; base_keys text[]:=array[
  end loop;
 end $$;
 
+-- H3 / OD-3: ops reads contact while an exception is open, also after the booking is
+-- terminal; once the last exception is resolved (and it is not escalatable) access ends.
+select pg_temp.p5_raw('lab','in_progress',now()-interval '20 hours','c1000000-0000-4000-8000-000000000002') as cwi \gset
+select pg_temp.p5_raw('ambulance','in_progress',now()-interval '10 minutes','c1000000-0000-4000-8000-000000000002') as pickup \gset
+select pg_temp.as_user('c1000000-0000-4000-8000-000000000002');
+select booking_private.assignee_finish(:'cwi','completed','other',gen_random_uuid());
+select booking_private.assignee_finish(:'pickup','interrupted','unsafe_conditions',gen_random_uuid());
+select booking_private.open_exception(:'pickup','interrupted_after_pickup','unsafe_conditions');
+select set_config('p5.cwi',:'cwi',true),set_config('p5.pickup',:'pickup',true);
+do $$ declare b uuid; e public.booking_exceptions; j jsonb; ops uuid:='c1000000-0000-4000-8000-000000000005'; begin
+ foreach b in array array[current_setting('p5.cwi')::uuid,current_setting('p5.pickup')::uuid] loop
+  select * into e from public.booking_exceptions where booking_id=b and status='open';
+  perform pg_temp.assert_true((select state from public.bookings where id=b) in ('completed','interrupted') and not booking_private.escalatable(b),e.kind||' booking terminal, not escalatable');
+  j:=pg_temp.contact(b,ops);
+  perform pg_temp.assert_true(pg_temp.keys(j)=array['address','booking_id','contact','public_ref'] and pg_temp.keys(j->'address')=array['line1','locality','pin_code']
+   and pg_temp.keys(j->'contact')=array['name','phone'],e.kind||' ops contact shape on a terminal booking');
+  perform pg_temp.assert_true((select count(*)=1 from public.audit_events where target_id=b and action='booking.contact_viewed_ops' and actor_profile_id=ops),e.kind||' one ops contact audit');
+  perform pg_temp.as_user('c1000000-0000-4000-8000-000000000002');
+  perform pg_temp.expect_state(format('select public.get_assignment_contact(%L)',b),'P0002',e.kind||' assignee contact ended with the work');
+  perform pg_temp.as_user(ops);
+  perform public.ops_resolve_exception(e.id,1,'resolved',gen_random_uuid());
+  perform pg_temp.expect_state(format('select public.get_assignment_contact(%L)',b),'P0002',e.kind||' ops contact ends once resolved');
+  perform pg_temp.assert_true((select count(*)=1 from public.audit_events where target_id=b and action like 'booking.contact_viewed%'),e.kind||' denial wrote no audit');
+ end loop;
+end $$;
+
 -- Patients and providers read nothing from the base tables.
 set local role authenticated;
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000001');

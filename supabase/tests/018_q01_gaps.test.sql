@@ -81,15 +81,19 @@ alter table public.bookings disable trigger b01_booking_guard;
 update public.bookings set start_at=now()+interval '30 minutes',end_at=now()+interval '60 minutes' where id=:'b1';
 alter table public.bookings enable trigger b01_booking_guard;
 set local role authenticated;
+reset role;
 select pg_temp.assert_true(booking_private.assigned(:'b1','doctor_visit'),'B1 D1 in-window scope');
+set local role authenticated;
 
 -- Q01-T03: a different verified doctor cannot act on B1.
 select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000006"}',true);
+reset role;
 select pg_temp.assert_true(not booking_private.assigned(:'b1','doctor_visit'),'T03 D2 has no assigned scope');
+set local role authenticated;
 select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4)',:'b1'),'42501','T03 D2 cannot advance');
 select pg_temp.expect_state(format('select public.get_booking(%L)',:'b1'),'P0002','T03 D2 cannot read');
 select pg_temp.expect_state(format('select public.cancel_booking(%L,4,''other'')',:'b1'),'42501','T03 D2 cannot cancel');
-select pg_temp.assert_true((select count(*)=0 from public.bookings),'T03 D2 sees no booking rows');
+select pg_temp.expect_state('select count(*) from public.bookings','42501','T03 D2 sees no booking rows (no base-table SELECT, P5 8.5)');
 
 -- Q01-T04: the patient cannot mark visit progress.
 select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000001"}',true);
@@ -103,7 +107,9 @@ select pg_temp.assert_true((select b.state='confirmed' and b.version=4 and v.sub
 update public.providers set status='suspended',verification_state='suspended' where id='b3000000-0000-4000-8000-000000000001';
 set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000002"}',true);
+reset role;
 select pg_temp.assert_true(not booking_private.assigned(:'b1','doctor_visit'),'T06 suspension removes assigned scope');
+set local role authenticated;
 select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4)',:'b1'),'42501','T06 suspended provider doctor cannot advance');
 select public.get_booking(:'b1') as t06_suspended \gset
 select pg_temp.assert_true(not (:'t06_suspended'::jsonb ?| array['address_snapshot','contact_snapshot','patient_id']),'T06 suspended provider sees no address or contact');
@@ -115,7 +121,9 @@ update public.providers set status='active',verification_state='approved' where 
 -- Q01-T06: doctor evidence expired after confirmation.
 update public.provider_documents set expires_at=now() where id='b3100000-0000-4000-8000-000000000001';
 set local role authenticated;
+reset role;
 select pg_temp.assert_true(not booking_private.assigned(:'b1','doctor_visit'),'T06 expired evidence removes assigned scope');
+set local role authenticated;
 select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4)',:'b1'),'42501','T06 expired evidence doctor cannot advance');
 select public.get_booking(:'b1') as t06_expired \gset
 select pg_temp.assert_true(not (:'t06_expired'::jsonb ?| array['address_snapshot','contact_snapshot','patient_id']),'T06 expired evidence hides address and contact');

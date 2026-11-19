@@ -229,7 +229,7 @@ end $$;
 -- Exceptions that need no booking change. absence_reported resolves only through ops_close_booking.
 create function public.ops_resolve_exception(p_exception_id uuid,p_expected_version integer,p_resolution text,p_request_key uuid) returns integer
 language plpgsql volatile security definer set search_path='' as $$
-declare actor uuid:=identity_private.require_actor(); e public.booking_exceptions; hash text; prior record; result integer; begin
+declare actor uuid:=identity_private.require_actor(); e public.booking_exceptions; hash text; prior record; result integer; prov uuid; begin
  if p_exception_id is null or p_expected_version is null or p_resolution is null or p_request_key is null then
   raise exception using errcode='22023',message='invalid_input'; end if;
  hash:=booking_private.request_hash(jsonb_build_array(p_exception_id,p_expected_version,p_resolution));
@@ -237,7 +237,14 @@ declare actor uuid:=identity_private.require_actor(); e public.booking_exception
  if prior.result_version is not null then return prior.result_version; end if;
  select * into e from public.booking_exceptions where id=p_exception_id;
  if not found or not booking_private.ops_actor(e.booking_id) then raise exception using errcode='42501',message='forbidden'; end if;
- perform 1 from public.bookings where id=e.booking_id for update;
+ -- Lock order (?11.4): booking, organisation then provider (serialises with membership
+ -- changes, which take the organisation row first), resources of a blocking kind,
+ -- the exception, then the capability row. Replay and ops_actor are rechecked after.
+ select provider_id into prov from public.bookings where id=e.booking_id for update;
+ perform booking_private.lock_provider(prov);
+ if exists(select 1 from booking_private.exception_kinds k where k.code=e.kind and k.blocks_resources) then
+  perform 1 from public.resources where id in(select resource_id from public.booking_assignments where booking_id=e.booking_id) order by id for update;
+ end if;
  select * into e from public.booking_exceptions where id=p_exception_id for update;
  perform 1 from public.admin_capabilities where profile_id=actor and capability='booking:incident' for share;
  select * into prior from booking_private.replay(actor,'p5.ops.resolve',p_request_key,hash);

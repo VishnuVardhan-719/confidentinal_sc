@@ -100,6 +100,9 @@ begin
  if (select count(*) from public.resources where id=any(p_resource_ids) and kind='person')<>1
  or (b.category='ambulance' and (select count(*) from public.resources where id=any(p_resource_ids) and kind='vehicle')<>1)
  then raise exception using errcode='22023',message='invalid_resources'; end if;
+ -- Re-check after the resource locks: a gate switched off or suspended while this
+ -- command waited on a resource is seen before anything is written (?10.2).
+ perform booking_private.require_gate(b.category,'admission');
  select buffer_minutes into buf from public.booking_policy_versions where id=b.policy_version_id;
  occupied:=tstzrange(b.start_at-make_interval(mins=>coalesce(buf,0)),b.end_at+make_interval(mins=>coalesce(buf,0)),'[)');
  for r in select * from public.resources where id=any(p_resource_ids) order by id loop
