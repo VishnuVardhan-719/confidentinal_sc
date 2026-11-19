@@ -43,3 +43,14 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
 - PHASE4-D3 DONE: doctor+patient workspace e2e 110/110, lint/tsc/vitest(374)/build green. Handoff: .context/handoff-fe-a.md. Open: overlap with feat/fe2-p 4aa02f8 (patient records/notifications).
 
 - PHASE R7-D (C:/Users/Yashwanth/.claude-scratch-tasks/PHASE-R7-D.md): task 1 DONE d1a06f4 (public /verify proof check). All ws e2e 130/130. Next: task 2 consultation notes (doctor/consultations/[bookingId]).
+
+## TASK REPORT - PHASE R7-D (fe-a, worktree fe2-d, branch feat/fe2-d; never pushed)
+Status: tasks 1-4 DONE.
+- T1 d1a06f4 public proof-of-visit check `/[locale]/verify`, `/verify/[code]` (src/modules/proof-of-visit). R-FE-D-33.
+- T2 b50d67a consultation notes `/doctor/consultations/[bookingId]` (src/modules/consultation-notes): completed bookings only, draft -> sign-off, no autosave. R-FE-D-37.
+- T3 9511e32 prescription drafts `/doctor/consultations/[bookingId]/prescription` (src/modules/prescription-drafts): template-only, "Draft - not issued", no issue action. R-FE-D-38.
+- T4 835b02a doctor reviews `/doctor/reviews` (src/modules/doctor-reviews): read-only, moderation badges, rating/text only when published. R-FE-D-39.
+All fixture-only behind FEATURE_CLINICAL (off unless "true"); http adapters return fail("gated"); fixture refused in production.
+Evidence (final run): Playwright ws-desktop-1280 + ws-mobile-390, all workspace specs: 182 passed / 0 failed. tsc exit 0; npm run lint exit 0; vitest 26 files / 437 tests passed; npm run build passes.
+Shared edits: src/i18n/messages.ts + global.d.ts (namespaces verify, consultationNotes, prescriptionDrafts, doctorReviews), playwright.config.ts WORKSPACE_SPECS, doctor layout (client namespaces + Reviews nav), shared visit page (post-visit link), proof card (check link).
+Open: QR still not drawn (no approved library); reviews gated behind the clinical flag per the task file though not clinical; te/hi strings machine-written (REQUESTS R-FE-D-36..39); overlap with feat/fe2-p 4aa02f8 (patient records/notifications) still awaits a lead decision; tests hardened for load/time flakiness (redirect timeouts, IST-midnight count, hydration wait, sticky-bar poll).
