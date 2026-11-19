@@ -66,5 +66,37 @@
       "confirm": "Yes, remove",
       "keep": "Keep"
     }
+  },
+  "saved": {
+    "title": "Saved doctors",
+    "description": "Doctors you want to find again. Saving does not book a visit or share anything with the doctor.",
+    "savedLabel": "{count, plural, one {# saved doctor} other {# saved doctors}}",
+    "suggestLabel": "Doctors you can save",
+    "suggestBody": "Verified doctors from the directory. Save one to find it here later.",
+    "fee": "Fee {fee} per visit",
+    "noLocation": "Location not listed",
+    "view": "View profile",
+    "viewLabel": "View profile of {name}",
+    "save": "Save",
+    "saveLabel": "Save {name}",
+    "unsave": "Remove",
+    "unsaveLabel": "Remove {name} from saved",
+    "working": "Working…",
+    "savedNow": "Doctor saved.",
+    "removedNow": "Doctor removed from saved.",
+    "unlisted": "This doctor is no longer listed in the directory.",
+    "unlistedName": "Unlisted doctor",
+    "limit": "You can save up to {max} doctors. Remove one to save another.",
+    "empty": {
+      "title": "No saved doctors yet",
+      "body": "Save doctors you like so you can find them quickly next time.",
+      "action": "Find a doctor"
+    },
+    "suggestEmpty": "No more doctors to suggest right now.",
+    "state": {
+      "denied": "You do not have access to this list.",
+      "gated": "Saved doctors are not connected yet. Nothing here is saved.",
+      "directory": "Doctor details are not available right now. Your saved list is unchanged."
+    }
   }
 }

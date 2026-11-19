@@ -320,3 +320,11 @@ No endpoint in docs/API_CONTRACTS.md. The http adapter (`src/modules/family-memb
 fe-p must not edit `PatientShell` or the dashboard nav. Please add these links:
 - `/patient/family` (icon `users`, label: new `patient.shell.nav.family` key, "Family")
 - `/patient/saved`, `/patient/reviews` and `/patient/settings/reminders`: these pages are coming in R7-P.
+
+### R-FE-P-R7-2 Saved providers contract (owner: backend)
+No endpoint exists. The http adapter (`src/modules/saved-providers/http.ts`) returns `gated`. Proposed:
+- `GET /api/patient/saved-providers` -> `{ items: { providerId, savedAt }[] }`
+- `PUT /api/patient/saved-providers/:providerId` (Idempotency-Key header): idempotent save. Returns 404 for an unknown or unlisted provider.
+- `DELETE /api/patient/saved-providers/:providerId`: idempotent remove.
+- Only ids are stored. The page reads names, specialities and fees from the public doctor directory on every visit, so suspended or unlisted doctors show as "no longer listed".
+- Needs product confirmation: the cap of 50 per account (`MAX_SAVED_PROVIDERS`), and whether a save button belongs on the doctor directory and profile pages (owned by fe2-c; not edited here).
