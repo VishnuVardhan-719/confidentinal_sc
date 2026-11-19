@@ -4,7 +4,9 @@ import { defineConfig, devices } from "@playwright/test";
  * Identity e2e (auth, onboarding, admin verification). Runs against the SYNTHETIC fixture
  * adapter only: never point this at real data. Run:
  *   npx playwright test --config tests/e2e/playwright.config.ts
- * The dev-server fixture stores are process memory, so suites that mutate state run serially.
+ * The dev-server fixture stores are process memory, so suites that mutate state run serially,
+ * and each spec FILE needs a freshly started server (admin-verification changes state that
+ * onboarding/profile expect).
  */
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 

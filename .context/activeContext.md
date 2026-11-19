@@ -11,5 +11,5 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
 - PHASE3-B (Kiro B): committed ed384ee; guard wrong-role -> own landing; getAccountSession (src/modules/auth/account-session.ts + server.ts); /patient/onboarding forwards to health-profile; role-isolation.test.ts; REQUESTS R-FE07-01..03. Pending: tsc, lint, identity vitest, one build, commit.
 
 ## Kiro fe-b, PHASE4 (2026-11-19)
-- Task A (fe2-b, port 3310): fix 13 e2e failures (handoff-kiro-b.md). IN PROGRESS. Baseline run: 29 pass, 14 fail, 19 did not run. Root causes: spec locators; account page links read before streaming finished.
+- Task A (fe2-b, port 3310): DONE, see handoff-kiro-b.md. Baseline run: 29 pass, 14 fail, 19 did not run. Root causes: spec locators; account page links read before streaming finished.
 - Task B (fe2-e, port 3350): PHASE4-E2. TODO

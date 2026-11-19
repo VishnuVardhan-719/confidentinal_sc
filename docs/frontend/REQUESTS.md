@@ -147,3 +147,9 @@ Necessary for FE01; please review in the diff:
 | fe2-e (also fe2-p, fe2-integration) | `src/modules/admin/access.ts` | pure lab/ambulance/caretaker/admin decisions expecting a session from requireRole | keep; feed it `requireRole(...)` output |
 | fe2-a (also fe2-p, fe2-integration) | `src/components/shared/session-seam.ts` | `getPublicAccount()` returns `null` (R-FE01-6) | `getAccountSession()` per R-FE07-01 |
 | fe2-c (also fe2-p, fe2-integration) | `src/modules/catalog/FE07-08-HANDOFF.md` | private loaders not yet bound to a request-scoped guard | `requireRole("patient")` / `authorizeRole` |
+
+### R-FE07-04 routes other workstreams own, skipped or fixme'd in identity e2e (Kiro B, PHASE4)
+- Not on feat/fe2-b, so identity e2e skips them: role dashboards and bookings (/{role}/dashboard, /patient/bookings*), /lab/orders, /doctors, /lab-tests (public chrome links to it; 404 on this branch). Re-run 
+avigation.spec.ts role walk and the two onboarding.spec.ts fixme tests on the integration branch.
+- AccountFrame should drop under role shells once the role layouts exist (one header per page).
+- Identity specs mutate shared fixture memory, so run each spec file against a freshly started server (admin-verification approves the lab that onboarding.spec expects under review).
