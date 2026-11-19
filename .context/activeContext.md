@@ -14,3 +14,18 @@ Progress:
 - Ops specs un-fixme'd; signInAs wired (support/operations.ts, hard reload after sign-in). Discovery copies (serial removed) in tests/e2e/zz-discover (DO NOT COMMIT; delete at end). First discovery: 26 fail / 15 pass desktop, list in .context/ops-e2e-discovery-desktop.txt.
 
 - PHASE4-E2 done (b77fb24, ea568c8, b49844c): 5 ops specs + new role-isolation.spec pass on desktop-1280 and mobile-390 (lab also with FEATURE_CLINICAL=true); fixture ops clock, lab 'scheduled' queue, recollection reference, public stories/FAQ read CMS. Open: pre-existing soft 404 on /stories/<unknown>. Details: .context/handoff-fe-b-e2.md. zz-discover deleted.
+
+## fe-b PHASE4 follow-up (lead t4), 2026-11-19
+- Steps 1-4 committed: 4d939f1 (stories 404 via proxy), a1da5e8 (.gitignore), 0813f7b (emergency spec), ff65066 (error boundaries). Step 5 a11y-sweep-e.spec.ts IN PROGRESS.
+
+
+## TASK REPORT (fe-b, lead t4 follow-up), 2026-11-19, feat/fe2-e, not pushed
+Commits: 4d939f1, a1da5e8, 0813f7b, ff65066, 0500117, e03fb45 (all with Co-Authored-By trailer).
+1. Story 404 (4d939f1): with Cache Components a request-time notFound() runs after the streamed shell (HTTP 200), and `dynamicParams` is not allowed. src/proxy.ts now checks /{locale}/stories/<slug> against published content and rewrites unknown slugs to the prerendered catch-all not-found (404). The content fixture store moved to globalThis so the proxy and pages share it. Probe: /en|hi/stories/anything 404, /te/no-such-page 404, /en/stories/synthetic-story-one 200. public.spec desktop 51 pass, 1 skip (one cold-start failure on the first test in an earlier run; passed on rerun).
+2. .gitignore (a1da5e8): coverage/ -> /coverage/. git check-ignore: route path no longer ignored, root coverage/ still ignored. fe2-e has no admin/coverage route files (they live on feat/fe2-b, force-added there), so nothing to add here.
+3. Emergency (0813f7b): page already leads with a large tel:112 button; header/footer links keep /emergency. New tests/e2e/emergency-e.spec.ts asserts link targets, tel:112 button >=56px tall and fully on screen at 390 and 1280, and works without JS: 3/3.
+4. Boundaries (ff65066): ops areas (admin, lab, ambulance, caretaker) already had loading+error. Added localized error.tsx with retry for (public) and (auth) (src/components/shared/public-route-error.tsx, errors.boundary en/te/hi). No loading.tsx for public pages on purpose: a group-level one broke the build (catch-all notFound inside Suspense) and stories/faq ones hid content without JavaScript (public.spec no-JS FAQ failed). Unit test locks this in (route-boundaries.test.ts).
+5. a11y sweep (e03fb45): tests/e2e/a11y-sweep-e.spec.ts, 18 public/auth/404 pages + 49 ops/admin/CMS pages at 390 and 1280, axe serious/critical + no horizontal scroll: 14/14 tests pass. App fixes: record-list table wrapper min-w-0 (ambulance fleet/requests, admin audit overflowed at 1280), mobile cards stack label above value (390 overflow), 404 numeral contrast.
+Steering (money): 0500117 replaces paise/100 + toFixed(2) in the lab catalogue editor with integer maths (paiseToRupeesString in components/admin/ops/format.ts; formatPaise passes the exact decimal string to the en-IN Intl formatter). No shared money helper exists on this branch, so the ops format module is the shared one here. Test money-format.test.ts.
+Verification: tsc 0, eslint 0, vitest 705/705, build 0. Regression: mobile-390 lab 9+1skip, ambulance 9, caretaker 8, admin-ops 9, cms 6; desktop lab 9+1skip. Server on 3350 stopped.
+Open: proxy story check queries content on every /stories/<slug> request (cheap in fixture; http adapter has no CMS contract yet so all story slugs 404 there, same as the page). te/hi strings still unreviewed.
