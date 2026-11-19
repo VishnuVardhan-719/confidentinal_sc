@@ -55,7 +55,7 @@ export function LoaderState<T>({
   switch (result.status) {
     case "ok":
       return (
-        <div className="grid gap-6">
+        <div className="grid min-w-0 gap-6">
           {result.fixture ? <FixtureNotice /> : null}
           {children(result.data)}
         </div>

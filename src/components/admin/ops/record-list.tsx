@@ -29,7 +29,7 @@ export function RecordList<T>({
   const rest = columns.filter((c) => c !== primary);
   return (
     <>
-      <div className="hidden md:block">
+      <div className="hidden min-w-0 md:block">
         <Table label={label}>
           <TableHeader>
             <TableRow>
