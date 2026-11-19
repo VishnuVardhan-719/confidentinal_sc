@@ -1,61 +1,98 @@
-# SureCure Visit frontend: resume here
+# SureCure Visit frontend: RESUME HERE
 
-Checkpoint written 2026-11-19, when the laptop was shut down. Read this first, then the per-branch handoff files listed below.
+Checkpoint written 2026-11-20 ~02:20 IST, when the user shut the laptop down. Everything below is pushed to GitHub (repo `VishnuVardhan-719/confidentinal_sc`, feature branches only).
 
-## What this is
+## The trigger
 
-The SureCure Visit frontend: Next.js 16 App Router, React 19, strict TypeScript, Tailwind 4, Zod 4, Vitest, Playwright and axe, next-intl (en/te/hi). It is a real website, not a prototype. The spec is `docs/FRONTEND_MASTER.md`. Backend PRs #1 to #5 are **not merged**, so everything runs on the synthetic `fixture` adapter ("Synthetic data, not live"), selected with `FRONTEND_ADAPTER=fixture` and refused when `APP_ENV=production`. The `http` adapter follows `docs/API_CONTRACTS.md`.
+When the user says **"LETS RESUME"**, resume autonomously, with no questions:
 
-## Rules that still apply
+1. Read this file, then `.context/activeContext.md` in each worktree (each has a `PAUSED STATE` section with exact next steps).
+2. Check memory is free enough (`~0.6 GB` free on this laptop; one dev server per window).
+3. Restart the five Kiro windows (below), re-run the approver, re-arm the monitors, and give each agent its next task.
+4. Claude also writes code, runs CodeRabbit, and monitors. Nobody sits idle. The user is away and gave full permissions (see memory `feedback_full_autonomy_frontend`).
 
-- Work only on feature branches off `develop`. Never commit to `develop` or `main`.
-- Do not merge the backend PRs unless the user says "merge them".
-- No secrets in code. Use `.env` (gitignored) or `~/.secrets/`.
-- Money is in integer paise. Times are stored as UTC and shown in Asia/Kolkata.
-- Booking, payment and clinical states are separate badges. No PHI in URLs or storage.
-- Live payments are disabled. Providers set their own fees and manually accept or decline requests.
-- There is no public admin signup. Six roles: patient, doctor, lab, ambulance, caretaker, admin.
-- Fixture accounts live in `src/fixtures/identity/sessions.ts` (`@example.invalid`). Any password of 1 to 128 characters works. The fixture OTP is `246810`.
+## Hard rules (unchanged)
 
-## Branch map (all pushed or to be pushed to origin)
+- Feature branches only. Never commit or push to `develop` or `main`. No force-push, no `--no-verify`.
+- Backend PRs #1 to #5 stay unmerged unless the user says "merge them". `docs/backend-handoff` stays unpushed.
+- Never commit or push unless authorised: agents commit on their feature branch, the lead pushes feature branches only.
+- Secrets only in `.env` (gitignored) or `~/.secrets/`.
+- Money in integer paise (en-IN). UTC stored, shown Asia/Kolkata. Separate booking, payment and clinical badges. No PHI in URLs or storage. Live payments disabled. Clinical flag OFF in production.
+- Ask the user only for: purchases, production deploy, DNS, destructive git/db ops, big schema or architecture changes, real patient data, live payments, clinical production activation, emergency dispatch, security bypass, binding legal or business policy.
+- Kiro only, Codex is OFF, no paid API billing. Kiro credits are a shared pool: warn the user near ~7,500 used (about 4,000 to 4,300 used now, estimate; the user last saw 3,125 of 10,000).
 
-| Branch | Worktree | Owner window | What it holds | Handoff file |
+## Branches and worktrees (all pushed, local = remote)
+
+| Worktree (dir under `C:\Users\Yashwanth\`) | Branch | Head | Kiro window (name, tab) | Last task |
 |---|---|---|---|---|
-| `feat/fe2-a` | `fe2-a` | fe-a | UI foundation, i18n, public pages, header, route-link and a11y tests. Browser e2e passing: public 115, a11y 16, perf 4. | `.context/handoff-fe-a.md` |
-| `feat/fe2-b` | `fe2-b` | fe-b | Auth pages, patient and provider onboarding, admin provider review and coverage, role guards, `getAccountSession`. e2e last run: 36 pass, 13 fail (mostly spec locators). | `.context/handoff-kiro-b.md` |
-| `feat/fe2-c` | `fe2-c` | fe-q | Doctor discovery and the 22-step booking journey (`/patient/book`, request page, receipt), booking store, slots. | `.context/handoff-fe-q.md` (older: `handoff-t3j.md`) |
-| `feat/fe2-d` | `fe2-d` | (retired) | Patient dashboard, doctor workspace, clinical draft and finalize flow. Doctor e2e un-fixme'd but **never run**. | `.context/handoff-t3k.md` |
-| `feat/fe2-e` | `fe2-e` | (retired) | Operations workspaces (admin, ambulance, caretaker, lab, CMS). Merged fe-b guards. Real-guard adoption **not started**. | `.context/handoff-t3h.md` |
-| `feat/fe2-p` | `fe2-p` | fe-p | Patient bookings list and detail, cancel flow. Tests green, Playwright 18/18 on port 3380. | `.context/handoff-t38.md` |
-| `feat/fe2-integration` | `fe2-int` | fe-int | Merge target. fe-c, fe-d, fe-a and fe-e (5a6bcf8) are merged. fe-b 64b916f merged. fe-e 05ba88a, fe-a later commits and the rest are **still to merge**. | `.context/handoff-t34.md` (if present) |
+| `fe2-a` | `feat/fe2-a` | 3c72d13 | fe-a / t3z works in **`fe2-d`** | R8-D |
+| `fe2-d` | `feat/fe2-d` | f36ff67 | (same window as fe-a) | R7-D, R8-D (consultation editor WIP) |
+| `fe2-e` | `feat/fe2-e` | c99a4c7 | fe-b / t40 | R9-E (stories gated state, lab paise fix) |
+| `fe2-c` | `feat/fe2-c` | 5b92202 | fe-q / t42 | R10-C done, R9-C2 adversarial review (WIP) |
+| `fe2-p` | `feat/fe2-p` | 149a74b | fe-p / t41 | R9-P (merge fe-a, moderation audit view) |
+| `fe2-int` | `feat/fe2-integration` | 47b6574 | fe-int2 / t43 | INT3 (WIP) |
 
-Worktrees sit side by side under `C:\Users\Yashwanth\` (`fe2-a`, `fe2-b`, and so on). The repo is https://github.com/VishnuVardhan-719/confidentinal_sc.
+Tab ids (`t3z`, `t40`, `t41`, `t42`, `t43`) change after a restart. Re-check with `hc ls`.
 
-## What to do next, in order
+## How to restart the agents
 
-1. **Integration (highest priority).** In `fe2-int`: merge `feat/fe2-e`, the latest `feat/fe2-a` and `feat/fe2-b`, then `feat/fe2-c` and `feat/fe2-p`. Run `npx tsc --noEmit` after each merge. Keep both sides on conflicts in `docs/frontend/REQUESTS.md`. Then lint, vitest and `npm run build`.
-2. **Adopt the real guards** in integration: `requireRole(role)` from `@/modules/auth/server`, the profile gate on the patient dashboard, `getAccountSession()` in the public header, and the real operations session in place of `getOperationsSession()` (fe-e handoff has the exact file list and mapping). Ops pages need active fixture accounts for lab, ambulance and caretaker (the current ones are pending or restricted).
-3. **Run the browser e2e** on the integrated build, on its own port (for example 3320). Un-fixme the deferred specs and fix real app failures, not the tests. Spec files: `tests/e2e/{doctor-workspace,patient-workspace,admin-ops,ambulance,caretaker,lab,cms,doctor-search,directory,booking-wizard,patient-bookings}.spec.*`. fe-d's doctor workspace needs `.context/ws-serve.mjs` (ports 3370 to 3383).
-4. **fe-b e2e failures** (13): mostly spec locators. Wrong role now redirects to its own landing, so assert the URL. See the list in `handoff-kiro-b.md`.
-5. **fe-c booking journey:** finish verification (three unit failures earlier, then e2e for the happy path and the decline path, 390px and desktop, axe, keyboard-only path). `/patient/bookings*` belongs to fe-p. The wizard is at `/patient/book`.
-6. **Doctor workspace** (fe-d): availability schedule, incoming booking requests with manual accept or decline, consultation draft to finalize, prescriptions and records, patient records and notifications. Then te/hi strings and axe.
-7. **Phases R6 to R9:** other healthcare workflows (lab, ambulance, caretaker), Practo-level clinical expansion, design, language and usability review, final regression and handover.
-8. **Reviews still owed:** CodeRabbit once each on fe-c, fe-b and integration (no secrets or PHI in the diff), then an adversarial review by a different model near the end.
-9. **Docs:** update `docs/PROGRESS_REPORT.md`. te/hi translations are placeholders that need fluent review (`docs/frontend/REVIEW_NEEDED.md`). Public routes under `src/app/[locale]` are missing `loading.tsx`. The CSP and vitest config changes made by fe-a need review.
+```
+export MSYS_NO_PATHCONV=1
+hc run --bg --name fe-a    --cwd C:/Users/Yashwanth/fe2-d   kiro-cli chat --model claude-opus-5.5
+hc run --bg --name fe-b    --cwd C:/Users/Yashwanth/fe2-e   kiro-cli chat --model claude-opus-5.5
+hc run --bg --name fe-p    --cwd C:/Users/Yashwanth/fe2-p   kiro-cli chat --model claude-opus-5.5
+hc run --bg --name fe-q    --cwd C:/Users/Yashwanth/fe2-c   kiro-cli chat --model claude-opus-5.5
+hc run --bg --name fe-int2 --cwd C:/Users/Yashwanth/fe2-int kiro-cli chat --model claude-opus-5.5
+```
 
-## Known issues and caveats
+Then `hc ls` for the new tab ids. Send each a prompt (`hc send tN "..."` then `hc keys tN enter`): "Read .context/activeContext.md PAUSED STATE and continue", plus the task below. Use `cd <worktree> && git ...` for git (not `git -C`) when `MSYS_NO_PATHCONV=1`.
 
-- te/hi strings are machine-written or English placeholders until reviewed.
-- `fe2-p`: `node_modules` is a real directory copy (Turbopack refused the junction). Restore steps are in `handoff-t38.md`.
-- `fe2-c` has an untracked `.playwright-mcp/` screenshots folder (not committed).
-- The patient dashboard uses an interim login check until integration adopts `requireRole("patient")`.
-- Progress numbers given in chat were estimates, not measurements. Last estimate: roughly 59% built and 15% verified overall.
+Approver: `C:\Users\Yashwanth\.claude-scratch-approve-full.sh <tab ids>`. It approves every dialog except a deny list (push, reset, clean, rebase, stash, checkout of develop/main, force, secrets, curl and other network, Stop-Process, recursive deletes, writes outside worktrees), which go to `.claude-scratch-hold.log` for manual review. Vet each HOLD (expand with Ctrl+O, check scope is the agent's own port and worktree, collapse, verify "Allow once", then `hc keys tN enter`). "blocked (permission)" notices are mostly stale: always verify with `hc read tN | tail -100 | tail -14 | grep -c "Allow once"`.
 
-## How to restart the agent setup
+Push recipe (never to `develop`/`main`):
+`cd <worktree> && GIT_TERMINAL_PROMPT=0 timeout 100 git -c credential.helper= -c "credential.helper=!gh auth git-credential" push -q origin <branch>`, then check `git rev-parse --short HEAD` equals `git ls-remote origin <branch>`. Commit trailer: `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`.
 
-- Kiro CLI windows are launched through Herdr: `hc run --bg --name <name> --cwd C:/Users/Yashwanth/<worktree> kiro-cli chat --model claude-opus-5.5`. Wait about 30 seconds before the first `hc send`.
-- Use five windows at most. One owner per worktree, no overlapping files, one port each (3320 integration, 3330 fe-a, 3310 fe-b, 3360 fe-c, 3370 to 3383 fe-d, 3350 fe-e, 3380 fe-p).
-- Tell each window: read `PHASE4-common.md` (in `.claude-scratch-tasks`, not in the repo, so re-create from this README if missing), then its handoff file. Keep context under about 150k tokens (use /compact). Commit on its own branch, never push; the lead pushes feature branches only.
-- Kiro credits are a shared pool (3,125 of 10,000 used at the last check this session). Watch the footer cost.
-- Push command that works: `GIT_TERMINAL_PROMPT=0 git -c credential.helper= -c "credential.helper=!gh auth git-credential" push origin <branch>`.
-- Commit messages end with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`.
+Ports: fe2-a/d 3370 to 3383, fe2-c 3360 to 3369, fe2-e/b 3350 to 3359, fe2-p 3384, integration 3320. All servers are stopped now.
+
+## What to take up first on resume (in order)
+
+1. **fe-int2 (fe2-int), INT3.** Done: re-merge of c/d/e/p, guard codemod, e2e specs moved to real fixture sign-in (`tests/e2e/support/fixture-session.ts`, `workspace-servers.ts`). Not done: smoke mutation flows (booking request, provider accept or decline, cancel, CMS publish) plus axe with dialogs open in `tests/e2e/integration-smoke.spec.ts`. Then rerun smoke on a fresh build (`.context/int2-serve.ps1`, `npx playwright test --config tests/e2e/integration.config.ts`), update `docs/frontend/INTEGRATION_REPORT.md`, re-merge the newest heads of a/c/d/e/p, TASK REPORT.
+2. **fe-p (fe2-p), R9-P.** Merge local `feat/fe2-a` (clears 13 shared-suite failures from the Telugu header overflowing 12 px at 1280), rerun shared public and a11y suites, then the read-only moderation audit-log view (no undo) with tests.
+3. **fe-b (fe2-e), R9-E.** Gated "not available yet" page for `/stories` in http mode, then a full regression (tsc, lint, unit, build, a11y at 390 and 1280). Lab catalogue paise fix is committed (0500117 path, `paiseToRupeesString`).
+4. **fe-q (fe2-c), R9-C2.** Finish `docs/frontend/ADVERSARIAL_REVIEW.md` (so far: 1 HIGH, 1 MEDIUM, 2 LOW against fe2-int 02dc8bf). Then re-scan the new integration head. Fix the HIGH item with the owner of the file.
+5. **fe-a (fe2-d), R8-D.** Finish the consultation editor changes (uncommitted edits were committed as WIP), fix the midnight-IST test, doctor/verify a11y sweeps, hydration-reset bug repro. Add `/lab-tests` to the sitemap (fe-a owns it).
+6. **Claude:** CodeRabbit on each branch (no secrets or PHI; `/c/Users/Yashwanth/AppData/Local/Programs/coderabbit/coderabbit review --agent --base-commit <sha>` in the background), merge everything into `feat/fe2-integration`, full lint/typecheck/unit/build, full Playwright on the integrated build, update `docs/PROGRESS_REPORT.md`, final adversarial review, PHASE REPORT.
+
+## Progress (estimates, not measured percentages from CI)
+
+```
+Phase                          Built                    Tested
+R0  Recover agents        100% [####################]  100% [####################]
+R1  Foundation             98% [###################.]   90% [##################..]
+R2  Roles / onboarding     95% [###################.]   80% [################....]
+R3  Search / discovery     95% [###################.]   85% [#################...]
+R4  Patient booking        92% [##################..]   80% [################....]
+R5  Provider ops           88% [#################...]   70% [##############......]
+R6  Other workflows        82% [################....]   65% [#############.......]
+R7  Clinical expansion     82% [################....]   60% [############........]
+R8  Design / lang / UX     78% [###############.....]   60% [############........]
+R9  Regression / handover  35% [#######.............]   25% [#####...............]
+R10 Lab directory (C)      90% [##################..]   80% [################....]
+OVERALL                    ~84% [################....]  ~70% [##############......]
+```
+
+Remaining: about 3 hours of agent time plus review (about 1,900 more Kiro credits). Test totals at last checks: unit 988/988 (fe2-c), 995/995 (fe2-p); e2e fe2-c 135 passed, fe2-p three modes 0 failures; earlier integration build exit 0 (446 pages) and smoke 84/84 at 390 and 1280 with axe.
+
+## Open items and known gaps
+
+- Telugu and Hindi strings are machine-written and need a fluent human review (`docs/frontend/REVIEW_NEEDED.md`, `REQUESTS.md` R-FE-D-36 to 39).
+- Proof-of-visit QR is not built (no approved QR library).
+- Possible hydration-reset bug in shared form controls (fe-a to reproduce, propose a patch in `REQUESTS.md`).
+- Reviews flag question (separate flag or clinical flag) is a user decision. Overlap between fe2-d and fe2-p (4aa02f8) needs a decision.
+- Unused leftovers to delete once owners agree: fe-p notifications api/actions/inbox, fe-d `myRecordPdfLinkAction`.
+- Product decisions still open: family limit 10, saved doctors 50, default reminder settings, safety messages vs quiet hours, WhatsApp/SMS opt-in wording.
+- Proposed backend endpoints are in `docs/frontend/REQUESTS.md` (R-FE-P-R7-1 to 4, R-FE-P-R8-1, R-FE-D-36 to 39).
+
+## After the frontend is complete
+
+Connect to the backend with `FRONTEND_ADAPTER=http` (Docker is needed only for local Supabase), then carry out the user's change requests.
