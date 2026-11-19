@@ -108,3 +108,8 @@ Lead = Claude (commits/push, integration, review). Task files: C:/Users/Yashwant
 Task: merge feat/fe2-b (64b916f) -> replace getOperationsSession/interim guards with requireRole -> un-fixme e2e admin-ops/ambulance/caretaker/lab/cms -> role-isolation browser test -> axe on each workspace -> tsc/lint/vitest/build/playwright -> commit.
 Progress:
 - [ ] merge fe2-b
+## Kiro B (fe2-b) state, appended
+- No browser/e2e runs (user rule). Port 3313 server stopped. RAM rules: vitest --maxWorkers=2, one heavy job at a time, NODE_OPTIONS=--max-old-space-size=1536 for build.
+- Done: e2e helpers fixed; profile.spec 6/6 (desktop, before rule); 2 nav tests fixme; profile gate (src/modules/onboarding/profile-gate.ts + profile-gate-server.ts, 5 unit tests); REQUESTS R-FE06-01..09.
+- Next: COMPONENTS.md, REVIEW_NEEDED row, delete .playwright-mcp, final lint/typecheck/test/build, report DONE.
+- PHASE3-B (Kiro B): committed ed384ee; guard wrong-role -> own landing; getAccountSession (src/modules/auth/account-session.ts + server.ts); /patient/onboarding forwards to health-profile; role-isolation.test.ts; REQUESTS R-FE07-01..03. Pending: tsc, lint, identity vitest, one build, commit.
