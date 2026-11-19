@@ -13,3 +13,5 @@ Phase 2 (after A merged): auth/onboarding UI (B), directory/booking/patient dash
 ## Kiro fe-b, PHASE4 (2026-11-19)
 - Task A (fe2-b, port 3310): DONE, see handoff-kiro-b.md. Baseline run: 29 pass, 14 fail, 19 did not run. Root causes: spec locators; account page links read before streaming finished.
 - Task B (fe2-e, port 3350): PHASE4-E2. TODO
+
+- Task A committed b841051 (feat/fe2-b). Task B started in fe2-e (base 9b67077).
