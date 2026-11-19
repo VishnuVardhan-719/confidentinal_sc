@@ -1,5 +1,14 @@
 # Active SureCure Visit context
 
+## P01a SQL checkpoint (2026-11-19)
+
+- Authority: `C:/tmp/scv_logs/codex_p01a_sql.txt`; branch `feat/P01a-sql`, base `integ/all` `5f94c98`. Commit/push authorized only to this branch. No .env access, installation, DB/Docker operation, other-worktree edit, merge or activation.
+- Authored migration `20261117002000_p01a_payments.sql`, suites 070–089, `_p01_fixture.inc`, and `tests/rls/run_p01_concurrency.py` (9 cases). Exact 14 app RPC signatures preserved; no app change. P01a only; no gateway/webhook/test-mode objects. Finance grants nobody; pay-after and paid gates OFF.
+- Shared SQL 001550–001590 and fixture read-only from `kiro-shared`; not copied here. Preflight requires shared objects. Claude has NOT said “shared merged”; no SQL/RLS/race execution. Future runner requires explicit flags, local target validation and common 30-minute DB lock, then scratch-only replay.
+- Decisions: preserve seven shared capabilities + two finance; retain private fail-closed settings because shared read/closeout gates differ; permit collector self-void only; permit finance disputed-claim confirmation; closed review/resolution reasons reuse app list; exception cursor uses raised_at; missing terminal backfill event blocks; doctor-only until category final provenance. Private typed-time primitives support deterministic boundary tests while API callers can never supply time.
+- Evidence: Vitest exit 0 (228 passed/2 skipped, 15 files passed/2 skipped); tsc exit 0; targeted and full ESLint exit 0; webpack production build exit 0. Default Turbopack build fails to resolve Next through existing node_modules junction. Structural checks match all signatures and 20 suite TAP/include contracts; Python parsing/help/no-execution guard pass. Final commits recorded by branch HEAD and final response.
+- Independent review corrected OFF-gate direct SELECT leakage, unbounded worker history, monitoring-role barrier, overlapping zero-price fixture, credential isolation and premature immediate constraints. All suites now force deferred checks only at their final success boundary. P01 remains IN_PROGRESS until DB acceptance; see `docs/handoffs/P01a_sql_codex_2026-11-19.md`.
+
 ## P01a application checkpoint (2026-11-19)
 
 - Current task authority: `C:/tmp/scv_logs/codex_p01app.txt`, narrowed by the owner's later scope correction relayed from Claude: ONLY P01a section 7/12 application adapters. D-14 option A applies. P01b webhook/order/checkout/HMAC/gateway reconciliation, paymentsTestMode and Razorpay env entries are excluded. No such code was implemented.
