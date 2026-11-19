@@ -139,11 +139,8 @@ test.describe("doctor guard and shell", () => {
     await expectSynthetic(page);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.getByRole("region", { name: /pending requests/i }).getByRole("listitem")).toHaveCount(1);
-    // Fixture times are relative to server start (today visit = +30 min), so near IST midnight one of
-    // the two can fall on tomorrow; the grouping itself is unit-tested (splitTodayUpcoming).
-    const todayCount = await page.getByRole("region", { name: /today/i }).getByRole("listitem").count();
-    expect(todayCount).toBeGreaterThanOrEqual(1);
-    expect(todayCount).toBeLessThanOrEqual(2);
+    // Fixture "today" visits are anchored to the current IST day (world rolls daily; tests/unit/modules-clinical/world-days.test.ts).
+    await expect(page.getByRole("region", { name: /today/i }).getByRole("listitem")).toHaveCount(2);
     await expect(page.getByRole("link", { name: /continue consultation/i })).toHaveAttribute("href", path.consultation(I.bookingActive));
     await expectNoPhiInUrlOrStorage(page);
     await expectNoAxeViolations(page);

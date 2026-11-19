@@ -155,6 +155,30 @@ export function fixtureHash(salt: string, value: string): string {
 
 const iso = (d: Date) => d.toISOString();
 const addMinutes = (d: Date, m: number) => new Date(d.getTime() + m * 60_000);
+const DAY_MS = 86_400_000;
+const istKeyFormat = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" });
+/** IST calendar day "YYYY-MM-DD" of an instant. */
+export const istDayKey = (d: Date): string => istKeyFormat.format(d);
+const istMidnight = (d: Date) => new Date(`${istDayKey(d)}T00:00:00+05:30`);
+
+/**
+ * Keep a "today" fixture time on the IST calendar day of `now`: offsets near midnight would
+ * otherwise push "today" visits into tomorrow or yesterday (flaky date grouping).
+ */
+export function onIstDayOf(now: Date, offsetMinutes: number): Date {
+  const start = istMidnight(now).getTime() + 60_000;
+  const end = istMidnight(now).getTime() + DAY_MS - 60_000;
+  return new Date(Math.min(end, Math.max(start, now.getTime() + offsetMinutes * 60_000)));
+}
+
+const ISO_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
+/** Copy of `v` with every ISO timestamp string moved by `ms` (ids, tokens and text are untouched). */
+export function shiftTimestamps<T>(v: T, ms: number): T {
+  if (typeof v === "string") return (ISO_TIME.test(v) ? new Date(Date.parse(v) + ms).toISOString() : v) as T;
+  if (Array.isArray(v)) return v.map((x) => shiftTimestamps(x, ms)) as T;
+  if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, shiftTimestamps(x, ms)])) as T;
+  return v;
+}
 
 const signedPastContent = (): ClinicalDraftContent => ({
   vitals: { temperature: { value: 99.1, unit: "F" }, pulseBpm: 84, examinationFindings: "Synthetic finding text." },
@@ -212,8 +236,8 @@ export function createClinicalWorld(now: Date = new Date()): ClinicalWorld {
 
   const bookings: FixtureBooking[] = [
     base({ bookingId: I.bookingRequest, publicReference: null, assignedDoctorId: null, state: "requested", version: 2, respondBy: iso(addMinutes(now, 25)), scheduledStartAt: iso(addMinutes(now, 24 * 60)) }),
-    base({ bookingId: I.bookingToday, publicReference: "SYN-BKG-0102", scheduledStartAt: iso(addMinutes(now, 30)) }),
-    base({ bookingId: I.bookingActive, publicReference: "SYN-BKG-0106", state: "in_progress", phase: "service_started", consultationId: I.consultationActive, scheduledStartAt: iso(addMinutes(now, -20)), version: 7 }),
+    base({ bookingId: I.bookingToday, publicReference: "SYN-BKG-0102", scheduledStartAt: iso(onIstDayOf(now, 30)) }),
+    base({ bookingId: I.bookingActive, publicReference: "SYN-BKG-0106", state: "in_progress", phase: "service_started", consultationId: I.consultationActive, scheduledStartAt: iso(onIstDayOf(now, -20)), version: 7 }),
     base({ bookingId: I.bookingUpcoming, publicReference: "SYN-BKG-0103", scheduledStartAt: iso(addMinutes(now, 3 * 24 * 60)), hasKnownAllergies: null }),
     base({ bookingId: I.bookingPast, publicReference: "SYN-BKG-0104", state: "completed", phase: "service_completed", consultationId: I.consultationPastFinal, scheduledStartAt: iso(addMinutes(now, -7 * 24 * 60)), paymentState: "PAID", version: 9 }),
     base({ bookingId: I.bookingPatientB, publicReference: "SYN-BKG-0105", patientId: I.patientB, patient: patientB, state: "completed", phase: "service_completed", consultationId: I.consultationPatientB, scheduledStartAt: iso(addMinutes(now, -2 * 24 * 60)), version: 9 }),
@@ -257,10 +281,35 @@ export function createClinicalWorld(now: Date = new Date()): ClinicalWorld {
  * Tests should create their own world.
  */
 const WORLD_KEY = Symbol.for("scv.fixtures.clinicalWorld");
-export function sharedClinicalWorld(): ClinicalWorld {
-  const g = globalThis as typeof globalThis & { [WORLD_KEY]?: ClinicalWorld };
-  g[WORLD_KEY] ??= createClinicalWorld();
+const ANCHOR_KEY = Symbol.for("scv.fixtures.clinicalWorldDay");
+type WorldGlobal = typeof globalThis & { [WORLD_KEY]?: ClinicalWorld; [ANCHOR_KEY]?: string };
+
+/**
+ * Process-wide world. Its times are relative to when the server created it; when the IST calendar
+ * day changes while the server keeps running, every timestamp in the world moves by whole days so
+ * "today" visits stay today (relative order, mutations and IDs are kept).
+ */
+export function sharedClinicalWorld(now: Date = new Date()): ClinicalWorld {
+  const g = globalThis as WorldGlobal;
+  if (!g[WORLD_KEY]) {
+    g[WORLD_KEY] = createClinicalWorld(now);
+    g[ANCHOR_KEY] = istDayKey(now);
+    return g[WORLD_KEY];
+  }
+  const today = istDayKey(now);
+  const anchor = g[ANCHOR_KEY] ?? today;
+  if (anchor !== today) {
+    rollWorld(g[WORLD_KEY], Date.parse(`${today}T00:00:00Z`) - Date.parse(`${anchor}T00:00:00Z`));
+    g[ANCHOR_KEY] = today;
+  }
   return g[WORLD_KEY];
+}
+
+/** Shift every time in a world in place (same world object and Map instances; entries replaced). */
+export function rollWorld(world: ClinicalWorld, ms: number): void {
+  for (const map of [world.bookings, world.challenges, world.consultations, world.facts, world.proofs, world.photoConsents, world.photos, world.collections] as Map<string, unknown>[]) {
+    for (const [k, v] of map) map.set(k, shiftTimestamps(v, ms));
+  }
 }
 
 /**
