@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
+import { ArrowLeftRight, ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import type { ReactElement } from "react";
 import { Button } from "@/components/ui/button";
@@ -51,9 +51,10 @@ export function AccountActions({ account, variant }: { account: PublicAccount | 
   const signOut = (
     <form action={account.signOutAction} method={typeof account.signOutAction === "string" ? "post" : undefined}>
       <input type="hidden" name="locale" value={locale} />
-      <Button type="submit" variant={mobile ? "secondary" : "quiet"} size={mobile ? "lg" : "md"} className={mobile ? "w-full" : undefined}>
+      <Button type="submit" variant={mobile ? "secondary" : "quiet"} size={mobile ? "lg" : "icon"} className={mobile ? "w-full" : undefined} title={mobile ? undefined : t("account.signOut")}>
         <LogOut aria-hidden />
-        {t("account.signOut")}
+        {/* Desktop header is icon-only (no room for long Telugu/Hindi labels); the name stays for AT. */}
+        <span className={mobile ? undefined : "sr-only"}>{t("account.signOut")}</span>
       </Button>
     </form>
   );
@@ -85,8 +86,9 @@ export function AccountActions({ account, variant }: { account: PublicAccount | 
       </Button>
       {others.length > 0 ? (
         <DropdownMenu>
-          <DropdownMenuTrigger className="inline-flex min-h-target items-center gap-1 rounded-md px-3 font-medium text-ink hover:bg-mist data-[state=open]:bg-mist">
-            {t("account.switch")}
+          <DropdownMenuTrigger title={t("account.switch")} className="inline-flex min-h-target min-w-target items-center justify-center gap-0.5 rounded-md px-2 text-ink hover:bg-mist data-[state=open]:bg-mist">
+            <ArrowLeftRight aria-hidden className="size-4.5 text-forest" />
+            <span className="sr-only">{t("account.switch")}</span>
             <ChevronDown aria-hidden className="size-4 text-muted" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

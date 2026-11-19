@@ -131,4 +131,7 @@ Progress:
 - Fast-forwarded feat/fe2-c 0331c6b -> feat/fe2-integration 1ac677e (ancestor, no conflicts) to get patient session (modules/patient-dashboard/session.ts), payments components, CSP.
 - Plan: wizard route /patient/book (8 steps) + request page /patient/book/[id] (pending/accepted/declined, payment pay-after, confirm ref, cancel, reschedule, request receipt). Process-wide synthetic store src/fixtures/marketplace/booking-store.ts (globalThis); synthetic doctor 2 declines, others accept after FIXTURE_PROVIDER_RESPONSE_MS. Slots fixture API; patient addAddress; createBooking optional visitReason; BookingsApi.reschedule (http gated).
 - E2E env: FRONTEND_ADAPTER=fixture APP_ENV=test FIXTURE_PATIENT_SESSION=self, PLAYWRIGHT_BASE_URL=http://localhost:3360.
+## T5 fe-p on fe2-a (port 3330)
+- 305e48d header 2xl overflow fix (te 175px@1536). public+public-nav+a11y: 131 passed 0 failed before 1536 add; 1536 sweep 3/3.
+- Next: R8 usability audit te/hi 390/768/1280 via .context/fep2-audit.mjs, fix CSS/components, small commits, handoff-fe-p2.md.
 
