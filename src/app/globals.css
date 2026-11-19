@@ -103,10 +103,7 @@
     text-wrap: balance;
     line-height: 1.18;
   }
-  :lang(te) :is(h1, h2, h3, h4),
-  :lang(hi) :is(h1, h2, h3, h4) {
-    line-height: 1.4;
-  }
+  /* te/hi heading line-height: see the unlayered rule below the base layer. */
 
   p {
     text-wrap: pretty;
@@ -146,6 +143,26 @@
   [hidden] {
     display: none !important;
   }
+}
+
+/*
+ * Telugu and Hindi: vowel signs above and below the line (and the Devanagari headline bar) need
+ * taller line boxes than Latin text. Heading and display sizes set a tight Latin line-height through
+ * text-size and leading utilities, so this rule is unlayered on purpose: it must win over those utilities
+ * on te/hi pages only. English keeps the designed tight display leading.
+ */
+:lang(te) :is(h2, h3, h4),
+:lang(hi) :is(h2, h3, h4) {
+  line-height: 1.4;
+}
+/* Display-size h1: slightly tighter so two-line heroes stay one visual block. */
+:lang(te) h1,
+:lang(hi) h1 {
+  line-height: 1.3;
+}
+:lang(te) .font-display:not(h1, h2, h3, h4),
+:lang(hi) .font-display:not(h1, h2, h3, h4) {
+  line-height: 1.5;
 }
 
 @layer utilities {

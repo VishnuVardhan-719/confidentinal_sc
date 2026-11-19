@@ -44,12 +44,12 @@ export default async function StoryPage({ params }: PageProps<"/[locale]/stories
     <Container className="grid gap-8 py-12 md:py-20">
       <ArrowLink href="/stories">{t("back")}</ArrowLink>
       {result.fixture ? <FixtureNotice /> : null}
-      <article className="grid gap-6" lang={story.servedLocale}>
+      <article className="grid gap-6">
         <header className="grid gap-3">
-          <h1 className="max-w-4xl font-display text-[clamp(2rem,1.5rem+2vw,3.25rem)] leading-[1.1] font-medium tracking-[-0.025em] text-ink">
+          <h1 lang={story.servedLocale} className="max-w-4xl font-display text-[clamp(2rem,1.5rem+2vw,3.25rem)] leading-[1.1] font-medium tracking-[-0.025em] text-ink">
             {story.title}
           </h1>
-          <p className="measure text-xl text-muted">{story.summary}</p>
+          <p lang={story.servedLocale} className="measure text-xl text-muted">{story.summary}</p>
           <p className="text-sm text-muted">
             <time dateTime={story.publishedAt}>
               {t("published", { date: format.dateTime(new Date(story.publishedAt), { dateStyle: "long", timeZone: "Asia/Kolkata" }) })}
@@ -57,7 +57,10 @@ export default async function StoryPage({ params }: PageProps<"/[locale]/stories
           </p>
           {story.servedLocale !== locale ? <p className="text-sm text-muted">{t("fallbackLanguage")}</p> : null}
         </header>
-        <RichText doc={story.body} />
+        {/* Only the story content carries the served language; UI text stays in the page locale. */}
+        <div lang={story.servedLocale}>
+          <RichText doc={story.body} />
+        </div>
         <p className="text-sm text-muted">{t("disclaimer")}</p>
       </article>
     </Container>

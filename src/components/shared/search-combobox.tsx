@@ -106,6 +106,9 @@ export function SearchCombobox({
         setActive(-1);
         return;
       }
+      // New query: drop the previous results so Enter can never choose a stale option.
+      setGroups([]);
+      setActive(-1);
       setPhase("loading");
       timerRef.current = setTimeout(async () => {
         const seq = ++requestSeq.current;

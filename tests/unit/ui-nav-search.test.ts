@@ -64,6 +64,9 @@ describe("doctor search URL", () => {
     expect(doctorSearchHref({ q: "fever <b>", location: "1" })).toBe("/doctors?q=fever+b");
     expect(doctorSearchHref({ q: "జ్వరం", location: "హైదరాబాద్" })).toBe(`/doctors?q=${encodeURIComponent("జ్వరం")}&city=${encodeURIComponent("హైదరాబాద్")}`);
     expect(doctorSearchHref({ q: "a".repeat(120) })).toBe(`/doctors?q=${"a".repeat(80)}`);
+    // CodeRabbit #2: over-long or malformed PINs are omitted, never truncated into a valid one.
+    expect(doctorSearchHref({ q: "fever", location: "5000019" })).toBe("/doctors?q=fever");
+    expect(doctorSearchHref({ location: "050001" })).toBe("/doctors");
   });
 });
 
@@ -120,6 +123,22 @@ describe("SearchCombobox", () => {
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: "d1" }));
     expect((input as HTMLInputElement).value).toBe("Dr. Fixture (synthetic)");
     expect(input.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("clears previous suggestions when a new query starts, so Enter cannot pick a stale option", async () => {
+    const load = vi.fn().mockResolvedValueOnce(groups).mockReturnValueOnce(new Promise(() => {}));
+    const onSelect = vi.fn();
+    render(withIntl(h(SearchCombobox, { labels, loadSuggestions: load, onSelect })));
+    const input = screen.getByRole("combobox");
+    fireEvent.change(input, { target: { value: "card" } });
+    await act(async () => vi.advanceTimersByTime(300));
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    expect(screen.getAllByRole("option")).toHaveLength(2);
+    fireEvent.change(input, { target: { value: "derm" } });
+    expect(screen.queryAllByRole("option")).toHaveLength(0);
+    expect(input.getAttribute("aria-activedescendant")).toBeNull();
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
   it("shows gated and error states honestly and closes on Escape", async () => {

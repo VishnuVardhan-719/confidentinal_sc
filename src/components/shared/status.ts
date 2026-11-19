@@ -80,6 +80,9 @@ export function toStatusDescriptor(presentation: StatusPresentation | null | und
   if (!presentation || !t.has(presentation.labelKey)) {
     return { tone: "neutral", label: t(UNKNOWN_STATUS_KEY), icon: "help" };
   }
-  const tone = isStatusTone(presentation.tone) ? presentation.tone : "neutral";
-  return { tone, label: t(presentation.labelKey), icon: presentation.icon ?? (tone === "neutral" && presentation.tone !== "neutral" ? "help" : undefined) };
+  if (!isStatusTone(presentation.tone)) {
+    // Unknown tone: fail closed and ignore any explicit icon (e.g. a "verified" shield).
+    return { tone: "neutral", label: t(presentation.labelKey), icon: "help" };
+  }
+  return { tone: presentation.tone, label: t(presentation.labelKey), icon: presentation.icon };
 }

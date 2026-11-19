@@ -185,3 +185,7 @@ Known limitations:
 - Moderation cannot undo a decision.
 - The fixture review store is shared per server: run the review specs once per server start (the script restarts it).
 - te/hi are machine-written (REVIEW_NEEDED.md).
+## T5 fe-p on fe2-a (port 3330)
+- 305e48d header 2xl overflow fix (te 175px@1536). public+public-nav+a11y: 131 passed 0 failed before 1536 add; 1536 sweep 3/3.
+- Next: R8 usability audit te/hi 390/768/1280 via .context/fep2-audit.mjs, fix CSS/components, small commits, handoff-fe-p2.md.
+

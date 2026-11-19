@@ -47,7 +47,9 @@
       "reference": "Your reference is {reference}. Use it if you contact us about this request.",
       "noReference": "We have your request. Its reference will appear in your support list.",
       "another": "Send another request"
-    }
+    },
+    "bookingUnknown": "A booking that is not in your list",
+    "bookingClear": "Remove the booking link"
   },
   "timeline": {
     "emptyTitle": "No updates yet",

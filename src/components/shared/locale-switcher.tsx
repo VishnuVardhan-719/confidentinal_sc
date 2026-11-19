@@ -18,7 +18,8 @@ import { LOCALES, type AppLocale } from "@/i18n/routing";
  * Switches language while staying on the same route. Plain links work without JS (path only);
  * with JS the current query string is kept too. The locale cookie stores only the locale code.
  */
-export function LocaleSwitcher({ variant = "menu", className }: { variant?: "menu" | "inline"; className?: string }) {
+/** `compact`: the menu trigger shows only the icon (the aria-label still names the current language). */
+export function LocaleSwitcher({ variant = "menu", compact = false, className }: { variant?: "menu" | "inline"; compact?: boolean; className?: string }) {
   const t = useTranslations("common");
   const ta = useTranslations("accessibility");
   const current = useLocale();
@@ -69,7 +70,9 @@ export function LocaleSwitcher({ variant = "menu", className }: { variant?: "men
         aria-label={`${ta("language")}: ${t(`locales.${current}`)}`}
       >
         <Languages aria-hidden className="size-4.5 text-forest" />
-        <span lang={current}>{t(`locales.${current}`)}</span>
+        <span lang={current} className={compact ? "sr-only" : undefined}>
+          {t(`locales.${current}`)}
+        </span>
         <ChevronDown aria-hidden className="size-4 text-muted" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

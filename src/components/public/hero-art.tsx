@@ -1,5 +1,6 @@
 import { ServiceIcon, type ServiceIconName } from "@/components/shared/service-icon";
 import { House } from "lucide-react";
+import { cn } from "@/components/ui/cn";
 
 /**
  * Decorative geometry for the hero: four service routes converging on one home inside a coverage
@@ -15,7 +16,9 @@ const NODES: { icon: ServiceIconName; x: number; y: number; d: string }[] = [
 
 export function HeroArt({ className }: { className?: string }) {
   return (
-    <div aria-hidden className={className}>
+    // Mobile first: the art follows the search form below lg and stays small, so the search is in
+    // the first screen on a phone.
+    <div aria-hidden className={cn("max-lg:order-last max-lg:max-w-[17rem]", className)}>
       <div className="relative aspect-[1/1] w-full overflow-hidden rounded-lg bg-mist">
         <svg viewBox="0 0 500 500" className="absolute inset-0 size-full" fill="none">
           {/* Street-like contours: the neighbourhood the coverage radius sits in. */}

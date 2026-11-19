@@ -43,8 +43,22 @@ for (const path of PAGES) {
       new PerformanceObserver((list) => {
         for (const e of list.getEntries()) w.__lcp = e.startTime;
       }).observe({ type: "largest-contentful-paint", buffered: true });
+      // CLS = largest session window: shifts less than 1 s apart, window capped at 5 s (web-vitals definition).
+      let sessionValue = 0;
+      let sessionStart = 0;
+      let lastShift = 0;
       new PerformanceObserver((list) => {
-        for (const e of list.getEntries() as (PerformanceEntry & { value: number; hadRecentInput: boolean })[]) if (!e.hadRecentInput) w.__cls += e.value;
+        for (const e of list.getEntries() as (PerformanceEntry & { value: number; hadRecentInput: boolean })[]) {
+          if (e.hadRecentInput) continue;
+          if (sessionValue > 0 && e.startTime - lastShift < 1000 && e.startTime - sessionStart < 5000) {
+            sessionValue += e.value;
+          } else {
+            sessionValue = e.value;
+            sessionStart = e.startTime;
+          }
+          lastShift = e.startTime;
+          w.__cls = Math.max(w.__cls, sessionValue);
+        }
       }).observe({ type: "layout-shift", buffered: true });
     });
 

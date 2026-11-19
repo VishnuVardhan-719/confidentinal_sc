@@ -73,7 +73,7 @@ export function DoctorSearch({ labels, className }: { labels: DoctorSearchLabels
         labels={labels.query}
         loadSuggestions={(q) => suggestDoctorSearch(q, locale)}
       />
-      <Button type="submit" size="lg" disabled={pending} aria-busy={pending} className="md:mb-0">
+      <Button type="submit" size="lg" disabled={pending} aria-busy={pending} className="w-full md:w-auto">
         {pending ? labels.submitting : labels.submit}
       </Button>
     </form>

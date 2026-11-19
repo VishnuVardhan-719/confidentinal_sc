@@ -71,6 +71,7 @@ describe("PIN finder", () => {
       errors: { service: "serviceRequired" },
     });
     expect(validateFinder({ pin: "५००००१", service: "labTests" })).toEqual({ ok: true, href: "/lab-tests?pin=500001" });
+    expect(validateFinder({ pin: "5000019", service: "doctors" })).toEqual({ ok: false, errors: { pin: "pinInvalid" } });
   });
 });
 

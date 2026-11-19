@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
+import { ArrowLeftRight, ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactElement } from "react";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ export function AccountActions({ account, variant }: { account: PublicAccount | 
 
   if (account === null || account.workspaces.length === 0) {
     return (
-      <div className={cn(mobile ? "grid gap-3" : "flex items-center gap-2")}>
+      <div className={cn(mobile ? "grid gap-3" : "flex items-center gap-1 whitespace-nowrap")}>
         {mobile ? null : (
           <Button asChild variant="quiet">
             <Link href={loginHref(pathname)}>{t("actions.signIn")}</Link>
@@ -49,9 +49,10 @@ export function AccountActions({ account, variant }: { account: PublicAccount | 
   const [primary, ...others] = account.workspaces;
   const signOut = (
     <form action={account.signOutAction} method="post">
-      <Button type="submit" variant={mobile ? "secondary" : "quiet"} size={mobile ? "lg" : "md"} className={mobile ? "w-full" : undefined}>
+      <Button type="submit" variant={mobile ? "secondary" : "quiet"} size={mobile ? "lg" : "icon"} className={mobile ? "w-full" : undefined} title={mobile ? undefined : t("account.signOut")}>
         <LogOut aria-hidden />
-        {t("account.signOut")}
+        {/* Desktop header is icon-only (no room for long Telugu/Hindi labels); the name stays for AT. */}
+        <span className={mobile ? undefined : "sr-only"}>{t("account.signOut")}</span>
       </Button>
     </form>
   );
@@ -74,7 +75,7 @@ export function AccountActions({ account, variant }: { account: PublicAccount | 
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 whitespace-nowrap">
       <Button asChild>
         <Link href={primary.href}>
           <LayoutDashboard aria-hidden />
@@ -83,8 +84,9 @@ export function AccountActions({ account, variant }: { account: PublicAccount | 
       </Button>
       {others.length > 0 ? (
         <DropdownMenu>
-          <DropdownMenuTrigger className="inline-flex min-h-target items-center gap-1 rounded-md px-3 font-medium text-ink hover:bg-mist data-[state=open]:bg-mist">
-            {t("account.switch")}
+          <DropdownMenuTrigger title={t("account.switch")} className="inline-flex min-h-target min-w-target items-center justify-center gap-0.5 rounded-md px-2 text-ink hover:bg-mist data-[state=open]:bg-mist">
+            <ArrowLeftRight aria-hidden className="size-4.5 text-forest" />
+            <span className="sr-only">{t("account.switch")}</span>
             <ChevronDown aria-hidden className="size-4 text-muted" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

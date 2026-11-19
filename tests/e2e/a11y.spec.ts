@@ -3,13 +3,14 @@ import { expect, test, type Page } from "@playwright/test";
 
 /**
  * Accessibility sweep over every public route that exists on this branch:
- * axe (WCAG 2.1 A/AA) at 360/768/1024/1440 in en/te/hi (390 and 1280 are covered by public.spec),
+ * axe (WCAG 2.1 A/AA) at 360/768/1024/1440/1536 in en/te/hi (390 and 1280 are covered by public.spec),
  * 200% text size without horizontal scrolling, visible keyboard focus, and security headers.
  * Runs once (desktop project) and sets each viewport itself.
  */
 const LOCALES = ["en", "te", "hi"] as const;
 const ROUTES = ["", "/about", "/our-story", "/stories", "/how-it-works", "/faq", "/contact", "/privacy", "/terms", "/refunds", "/become-a-provider", "/memberships", "/emergency", "/no-such-page"];
-const WIDTHS = [360, 768, 1024, 1440];
+// 1536 = Tailwind 2xl: the header row stays capped at max-w-content there, so it guards header overflow.
+const WIDTHS = [360, 768, 1024, 1440, 1536];
 
 test.beforeEach(({}, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-1280", "sweep runs once and sets its own viewports");
