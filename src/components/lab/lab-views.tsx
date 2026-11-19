@@ -1,5 +1,5 @@
 import { useLocale, useTranslations } from "next-intl";
-import { formatDateTime, formatPaise, formatWindow } from "@/components/admin/ops/format";
+import { formatDateTime, formatPaise, formatWindow, paiseToRupeesString } from "@/components/admin/ops/format";
 import { MetricTile } from "@/components/admin/ops/metric-tile";
 import { OpsAction } from "@/components/admin/ops/ops-action";
 import { OpsStatus, useKeyTranslator } from "@/components/admin/ops/ops-status";
@@ -170,7 +170,7 @@ export function LabCatalogView({ result }: { result: LoaderResult<CatalogRowVM[]
                 header: t("columns.actions"),
                 cell: (r) => (
                   <CatalogEditForm
-                    initial={{ price: (r.pricePaise / 100).toFixed(2), preparation: r.preparation, active: r.active.labelKey === "lab.status.catalog.active" }}
+                    initial={{ price: paiseToRupeesString(r.pricePaise), preparation: r.preparation, active: r.active.labelKey === "lab.status.catalog.active" }}
                     run={labCatalogAction.bind(null, { itemId: r.id, expectedVersion: r.version })}
                     labels={{
                       edit: t("edit"),
