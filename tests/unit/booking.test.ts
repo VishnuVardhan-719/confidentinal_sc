@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { acceptSchema, addressSchema, availabilityRuleSchema, blackoutSchema, bookingRequestSchema, decisionSchema, listBookingsSchema, resourceSchema } from "@/lib/validation/booking";
+import { acceptSchema, addressSchema, availabilityRuleSchema, availabilitySchema, blackoutSchema, bookingRequestSchema, decisionSchema, listBookingsSchema, resourceSchema } from "@/lib/validation/booking";
 import { bookingCommand } from "@/lib/booking/service";
 
 const id = "10000000-0000-4000-8000-000000000001";
@@ -52,5 +52,15 @@ describe("provider scheduling boundaries", () => {
       effectiveFrom: "2027-01-01", effectiveTo: "2027-12-31", expectedVersion: 0 }).success).toBe(false);
     expect(blackoutSchema.safeParse({ providerId: id, resourceId: id, startAt: "2027-01-01T09:00:00Z", endAt: "2027-01-01T10:00:00Z",
       reason: "free text", expectedVersion: 1 }).success).toBe(false);
+  });
+});
+describe("public availability boundary", () => {
+  it("takes the public provider reference from search, never a provider UUID", () => {
+    const ok = { provider: "SCV-DOC-100001", service: id, date: "2027-01-01" };
+    expect(availabilitySchema.parse(ok)).toEqual(ok);
+    expect(availabilitySchema.safeParse({ ...ok, provider: id }).success).toBe(false);
+    expect(availabilitySchema.safeParse({ ...ok, provider: "SCV-XYZ-100001" }).success).toBe(false);
+    expect(availabilitySchema.safeParse({ ...ok, provider: "SCV-DOC-1" }).success).toBe(false);
+    expect(availabilitySchema.safeParse({ ...ok, providerId: id }).success).toBe(false);
   });
 });
