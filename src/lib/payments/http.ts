@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { z } from "zod";
 import { IdentityError } from "@/lib/auth/identity";
 import { endpoint, input, json, session } from "@/lib/auth/http";
@@ -80,6 +81,9 @@ const responseKeys: Record<PaymentCommand, string> = {
 /** Bind a fixed operation in each route file; no client-chosen RPC dispatch. */
 export function paymentRoute(name: PaymentCommand) {
   return async (request: Request, context: Context) => endpoint(async () => {
+    // Opt out of prerendering: the gate throws before the request is read, so
+    // without this a gate-off 404 would be baked in at build time.
+    await connection();
     if (!isEnabled("payAfter")) throw new IdentityError(404, "feature_unavailable");
     const { db } = await session(request);
     const args = await argumentsFor(name, request, await context.params);
