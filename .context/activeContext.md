@@ -239,3 +239,9 @@ Commands:
 - INT4 (2026-11-20): merged c 7e41856, d 0e09eef, e 0816fb5+6cec6a0, p f977bc0+b796bb2 (HEAD fec9da1). tsc/lint 0; vitest 112 files, 1540 pass / 5 fail (fe-p static tests admin-return-path + provider-route-gates do not accept requireRole page guards: admin/coverage, {doctor,lab,ambulance,caretaker}/onboarding). peer-guards 4/4 run. Next: build, smoke, a11y-sweep-c, hydration-race, a11y-sweep, onboarding, admin-verification, report 6.7.
 - INT4 DONE on fec9da1: build 529, smoke 102/102, a11y-sweep 78/78 x2, hydration-race-e 3/3 x2; owner items: fe-p route-gate static tests (5 unit), hydration-race + a11y-sweep-c lack sign-in (fe-a, fe-q), nested <main> from AccountFrame under role shells (fe-b; onboarding + admin-verification). Moved heads not merged: c bdf0c54 d ff54236 e 8e3ccf6 p 7f9fd28. Report 6.7. Server stopped.
 - INT5 (2026-11-20): merged c bdf0c54, d ff54236, e 8e3ccf6, p 7f9fd28 (9fac4f5). WIP: AccountFrame nested div via OnboardingLayout; hydration-race on wsTest; onboarding 2 tests un-fixme'd (/patient/book, lab). Next: build, probe mains, run specs, vitest, report 6.8.
+
+## LEAD NOTE 2026-11-20 ~22:45 IST: KIRO MONTHLY LIMIT HIT
+fe-a (t49) and fe-b (t4g) returned "You've reached your monthly usage limit". fe-p, fe-q, fe-int2 still running but will hit it too.
+Pushed heads: c f829a75, d 2562920, e 8e3ccf6, p 746686e, int a63d1c4.
+Uncommitted work: fe2-d (R9-D10 consultation flake + public content pass, in progress), fe2-e (R9-E7 caretaker touch-target, date guard, in progress), fe2-p (R9-P6), fe2-c (R9-C14 patches in REQUESTS), int (INT5 smoke run).
+Needs user: Kiro credit top-up/next-month reset, or Claude (lead) finishes the remaining tasks directly.
