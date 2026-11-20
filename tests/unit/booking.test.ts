@@ -30,6 +30,20 @@ describe("booking database boundary", () => {
     const rpc = vi.fn().mockResolvedValue({ data: null, error: { code, message: "private data" } });
     await expect(bookingCommand({ rpc }, "cancel_booking", {})).rejects.toMatchObject({ status });
   });
+  it.each(["feature_unavailable", "feature_suspended"])("maps the %s database gate to 503 feature_unavailable", async (message) => {
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: { code: "55000", message } });
+    await expect(bookingCommand({ rpc }, "create_booking_request", {})).rejects.toMatchObject({ status: 503, code: "feature_unavailable" });
+    await expect(bookingCommand({ rpc }, "accept_booking", {})).rejects.toMatchObject({ status: 503, code: "feature_unavailable" });
+    expect(rpc).toHaveBeenCalledTimes(2);
+  });
+  it.each(["invalid_transition", "use_category_command", "resource_busy"])("keeps other 55000 states (%s) as 409 conflict", async (message) => {
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: { code: "55000", message } });
+    await expect(bookingCommand({ rpc }, "accept_booking", {})).rejects.toMatchObject({ status: 409, code: "conflict" });
+  });
+  it("does not treat a gate message under another SQLSTATE as a gate", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: { code: "42501", message: "feature_unavailable" } });
+    await expect(bookingCommand({ rpc }, "accept_booking", {})).rejects.toMatchObject({ status: 403 });
+  });
   it("retries only transactional failures with identical arguments", async () => {
     const rpc = vi.fn().mockResolvedValueOnce({ error: { code: "40P01" } }).mockResolvedValueOnce({ data: { id }, error: null });
     const args = { p_request_key: id };
