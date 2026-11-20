@@ -75,7 +75,7 @@ set local role authenticated;
 reset role;
 select pg_temp.assert_true(not booking_private.assigned(:'staff_booking','doctor_visit'),'expiry revokes existing assignment scope');
 set local role authenticated;
-select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4)',:'staff_booking'),'42501','expired clinician cannot advance');
+select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4,gen_random_uuid())',:'staff_booking'),'42501','expired clinician cannot advance');
 select pg_temp.expect_state(format('select public.get_booking(%L)',:'staff_booking'),'P0002','expired clinician loses patient contact');
 reset role;
 update public.staff_credential_documents set expires_at=now()+interval '1 year' where case_id=:'staff_case';
