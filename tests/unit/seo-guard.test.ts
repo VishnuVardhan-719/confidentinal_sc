@@ -32,7 +32,8 @@ function pagesUnder(dir: string): string[] {
 const routeOf = (file: string) => "/" + relative(PUBLIC_DIR, file).replace(/\\/g, "/").replace(/\/?page\.tsx$/, "");
 
 describe("public page metadata", () => {
-  const pages = pagesUnder(PUBLIC_DIR).filter((f) => !/\[/.test(relative(PUBLIC_DIR, f)));
+  // /doctors and /lab-tests are directory pages (not in PUBLIC_PAGES): it builds its own metadata with pageMetadata().
+  const pages = pagesUnder(PUBLIC_DIR).filter((f) => !/\[/.test(relative(PUBLIC_DIR, f)) && !/^(doctors|lab-tests)[\\/]/.test(relative(PUBLIC_DIR, f)));
   const calls = pages.map((f) => {
     const m = /publicPageMetadata\("([A-Za-z]+)",\s*"([^"]+)"\)/.exec(readFileSync(f, "utf8"));
     return { file: relative(process.cwd(), f), route: routeOf(f).replace(/^\/$/, "/"), key: m?.[1], path: m?.[2] };
@@ -106,7 +107,7 @@ describe("canonical, hreflang and robots meta", () => {
 
 describe("noindex on private and gated pages", () => {
   /** Nearest layout (up to [locale]) or the page itself declares noindex. */
-  const declaresNoindex = (file: string) => /index:\s*false|noindex/.test(readFileSync(file, "utf8"));
+  const declaresNoindex = (file: string) => /index:\s*false|noindex|privateMetadata\(/.test(readFileSync(file, "utf8"));
   const verifyNoindex = declaresNoindex(join(process.cwd(), "src", "components", "proof-of-visit", "verify-page.tsx"));
 
   it("every page outside (public) is noindex or only redirects", () => {

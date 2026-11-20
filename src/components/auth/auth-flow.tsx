@@ -17,6 +17,7 @@ import { IDLE, type AuthFormState } from "@/modules/auth/flows";
 import { SIGNUP_ROLES, type SignupRole } from "@/modules/auth/roles";
 import { OtpStep } from "./otp-step";
 import { translateKey, type RootTranslator } from "./message-key";
+import { HydrationStatus, hydrationBusy } from "@/components/clinical/hydration-status";
 import { useHydrated } from "./use-hydrated";
 
 type Mode = "login" | "signup";
@@ -125,8 +126,9 @@ export function AuthFlow({
 
   const roleField =
     mode === "signup" ? (
-      <fieldset className="grid gap-3" aria-busy={!hydrated || undefined}>
+      <fieldset className="grid gap-3" {...hydrationBusy(hydrated)}>
         <legend className="text-base font-semibold text-ink">{t("signup.roleLegend")}</legend>
+        <HydrationStatus hydrated={hydrated} />
         <p className="-mt-1 text-sm text-muted">{t("signup.roleHint")}</p>
         {fieldError("role") ? <p className="text-sm font-medium text-danger">{fieldError("role")}</p> : null}
         <RadioGroup name="role" value={role || values.role || ""} onValueChange={setRole} disabled={!hydrated} className="grid gap-2 sm:grid-cols-2">

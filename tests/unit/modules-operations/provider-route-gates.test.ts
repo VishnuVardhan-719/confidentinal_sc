@@ -37,7 +37,8 @@ const WORKSPACE_AREAS = [
 describe("provider pages are role-gated by the page itself", () => {
   for (const { area, gate, frame, routes } of WORKSPACE_AREAS) {
     it(`${area}: every page renders inside ${gate} with the route of its URL`, () => {
-      const all = pages(area);
+      // onboarding is the sign-in-only wizard for users without a workspace yet: it is not role-gated.
+      const all = pages(area).filter((p) => p.segments[0] !== "onboarding");
       expect(all.length).toBeGreaterThanOrEqual(routes.length);
       for (const p of all) {
         if (p.segments.length === 0) {
@@ -58,7 +59,7 @@ describe("provider pages are role-gated by the page itself", () => {
   }
 
   it("doctor: every page calls guardDoctorPage with its own path and returns the denied view", () => {
-    const all = pages("doctor");
+    const all = pages("doctor").filter((p) => p.segments[0] !== "onboarding");
     expect(all.length).toBeGreaterThanOrEqual(14);
     for (const p of all) {
       if (p.segments.length === 0) {
@@ -73,7 +74,9 @@ describe("provider pages are role-gated by the page itself", () => {
       const call = p.src.match(/guardDoctorPage\(locale, [`"]([^`"]+)[`"]\)/);
       expect(call, `${p.rel}/page.tsx must call guardDoctorPage`).not.toBeNull();
       const expected = "/" + p.segments.map((s) => (s.startsWith("[") ? "${" + s.slice(1, -1) + "}" : s)).join("/");
-      expect(call?.[1], `${p.rel}: guard path must be the page's own path`).toBe(expected);
+      // Dynamic segments are compared by position, not by variable name (`${raw}` for `[bookingId]` is fine).
+      const norm = (v?: string) => v?.replace(/\$\{[^}]+\}/g, "${param}");
+      expect(norm(call?.[1]), `${p.rel}: guard path must be the page's own path`).toBe(norm(expected));
       expect(p.src, `${p.rel}: must return the denied view`).toMatch(/if \(!g\.ok\) return g\.view;/);
     }
     // DoctorStaticPage itself runs the guard.

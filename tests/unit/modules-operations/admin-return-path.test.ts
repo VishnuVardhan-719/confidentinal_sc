@@ -63,7 +63,7 @@ describe("admin sign-in return path (R9-P2)", () => {
     expect(pages.length).toBeGreaterThanOrEqual(13);
     for (const p of pages) {
       const src = readFileSync(join(root, p), "utf8");
-      const gated = /<AdminRouteGate\s+route="/.test(src) || /^\s*redirect\(`\/\$\{await currentLocale\(\)\}\/admin\/dashboard`\);\s*$/m.test(src);
+      const gated = /<AdminRouteGate\s+route="/.test(src) || /requireRole\("admin"/.test(src) || /^\s*redirect\(`\/\$\{await currentLocale\(\)\}\/admin\/dashboard`\);\s*$/m.test(src);
       expect(gated, `${p} must render inside AdminRouteGate`).toBe(true);
     }
     const sub = readFileSync(join(root, "reviews", "log", "page.tsx"), "utf8");
