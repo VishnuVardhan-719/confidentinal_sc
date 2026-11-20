@@ -88,6 +88,24 @@ describe("care requests fixture adapter", () => {
     expect(row.ok && row.data.payment.amountDuePaise).toBe(0);
   });
 
+  it("with the shift length known, start times that would run into another booking are not offered", async () => {
+    const { api } = setup();
+    const slots = await api.slots(ONE.id);
+    if (!slots.ok) throw new Error("no slots");
+    // Book the second start of a day (10:00 IST) for 2 hours, then ask for 4-hour shifts.
+    const day = slots.data.items.filter(slot => slot.startAt.slice(0, 10) === slots.data.items[4].startAt.slice(0, 10));
+    const second = day.find(slot => new Date(Date.parse(slot.startAt) + 330 * 60_000).toISOString().slice(11, 16) === "10:00");
+    if (!second) throw new Error("no 10:00 slot");
+    const created = await api.create(input({ startAt: second.startAt, hours: 2, expectedTotalPaise: 50000 }), crypto.randomUUID());
+    expect(created.ok).toBe(true);
+    const eight = new Date(Date.parse(second.startAt) - 2 * 3_600_000).toISOString();
+    const short = await api.slots(ONE.id);
+    const long = await api.slots(ONE.id, 4 * 60);
+    expect(short.ok && short.data.items.some(slot => slot.startAt === eight)).toBe(true);
+    expect(long.ok && long.data.items.some(slot => slot.startAt === eight)).toBe(false);
+    expect((await api.slots(ONE.id, 0)).ok).toBe(false);
+  });
+
   it("http adapter fails closed", async () => {
     const api = createCareRequestsHttpApi();
     const result = await api.create(input(), crypto.randomUUID());

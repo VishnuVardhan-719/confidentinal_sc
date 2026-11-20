@@ -16,9 +16,12 @@ async function guarded<T>(run: (api: CareRequestsApi) => Promise<ApiResult<T>>):
   try { return await run(createCareRequestsApi({ patient: servicePatientApi() })); } catch { return fail("unavailable"); }
 }
 
-export async function careSlotsAction(providerId: unknown): Promise<ApiResult<{ items: RequestSlot[] }>> {
+/** `hours`, once chosen, hides start times that cannot fit the whole shift. */
+export async function careSlotsAction(providerId: unknown, hours?: unknown): Promise<ApiResult<{ items: RequestSlot[] }>> {
   if (!z.uuid().safeParse(providerId).success) return fail("validation");
-  return guarded(api => api.slots(providerId as string));
+  const length = hours === undefined || hours === null ? undefined : z.number().int().min(1).max(12).safeParse(hours);
+  if (length && !length.success) return fail("validation");
+  return guarded(api => api.slots(providerId as string, length ? length.data * 60 : undefined));
 }
 
 export async function createCareRequestAction(input: unknown, idempotencyKey: unknown): Promise<ApiResult<{ id: string }>> {

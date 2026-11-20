@@ -512,3 +512,8 @@ No endpoint exists. The http adapter (`src/modules/reminder-prefs/http.ts`) retu
   - the defaults: SMS on, quiet hours 21:00-07:00 IST
   - whether safety and critical booking messages bypass quiet hours (the UI says only visit reminders are affected)
   - the WhatsApp/SMS consent and opt-in wording (TRAI/DLT)
+## 2026-11-19 - PHASE R10-C public lab directory (fe-q, feat/fe2-c)
+`src/modules/lab` (fe-e) is the member-scoped lab operations API; there is no public, signed-out read of labs and their tests. `/[locale]/lab-tests` and `/[locale]/lab-tests/[id]` use the synthetic lab-orders fixture (`src/modules/lab-orders/directory.ts`); the HTTP adapter returns `gated` until these exist:
+- `GET /api/labs?test=&city=` -> `{ items: LabListing[], cities: string[] }`. Published, verified, active labs only. `LabListing` = `{ id, name, area: { locality, city, pins[] }, collectionOptions: ("home" | "walk_in")[], collectionFeePaise, tests: [{ id, name, specimen, preparation, pricePaise, reportHours }] }`. Integer paise; no staff, phone or street address.
+- `GET /api/labs/:id` -> `LabListing`, 404 for unknown, unpublished or suspended labs.
+- `test` is a case-insensitive name match (2 to 60 characters); `city` is an exact city match.

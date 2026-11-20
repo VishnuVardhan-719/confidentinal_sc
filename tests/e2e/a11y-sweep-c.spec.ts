@@ -2,7 +2,8 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
 /**
- * R8-C accessibility sweep over every route fe-c owns: the doctor booking journey (/patient/book/**) and the
+ * R8-C/R9-C accessibility sweep over every route fe-c owns: the public doctor directory and profiles (/doctors/**),
+ * the doctor booking journey (/patient/book/**) and the
  * lab, caretaker and ambulance request trees, in their normal, empty, error-free gated and missing-input states.
  * Each visit, at 390px and 1280px (Playwright projects): axe has no serious or critical violation, the page does
  * not scroll sideways, and the first Tab stop shows a visible focus indicator. Fixture adapter only.
@@ -23,6 +24,10 @@ async function sweep(page: Page, label: string) {
   const serious = results.violations.filter(v => v.impact === "serious" || v.impact === "critical");
   expect(serious.map(v => `${label}: ${v.id} (${v.impact}) ${v.nodes.map(n => n.target.join(" ")).join(", ")}`)).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), `${label}: horizontal scroll`).toBe(true);
+  // No browser storage and only public filters or ids in the query string.
+  expect(await page.evaluate(() => [localStorage.length, sessionStorage.length]), `${label}: browser storage used`).toEqual([0, 0]);
+  const keys = [...new URL(page.url()).searchParams.keys()].filter(key => !["providerId", "serviceId", "pin", "speciality", "sort", "showFull", "availability", "next", "test", "city"].includes(key));
+  expect(keys, `${label}: unexpected query parameters`).toEqual([]);
   // First Tab stop from the top of the page: it must be on screen and show a focus indicator.
   await page.evaluate(() => { (document.activeElement as HTMLElement | null)?.blur(); window.scrollTo(0, 0); });
   await page.keyboard.press("Tab");
@@ -43,6 +48,25 @@ async function sweep(page: Page, label: string) {
 }
 
 const STATIC_ROUTES: [string, string, RegExp | string][] = [
+  ["doctors: directory", "/en/doctors", "Find a doctor"],
+  ["doctors: speciality filter", "/en/doctors?speciality=paediatrics", "Find a doctor"],
+  ["doctors: full list sorted", "/en/doctors?showFull=1&sort=fee_asc", "Find a doctor"],
+  ["doctors: profile", "/en/doctors/00000000-0000-4000-8000-000000000001", "Synthetic doctor 1"],
+  ["doctors: fully booked profile", "/en/doctors/00000000-0000-4000-8000-000000000102", "No open slots right now"],
+  ["doctors: unknown profile", "/en/doctors/00000000-0000-4000-8000-000000009999", /./],
+  ["te: doctors directory", "/te/doctors", /./],
+  ["hi: doctors directory", "/hi/doctors", /./],
+  ["te: doctor profile", "/te/doctors/00000000-0000-4000-8000-000000000001", "Synthetic doctor 1"],
+  ["hi: doctor profile", "/hi/doctors/00000000-0000-4000-8000-000000000001", "Synthetic doctor 1"],
+  ["labs: directory", "/en/lab-tests", "Find a lab test"],
+  ["labs: test filter", "/en/lab-tests?test=blood", "Matching tests"],
+  ["labs: test and city", "/en/lab-tests?test=blood&city=Secunderabad", "1 lab"],
+  ["labs: invalid test", "/en/lab-tests?test=x", "Enter at least 2 characters of the test name."],
+  ["labs: no match", "/en/lab-tests?test=zzzz", "No lab matches these filters"],
+  ["labs: detail", "/en/lab-tests/00000000-0000-4000-8200-000000000001", "Tests offered"],
+  ["labs: unknown lab", "/en/lab-tests/00000000-0000-4000-8200-000000000099", "This lab is not listed"],
+  ["te: labs directory", "/te/lab-tests", "ల్యాబ్ పరీక్షను వెతకండి"],
+  ["hi: lab detail", "/hi/lab-tests/00000000-0000-4000-8200-000000000001", "उपलब्ध जाँचें"],
   ["book: no doctor", "/en/patient/book", "Choose a doctor first"],
   ["book: wizard", `/en/patient/book?${DOCTOR_1}`, "Request a visit with Synthetic doctor 1"],
   ["book: not bookable", `/en/patient/book?${DOCTOR_3}`, "This doctor cannot take requests right now"],
@@ -70,7 +94,7 @@ test.describe("a11y sweep: fe-c routes", () => {
     test(label, async ({ page }) => {
       await page.goto(path);
       await expect(page.getByText(marker).filter({ visible: true }).first()).toBeVisible({ timeout: 20_000 });
-      if (path.includes("/ambulance")) await expect(page.getByTestId("emergency-banner").filter({ visible: true }).first()).toBeVisible();
+      if (path.includes("/patient/ambulance")) await expect(page.getByTestId("emergency-banner").filter({ visible: true }).first()).toBeVisible();
       await sweep(page, label);
     });
   }
@@ -102,8 +126,8 @@ test.describe("a11y sweep: fe-c routes", () => {
 
     await page.goto(`/en/patient/caretakers/request?providerId=${CARE(1)}`);
     await page.getByRole("checkbox", { name: "Company and conversation" }).check();
-    await pick();
     await page.getByLabel("How many hours?").selectOption("2");
+    await pick();
     await page.getByRole("checkbox", { name: "I understand caretakers give non-clinical help only." }).check();
     await send(/\/patient\/caretakers\/requests\//);
     await sweep(page, "care: status");
@@ -120,6 +144,22 @@ test.describe("a11y sweep: fe-c routes", () => {
     await send(/\/patient\/ambulance\/requests\//);
     await expect(page.getByTestId("emergency-banner").filter({ visible: true }).first()).toBeVisible();
     await sweep(page, "ambulance: status");
+  });
+
+  test("doctors: mobile filter sheet and type-ahead open", async ({ page }, info) => {
+    await page.goto("/en/doctors");
+    await expect(page.getByRole("heading", { level: 1, name: "Find a doctor" })).toBeVisible({ timeout: 20_000 });
+    await page.getByRole("combobox", { name: "Search doctors, specialities or symptoms" }).pressSequentially("child");
+    await expect(page.getByRole("listbox")).toBeVisible();
+    await sweep(page, "doctors: type-ahead open");
+    if (info.project.name === "mobile-390") {
+      await page.keyboard.press("Escape");
+      await page.getByRole("button", { name: /^Filters/ }).click();
+      await expect(page.getByRole("dialog")).toBeVisible();
+      const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
+      expect(results.violations.filter(v => v.impact === "serious" || v.impact === "critical").map(v => v.id)).toEqual([]);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+    }
   });
 
   test("form error states: summary and field errors", async ({ page }) => {

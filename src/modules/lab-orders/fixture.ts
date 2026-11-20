@@ -12,7 +12,7 @@ const test = (n: number) => `00000000-0000-4000-8201-${String(n).padStart(12, "0
 /** Fictional labs and tests for development. Prices are synthetic, set "by the lab", in integer paise. */
 export const SYNTHETIC_LABS: readonly LabProvider[] = [
   {
-    id: lab(1), category: "lab", name: "Synthetic lab 1", synthetic: true, collectionFeePaise: 10000,
+    id: lab(1), category: "lab", name: "Synthetic lab 1", synthetic: true, collectionFeePaise: 10000, collectionOptions: ["home", "walk_in"],
     area: { locality: "Synthetic locality A", city: "Hyderabad", pins: ["500001", "500002", "500032"] },
     tests: [
       { id: test(1), name: "Complete blood count", specimen: "blood", preparation: "none", pricePaise: 35000, reportHours: 24 },
@@ -22,7 +22,7 @@ export const SYNTHETIC_LABS: readonly LabProvider[] = [
     ],
   },
   {
-    id: lab(2), category: "lab", name: "Synthetic lab 2", synthetic: true, collectionFeePaise: 0,
+    id: lab(2), category: "lab", name: "Synthetic lab 2", synthetic: true, collectionFeePaise: 0, collectionOptions: ["home"],
     area: { locality: "Synthetic locality D", city: "Secunderabad", pins: ["500001", "500003"] },
     tests: [
       { id: test(11), name: "Complete blood count", specimen: "blood", preparation: "none", pricePaise: 30000, reportHours: 24 },
@@ -30,7 +30,7 @@ export const SYNTHETIC_LABS: readonly LabProvider[] = [
     ],
   },
   {
-    id: lab(3), category: "lab", name: "Synthetic lab 3", synthetic: true, collectionFeePaise: 15000,
+    id: lab(3), category: "lab", name: "Synthetic lab 3", synthetic: true, collectionFeePaise: 15000, collectionOptions: ["home", "walk_in"],
     area: { locality: "Synthetic locality C", city: "Hyderabad", pins: ["500081"] },
     tests: [{ id: test(21), name: "Vitamin D", specimen: "blood", preparation: "none", pricePaise: 120000, reportHours: 48 }],
   },

@@ -284,8 +284,48 @@
       "book": "Back to doctors",
       "lab": "Back to lab tests",
       "care": "Back to caretakers",
-      "ambulance": "Back to ambulance transfers"
+      "ambulance": "Back to ambulance transfers",
+      "labs": "Back to labs"
     },
     "emergency": "Emergency? Call 112 now. Do not wait for this page."
+  },
+  "labDirectory": {
+    "metaTitle": "Lab tests: home collection and walk-in labs",
+    "metaDescription": "Compare lab test prices, sample collection and report times by test and city. Each lab sets its own prices.",
+    "title": "Find a lab test",
+    "description": "Search by test and city. Each lab sets its own prices and accepts or declines each request.",
+    "filterLabel": "Filter labs",
+    "testLabel": "Test name",
+    "testHint": "For example, blood count or thyroid.",
+    "testError": "Enter at least 2 characters of the test name.",
+    "cityLabel": "City",
+    "allCities": "All cities",
+    "search": "Search",
+    "clear": "Clear filters",
+    "results": "{count, plural, =0 {No labs} one {# lab} other {# labs}}",
+    "emptyTitle": "No lab matches these filters",
+    "emptyBody": "Try a shorter test name or another city.",
+    "collection": {
+      "home": "Home sample collection",
+      "walk_in": "Walk-in at the lab"
+    },
+    "collectionFee": "Home collection fee: {price}",
+    "noCollectionFee": "No home collection fee",
+    "matching": "Matching tests",
+    "viewLab": "View lab",
+    "viewLabFor": "View {name}",
+    "request": "Request tests",
+    "requestFor": "Request tests from {name}",
+    "requestNote": "You sign in to send a request. Nothing is charged now.",
+    "back": "Back to labs",
+    "testsTitle": "Tests offered",
+    "collectionTitle": "Sample collection",
+    "sample": "Sample",
+    "preparation": "Preparation",
+    "report": "Report in",
+    "reportHours": "{hours, plural, one {about # hour} other {about # hours}}",
+    "price": "Price",
+    "notFoundTitle": "This lab is not listed",
+    "notFoundBody": "It may no longer be listed. Search the list of labs instead."
   }
 }
