@@ -46,7 +46,7 @@ Nothing here is approved. Agents build with the **default** until the owner reco
 | ID | Question | Recommendation |
 |---|---|---|
 | R-1 | Repo `confidentinal_sc` is **public** and holds confidential specs and a Gmail address in commit metadata | Make it private |
-| R-2 | Merge `integ/all` into `develop` (and later `main`)? | Yes, after the shared engine and doctor core land with green suites |
+| R-2 | Merge `integ/all` into `develop` (and later `main`)? | **Decided 2026-11-20 (owner):** fast-forwarded `main` and `develop` to `integ/all` `50ccdd2` after CI run #58 went green |
 | R-3 | Friend's frontend (`feat/fe2-*`) is based on `develop` with fixture data, not `integ/all` | Merge backend to `develop` (R-2) so the friend can switch fixtures to real APIs using `docs/HANDOFF_FRONTEND.md` |
 | R-4 | One migration author at a time (AGENTS.md) | Keep for the shared block; after it merges, allow lab/ambulance/care/P01 authors in parallel (disjoint number blocks, DB lock serialises test runs) |
 | R-5 | Keep `.context/build_b01_forward.py` and `.context/prepare_b01_suites.py` in the repo? | Move to `tools/` or delete |

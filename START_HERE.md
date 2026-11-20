@@ -7,8 +7,8 @@ This is the entry point for anyone picking up the project (updated 2026-11-20 by
 | Branch | What it is |
 |---|---|
 | `integ/all` | **The working branch.** All backend work is merged here: identity, onboarding, catalog, booking core, the P5 shared engine, doctor, lab, ambulance and caretaker workflows, pay-after payments (P01a), notifications (N01), doctor clinical DC03-DC14. No UI yet. Branch new work from here. |
-| `develop`, `main` | Behind `integ/all` (develop by 120+ commits). Merging `integ/all` into `develop` is an owner decision (`docs/OWNER_DECISIONS_PENDING.md` R-2). Do not push to either without the owner. |
-| `feat/*` already merged | `feat/P5-shared-engine`, `feat/P5-shared-api`, `feat/S01-doctor-core`, `feat/P5-lab`, `feat/P5-ambulance`, `feat/P5-care`, `feat/P01a-sql`, `feat/N01-notifications`, `feat/DC-clinical-core`, `feat/DC-extras`, `test/Q01-gaps`, `chore/R6-seed`. Kept for history; do not build on them. |
+| `main`, `develop` | Same commit as `integ/all` (aligned 2026-11-20 after CI went green). `main` is the reviewed baseline; do not push to it directly, open a pull request from `integ/all` or your feature branch. |
+| Merged feature branches | Deleted from GitHub on 2026-11-20 because all their commits are in `main`; names and commits are in `docs/ARCHIVED_BRANCHES.md` if one is ever needed. |
 | `feat/fe2-*`, `task/U0*`, `fix/U01a-*`, `wip/frontend-pause-2026-11-18` | Earlier unreviewed UI work, based on `develop` with fixture data and the old API proposal. Ask the owner before reusing it. |
 | `wip/B01-fix-round1`, `wip/Q01a-rls-runner`, `docs/backend-*`, `docs/handoff-2026-11-18` | Superseded (B01 fixes landed via `integ/b01-fixes`; the RLS runner is replaced by `npm run verify:db`). History only. |
 
@@ -61,7 +61,7 @@ Read the ledger for the current state; at the time of writing:
 1. **Concurrency runners** (`npm run verify:db` on a Docker machine): the pgTAP suites pass in CI, the race runners have not run anywhere.
 2. **Doctor clinical owner questions**: DCQ-1..8 in `docs/handoffs/DC_clinical_core_kiro_2026-11-20.md` and five in `DC_extras_kiro_2026-11-20.md` (consent model, allergy matching, vital thresholds, photo retention, Indic PDF fonts). Their gates stay off until answered.
 3. **UI** (U01): patient, provider and admin screens. Nothing exists yet beyond a placeholder page.
-4. **Owner decisions** that gate release: ops escalation owner (OD-2), payment confirmation (D-1, D-13), privacy (D-PRIV), clinical scope (D-CLIN), repo visibility (R-1), merge to `develop` (R-2).
+4. **Owner decisions** that gate release: ops escalation owner (OD-2), payment confirmation (D-1, D-13), privacy (D-PRIV), clinical scope (D-CLIN), repo visibility (R-1; the repo is public and holds the full backend).
 5. Release work: staging, runbook (R02).
 
 Known gaps carried by the handoffs: caretaker admission without a task list and closeout after suspension (`docs/handoffs/P5_care_kiro_2026-11-20.md`); the B01 `service_role` write hardening that blocks external notification channels (`docs/handoffs/N01_codex_2026-11-20.md`); the payment gateway (P01b) is deferred.
