@@ -5,7 +5,7 @@ This is a **real product build**, not a demo. There is no "demo mode", no demo a
 
 ## Data honesty (non-negotiable)
 - Every screen talks to a typed **module API** (`src/modules/<name>/api.ts`) that has two adapters: `http` (calls the `/api/...` contracts) and `fixture` (synthetic data in `src/fixtures/**`).
-- Adapter chosen by `getAdapterMode()` in `src/lib/api/mode.ts` (env `FRONTEND_ADAPTER=http|fixture`, default `http`). Fixture is **refused when `APP_ENV=production`**. Fixture-backed pages show the shared `<FixtureNotice/>` ("Synthetic data — not live"). Never present fixture output as real.
+- Adapter chosen by `getAdapterMode()` in `src/lib/api/mode.ts` (env `FRONTEND_ADAPTER=http|fixture`, default `http`). Fixture is **allowed only for `APP_ENV` development/test/preview/staging** (or `APP_ENV` unset under `next dev`/vitest) and never when `VERCEL_ENV=production` (REQUESTS R-FE-D-42). Fixture-backed pages show the shared `<FixtureNotice/>` ("Synthetic data — not live"). Never present fixture output as real.
 - No invented providers, ratings, reviews, prices shown as real, ETAs, "verified" badges, counts or testimonials. Empty states instead.
 - Money = integer paise (format with `Intl`, INR). Times = UTC ISO from server, rendered in Asia/Kolkata. Reference IDs come from the server only.
 - Statuses: one canonical status→label/tone map per state machine (`src/modules/<name>/status.ts`). Unknown server status never maps to "active"/"approved". Booking, clinical and payment statuses are separate badges.

@@ -26,7 +26,8 @@ export function wsOrigin(project: string, server: WorkspaceServer): string {
 
 /** Server env per actor. Synthetic fixture adapter only; never APP_ENV=production. */
 export function wsEnv(server: WorkspaceServer): Record<string, string> {
-  const common = { FRONTEND_ADAPTER: "fixture", NEXT_TELEMETRY_DISABLED: "1", FIXTURE_BOOKING_SCENARIO: "accepted" };
+  // APP_ENV=test: `next start` runs with NODE_ENV=production, and fixtures are allowlisted by APP_ENV.
+  const common = { FRONTEND_ADAPTER: "fixture", APP_ENV: "test", NEXT_TELEMETRY_DISABLED: "1", FIXTURE_BOOKING_SCENARIO: "accepted" };
   switch (server) {
     case "assigned":
       return { ...common, FEATURE_CLINICAL: "true", FIXTURE_DOCTOR_SESSION: "assigned", FIXTURE_PATIENT_SESSION: "self" };
