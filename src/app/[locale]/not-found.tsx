@@ -14,7 +14,7 @@ export default function LocaleNotFound() {
       <PublicHeaderWithAccount />
       <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex-1 outline-none">
         <div className="mx-auto grid max-w-content gap-6 px-4 py-20 sm:px-6 md:py-28 lg:px-8">
-          <p aria-hidden className="font-display text-display leading-none text-border-strong tabular">404</p>
+          <p aria-hidden className="font-display text-display leading-none text-muted tabular">404</p>
           <h1 className="font-display text-3xl font-medium tracking-[-0.02em] text-ink">{t("title")}</h1>
           <p className="measure text-lg text-muted">{t("body")}</p>
           <div className="flex flex-wrap gap-3">

@@ -273,7 +273,10 @@
     "lead": "Real experiences from patients and providers, shared with their consent, and health awareness articles reviewed before publication. Articles are general information, not personal medical advice.",
     "emptyTitle": "Nothing published yet",
     "emptyBody": "There are no published stories or articles yet. We do not invent testimonials, so this page stays empty until real ones are ready.",
-    "emptyCta": "See how SureCure Visit works"
+    "emptyCta": "See how SureCure Visit works",
+    "gatedTitle": "Stories are not available yet",
+    "gatedBody": "Stories and articles will appear here once publishing is switched on. Nothing is shown until real, reviewed content is ready.",
+    "gatedBack": "Back to stories"
   },
   "howItWorks": {
     "title": "How SureCure Visit works",

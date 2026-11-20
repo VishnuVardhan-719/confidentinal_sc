@@ -12,6 +12,8 @@ const STORY_PATH = /^\/(en|te|hi)\/stories\/([^/]+)\/?$/;
  * With Cache Components a page's request-time notFound() runs after the streamed shell, so it
  * keeps HTTP 200. Unknown or unpublished story slugs are therefore answered here, before
  * rendering, by rewriting to the catch-all not-found page (prerendered with status 404).
+ * A gated content backend (http adapter, no CMS contract yet) is not "not found": those
+ * requests pass through and the page shows its "not available yet" state.
  */
 export default async function proxy(request: NextRequest) {
   const match = STORY_PATH.exec(request.nextUrl.pathname);

@@ -37,6 +37,11 @@ async function PublishedStoriesList() {
   const format = await getFormatter();
   const result = await getPublishedStories(locale);
 
+  // No CMS contract yet (http adapter): "not available yet", not the empty "no stories" state.
+  if (result.status === "gated") {
+    return <EmptyState icon="stories" title={t("gatedTitle")} description={t("gatedBody")} className="max-w-3xl" />;
+  }
+
   return (
     <>
         {result.status === "ok" && result.fixture ? <FixtureNotice /> : null}

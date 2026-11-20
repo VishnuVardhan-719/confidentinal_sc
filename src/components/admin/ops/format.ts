@@ -8,9 +8,23 @@ import { LOCALE_TAGS, type AppLocale } from "@/i18n/routing";
 const TIME_ZONE = "Asia/Kolkata";
 const DASH = "—";
 
+/**
+ * Integer paise -> exact "rupees.paise" decimal string (no floating-point division).
+ * Negative amounts keep their sign. Used for display and for prefilled form inputs.
+ */
+export function paiseToRupeesString(paise: number): string {
+  const sign = paise < 0 ? "-" : "";
+  const abs = Math.abs(paise);
+  const rest = abs % 100;
+  return `${sign}${(abs - rest) / 100}.${String(rest).padStart(2, "0")}`;
+}
+
 export function formatPaise(paise: number, locale: AppLocale): string {
   if (!Number.isSafeInteger(paise)) return DASH;
-  return new Intl.NumberFormat(LOCALE_TAGS[locale], { style: "currency", currency: "INR", minimumFractionDigits: 2 }).format(paise / 100);
+  // Intl formats the decimal string exactly (rupees and paise kept as integers until here).
+  return new Intl.NumberFormat(LOCALE_TAGS[locale], { style: "currency", currency: "INR", minimumFractionDigits: 2 }).format(
+    paiseToRupeesString(paise) as `${number}`,
+  );
 }
 
 function valid(iso: string | null | undefined): Date | null {

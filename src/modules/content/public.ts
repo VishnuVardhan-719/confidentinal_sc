@@ -11,36 +11,36 @@ import type { PublicFaqItem, PublicStory, PublicStorySummary } from "./types";
  *
  * - Returns published snapshots only; drafts and previews never leave the CMS.
  * - `fixture: true` means synthetic data: render <FixtureNotice/>.
- * - No CMS contract exists yet, so the http adapter is `gated`; that maps to
- *   `empty` here so public pages render their empty state, never invented copy.
+ * - No CMS contract exists yet, so the http adapter is `gated`. Stories report
+ *   `gated` (list and detail render a "not available yet" state, never a 404 or
+ *   invented copy); the FAQ maps `gated` to `empty`.
  * - Rich text is structured nodes; render them with React elements, never as HTML.
  */
 export type PublicContentResult<T> =
   | { status: "ok"; data: T; fixture: boolean }
   | { status: "empty"; fixture: boolean }
   | { status: "not_found" }
+  | { status: "gated" }
   | { status: "unavailable" };
 
 type Env = Record<string, string | undefined>;
 
-function toPublic<T>(result: ApiResult<T>, fixture: boolean, isEmpty: (data: T) => boolean): PublicContentResult<T> {
+function toPublic<T>(result: ApiResult<T>, fixture: boolean, isEmpty: (data: T) => boolean, gatedAs: "gated" | "empty" = "empty"): PublicContentResult<T> {
   if (result.ok) return isEmpty(result.data) ? { status: "empty", fixture } : { status: "ok", data: result.data, fixture };
-  if (result.error.code === "gated") return { status: "empty", fixture };
+  if (result.error.code === "gated") return gatedAs === "gated" ? { status: "gated" } : { status: "empty", fixture };
   if (result.error.code === "not_found") return { status: "not_found" };
   return { status: "unavailable" };
 }
 
 export async function getPublishedStories(locale: Locale, env: Env = process.env): Promise<PublicContentResult<PublicStorySummary[]>> {
   const api = getPublicContentApi({ env });
-  return toPublic(await api.listStories(locale), api.mode === "fixture", (d) => d.length === 0);
+  return toPublic(await api.listStories(locale), api.mode === "fixture", (d) => d.length === 0, "gated");
 }
 
 export async function getPublishedStory(slug: string, locale: Locale, env: Env = process.env): Promise<PublicContentResult<PublicStory>> {
   const api = getPublicContentApi({ env });
-  const result = await api.getStory(slug, locale);
-  // A missing story on a gated backend is still "not found" for a detail URL.
-  if (!result.ok && result.error.code === "gated") return { status: "not_found" };
-  return toPublic(result, api.mode === "fixture", () => false);
+  // Gated backend: the URL may become valid once publishing is on, so it is "gated", not "not_found".
+  return toPublic(await api.getStory(slug, locale), api.mode === "fixture", () => false, "gated");
 }
 
 export async function getPublishedFaq(locale: Locale, env: Env = process.env): Promise<PublicContentResult<PublicFaqItem[]>> {

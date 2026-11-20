@@ -5,6 +5,7 @@ import { getPublishedStory } from "@/components/public/content-source";
 import { ArrowLink, Container } from "@/components/public/layout";
 import { RichText } from "@/components/public/rich-text";
 import { pageMetadata } from "@/components/public/seo";
+import { StoriesUnavailable } from "@/components/public/stories-unavailable";
 import { FixtureNotice } from "@/components/shared/fixture-notice";
 import { InlineError } from "@/components/shared/inline-error";
 
@@ -27,6 +28,8 @@ export default async function StoryPage({ params }: PageProps<"/[locale]/stories
   const locale = await getLocale();
   const result = await getPublishedStory(slug, locale);
   if (result.status === "not_found" || result.status === "empty") notFound();
+  // No CMS contract yet (http adapter): "not available yet" with HTTP 200; the URL may become valid later.
+  if (result.status === "gated") return <StoriesUnavailable />;
 
   const t = await getTranslations("public.storyPage");
   if (result.status === "unavailable") {
