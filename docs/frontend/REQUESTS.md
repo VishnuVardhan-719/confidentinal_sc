@@ -410,6 +410,7 @@ Per user rule, no Playwright/browser runs from agents. `tests/e2e/doctor-workspa
 | fe2-e (also fe2-p, fe2-integration) | `src/modules/admin/access.ts` | pure lab/ambulance/caretaker/admin decisions expecting a session from requireRole | keep; feed it `requireRole(...)` output |
 | fe2-a (also fe2-p, fe2-integration) | `src/components/shared/session-seam.ts` | `getPublicAccount()` returns `null` (R-FE01-6) | `getAccountSession()` per R-FE07-01 |
 | fe2-c (also fe2-p, fe2-integration) | `src/modules/catalog/FE07-08-HANDOFF.md` | private loaders not yet bound to a request-scoped guard | `requireRole("patient")` / `authorizeRole` |
+## fe-a requests carried in by the feat/fe2-a merge
 
 ### R-FE01-13 (to lead) — PHASE3-A gaps in src/app (outside fe-a's edit scope)
 - Add `src/app/[locale]/(public)/stories/[slug]/loading.tsx` with `export { PublicPageLoading as default } from "@/components/public/page-loading";` (the only public route rendered at request time; the others are prerendered).
@@ -448,6 +449,22 @@ No QR library is approved and there is no public verification route, so the proo
 Machine-written te/hi for: `patient.records.*`, `patient.notifications.*`, `patient.dashboard.notifications.*`, `patient.dashboard.actions.records*`, `patient.shell.nav.records|notifications`, `doctor.pages.availability.*`, `doctor.common.offlineSince`, `clinical.vitals.incompleteTitle`. Unchanged te/hi for edited en copy: `doctor.common.notFound`, `clinical.gate.consultation`, `clinical.collection.recorded`, `clinical.record.notFound`, `common.gate.features.clinical` (en now "Clinical record keeping").
 ## 2026-11-19 R7-P patient account features (fe-p, branch feat/fe2-p)
 
+## fe-p requests (feat/fe2-p, R7-P to R9-P3)
+
+| ID | To | Status | Summary |
+|---|---|---|---|
+| R-FE-P-R7-1 | backend | Open | Family members contract |
+| R-FE-P-R7-NAV | fe2-d | Resolved | Patient shell links to the R7 pages |
+| R-FE-P-R7-2 | backend | Open | Saved providers contract |
+| R-FE-P-R7-3 | backend + admin | Open | Patient reviews contract, incl. edit and withdraw |
+| R-FE-P-R7-4 | backend + notifications | Open | Reminder preferences contract; opt-in wording needs product/legal |
+| R-FE-P-R8-1 | backend + admin | Open | Review moderation contract, capability and decision log |
+| R-FE-P-R9-1 | lead / fe-a | Open | public-nav hero search spec out of date (4 shared e2e failures) |
+| R-FE-P-R9-2 | fe-a | Open | Modal language menu: axe aria-hidden-focus |
+| R-FE-P-R9-3 | lead / fe-b / fe-e | Fixed on fe2-p, needs review | Admin sign-in return path |
+| R-FE-P-R9-4 | fe-e | Open | Lab/ambulance/caretaker sign-in returns to the dashboard |
+| R-FE-P-R9-5 | fe-a | Open | `a11y.spec.ts` axe can run during the hero fade-in (load-dependent color-contrast) |
+
 ### R-FE-P-R7-1 Family members contract (owner: backend)
 No endpoint in docs/API_CONTRACTS.md. The http adapter (`src/modules/family-members/http.ts`) returns `gated`. Proposed:
 - `GET /api/patient/family-members` -> `{ items: FamilyMember[] }`
@@ -459,10 +476,11 @@ No endpoint in docs/API_CONTRACTS.md. The http adapter (`src/modules/family-memb
 - Owner-only (RLS). A non-owned id returns 404, the same as an unknown one.
 - Needs product confirmation: the limit of 10 per account (`MAX_FAMILY_MEMBERS`), and guardian consent or invite flows for adult members (FRONTEND_MASTER "consent/invite or guardian flow"). The UI stores name, relation and DOB only, with no health data.
 
-### R-FE-P-R7-NAV Patient nav links (owner: fe2-d patient shell)
+### R-FE-P-R7-NAV Patient nav links (owner: fe2-d patient shell) - RESOLVED
 fe-p must not edit `PatientShell` or the dashboard nav. Please add these links:
 - `/patient/family` (icon `users`, label: new `patient.shell.nav.family` key, "Family")
 - `/patient/saved`, `/patient/reviews` and `/patient/settings/reminders`: these pages are coming in R7-P.
+- Resolved: the patient shell links Family, Saved doctors, Reviews and Reminders (checked by `tests/e2e/a11y-sweep-p.spec.ts` "dashboard and shell nav reach every R7 patient page").
 
 ## 2026-11-19 - PHASE-R6-C patient lab, caretaker and ambulance requests (fe-q, feat/fe2-c)
 `docs/API_CONTRACTS.md` has only the generic `POST /api/bookings` flow. These patient flows need contracts; until then their HTTP adapters (`src/modules/{lab-orders,care-requests,ambulance-requests}/http.ts`) validate input and return `gated`.
@@ -500,6 +518,11 @@ No endpoint exists. The http adapter (`src/modules/reviews/http.ts`) returns `ga
   - `422`: `fields: rating_required | text_too_short | text_too_long | text_contact`
 - The server must enforce completion, ownership and one review per booking. It also needs moderation before publishing (admin queue, not built), and a published rating aggregate for `doctorResultSchema.rating`.
 - Needs product confirmation: whether patients may edit or withdraw a pending review (not offered), the review window after completion (none enforced), and the contact/link filter rule.
+
+**Amended in R8-P2: edit and withdraw**
+- `PATCH /api/patient/reviews/:bookingId` body `{ rating, text, expectedVersion }`. The review returns to `pending_moderation` with `rejectionReason: null`. Errors: `409` on a version mismatch or a withdrawn review; `422` uses the same field codes as create.
+- `POST /api/patient/reviews/:bookingId/withdraw` body `{ expectedVersion }`. Sets `withdrawn`, which is final; the booking cannot be reviewed again.
+- Review DTO gains `rejectionReason (personal_info|not_about_service|offensive|spam|null)` and `version`.
 
 ### R-FE-P-R7-4 Reminder preferences contract (owner: backend + notifications)
 No endpoint exists. The http adapter (`src/modules/reminder-prefs/http.ts`) returns `gated`. Proposed:
@@ -550,6 +573,7 @@ Alternative where a form must work before hydration: make it uncontrolled (`defa
 - `PATCH /api/patient/reviews/:bookingId` body `{ rating, text, expectedVersion }`. The review returns to `pending_moderation` with `rejectionReason: null`. Errors: `409` on a version mismatch or a withdrawn review; `422` uses the same field codes as create.
 - `POST /api/patient/reviews/:bookingId/withdraw` body `{ expectedVersion }`. Sets `withdrawn`, which is final; the booking cannot be reviewed again.
 - Review DTO gains `rejectionReason (personal_info|not_about_service|offensive|spam|null)` and `version`.
+- Module summary, channels, quiet-hours rule and the opt-in wording TODOs: `docs/frontend/NOTIFICATIONS.md`.
 
 ### R-FE-P-R8-1 Review moderation contract and capability (owner: backend + admin)
 - New proposed capability `review:moderate` (added to `PROPOSED_ADMIN_CAPABILITIES`) and admin route `/admin/reviews`.
@@ -707,6 +731,20 @@ This index tidies the entries above without editing them (the file is append-onl
 - Suggested fix: `<DropdownMenu modal={false}>` in the locale switcher (the WAI-ARIA menu button pattern is non-modal). After that, the exception in the sweep can be removed. fe-p did not edit the component (fe-a scope).
 
 ### R-FE-P-R9-3 (to lead / fe-b) - sign-in return to the decision log
-- Root cause: `AdminFrame` (admin layout, fe-e) redirected signed-out visitors itself with `next=/{locale}/admin/dashboard`, so every admin page returned to the dashboard. The layout now renders no shell when signed out and leaves the redirect to the page gate; a unit test checks every admin page is gated. fe-e please review. The lab/ambulance/caretaker frames were not checked for the same pattern.
+- Root cause: `AdminFrame` (admin layout, fe-e) redirected signed-out visitors itself with `next=/{locale}/admin/dashboard`, so every admin page returned to the dashboard. The layout now renders no shell when signed out and leaves the redirect to the page gate; a unit test checks every admin page is gated. fe-e please review. The lab, ambulance and caretaker frames have the same problem: see R-FE-P-R9-4.
 - fe2-p now sends `next=/{locale}/admin/reviews/log` from the decision log: `AdminRouteGate` takes a fixed `subPath`, `adminPagePath` accepts plain lowercase segments only, and `loginRedirectPath` still reduces `next` to an internal locale-prefixed path with no query (tests/unit/modules-operations/admin-return-path.test.ts).
 - fe2-p has no login page. The consumer that reads `next` after sign-in is fe-b's `auth-page.tsx` + `normalizeInternalPath` on feat/fe2-integration, which already rejects off-site and `/api` targets. The end-to-end landing (sign in, then arrive on the log) can only be checked after integration.
+
+### R-FE-P-R9-4 (to fe-e) - lab, ambulance and caretaker sign-in returns to the dashboard
+- `LabFrame`, `AmbulanceFrame` and `CaretakerFrame` (`src/components/{lab,ambulance,caretaker}/*-frame.tsx`, fe-e) redirect signed-out visitors from the layout with the dashboard path, before the page gate runs. Measured on the fe2-p guest server (R9-P3):
+  - `/en/lab/orders` -> `/en/login?next=%2Fen%2Flab%2Fdashboard`
+  - `/te/ambulance/trips` -> `/te/login?next=%2Fte%2Fambulance%2Fdashboard`
+  - `/hi/caretaker/shifts` and `/en/caretaker/assignments/<id>` -> `next=/{locale}/caretaker/dashboard`
+  - For comparison, `/en/doctor/visits` -> `next=%2Fen%2Fdoctor%2Fvisits` (the doctor layout already leaves the redirect to the page) and `/en/admin/reviews/log` -> `next=%2Fen%2Fadmin%2Freviews%2Flog` (fixed in R9-P2).
+- Suggested fix (same as `AdminFrame` in f977bc0): when `access.kind === "unauthenticated"`, return `<>{children}</>` instead of `redirect(access.loginPath)`, and let `*RouteGate` redirect. That is safe because every lab, ambulance and caretaker page renders inside its `*RouteGate` with the route of its URL, and the index pages redirect to the dashboard. `tests/unit/modules-operations/provider-route-gates.test.ts` checks this and fails if a page is added without a gate.
+- Secondary: the gates build `next` from the route root, so detail pages (`/lab/orders/[orderId]`, `/ambulance/trips/[tripId]`, `/caretaker/assignments/[assignmentId]`) return to their list. Decide whether that is intended (it keeps ids out of `next`); the patient and doctor areas keep the detail path.
+- fe-p did not edit these files (fe-e scope).
+
+### R-FE-P-R9-5 (to fe-a) - shared a11y spec audits the landing hero mid-animation under load
+- In the R9-P3 full run (4 workers, machine busy with other agents' servers), `tests/e2e/a11y.spec.ts` "axe en @360" failed once with `/: color-contrast: .scv-rise-delay`. That is the hero lead paragraph (`src/app/[locale]/(public)/page.tsx:92`) while its fade-in is still running, so axe measures a partly transparent colour. It passed 3/3 when run alone.
+- Suggested fix in the spec: `page.emulateMedia({ reducedMotion: "reduce" })` before auditing (`.scv-rise` only animates under `prefers-reduced-motion: no-preference`, see `globals.css`), or wait for `document.getAnimations()` to finish before `AxeBuilder.analyze()`. fe-p did not edit the spec (fe-a scope).
