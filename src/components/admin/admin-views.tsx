@@ -1,6 +1,6 @@
 import { useLocale, useTranslations } from "next-intl";
 import { CursorPager } from "@/components/admin/ops/cursor-pager";
-import { formatDateTime, formatPaise } from "@/components/admin/ops/format";
+import { formatDateTime, formatPaiseOrDash } from "@/components/admin/ops/format";
 import { MetricTile } from "@/components/admin/ops/metric-tile";
 import { OpsAction } from "@/components/admin/ops/ops-action";
 import { OpsStatus, useKeyTranslator } from "@/components/admin/ops/ops-status";
@@ -193,7 +193,7 @@ export function PaymentsView({ result }: { result: LoaderResult<PaymentsVM> }) {
   const t = useTranslations("admin.payments");
   const tk = useKeyTranslator();
   const locale = useAppLocale();
-  const money = (p: number) => <span className="tabular">{formatPaise(p, locale)}</span>;
+  const money = (p: number) => <span className="tabular">{formatPaiseOrDash(p)}</span>;
   return (
     <div className="grid gap-8">
       <PageHeader title={t("title")} description={t("description")} />

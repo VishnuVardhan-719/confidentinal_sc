@@ -1,3 +1,4 @@
+import { paiseToDecimalString } from "@/lib/money";
 import type { AnswerState } from "./patient";
 
 /**
@@ -17,12 +18,11 @@ export function rupeesToPaise(input: string): number | null {
   return Number.isSafeInteger(paise) ? paise : null;
 }
 
-/** Paise -> editable rupee text ("800", "800.50"). */
+/** Paise -> editable rupee text ("800", "800.50"); "" if not valid paise. Uses the canonical money lib. */
 export function paiseToRupeesInput(paise: number): string {
-  if (!Number.isSafeInteger(paise) || paise < 0) return "";
-  const rupees = Math.floor(paise / 100);
-  const rest = paise % 100;
-  return rest === 0 ? String(rupees) : `${rupees}.${String(rest).padStart(2, "0")}`;
+  const decimal = paiseToDecimalString(paise);
+  if (decimal === null) return "";
+  return decimal.endsWith(".00") ? decimal.slice(0, -3) : decimal;
 }
 
 /** Whole number from a text input, or null. */
