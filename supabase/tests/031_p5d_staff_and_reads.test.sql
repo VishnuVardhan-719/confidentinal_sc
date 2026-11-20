@@ -174,18 +174,23 @@ insert into public.consent_events(id,actor_profile_id,patient_id,purpose,policy_
 insert into public.patient_access(patient_id,grantee_profile_id,scope,consent_event_id,granted_by)
  select 'd2000000-0000-4000-8000-000000000001','b1000000-0000-4000-8000-000000000002',s,'d2100000-0000-4000-8000-000000000001','b1000000-0000-4000-8000-000000000002'
  from unnest(array['booking:read','booking:create','profile:read','profile:write']) s;
+-- B01 admits only self access to create a booking, so the requesting doctor books as its own patient.
+insert into public.patients(id,self_profile_id) values ('d2000000-0000-4000-8000-000000000002','c1000000-0000-4000-8000-000000000002');
+insert into public.consent_events(id,actor_profile_id,patient_id,purpose,policy_version,decision) values
+ ('d2100000-0000-4000-8000-000000000002','c1000000-0000-4000-8000-000000000002','d2000000-0000-4000-8000-000000000002','self_patient_access','synthetic-v1','granted');
 insert into public.patient_access(patient_id,grantee_profile_id,scope,consent_event_id,granted_by)
- select 'b2000000-0000-4000-8000-000000000001','c1000000-0000-4000-8000-000000000002',s,'b2100000-0000-4000-8000-000000000001','b1000000-0000-4000-8000-000000000001'
- from unnest(array['booking:read','booking:create']) s;
+ select 'd2000000-0000-4000-8000-000000000002','c1000000-0000-4000-8000-000000000002',s,'d2100000-0000-4000-8000-000000000002','c1000000-0000-4000-8000-000000000002'
+ from unnest(array['booking:read','booking:create','profile:read','profile:write']) s;
 insert into public.patient_addresses(id,patient_id,line1,locality,pin_code,contact_name,phone) values
- ('d5000000-0000-4000-8000-000000000001','d2000000-0000-4000-8000-000000000001','Synthetic doctor home','Synthetic','599991','Synthetic doctor','+919999999998');
+ ('d5000000-0000-4000-8000-000000000001','d2000000-0000-4000-8000-000000000001','Synthetic doctor home','Synthetic','599991','Synthetic doctor','+919999999998'),
+ ('d5000000-0000-4000-8000-000000000002','d2000000-0000-4000-8000-000000000002','Synthetic requester home','Synthetic','599991','Synthetic requester','+919999999997');
 set local role authenticated;
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000002');
 select public.create_booking_request('d2000000-0000-4000-8000-000000000001','b4100000-0000-4000-8000-000000000001','d5000000-0000-4000-8000-000000000001',
  date_trunc('day',now())+interval '3 days 4 hours',gen_random_uuid()) as selfb \gset
 select pg_temp.expect_state(format('select public.accept_booking(%L,2,array[''b6000000-0000-4000-8000-000000000001''::uuid])',:'selfb'),'42501','doctor cannot accept a visit to themself');
 select pg_temp.as_user('c1000000-0000-4000-8000-000000000002');
-select public.create_booking_request('b2000000-0000-4000-8000-000000000001','c4100000-0000-4000-8000-000000000001','b5000000-0000-4000-8000-000000000001',
+select public.create_booking_request('d2000000-0000-4000-8000-000000000002','c4100000-0000-4000-8000-000000000001','d5000000-0000-4000-8000-000000000002',
  pg_temp.p5_at(6),gen_random_uuid()) as reqb \gset
 select pg_temp.as_user('c1000000-0000-4000-8000-000000000001');
 select pg_temp.expect_state(format('select public.accept_booking(%L,2,array[''c6000000-0000-4000-8000-000000000001''::uuid])',:'reqb'),'42501','scheduler cannot assign the requesting doctor');
