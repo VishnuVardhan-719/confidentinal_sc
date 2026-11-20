@@ -4,7 +4,7 @@ import { fail, ok } from "@/lib/api/result";
 import type { ReviewModerationApi, ReviewsApi } from "./api";
 import { moderationDecisionSchema, validateReviewInput, versionSchema } from "./schemas";
 import { canChangeReview, canModerate } from "./status";
-import type { ModerationFilter, ModerationItem, Review, ReviewableVisit } from "./types";
+import type { ModerationFilter, ModerationItem, ModerationLogEntry, Review, ReviewableVisit } from "./types";
 
 type Store = { visits: Map<string, ReviewableVisit>; keys: Map<string, string> };
 type World = Map<string, Store>;
@@ -64,6 +64,23 @@ function world(): World {
   const g = globalThis as typeof globalThis & { [WORLD_KEY]?: World };
   g[WORLD_KEY] ??= new Map();
   return g[WORLD_KEY];
+}
+
+/** Stored log row: the decider id stays inside the adapter; reads expose only `decidedBySelf`. */
+type LogRow = Omit<ModerationLogEntry, "decidedBySelf"> & { decidedBy: string };
+const LOG_KEY = Symbol.for("scv.fixture.reviews.log");
+/** A synthetic moderator other than the fixture session, credited with the seeded past decisions. */
+export const SEEDED_MODERATOR_ID = "00000000-0000-4000-8000-0000000000d2";
+
+function decisionLog(now: Date): LogRow[] {
+  const g = globalThis as typeof globalThis & { [LOG_KEY]?: LogRow[] };
+  // Past decisions matching the seeded published/rejected reviews (SYN-BKG-0204/0206/0207).
+  g[LOG_KEY] ??= [
+    { entryId: "00000000-0000-4000-8000-0000000004a1", bookingReference: "SYN-BKG-0204", category: "doctor", providerDisplayName: "Synthetic doctor 2", outcome: "published", reason: null, decidedAt: daysAgo(now, 37), decidedBy: SEEDED_MODERATOR_ID },
+    { entryId: "00000000-0000-4000-8000-0000000004a2", bookingReference: "SYN-BKG-0206", category: "lab", providerDisplayName: "Synthetic lab provider", outcome: "rejected", reason: "not_about_service", decidedAt: daysAgo(now, 18), decidedBy: SEEDED_MODERATOR_ID },
+    { entryId: "00000000-0000-4000-8000-0000000004a3", bookingReference: "SYN-BKG-0207", category: "doctor", providerDisplayName: "Synthetic doctor 5", outcome: "rejected", reason: "not_about_service", decidedAt: daysAgo(now, 20), decidedBy: SEEDED_MODERATOR_ID },
+  ];
+  return g[LOG_KEY];
 }
 
 function storeFor(ownerId: string, scenario: "empty" | "seeded", now: Date): Store {
@@ -152,7 +169,7 @@ export function createReviewsFixtureApi(options: ReviewsFixtureOptions): Reviews
  * Synthetic moderation adapter over every synthetic patient's reviews. The queue owner is seeded so
  * there is always work to moderate. Items carry the booking reference and provider only.
  */
-export function createReviewModerationFixtureApi(options: { env?: FixtureEnvironment; moderator: boolean; now?: () => Date }): ReviewModerationApi {
+export function createReviewModerationFixtureApi(options: { env?: FixtureEnvironment; moderator: boolean; actorId?: string | null; now?: () => Date }): ReviewModerationApi {
   const guard = fixtureGuard(options.env);
   const now = options.now ?? (() => new Date());
   const all = () => {
@@ -184,6 +201,9 @@ export function createReviewModerationFixtureApi(options: { env?: FixtureEnviron
     async decide(reviewId, decision, expectedVersion) {
       guard();
       if (!options.moderator) return fail("forbidden");
+      // A decision without a known decider is refused: every log row must be attributable.
+      const actorId = options.actorId && idSchema.safeParse(options.actorId).success ? options.actorId.toLowerCase() : null;
+      if (!actorId) return fail("forbidden");
       if (!idSchema.safeParse(reviewId).success || !versionSchema.safeParse(expectedVersion).success) return fail("validation");
       const parsed = moderationDecisionSchema.safeParse(decision);
       if (!parsed.success) return fail("validation");
@@ -196,7 +216,25 @@ export function createReviewModerationFixtureApi(options: { env?: FixtureEnviron
         rejectionReason: parsed.data.decision === "reject" ? parsed.data.reason : null,
         version: v.review.version + 1,
       };
+      decisionLog(now()).push({
+        entryId: globalThis.crypto.randomUUID(),
+        bookingReference: v.bookingReference,
+        category: v.category,
+        providerDisplayName: v.providerDisplayName,
+        outcome: v.review.status === "published" ? "published" : "rejected",
+        reason: v.review.rejectionReason,
+        decidedAt: now().toISOString(),
+        decidedBy: actorId,
+      });
       return ok(item(v));
+    },
+    async listDecisions() {
+      guard();
+      if (!options.moderator) return fail("forbidden");
+      const self = options.actorId?.toLowerCase() ?? null;
+      const rows = decisionLog(now()).map(({ decidedBy, ...rest }) => ({ ...rest, decidedBySelf: self !== null && decidedBy === self }));
+      rows.sort((a, b) => b.decidedAt.localeCompare(a.decidedAt));
+      return ok(rows);
     },
   };
 }

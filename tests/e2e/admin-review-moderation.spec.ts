@@ -54,6 +54,11 @@ test.describe("review moderation (synthetic moderator)", () => {
       await expect(main.getByText("SYN-BKG-0301")).toHaveCount(0);
       await page.goto("/en/admin/reviews?status=published");
       await expect(main.getByRole("listitem").filter({ hasText: "SYN-BKG-0301" })).toContainText("Published");
+      await page.goto("/en/admin/reviews/log");
+      const entry = main.getByRole("listitem").filter({ hasText: "SYN-BKG-0301" });
+      await expect(entry).toHaveCount(1);
+      await expect(entry).toContainText("Published");
+      await expect(entry).toContainText("Decided by you");
     } else {
       await main.getByRole("button", { name: "Do not publish the review for booking SYN-BKG-0302", exact: true }).click();
       const dialog = page.getByRole("alertdialog", { name: "Do not publish this review?" }).or(page.getByRole("dialog", { name: "Do not publish this review?" }));
@@ -67,16 +72,51 @@ test.describe("review moderation (synthetic moderator)", () => {
       const row = main.getByRole("listitem").filter({ hasText: "SYN-BKG-0302" });
       await expect(row).toContainText("Not published");
       await expect(row).toContainText("Reason: Advertising or spam");
+      await page.goto("/en/admin/reviews/log");
+      const entry = main.getByRole("listitem").filter({ hasText: "SYN-BKG-0302" });
+      await expect(entry).toHaveCount(1);
+      await expect(entry).toContainText("Not published");
+      await expect(entry).toContainText("Reason: Advertising or spam");
+      await expect(entry).toContainText("Decided by you");
     }
+  });
+
+  test("decision log is read-only, newest first, and carries no patient identity", async ({ page }) => {
+    await page.goto("/en/admin/reviews");
+    const main = page.getByRole("main");
+    await main.getByRole("link", { name: "Decision log" }).click();
+    await expect(page).toHaveURL(/\/en\/admin\/reviews\/log$/);
+    // Fresh load: after client navigation the router may keep the queue page mounted but hidden,
+    // and its review text would leak into main's textContent.
+    await page.reload();
+    await expect(main.getByRole("heading", { level: 1, name: "Moderation decision log" })).toBeVisible();
+    await expect(main.getByRole("heading", { level: 2, name: /\d+ decisions?$/ })).toBeVisible();
+    const seeded = main.getByRole("listitem").filter({ hasText: "SYN-BKG-0206" });
+    await expect(seeded).toContainText("Not published");
+    await expect(seeded).toContainText("Reason: Not about the service");
+    await expect(seeded).toContainText("Decided by another moderator");
+    // No undo or any other control: the only interactive element in main is the way back.
+    await expect(main.getByRole("button")).toHaveCount(0);
+    await expect(main.locator("form, input, select, textarea")).toHaveCount(0);
+    await expect(main.getByRole("link")).toHaveCount(1);
+    await expect(main.getByRole("link", { name: "Back to review moderation" })).toHaveAttribute("href", "/en/admin/reviews");
+    // Newest first: decision times are in descending order.
+    const times = await main.locator("ol > li time").evaluateAll((els) => els.map((e) => e.getAttribute("datetime") ?? ""));
+    expect(times.length).toBeGreaterThanOrEqual(3);
+    expect(times).toEqual([...times].sort().reverse());
+    await expect(main).not.toContainText(/patient(Id)?[:=]|00000000-0000-4000-8000-0000000000(a1|c1|d2|ad)|Synthetic (queue )?review/i);
+    await expectAxeClean(page);
   });
 
   test("te and hi render the queue without raw keys and pass axe", async ({ page }) => {
     for (const locale of ["te", "hi"]) {
-      await page.goto(`/${locale}/admin/reviews`);
-      await expect(page.locator("html")).toHaveAttribute("lang", locale);
-      await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toBeVisible();
-      await expect(page.getByRole("main")).not.toContainText(/admin\.reviews\.|patientAccount\./);
-      await expectAxeClean(page);
+      for (const path of ["/admin/reviews", "/admin/reviews/log"]) {
+        await page.goto(`/${locale}${path}`);
+        await expect(page.locator("html")).toHaveAttribute("lang", locale);
+        await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toBeVisible();
+        await expect(page.getByRole("main")).not.toContainText(/admin\.reviews\.|patientAccount\./);
+        await expectAxeClean(page);
+      }
     }
   });
 });
@@ -86,7 +126,9 @@ test.describe("review moderation (no admin session)", () => {
   test.skip(!MODE, "needs a fixture server");
 
   test("redirects to login", async ({ page }) => {
-    await page.goto("/en/admin/reviews");
-    await expect(page).toHaveURL(/\/en\/login\?/);
+    for (const path of ["/en/admin/reviews", "/en/admin/reviews/log"]) {
+      await page.goto(path);
+      await expect(page).toHaveURL(/\/en\/login\?/);
+    }
   });
 });

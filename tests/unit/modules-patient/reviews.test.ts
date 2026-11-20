@@ -7,6 +7,7 @@ import { parseModerationFilter, validateReviewInput } from "@/modules/reviews/sc
 import { describeReviewStatus, reviewEligibility } from "@/modules/reviews/status";
 
 const ENV = { FRONTEND_ADAPTER: "fixture", APP_ENV: "test" };
+const MODERATOR = "00000000-0000-4000-8000-0000000000ad";
 const good = { rating: 4, text: "  Arrived on time and explained everything clearly.  " };
 let n = 0;
 const owner = () => `reviews-owner-${Date.now()}-${n++}`;
@@ -142,7 +143,7 @@ describe("review moderation fixture", () => {
   });
 
   it("publishes or rejects with a reason once; stale or repeated decisions conflict", async () => {
-    const api = createReviewModerationFixtureApi({ env: ENV, moderator: true });
+    const api = createReviewModerationFixtureApi({ env: ENV, moderator: true, actorId: MODERATOR });
     const q = await api.listQueue("pending_moderation");
     if (!q.ok) throw new Error("queue");
     const [a, b] = q.data.filter((i) => i.bookingReference.startsWith("SYN-BKG-030"));
@@ -163,6 +164,7 @@ describe("review moderation fixture", () => {
     const http = createReviewModerationHttpApi();
     expect(await http.listQueue("pending_moderation")).toEqual({ ok: false, error: { code: "gated" } });
     expect(await http.decide("x", {}, 1)).toEqual({ ok: false, error: { code: "gated" } });
+    expect(await http.listDecisions()).toEqual({ ok: false, error: { code: "gated" } });
   });
 
   it("in the integrated fixture world only the synthetic admin lead holds review:moderate (real admin sign-in, no env switch)", () => {
@@ -171,5 +173,59 @@ describe("review moderation fixture", () => {
       expect(can(p, "review:moderate")).toBe(false);
     }
     expect(can(adminPrincipals.noMfa, "review:moderate")).toBe(false);
+  });
+});
+
+describe("review moderation decision log", () => {
+  const LOG_KEYS = ["bookingReference", "category", "decidedAt", "decidedBySelf", "entryId", "outcome", "providerDisplayName", "reason"];
+
+  it("refuses non-moderators", async () => {
+    expect(await createReviewModerationFixtureApi({ env: ENV, moderator: false, actorId: MODERATOR }).listDecisions()).toMatchObject({ ok: false, error: { code: "forbidden" } });
+  });
+
+  it("is seeded with past decisions, newest first, with no patient identity, review text or moderator id", async () => {
+    const log = await createReviewModerationFixtureApi({ env: ENV, moderator: true, actorId: MODERATOR }).listDecisions();
+    if (!log.ok) throw new Error("log");
+    expect(log.data.map((e) => e.bookingReference)).toEqual(expect.arrayContaining(["SYN-BKG-0204", "SYN-BKG-0206", "SYN-BKG-0207"]));
+    expect(log.data.map((e) => e.decidedAt)).toEqual(log.data.map((e) => e.decidedAt).sort().reverse());
+    for (const e of log.data) {
+      expect(Object.keys(e).sort()).toEqual(LOG_KEYS);
+      expect(JSON.stringify(e)).not.toMatch(/0000000000a1|0000000000c1|0000000000d2|0000000000ad|Synthetic (queue )?review/);
+    }
+    expect(log.data.find((e) => e.bookingReference === "SYN-BKG-0204")).toMatchObject({ outcome: "published", reason: null, decidedBySelf: false });
+    expect(log.data.find((e) => e.bookingReference === "SYN-BKG-0206")).toMatchObject({ outcome: "rejected", reason: "not_about_service" });
+  });
+
+  it("appends each decision once, attributed to the deciding moderator; refused decisions are not logged", async () => {
+    const api = createReviewModerationFixtureApi({ env: ENV, moderator: true, actorId: MODERATOR, now: () => new Date("2030-01-01T00:00:00.000Z") });
+    const other = createReviewModerationFixtureApi({ env: ENV, moderator: true, actorId: "00000000-0000-4000-8000-0000000000ae" });
+    const q = await api.listQueue("pending_moderation");
+    if (!q.ok) throw new Error("queue");
+    const target = q.data.find((i) => i.bookingReference.startsWith("SYN-BKG-030"));
+    if (!target) throw new Error("one synthetic queue review should still be pending");
+    const before = await api.listDecisions();
+    if (!before.ok) throw new Error("log");
+
+    // No decider, stale version, missing reason: refused and nothing logged.
+    expect(await createReviewModerationFixtureApi({ env: ENV, moderator: true }).decide(target.reviewId, { decision: "publish" }, target.version)).toMatchObject({ ok: false, error: { code: "forbidden" } });
+    expect(await api.decide(target.reviewId, { decision: "publish" }, target.version + 9)).toMatchObject({ ok: false, error: { code: "conflict" } });
+    expect(await api.decide(target.reviewId, { decision: "reject" }, target.version)).toMatchObject({ ok: false, error: { code: "validation" } });
+    const unchanged = await api.listDecisions();
+    expect(unchanged.ok && unchanged.data.length).toBe(before.data.length);
+
+    expect(await api.decide(target.reviewId, { decision: "reject", reason: "offensive" }, target.version)).toMatchObject({ ok: true });
+    expect(await api.decide(target.reviewId, { decision: "publish" }, target.version + 1)).toMatchObject({ ok: false, error: { code: "conflict" } });
+
+    const mine = await api.listDecisions();
+    const theirs = await other.listDecisions();
+    if (!mine.ok || !theirs.ok) throw new Error("log");
+    expect(mine.data).toHaveLength(before.data.length + 1);
+    expect(mine.data[0]).toMatchObject({ bookingReference: target.bookingReference, outcome: "rejected", reason: "offensive", decidedBySelf: true, decidedAt: "2030-01-01T00:00:00.000Z" });
+    expect(theirs.data.find((e) => e.entryId === mine.data[0].entryId)?.decidedBySelf).toBe(false);
+
+    // Reads are copies: changing a returned row cannot rewrite the log.
+    mine.data[0].outcome = "published";
+    const again = await api.listDecisions();
+    expect(again.ok && again.data[0].outcome).toBe("rejected");
   });
 });

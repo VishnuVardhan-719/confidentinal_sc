@@ -478,6 +478,17 @@
       "published": "No published reviews yet.",
       "rejected": "No reviews have been turned down."
     },
-    "gated": "Review moderation is not connected yet. Nothing here is saved."
+    "gated": "Review moderation is not connected yet. Nothing here is saved.",
+    "log": {
+      "link": "Decision log",
+      "title": "Moderation decision log",
+      "description": "Every publish and do-not-publish decision, newest first. This log is read-only: decisions cannot be undone here. A patient whose review was not published can edit it and send it again.",
+      "back": "Back to review moderation",
+      "count": "{count, plural, =0 {No decisions recorded} one {# decision} other {# decisions}}",
+      "empty": "No moderation decisions have been recorded yet.",
+      "bySelf": "Decided by you",
+      "byOther": "Decided by another moderator",
+      "gated": "The decision log is not connected yet. Nothing here is saved."
+    }
   }
 }
