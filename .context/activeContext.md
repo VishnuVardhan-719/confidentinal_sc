@@ -171,3 +171,7 @@ Open: sitemap.xml (fe-a) does not list /lab-tests yet; te/hi labDirectory string
 - Stopped own server 3365 (pid 27192, cmd "node node_modules/next/dist/bin/next start -p 3365", port listener verified). No servers of mine running now.
 - Reviewed fe2-d b8e6215...f36ff67: D1 MEDIUM doctor-reviews lacks `withdrawn` -> page fails; D2 MEDIUM pending/rejected cards with exact date (re-identification); D3 LOW verify/check absolute redirect from Host; D4 LOW a11y disabled-until-hydrated with no status. REQUESTS R-FE-Q-R9C5-1.
 - tests/unit/peer-guards.test.ts (4; 3 skip locally until files integrate). Proven vs export of fe2-d + fe2-p reviews: 4/4 pass; broken copies 3 fail. tsc 0, lint 0, vitest 67 files 1002 passed + 3 skipped.
+
+## TASK REPORT: R9-C6 (fe-q, feat/fe2-c)
+- Re-reviewed heads fe2-d 7c0065d, fe2-p 8dc301a, fe2-e 87bfb6b (read-only, .context/rev-audit.cjs). 0 hard-coded strings, 0 storage/console, no personal query keys, noindex gaps only on redirect-only pages; fe2-p carries old lab-views toFixed. New: R6-1 LOW signup RadioGroup controlled pre-hydration (fe2-e auth-flow.tsx:62,128); R6-2 LOW no area-layout noindex default. fe2-d 7c0065d closes the /lab-tests sitemap item.
+- tests/unit/site-guards.test.ts (9): repo-wide strings, storage/console, personal query keys, money toFixed, private noindex, robots segments. Proven: 9/9 on fe2-c and the three head exports; broken copy 6 fail. tsc 0, lint 0, vitest 68 files 1011 passed + 3 skipped. No servers started.

@@ -158,3 +158,39 @@ Static guards added in `tests/unit/peer-guards.test.ts`. Each block skips until 
 - **D3 (headers):** every `/verify/**/route.ts` that redirects sets `no-referrer` and `no-store`.
 - **Proof:** I ran the guards with `GUARD_SRC` pointing at an export of `feat/fe2-d` src, with fe2-p's `src/modules/reviews` laid over it. Result: 4 of 4 passed. With `DOCTOR_OMITS` empty, a non-strict doctor schema and the `no-referrer` header removed (each change only in the temporary export), 3 failed as intended. The export was deleted afterwards.
 - **Not guarded statically:** D2's layout half (cards for unpublished rows) and D4 need a UI decision first.
+## R9-C6 (2026-11-20): re-review of the newest heads
+
+Heads: `feat/fe2-d` `7c0065d`, `feat/fe2-p` `8dc301a` (unchanged since R9-C4), `feat/fe2-e` `87bfb6b`. Read-only (`git archive`/`git show`; no worktree edited). Each full head was scanned with `.context/rev-audit.cjs`, plus a manual read of the new commits (`14f6292`, `7c0065d`, `87bfb6b`).
+
+| Rule | fe2-d `7c0065d` | fe2-p `8dc301a` | fe2-e `87bfb6b` |
+|---|---|---|---|
+| Hard-coded English in `.tsx` (JSX text, text-only lines, literal `aria-label`/`title`/`placeholder`/`alt`/`label`) | 0 | 0 | 0 |
+| `toFixed`/`parseFloat` on money | 0 | 1: `src/components/lab/lab-views.tsx:173`, an old copy brought in by an earlier fe2-e merge; fixed on fe2-e `0500117` (finding 6) | 0 |
+| Browser storage, cookies, `console.*` | 0 | 0 | 0 |
+| Personal data in query keys | none (keys: `code`, `error`, `next`, `reason`, `role`, `status`) | none (adds `category`, `city`, `done`, `kind`, `locale`, `pin`, `providerId`, `q`, `queue`, `serviceId`, `sort`) | none (adds `provider`, `step`) |
+| Private pages without noindex | 1 of 21, redirect-only | 5 of 76, all redirect-only | 4 of 51, all redirect-only |
+
+Findings:
+
+| # | Severity | Where | Finding | Fix |
+|---|---|---|---|---|
+| R6-1 | LOW | fe2-e `src/components/auth/auth-flow.tsx:62,128` (`87bfb6b`) | The signup role is now a controlled `RadioGroup` (`value={role \|\| values.role \|\| ""}`). A role picked before hydration is replaced by the state value (`initialRole` or empty) once React hydrates. This is the same input-loss pattern fe-d fixed with `useHydrated` (R-FE-D-40), on a public page. The server still validates the role (`signupRoleSchema`, `src/modules/auth/roles.ts:9-11`), and admin cannot be chosen. | Disable the radios until hydrated (`useHydrated`), or use the shared-control patch from R-FE-D-40. |
+| R6-2 | LOW | Every private area layout on all three heads (`src/app/[locale]/{patient,doctor,lab,ambulance,caretaker,admin}/layout.tsx`) | noindex is set page by page (`privateMetadata(...)` or `robots: { index: false }`). Every page with content has it today, but no area layout sets it by default, so a new page that forgets it would be indexable. The only backstop is `robots.txt`, which disallows private paths in production only. Indexing also needs a crawler to get past auth, so the impact is low. | Add `robots: { index: false, follow: false }` to each private area layout's metadata. Pages may still add their own. |
+
+Checked, no finding:
+- The five role-root pages without noindex (`/{admin,ambulance,caretaker,doctor,lab}` on fe2-p, four on fe2-e, `/doctor` on fe2-d) only call `redirect()` and render nothing.
+- `?role=` (`src/components/public/routes.ts:41`) is a signup preselect, validated server-side against `SIGNUP_ROLES`, which excludes admin. `?provider=` (`src/modules/onboarding/flows.ts:153,165,213`) is an opaque provider UUID. `?q=` is the known free-text search (finding 5). `?code=` is the proof code (finding 7).
+- fe2-e `87bfb6b` adds Sign out to the ops shells and denied pages, with labels from `auth.session.signOut`.
+- fe2-d `14f6292` (consultation editor a11y at 360/390) adds no strings or URL params.
+- **Correction to R9-C5:** fe2-d `7c0065d` now lists `/lab-tests` in the sitemap (`src/components/public/routes.ts`, `src/components/public/sitemap-entries.ts`, with `tests/unit/sitemap.test.ts`), so that open item is closed on fe2-d.
+
+Guards added in `tests/unit/site-guards.test.ts` (9 tests). These apply to every agent's files; earlier guards covered fe-c's files only (`invariants-c.test.ts`) or only paise-named values (`adversarial-guards.test.ts`):
+- No hard-coded English in any `.tsx` under `src`.
+- No `indexedDB`, `document.cookie` or `console.*` in `src`.
+- No personal-data query key (name, phone, email, DOB, age, address, coordinates, notes, OTP, token, Aadhaar and similar) in any template URL, `searchParams.set` or `URLSearchParams` object.
+- No `toFixed`/`parseFloat` on a line about price, amount, fee, rupee, paise or total. `lab-views.tsx` is exempt until fe2-e's fix merges.
+- Every private page is noindex itself or through a layout, unless it only redirects.
+- `robots.txt` lists every private area that exists under `src/app/[locale]`.
+- Each detector has a self-test.
+
+Proof: all 9 pass on `feat/fe2-c` and on exports of all three heads, with `GUARD_SRC` pointed at each export. On a broken copy of the fe2-e export, 6 failed as intended. The breakages were: a content page with no noindex and English text, a `?phone=` URL, `toFixed` on paise, `console.log`, and `caretaker` removed from `PRIVATE_SEGMENTS`. The exports were deleted afterwards.
