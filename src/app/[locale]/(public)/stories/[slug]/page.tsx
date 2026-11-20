@@ -18,6 +18,8 @@ export default async function StoryPage({ params }: PageProps<"/[locale]/stories
   const lookup = await getPublishedStory(locale, slug);
   if (lookup.kind === "not_found") notFound();
   if (lookup.kind === "gated") return <StoriesUnavailable />;
+  // A failed backend read is not a missing story: let (public)/error.tsx show the retry state (HTTP 500).
+  if (lookup.kind === "unavailable") throw new Error("Published story could not be loaded");
   const story = lookup.story;
   const format = await getFormatter();
 

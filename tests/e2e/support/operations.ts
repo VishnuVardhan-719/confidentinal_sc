@@ -169,15 +169,25 @@ export async function expectAxeClean(page: Page): Promise<void> {
   expect(results.violations).toEqual([]);
 }
 
-/** Every interactive target on the page is at least 44x44 CSS px. */
+/**
+ * Every interactive target on the page is at least 44x44 CSS px.
+ *
+ * Measured on settled layout: running CSS animations (for example a toast sliding in after an
+ * action) are awaited first. Mid-animation, a transformed ancestor makes getBoundingClientRect
+ * return float noise such as 43.99994 for a 44 px control, which is what made the desktop caretaker
+ * check flaky under load (R9-E7). The 0.01 px tolerance only absorbs that rounding; a real 43 px
+ * target still fails.
+ */
 export async function expectTouchTargets(page: Page): Promise<void> {
+  await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.playState === "running" && Number.isFinite(a.effect?.getComputedTiming().endTime ?? Infinity)).map((a) => a.finished.catch(() => undefined))));
   const small = await page.$$eval("a[href], button, input, select, textarea, [role=button]", (els) =>
     els
       .filter((el) => {
         const r = el.getBoundingClientRect();
-        return r.width > 0 && r.height > 0 && (r.width < 44 || r.height < 44) && !(el as HTMLElement).closest("[data-inline-link]");
+        const MIN = 44 - 0.01;
+        return r.width > 0 && r.height > 0 && (r.width < MIN || r.height < MIN) && !(el as HTMLElement).closest("[data-inline-link]");
       })
-      .map((el) => el.outerHTML.slice(0, 80)),
+      .map((el) => `${el.getBoundingClientRect().width.toFixed(2)}x${el.getBoundingClientRect().height.toFixed(2)} ${el.outerHTML.slice(0, 100)}`),
   );
   expect(small).toEqual([]);
 }

@@ -11,7 +11,7 @@ afterEach(() => {
 describe("stories while the content backend is gated (http adapter, no CMS contract)", () => {
   it("the list reports gated with no stories and no fixture notice", async () => {
     vi.stubEnv("FRONTEND_ADAPTER", "http");
-    expect(await listPublishedStories("en")).toEqual({ stories: [], fixture: false, gated: true });
+    expect(await listPublishedStories("en")).toEqual({ stories: [], fixture: false, gated: true, unavailable: false });
   });
 
   it("a story URL is gated (a 'not available yet' page), not a 404", async () => {

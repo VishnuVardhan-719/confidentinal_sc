@@ -7,6 +7,9 @@ import { publicPageMetadata } from "@/components/public/metadata";
 import { listPublishedStories } from "@/components/public/stories-source";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FixtureNotice } from "@/components/shared/fixture-notice";
+import { InlineError } from "@/components/shared/inline-error";
+import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
+import { RetryAction } from "@/components/shared/retry-action";
 import { Link } from "@/i18n/navigation";
 
 export function generateMetadata() {
@@ -20,7 +23,7 @@ export default async function StoriesPage() {
     <>
       <PublicPageIntro title={t("title")} lead={t("lead")} />
       <Container className="pb-20">
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="max-w-3xl"><LoadingSkeleton variant="list" rows={3} /></div>}>
           <PublishedStoriesList />
         </Suspense>
       </Container>
@@ -34,10 +37,14 @@ async function PublishedStoriesList() {
   const t = await getTranslations("public.storiesPage");
   const locale = await getLocale();
   const format = await getFormatter();
-  const { stories, fixture, gated } = await listPublishedStories(locale);
+  const { stories, fixture, gated, unavailable } = await listPublishedStories(locale);
 
   if (gated) {
     return <EmptyState icon="stories" title={t("gatedTitle")} description={t("gatedBody")} className="max-w-3xl" />;
+  }
+  if (unavailable) {
+    // A failed read is an error with a retry, never "no stories yet".
+    return <InlineError code="unavailable" action={<RetryAction />} className="max-w-3xl" />;
   }
 
   return (
