@@ -151,7 +151,7 @@ select pg_temp.expect_state(format('select public.interrupt_doctor_visit(%L,6,''
 reset role;
 select pg_temp.expire_case('c1000000-0000-4000-8000-000000000002',false);
 select pg_temp.set_gate('on');
-select pg_temp.assert_true(pg_temp.events(:'s3')=7 and pg_temp.events(:'s5')=7,'replays wrote no events');
+select pg_temp.assert_true(pg_temp.events(:'s3')=7 and pg_temp.events(:'s5')=7,'replays wrote no events; s3 '||coalesce((select string_agg(aggregate_version||':'||reason,',' order by aggregate_version) from public.booking_events where booking_id=:'s3'),'-')||' s5 '||coalesce((select string_agg(aggregate_version||':'||reason,',' order by aggregate_version) from public.booking_events where booking_id=:'s5'),'-'));
 
 -- 9. D19: doctor commands on a lab booking assigned to the same person.
 select pg_temp.p5_book('lab',pg_temp.p5_at(4),array['c6000000-0000-4000-8000-000000000002']::uuid[]) as lab \gset

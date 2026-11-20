@@ -4,6 +4,9 @@ begin;
 \ir _b01_fixture.inc
 \ir _p5s_fixture.inc
 \ir _p5c_fixture.inc
+-- Suspension needs provider:suspend (Q06 001200); the fixture verifier c1..04 holds only provider:verify.
+insert into public.admin_capabilities(profile_id,capability,scope_key,granted_by)
+values('c1000000-0000-4000-8000-000000000004','provider:suspend','global','b1000000-0000-4000-8000-000000000004');
 -- Care closeout and ops escalation. Contract §5.3 (a)-(e) through the care commands, §6
 -- (ops never writes the care substate), design T18 and T19/E7-E9 as changed by the contract.
 

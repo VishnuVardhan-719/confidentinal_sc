@@ -4,6 +4,9 @@ begin;
 \ir _b01_fixture.inc
 \ir _p5s_fixture.inc
 \ir _p5c_fixture.inc
+-- Suspension needs provider:suspend (Q06 001200); the fixture verifier c1..04 holds only provider:verify.
+insert into public.admin_capabilities(profile_id,capability,scope_key,granted_by)
+values('c1000000-0000-4000-8000-000000000004','provider:suspend','global','b1000000-0000-4000-8000-000000000004');
 -- Care acceptance through the generic accept_booking and p5c_care_booking_guard.
 -- Design §6.3 accept_check/after_accept, T07-T10; contract §7.2, §8.2, §10.1 admission, §11.
 

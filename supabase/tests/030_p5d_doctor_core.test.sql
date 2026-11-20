@@ -232,7 +232,7 @@ select pg_temp.expect_state(format('select public.interrupt_doctor_visit(%L,6,''
 select pg_temp.assert_true(public.interrupt_doctor_visit(:'v2',6,'ended_for_emergency',:'k_v2')=7,'emergency interruption needs no code');
 select pg_temp.assert_true(public.interrupt_doctor_visit(:'v2',6,'ended_for_emergency',:'k_v2')=7,'interruption replay after access ended');
 reset role;
-select pg_temp.assert_true(pg_temp.state(:'v2')='interrupted' and pg_temp.sub(:'v2')='interrupted' and pg_temp.events(:'v2')=7,'v2 interrupted once');
+select pg_temp.assert_true(pg_temp.state(:'v2')='interrupted' and pg_temp.sub(:'v2')='interrupted' and pg_temp.events(:'v2')=7,'v2 interrupted once; got '||coalesce(pg_temp.state(:'v2'),'-')||'/'||coalesce(pg_temp.sub(:'v2'),'-')||' events '||coalesce((select string_agg(aggregate_version||':'||reason,',' order by aggregate_version) from public.booking_events where booking_id=:'v2'),'-'));
 select pg_temp.assert_true((select count(*)=0 from doctor_private.arrival_challenges where booking_id=:'v2' and status='active'),'interruption revokes the live code');
 select pg_temp.assert_true((select array_agg(kind||':'||reason||':'||status) from public.booking_exceptions where booking_id=:'v2')
  =array['interrupted:ended_for_emergency:open'],'interruption opens one shared exception for ops review');
