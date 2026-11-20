@@ -162,3 +162,7 @@ Open: sitemap.xml (fe-a) does not list /lab-tests yet; te/hi labDirectory string
 ## TASK REPORT: R9-C3 (fe-q, feat/fe2-c)
 - Finding 1 fixed (journeyApis cancellationTerms; book/[id] page fails closed in http mode). tests/unit/adversarial-guards.test.ts (13): journey terms, fixture-import gating, paise toFixed and /100, hi plural zero, te/hi plural parity. Red run before fix/exemptions: 6 failed as expected. Exemptions: lab-views.tsx (fe-e, fixed on fe2-e), hi ambulance/lab (fe-e), hi common (fe-a) -> REQUESTS R-FE-Q-R9C3-1/2.
 - Lint was red at HEAD from my .context/*.cjs audit scripts; added eslint-disable headers.
+
+## TASK REPORT: R9-C4 (fe-q, feat/fe2-c)
+- e2e on own prod build port 3365 (fixture): booking-journey 10/10, a11y-sweep-c --grep book 12/12, 390+1280, axe clean; no expectation changes. Server 3365 left running (pid in .context/server-3365.pid; started detached because tool background processes die).
+- Review appended to ADVERSARIAL_REVIEW.md: fe2-e 0813f7b..9fc525c (E1 LOW soft-404 gated stories, E2 LOW paiseToRupeesString no int guard, E3 carried hi plurals); fe2-p 8f7ca31..8dc301a (P1 MEDIUM FIXTURE_ADMIN_SESSION moderator for every request + int conflict, P2 LOW no pagination, P3 LOW action args unvalidated).

@@ -91,3 +91,45 @@ Read-only commands against fe2-int's committed tree (`git show`, `git grep`, `gi
 - This is static review only. No finding was reproduced in a running app, and finding 2 was not exercised with a production build.
 - The uncommitted working-tree changes in fe2-int were not reviewed; only committed history was.
 - Branch heads not yet merged into fe2-int (for example fe2-e `c99a4c7`) were not reviewed, apart from the single line noted in finding 6.
+
+## R9-C4 (2026-11-20): booking e2e after the finding 1 fix
+
+Production build of `feat/fe2-c` (`next build`, then `next start -p 3365`) in fixture mode: `FRONTEND_ADAPTER=fixture APP_ENV=test FIXTURE_PATIENT_SESSION=self FIXTURE_PROVIDER_RESPONSE_MS=3000`.
+
+- `tests/e2e/booking-journey.spec.ts`, 390 and 1280 (`--workers=2`): **10 passed, 0 failed**. These runs cover the happy path (search, profile, request, doctor accepts, reschedule, cancel through the dialog), the decline path, the paid receipt, wizard refusals and the keyboard-only request and cancel. axe (wcag2a/aa) was clean on every state checked, including `request/pending`, `confirmed`, `reschedule` and `cancelled`.
+- `tests/e2e/a11y-sweep-c.spec.ts --grep book`, 390 and 1280: **12 passed, 0 failed** (no doctor, wizard, not bookable, completed request, receipt).
+- No test expectation changed. In fixture mode the page still receives the synthetic terms, so the visible behaviour is identical. The http-mode fail-closed path is covered by unit tests (`tests/unit/adversarial-guards.test.ts`) and was not exercised in a browser.
+
+## R9-C4 (2026-11-20): read-only review of feat/fe2-e and feat/fe2-p
+
+Reviewed with `git show`/`git diff` only; neither worktree was edited. Bases are the commits fe2-int last merged from each branch.
+
+### feat/fe2-e `0813f7b..9fc525c` (error boundaries, stories gated state, lab paise fix, a11y sweep)
+
+| # | Severity | Where | Finding | Fix |
+|---|---|---|---|---|
+| E1 | LOW | `src/app/[locale]/(public)/stories/[slug]/page.tsx:15-21`, `src/modules/content/public.ts` (`getPublishedStory`) | In http mode (CMS gated) every `/stories/<anything>` now answers HTTP 200 with "not available yet". The page has no `generateMetadata`, so these URLs are indexable soft-404s. | Return `robots: { index: false }` while gated, or 404 any slug that fails the slug schema before the gated check. |
+| E2 | LOW | `src/components/admin/ops/format.ts` `paiseToRupeesString` | It has no integer check (`10.5` gives `"0.10.5"`). Today it is only called after `Number.isSafeInteger` (`formatPaise`) or on Zod-validated `pricePaise` (`src/modules/lab/rules.ts:182`), so nothing renders wrong yet. Negative values keep their sign (finding 3 is still open). | Throw a `RangeError` or return `DASH` unless the value is a safe integer. |
+| E3 | MEDIUM (carried) | `src/messages/hi/ambulance.json` `dashboard.daysLeft`, `hi/lab.json` `orders.testCount` | Still wrong for 0 at `9fc525c` (finding 4). | Patch in REQUESTS R-FE-Q-R9C3-1. |
+
+Checked, no finding:
+- The new `error.tsx` boundaries (`(auth)`, `(public)`) render only the digest, never `error.message`. They use the `retry` prop, which Next 16.4.6 provides.
+- The lab catalogue default now uses `paiseToRupeesString`. That clears finding 6, and the `MONEY_EXEMPT` entry in `adversarial-guards.test.ts` can be deleted after merge.
+- `formatPaise` now formats the exact decimal string, not `paise / 100`.
+- No changes to role guards, server actions, storage, logs or URLs.
+- `public` and `errors` te/hi have exactly the en keys, with nothing copied from English and the same placeholders. `admin`, `caretaker`, `ambulance`, `lab` and `common` parity is clean apart from E3 and the known `common.errorSummary.title`.
+
+### feat/fe2-p `8f7ca31..8dc301a` (review edit/withdraw, moderation queue, moderation decision log)
+
+| # | Severity | Where | Finding | Fix |
+|---|---|---|---|---|
+| P1 | MEDIUM (integration) | `src/modules/admin/session.ts` (`fixtureAdminPrincipal`, `FIXTURE_MODERATOR`) | In fixture mode, `FIXTURE_ADMIN_SESSION=moderator` makes `getOperationsSession()` return a moderator for every request, including signed-out ones. This is fixture-only (`getAdapterMode` and `assertFixtureMode` refuse production), but on a shared fixture preview anyone can moderate. It also conflicts with fe2-int, which replaced such server switches with real fixture sign-in (`operationsViewFor`, present at `b8e6215`). | When merging, drop the env switch and add a `review:moderate` grant to a fixture admin principal in `src/fixtures/operations/admin`, reached through the normal sign-in. |
+| P2 | LOW | `src/modules/reviews/api.ts` `listQueue`, `listDecisions`; REQUESTS `GET /api/admin/reviews/decisions` | The queue and the log return every row with no cursor or limit, so a real backend would send the whole history. | Add `cursor` and `limit` to the proposed contract, the same way `/admin/audit` uses `readCursor`. |
+| P3 | LOW | `src/app/[locale]/admin/reviews/actions.ts` `decideReviewAction(reviewId: string, ..., expectedVersion: number)` | Server-action arguments are untrusted, but the TypeScript types imply validation that happens only inside the fixture adapter. The http adapter is gated, so nothing reaches a backend yet. | Parse `reviewId` (`z.uuid()`) and `expectedVersion` (int ≥ 1) in the action before calling the adapter. |
+
+Checked, no finding:
+- **Guards:** `/admin/reviews` and `/admin/reviews/log` sit behind `AdminRouteGate route="reviews"` (`review:moderate`). `decideReviewAction` re-checks the principal and the capability on every call, and the adapter refuses when `moderator` is false. A decision with no attributable decider is refused, and log rows are append-only. Patient review edit and withdraw re-resolve `getPatientSession()` and are version-checked.
+- **PHI:** queue items and log rows carry only the booking reference, provider, rating, outcome, reason and time, with no patient identity. The log has no review text or moderator id (only `decidedBySelf`). URLs carry only enums (`?status=`, `?done=`). There is no browser storage and no logging. Moderators see the review text by design, and submissions with contact details are refused (`text_contact`).
+- **Money:** no paise code touched.
+- **i18n:** `admin`, `patientAccount` and `support` te/hi have exactly the en keys, nothing copied, the same placeholders and no Hindi `one`-for-zero issue. No hard-coded JSX strings in the new components.
+- **Open question raised by fe-p (REQUESTS):** should moderation decisions also go to the `/admin/audit` stream? My recommendation is yes: the server should write them to the security audit trail as well, because they are admin actions on user content. The separate read-only log can stay as the moderator-facing view.
