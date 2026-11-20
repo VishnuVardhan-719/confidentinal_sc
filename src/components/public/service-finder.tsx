@@ -2,11 +2,12 @@
 
 import { ArrowRight, CircleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useState, useSyncExternalStore, useTransition, type FormEvent } from "react";
+import { useRef, useState, useSyncExternalStore, useTransition, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { fieldControlClass } from "@/components/ui/input";
 import { ServiceIcon } from "@/components/shared/service-icon";
+import { useOnHydrated } from "@/components/shared/use-early-input";
 import { useRouter } from "@/i18n/navigation";
 import { normalizePin, PIN_PATTERN_SOURCE, validateFinder, type FinderErrors } from "./finder";
 import { SERVICES, type ServiceKey } from "./routes";
@@ -36,6 +37,18 @@ export function ServiceFinder({ labels, idPrefix = "finder" }: { labels: FinderL
   const [service, setService] = useState<ServiceKey | "">("");
   const [errors, setErrors] = useState<FinderErrors>({});
 
+  // A PIN typed or a service chosen while JS was still loading is in the DOM, not in state: adopt
+  // it at hydration so React does not clear it (REQUESTS R-FE-D-41).
+  const formRef = useRef<HTMLFormElement>(null);
+  useOnHydrated(() => {
+    if (!formRef.current) return;
+    const fd = new FormData(formRef.current);
+    const earlyPin = normalizePin(String(fd.get("pin") ?? ""));
+    const earlyService = SERVICES.find((s) => s.key === fd.get("service"))?.key;
+    if (earlyPin) setPin(earlyPin);
+    if (earlyService) setService(earlyService);
+  });
+
   // Progressive enhancement: native validation on the server render, inline messages once hydrated.
   const enhanced = useSyncExternalStore(noopSubscribe, () => true, () => false);
 
@@ -59,6 +72,7 @@ export function ServiceFinder({ labels, idPrefix = "finder" }: { labels: FinderL
 
   return (
     <form
+      ref={formRef}
       action={`/${locale}/find`}
       method="get"
       noValidate={enhanced}

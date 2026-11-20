@@ -98,17 +98,15 @@ test.describe("input before hydration is never silently lost", () => {
 });
 
 /**
- * R8-D6: shared controls outside fe-d's own forms. The home page ServiceFinder
- * (src/components/public/service-finder.tsx, owner fe2-a) is a controlled form: `value={pin}` and
- * `checked={service === key}`. Reproduced: a PIN typed and a service chosen before hydration are
- * visibly CLEARED when React hydrates (state "" wins), and Find then reports "Enter your 6-digit
- * PIN code" and "Choose a service". Recorded in docs/frontend/REQUESTS.md R-FE-D-41.
- * `test.fail()` keeps the suite green while the bug exists; it turns red once fe2-a applies the
- * fix, and then this line should be removed.
+ * R8-D6/D7: shared controls outside fe-d's own forms. The home page ServiceFinder
+ * (src/components/public/service-finder.tsx) is a controlled form: `value={pin}` and
+ * `checked={service === key}`. Before R8-D7 a PIN typed and a service chosen before hydration were
+ * visibly CLEARED when React hydrated, and Find reported both missing (REQUESTS R-FE-D-41). The
+ * finder now adopts the DOM values at hydration (useOnHydrated). It is a progressive GET form, so
+ * it must accept input before hydration (no disabled gate).
  */
 test.describe("shared controls: input before hydration (R-FE-D-41)", () => {
   test("home service finder keeps a PIN and service chosen before hydration", async ({ page }) => {
-    test.fail(true, "Known bug R-FE-D-41 in src/components/public/service-finder.tsx (fe2-a)");
     const release = await loadWithoutJs(page, "/en");
     const form = page.locator("form:has(input[name=pin])").first();
     const pin = form.locator("input[name=pin]");
@@ -116,9 +114,11 @@ test.describe("shared controls: input before hydration (R-FE-D-41)", () => {
     const chose = await form.locator("label:has(input[value=labTests])").click({ timeout: 1500 }).then(() => true, () => false);
     await release();
     test.info().annotations.push({ type: "pre-hydration", description: JSON.stringify({ pin: early, service: chose }) });
-    // Contract: either the controls refused early input, or what was entered survives hydration.
-    if (early) await expect(pin, "PIN typed before hydration").toHaveValue("500001", { timeout: 2000 });
-    if (chose) await expect(form.locator("input[value=labTests]"), "service chosen before hydration").toBeChecked({ timeout: 2000 });
+    // The progressive form takes input before hydration, and what was entered survives hydration.
+    expect({ pin: early, service: chose }).toEqual({ pin: true, service: true });
+    await expect(pin, "PIN typed before hydration").toHaveValue("500001");
+    await expect(form.locator("input[value=labTests]"), "service chosen before hydration").toBeChecked();
+    await expect(form.getByText(/enter your 6-digit pin code|choose a service/i)).toHaveCount(0);
     await form.locator("button[type=submit]").click();
     await expect(page).toHaveURL(/\/en\/lab-tests\?pin=500001$/, { timeout: 5000 });
   });
