@@ -296,6 +296,19 @@ Scheduler = the individual owner, or an active org member with `schedule:manage`
 
 The visit-progress buttons are operational markers only. They carry no OTP, clinical acceptance or consent.
 
+### 5.8 Ops queue, ops closeout and assignment contact
+
+Ops = a holder of the `booking:incident` capability (OD-2: granted to nobody yet, so these return 403 or an empty list until the owner assigns it).
+
+| Method and path | Auth | Request | Success | Notable errors |
+|---|---|---|---|---|
+| `GET /api/ops/exceptions?limit=&after=` | ops | `limit` 1-50 (default 20), `after` = last `booking_id` of the previous page | `200 { items: [{ booking_id, public_ref, provider_reference, category, start_at, end_at, state, version, last_reason, overdue, escalatable, exceptions: [{ id, kind, reason, opened_at, version }] }] }` ordered by `booking_id`. No contact or address. | 422 bad query |
+| `POST /api/ops/bookings/{id}/close` | ops, `Idempotency-Key: <uuid>` | `{ expectedVersion, outcome: "interrupted"\|"no_show", reason: "no_show_confirmed"\|"ops_closeout"\|"provider_did_not_attend"\|"unsafe_conditions"\|"absence_disputed" }` | `200 { version }` (new booking version); open exceptions on the booking are resolved | 403, 409 (stale, not `confirmed`/`in_progress`, or not escalatable yet), 422 (`no_show` needs `confirmed` + an open absence report + `no_show_confirmed`; `absence_disputed` needs an open absence report), 503 gate |
+| `POST /api/ops/exceptions/{id}/resolve` | ops, `Idempotency-Key: <uuid>` | `{ expectedVersion, resolution: "resolved" }` | `200 { version }` (new exception version) | 403, 409 (stale, already resolved, or `absence_reported`, which resolves only through close), 422 |
+| `POST /api/bookings/{id}/contact` | current assignee, or ops while the booking has an open exception or is escalatable | none | `200 { contact: { booking_id, public_ref, address: { line1, locality, pin_code }, contact: { name, phone } } }` | 404 when not allowed (same as a missing booking) |
+
+Contact is `POST` because every allowed read writes an audit row: fetch it only when the user opens the contact panel, never on page load or prefetch, and never cache it. Retrying a close or resolve with the same `Idempotency-Key` and body returns the first result; the same key with a different body is 409.
+
 ## 6. Where the old proposal (`docs/API_CONTRACTS.md`) differs from the code
 
 | Proposal | Implemented |
