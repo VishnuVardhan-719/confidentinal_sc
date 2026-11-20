@@ -458,10 +458,10 @@ Machine-written te/hi for: `patient.records.*`, `patient.notifications.*`, `pati
 | R-FE-P-R7-2 | backend | Open | Saved providers contract |
 | R-FE-P-R7-3 | backend + admin | Open | Patient reviews contract, incl. edit and withdraw |
 | R-FE-P-R7-4 | backend + notifications | Open | Reminder preferences contract; opt-in wording needs product/legal |
-| R-FE-P-R8-1 | backend + admin | Open | Review moderation contract, capability and decision log |
+| R-FE-P-R8-1 | backend + admin | Open | Review moderation contract, capability, decision log and paging |
 | R-FE-P-R9-1 | lead / fe-a | Open | public-nav hero search spec out of date (4 shared e2e failures) |
 | R-FE-P-R9-2 | fe-a | Open | Modal language menu: axe aria-hidden-focus |
-| R-FE-P-R9-3 | lead / fe-b / fe-e | Fixed on fe2-p, needs review | Admin sign-in return path |
+| R-FE-P-R9-3 | lead / fe-e | Fixed on fe2-p; regressed on integration (R9-P4) | Admin sign-in return path |
 | R-FE-P-R9-4 | fe-e | Open | Lab/ambulance/caretaker sign-in returns to the dashboard |
 | R-FE-P-R9-5 | fe-a | Open | `a11y.spec.ts` axe can run during the hero fade-in (load-dependent color-contrast) |
 
@@ -583,6 +583,14 @@ Alternative where a form must work before hydration: make it uncontrolled (`defa
 - The http adapters (`createReviewModerationHttpApi`, patient edit/withdraw) return `gated`.
 - R9-P decision log (`/admin/reviews/log`, same `review:moderate` gate, read-only, no undo). Needs `GET /api/admin/reviews/decisions` -> entries `{ entryId, bookingReference, category, providerDisplayName, outcome: "published"|"rejected", reason, decidedAt, decidedBySelf }`, newest first. The server records the decider and computes `decidedBySelf` against the caller; it never returns the moderator id, the patient identity or the review text. A decision with no attributable decider must be refused. `listDecisions()` over http returns `gated`.
 - Open question for lead: should moderation decisions also appear in the global `/admin/audit` stream (`security:audit`)? The fixture keeps them in a separate log only.
+- R9-P4 paging (finding P2). Both lists take `?limit=1..50` (default 20) and `?cursor=<opaque>`, and return `{ items, nextCursor }` (`nextCursor: null` on the last page):
+  - `GET /api/admin/reviews?status=...&limit=&cursor=`
+  - `GET /api/admin/reviews/decisions?limit=&cursor=`
+  - The cursor is opaque, at most 128 characters of `[A-Za-z0-9_-]`, and must not encode a review id or a patient id: the page puts it in the URL.
+  - A malformed cursor, or one issued for another list or filter, returns `422`; the UI then goes back to the first page. A cursor past the end returns an empty last page.
+  - Keyset paging is preferred. The pending queue changes while moderators decide, and offsets would skip rows. The fixture uses offsets.
+  - The UI has a "Back to first page" link and a "Next page" link. Cursor pages cannot go back one step.
+- R9-P4 actor ids: the decision log attributes a decision to the principal's `profileId`. On integration that is a fixture profile id such as `fx-adm-super`, not a uuid. The fixture accepts `[A-Za-z0-9][A-Za-z0-9_-]{0,63}` and refuses anything else (no attributable decider means no decision).
 
 ### R-FE-P-R9-1 (to lead / fe-a) - shared public-nav hero search spec is out of date after the R-C2-4 swap
 - `tests/e2e/public-nav.spec.ts:81` and `:93` (4 failures, both projects) wait for fe-a's `DoctorSearch` labels ("City or PIN code" textbox, "Doctor, speciality or symptom" combobox; hi "शहर या पिन कोड", searchbox, "डॉक्टर खोजें"). Since f18d7cb (integration) the landing page renders fe-c's `DoctorSearchBar idPrefix="hero"`, whose fields are "Search doctors, specialities or symptoms" (combobox) and "City" (textbox), with a "Search" button and a separate "PIN code" finder below.
@@ -735,6 +743,10 @@ This index tidies the entries above without editing them (the file is append-onl
 - fe2-p now sends `next=/{locale}/admin/reviews/log` from the decision log: `AdminRouteGate` takes a fixed `subPath`, `adminPagePath` accepts plain lowercase segments only, and `loginRedirectPath` still reduces `next` to an internal locale-prefixed path with no query (tests/unit/modules-operations/admin-return-path.test.ts).
 - fe2-p has no login page. The consumer that reads `next` after sign-in is fe-b's `auth-page.tsx` + `normalizeInternalPath` on feat/fe2-integration, which already rejects off-site and `/api` targets. The end-to-end landing (sign in, then arrive on the log) can only be checked after integration.
 
+- R9-P4 re-check: integration regressed this. On feat/fe2-integration, `AdminFrame` calls `adminPrincipal(adminPath(locale, "dashboard"))`. That call reaches `requireOperationsSession` -> `requireRole`, which redirects signed-out visitors to `/login?next=/{locale}/admin/dashboard` before the layout's "render children, let the page gate redirect" branch runs. So on integration every admin page, including the decision log, again returns to the dashboard.
+  - Fix (in `admin-frame.tsx`, merge-resolved by the lead): read the session in the layout without redirecting, for example `(await authorizeOperationsSession("admin")).admin`. Keep `requireOperationsSession` with the page path in `AdminRouteGate` only.
+  - `tests/e2e/admin-review-moderation.spec.ts` "redirects to login" asserts `next` equals the page path. It will fail on integration until this is fixed.
+  - fe2-p's own files are correct, and fe2-p has no `requireRole`.
 ### R-FE-P-R9-4 (to fe-e) - lab, ambulance and caretaker sign-in returns to the dashboard
 - `LabFrame`, `AmbulanceFrame` and `CaretakerFrame` (`src/components/{lab,ambulance,caretaker}/*-frame.tsx`, fe-e) redirect signed-out visitors from the layout with the dashboard path, before the page gate runs. Measured on the fe2-p guest server (R9-P3):
   - `/en/lab/orders` -> `/en/login?next=%2Fen%2Flab%2Fdashboard`
@@ -744,6 +756,7 @@ This index tidies the entries above without editing them (the file is append-onl
 - Suggested fix (same as `AdminFrame` in f977bc0): when `access.kind === "unauthenticated"`, return `<>{children}</>` instead of `redirect(access.loginPath)`, and let `*RouteGate` redirect. That is safe because every lab, ambulance and caretaker page renders inside its `*RouteGate` with the route of its URL, and the index pages redirect to the dashboard. `tests/unit/modules-operations/provider-route-gates.test.ts` checks this and fails if a page is added without a gate.
 - Secondary: the gates build `next` from the route root, so detail pages (`/lab/orders/[orderId]`, `/ambulance/trips/[tripId]`, `/caretaker/assignments/[assignmentId]`) return to their list. Decide whether that is intended (it keeps ids out of `next`); the patient and doctor areas keep the detail path.
 - fe-p did not edit these files (fe-e scope).
+- R9-P4 re-check: still open. The fix lives only in fe-e files (*-frame.tsx). On integration the frames go through providerAreaAccess(..., path) -> equireRole, so the layout must also stop passing (or defaulting to) the dashboard path there.
 
 ### R-FE-P-R9-5 (to fe-a) - shared a11y spec audits the landing hero mid-animation under load
 - In the R9-P3 full run (4 workers, machine busy with other agents' servers), `tests/e2e/a11y.spec.ts` "axe en @360" failed once with `/: color-contrast: .scv-rise-delay`. That is the hero lead paragraph (`src/app/[locale]/(public)/page.tsx:92`) while its fade-in is still running, so axe measures a partly transparent colour. It passed 3/3 when run alone.

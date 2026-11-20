@@ -1,15 +1,16 @@
 /**
- * fe-p R8-P2: admin review-moderation queue. Needs the "on" fixture server, which also sets
- * FIXTURE_ADMIN_SESSION=moderator (server env, fixture mode only; a synthetic admin holding only
- * review:moderate). Mobile publishes SYN-BKG-0301, desktop declines SYN-BKG-0302, so the two
- * parallel projects never decide the same review. In other modes the page must redirect to login.
+ * fe-p R8-P2..R9-P4: admin review moderation (queue, decisions, read-only decision log).
+ * The moderator comes from tests/e2e/support/fep-moderator.ts:
+ *   - fe2-p: the "on" fixture server's FIXTURE_ADMIN_SESSION=moderator (no login page on fe2-p);
+ *   - integration: a real fe-b sign-in as the synthetic lead admin (the server switch is gone).
+ * Mobile publishes SYN-BKG-0301, desktop declines SYN-BKG-0302, so the two parallel projects never
+ * decide the same review. Signed out, every moderation page redirects to login with its own path.
  */
 import AxeBuilder from "@axe-core/playwright";
-import { expect as baseExpect, test, type Page } from "@playwright/test";
+import { expect as baseExpect, test as base, type Page } from "@playwright/test";
+import { MODERATOR_AVAILABLE, SERVER_MODERATOR, moderatorTest as test } from "./support/fep-moderator";
 
 const expect = baseExpect.configure({ timeout: 15_000 });
-const MODE = process.env.E2E_FEP_MODE;
-const CLINICAL = process.env.E2E_FEP_CLINICAL;
 const narrow = (page: Page) => (page.viewportSize()?.width ?? 1280) < 1024;
 
 async function expectAxeClean(page: Page) {
@@ -18,7 +19,7 @@ async function expectAxeClean(page: Page) {
 }
 
 test.describe("review moderation (synthetic moderator)", () => {
-  test.skip(MODE !== "session" || CLINICAL !== "on", "needs the on-mode server with FIXTURE_ADMIN_SESSION=moderator");
+  test.skip(!MODERATOR_AVAILABLE, "fe2-p off/guest servers have no moderator (the signed-out tests cover them)");
 
   test("pending queue shows reviews without patient identity; filters are URL state", async ({ page }) => {
     await page.goto("/en/admin/reviews");
@@ -108,6 +109,22 @@ test.describe("review moderation (synthetic moderator)", () => {
     await expectAxeClean(page);
   });
 
+  test("cursor pages: past the end shows the end and a way back; bad or foreign cursors fall back to page one", async ({ page }) => {
+    const main = page.getByRole("main");
+    await page.goto("/en/admin/reviews/log?cursor=l999999");
+    await expect(main.getByRole("heading", { level: 2, name: "0 decisions on this page" })).toBeVisible();
+    const pager = main.getByRole("navigation", { name: "Review pages" });
+    await expect(pager.getByText("End of the decision log")).toBeVisible();
+    await expect(pager.getByRole("link", { name: "Back to first page" })).toHaveAttribute("href", "/en/admin/reviews/log");
+    await expectAxeClean(page);
+    // A queue cursor that belongs to another list is refused by the server: back to the first page.
+    await page.goto("/en/admin/reviews?status=published&cursor=l1");
+    await expect(page).toHaveURL(/\/en\/admin\/reviews\?status=published$/);
+    // A malformed cursor is ignored before it reaches the server.
+    await page.goto("/en/admin/reviews?status=published&cursor=..%2Fx");
+    await expect(main.getByRole("heading", { level: 2, name: /^Published: \d+ reviews?$/ })).toBeVisible();
+    await expect(main.getByRole("navigation", { name: "Review pages" })).toHaveCount(0);
+  });
   test("te and hi render the queue without raw keys and pass axe", async ({ page }) => {
     for (const locale of ["te", "hi"]) {
       for (const path of ["/admin/reviews", "/admin/reviews/log"]) {
@@ -121,11 +138,10 @@ test.describe("review moderation (synthetic moderator)", () => {
   });
 });
 
-test.describe("review moderation (no admin session)", () => {
-  test.skip(MODE === "session" && CLINICAL === "on", "the on-mode server has a synthetic moderator");
-  test.skip(!MODE, "needs a fixture server");
+base.describe("review moderation (no admin session)", () => {
+  base.skip(SERVER_MODERATOR, "the fe2-p on-mode server makes every request the synthetic moderator");
 
-  test("redirects to login", async ({ page }) => {
+  base("redirects to login", async ({ page }) => {
     for (const path of ["/en/admin/reviews", "/en/admin/reviews/log"]) {
       await page.goto(path);
       await expect(page).toHaveURL(/\/en\/login\?/);

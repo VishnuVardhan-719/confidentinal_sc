@@ -13,9 +13,11 @@ import { KeyedStatusBadge } from "@/components/shared/status-badge";
 import { Link } from "@/i18n/navigation";
 import { fail } from "@/lib/api/result";
 import { can } from "@/modules/admin/capabilities";
-import { canModerate, describeReviewStatus, getReviewModerationApi, MODERATION_FILTERS, parseModerationFilter } from "@/modules/reviews";
+import { redirect } from "@/i18n/navigation";
+import { canModerate, describeReviewStatus, getReviewModerationApi, MODERATION_FILTERS, MODERATION_PAGE_SIZE, parseModerationCursor, parseModerationFilter } from "@/modules/reviews";
 import { decideReviewAction } from "./actions";
 import { ModerationActions } from "./_components/moderation-actions";
+import { ModerationPager } from "./_components/moderation-pager";
 
 export async function generateMetadata() {
   return privateMetadata((await getTranslations("admin.nav"))("reviews"));
@@ -31,10 +33,13 @@ export default async function ReviewModerationPage({ searchParams }: PageProps<"
   const sp = await searchParams;
   const filter = parseModerationFilter(sp.status);
   const done = typeof sp.done === "string" && sp.done in DONE ? DONE[sp.done as keyof typeof DONE] : null;
+  // Opaque server cursor (no ids); anything malformed is ignored and the first page is shown.
+  const cursor = parseModerationCursor(sp.cursor);
+  const listHref = (c?: string) => `/admin/reviews?status=${filter}${c ? `&cursor=${c}` : ""}`;
 
   return (
     <AdminRouteGate route="reviews">
-      {async (ctx) => {
+      {async (ctx, locale) => {
         const [t, format] = await Promise.all([getTranslations("admin.reviews"), getFormatter()]);
         const header = (
           <PageHeader
@@ -51,7 +56,11 @@ export default async function ReviewModerationPage({ searchParams }: PageProps<"
             }
           />
         );
-        const result = await getReviewModerationApi(process.env, can(ctx.principal, "review:moderate")).listQueue(filter).catch(() => fail("unavailable"));
+        const result = await getReviewModerationApi(process.env, can(ctx.principal, "review:moderate"))
+          .listQueue(filter, { limit: MODERATION_PAGE_SIZE, ...(cursor ? { cursor } : {}) })
+          .catch(() => fail("unavailable"));
+        // A cursor the server no longer accepts (foreign or expired): start again from the first page.
+        if (!result.ok && result.error.code === "validation" && cursor) redirect({ href: listHref(), locale });
         if (!result.ok) {
           return (
             <div className="grid gap-8">
@@ -60,7 +69,8 @@ export default async function ReviewModerationPage({ searchParams }: PageProps<"
             </div>
           );
         }
-        const items = result.data;
+        const { items, nextCursor } = result.data;
+        const paged = Boolean(cursor || nextCursor);
         return (
           <div className="grid gap-8">
             {header}
@@ -87,9 +97,9 @@ export default async function ReviewModerationPage({ searchParams }: PageProps<"
             </nav>
             <section aria-labelledby="moderation-list" className="grid gap-4">
               <h2 id="moderation-list" className="text-lg font-semibold text-ink">
-                {t(`filter.${filter}`)}: {t("count", { count: items.length })}
+                {t(`filter.${filter}`)}: {paged ? t("countPage", { count: items.length }) : t("count", { count: items.length })}
               </h2>
-              {items.length === 0 ? (
+              {items.length === 0 && !cursor ? (
                 <p className="text-muted">{t(`empty.${filter}`)}</p>
               ) : (
                 <ul className="grid gap-3">
@@ -121,6 +131,12 @@ export default async function ReviewModerationPage({ searchParams }: PageProps<"
                   ))}
                 </ul>
               )}
+              <ModerationPager
+                label={t("pager.label")}
+                firstHref={cursor ? listHref() : null}
+                nextHref={nextCursor ? listHref(nextCursor) : null}
+                text={{ first: t("pager.first"), next: t("pager.next"), end: t("pager.end") }}
+              />
             </section>
           </div>
         );

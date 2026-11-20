@@ -65,6 +65,13 @@ export type ModerationFilter = (typeof MODERATION_FILTERS)[number];
 
 export type ModerationDecision = { decision: "publish" } | { decision: "reject"; reason: RejectionReason };
 
+/** Page size for the moderation queue and the decision log (the server caps `limit` at 50). */
+export const MODERATION_PAGE_SIZE = 20;
+export const MODERATION_PAGE_MAX = 50;
+/** Opaque server cursor. The UI only passes it back; it must never encode a review or patient id. */
+export type ModerationPageRequest = { limit?: number; cursor?: string };
+export type ModerationPage<T> = { items: T[]; nextCursor: string | null };
+
 /**
  * One recorded moderation decision (append-only; nothing in the UI can change or undo it). Carries
  * the booking reference and provider only: no patient identity, no review text, no moderator id.
