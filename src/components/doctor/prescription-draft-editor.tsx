@@ -12,6 +12,7 @@ import { InlineError } from "@/components/shared/inline-error";
 import { Notice } from "@/components/shared/notice";
 import { useClinicalFormat } from "@/components/clinical/use-format";
 import { useHydrated } from "@/components/clinical/use-hydrated";
+import { useUnsavedChangesGuard } from "@/components/clinical/use-unsaved-guard";
 import { HydrationStatus, hydrationBusy } from "@/components/clinical/hydration-status";
 import { useRouter } from "@/i18n/navigation";
 import type { ApiResult } from "@/lib/api/result";
@@ -67,12 +68,7 @@ export function PrescriptionDraftEditor({ bookingId, initial, actions }: { booki
   const dirty = JSON.stringify(rows) !== savedSnapshot;
   const pendingFocus = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (!dirty) return;
-    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
+  useUnsavedChangesGuard(dirty);
 
   useEffect(() => {
     if (pendingFocus.current) document.getElementById(pendingFocus.current)?.focus();
