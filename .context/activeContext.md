@@ -235,3 +235,4 @@ Commands:
 - Follow-up: tests/e2e/admin-review-moderation.spec.ts still expects fe-p FIXTURE_ADMIN_SESSION mode (skipped outside fe-p); port to admin lead sign-in.
 - Next: Step 2 mutation smoke + axe dialogs in integration-smoke.spec.ts, rebuild, rerun smoke, INTEGRATION_REPORT.md, commit.
 - INT3 DONE (2026-11-20): mutation flows + dialog axe added to integration-smoke.spec.ts; lab-directory 'View lab' link name fix (WCAG 2.5.3, fe2-c file, port back); rebuild 525 pages exit 0; smoke 100/100 (390+1280); gate tsc/lint 0, vitest 102/1437. INTEGRATION_REPORT.md section 6. Server on 3320 stopped.
+- INT3 round 2 (2026-11-20): merged c 1a0db4f, d 7c0065d + 952c069, e 87bfb6b, p 8dc301a; fixture allowlist integrated (fixture-guard -> assertFixtureEnvironment); gate tsc/lint 0, vitest 107/1492, build 529 pages, smoke 102/102. Report section 6.6. Server stopped.

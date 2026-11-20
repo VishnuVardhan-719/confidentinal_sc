@@ -170,3 +170,36 @@ The first run had 4 failures, now fixed:
 - New fe2-d specs `hydration-race` and `a11y-sweep`, and fe2-c's `a11y-sweep-c`, were merged but not run here.
 - The mutation smoke changes server memory (doctor request, ambulance requests, CMS entries). Start a fresh server for every full smoke run.
 - Commit message 86da407 wrongly says tsc was clean (fixed by 0e4ced8). Commit 82b454c contains conflict markers in `.context/activeContext.md` (cleaned in 23b0973). History was not rewritten.
+
+### 6.6 Second re-merge (heads that moved during INT3) and the fe2-d fixture allowlist
+
+The feature branches moved on while INT3 ran, so they were merged again:
+
+| Branch | Tip | Merge commit | Notes |
+|---|---|---|---|
+| feat/fe2-c | 1a0db4f | b2fa938 | R9-C2..C5 adversarial review docs and guard tests; REQUESTS.md kept both |
+| feat/fe2-d | 7c0065d | 27ed491 | `/lab-tests` in the sitemap; consultation editor a11y fixes |
+| feat/fe2-e | 87bfb6b | 4484cf2 | Ops shell sign-out merged. `auth-flow.tsx` and the auth/navigation/onboarding/profile e2e specs keep the integration versions, because fe2-e's R9-E2 spec edits skip routes "not built on this branch" and all of those exist here. fe-b should re-check its sign-out-visibility assertions against the integrated app. |
+| feat/fe2-p | 8dc301a | ab6bedb | Read-only moderation decision log (`/admin/reviews/log`, behind AdminRouteGate) |
+| feat/fe2-d | 952c069 | 3e482d5 | Fixture allowlist guard (R-FE-D-42) |
+
+Fixes on the integrated tree:
+- **0aac1c5:** fe-q's new `adversarial-guards.test.ts` found 3 issues, now fixed:
+  - `fixtureActorFor` now returns null outside fixture mode.
+  - The patient dashboard no longer imports `DEFAULT_PATIENT_ACTOR`.
+  - The Hindi `auth.otp.attemptsLeft` `one` branch now uses `#`, because Hindi `one` also covers 0.
+- **3e482d5 and 8737d81 (fixture allowlist):**
+  - `src/modules/auth/fixture-guard.ts` `assertFixtureAllowed` now calls the shared `assertFixtureEnvironment` from `src/lib/api/mode.ts`. The rule: APP_ENV development/test/preview/staging, or unset under next dev/vitest; `VERCEL_ENV=production` always refuses.
+  - The patient dashboard uses `requirePatientSession` and takes `synthetic`/`fixtureActor` from it.
+  - `fixture-production-guard.test.ts` was adapted to the integration APIs. It also asserts the auth fixture guard, and `wsEnv` is now clinical/gateOff.
+  - Older "not allowed" message assertions also accept the new "fixtures are disabled" refusal.
+  - `.context/int2-serve.ps1`, `.context/int3-run.ps1`, `workspace-servers.ts` (`wsEnv`) and the `integration.config.ts` start command already set `APP_ENV=test`.
+
+Final gate on 8737d81:
+- `tsc --noEmit` exit 0
+- `npm run lint` exit 0
+- `vitest run` **107 files / 1492 tests passed**
+- `npm run build` exit 0, **529 pages**
+- Integration smoke on a fresh :3320 server: **102 passed, 0 failed** (mobile-390 + desktop-1280). This adds `/en/admin/reviews/log`. The run took 18.4 min because the machine was loaded by other agents' servers.
+
+The per-branch e2e specs in 6.4 and the new fe2-c/d/e specs were not rerun on this head.
