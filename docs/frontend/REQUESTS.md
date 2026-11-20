@@ -748,3 +748,14 @@ This index tidies the entries above without editing them (the file is append-onl
 ### R-FE-P-R9-5 (to fe-a) - shared a11y spec audits the landing hero mid-animation under load
 - In the R9-P3 full run (4 workers, machine busy with other agents' servers), `tests/e2e/a11y.spec.ts` "axe en @360" failed once with `/: color-contrast: .scv-rise-delay`. That is the hero lead paragraph (`src/app/[locale]/(public)/page.tsx:92`) while its fade-in is still running, so axe measures a partly transparent colour. It passed 3/3 when run alone.
 - Suggested fix in the spec: `page.emulateMedia({ reducedMotion: "reduce" })` before auditing (`.scv-rise` only animates under `prefers-reduced-motion: no-preference`, see `globals.css`), or wait for `document.getAnimations()` to finish before `AxeBuilder.analyze()`. fe-p did not edit the spec (fe-a scope).
+## 2026-11-20 R9-E4 review fixes (fe-b, branch feat/fe2-e)
+
+Fixes for the fe-b/fe-e items in `fe2-c/docs/frontend/ADVERSARIAL_REVIEW.md`:
+- **E2:** `paiseToRupeesString` (`src/components/admin/ops/format.ts`) returns the em dash unless its input is a safe integer. Callers are unchanged: `formatPaise` already checked, and the lab catalogue prefill gets the dash, which `rupeesToPaise` rejects.
+- **Finding 4 (Hindi):** applied the R-FE-Q-R9C3-1 patch to `hi/ambulance.json` `dashboard.daysLeft` (adds `=0`), `hi/lab.json` `orders.testCount` (`#`), and `hi/auth.json` `otp.attemptsLeft` (adds `=0`). The new guard `tests/unit/i18n-hindi-plurals.test.ts` checks every hi namespace, and render tests check counts 0, 1 and n.
+- **R6-1:** the signup role radios are disabled and their fieldset is `aria-busy` until hydration (`src/components/auth/use-hydrated.ts`). Before hydration they looked enabled but ignored taps. Covered by `tests/e2e/hydration-race-e.spec.ts`.
+
+### R-E9E4-01 still open for other owners
+- **fe-a:** `src/messages/hi/common.json` `errorSummary.title` still hard-codes "1" in `one` (patch in R-FE-Q-R9C3-1). It is listed in `EXEMPT` in `tests/unit/i18n-hindi-plurals.test.ts`. Remove that line when the patch lands; the test then requires the fix.
+- **i18n review:** the new Hindi strings "आज समाप्त" (expires today) and "कोई प्रयास बाकी नहीं" (no attempts left) need fluent review, the same as all te/hi copy (`src/messages/REVIEW_NEEDED.md`).
+- **Shared hook:** `src/components/auth/use-hydrated.ts` duplicates fe-d's `src/components/clinical/use-hydrated.ts`. Both should move to `src/lib/use-hydrated.ts` at integration, as R-FE-D-40 proposes.

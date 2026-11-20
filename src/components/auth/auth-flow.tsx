@@ -17,6 +17,7 @@ import { IDLE, type AuthFormState } from "@/modules/auth/flows";
 import { SIGNUP_ROLES, type SignupRole } from "@/modules/auth/roles";
 import { OtpStep } from "./otp-step";
 import { translateKey, type RootTranslator } from "./message-key";
+import { useHydrated } from "./use-hydrated";
 
 type Mode = "login" | "signup";
 type Method = "email_password" | "phone_otp";
@@ -58,8 +59,11 @@ export function AuthFlow({
   const [method, setMethod] = useState<Method>("email_password");
   const [phone, setPhone] = useState("");
   const [attempt, setAttempt] = useState(0);
-  // Each method tab renders its own form, so the chosen role lives here and survives a tab switch.
-  const [role, setRole] = useState<string | undefined>(initialRole ?? undefined);
+  // Shared by the Email and Mobile tabs so switching method keeps the chosen role.
+  const [role, setRole] = useState<string>(initialRole ?? "");
+  // Radix radios are buttons: before hydration a tap does nothing. Show them disabled and the
+  // group busy until React can hold the choice (ADVERSARIAL_REVIEW R6-1).
+  const hydrated = useHydrated();
 
   if (state.status === "otp") {
     return (
@@ -121,11 +125,11 @@ export function AuthFlow({
 
   const roleField =
     mode === "signup" ? (
-      <fieldset className="grid gap-3">
+      <fieldset className="grid gap-3" aria-busy={!hydrated || undefined}>
         <legend className="text-base font-semibold text-ink">{t("signup.roleLegend")}</legend>
         <p className="-mt-1 text-sm text-muted">{t("signup.roleHint")}</p>
         {fieldError("role") ? <p className="text-sm font-medium text-danger">{fieldError("role")}</p> : null}
-        <RadioGroup name="role" value={role ?? values.role ?? ""} onValueChange={setRole} className="grid gap-2 sm:grid-cols-2">
+        <RadioGroup name="role" value={role || values.role || ""} onValueChange={setRole} disabled={!hydrated} className="grid gap-2 sm:grid-cols-2">
           {SIGNUP_ROLES.map((role) => (
             <label
               key={role}
