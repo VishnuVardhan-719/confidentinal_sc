@@ -70,7 +70,7 @@ Reasoning: the review's collision was lab reserving all of `0016xx` for shared w
 | `20261117001570` | Shared | `20261117001570_p5s_resources_exceptions.sql`: exceptions, assignment end/release, resource-busy guard, `resource_in_use` fix, ops commands (§6.3, §6.4, §11, §12) |
 | `20261117001580` | Shared | `20261117001580_p5s_projections.sql`: `get_booking` key sets, `get_assignment_contact`, base-table revokes (§8.3 to §8.5) |
 | `20261117001590` | Shared | `20261117001590_p5s_admission.sql`: `create_request_core`, generic create/accept/cancel/list_slots rewrites (§7) |
-| `20261117001591` to `001599` | Shared | Reserved for shared review fixes, and for owner-approved shared items not decided here (§2.5). `001591_p5s_category_storage.sql`: registry `providers_private.category_object_checks` and a category clause in `i02_objects_guard` (ambulance review conflict 1). A category registers its `(text,text,boolean) -> boolean` Storage predicate by inserting one row in its own migration. |
+| `20261117001591` to `001599` | Shared | Reserved for shared review fixes, and for owner-approved shared items not decided here (§2.5). `001591_p5s_category_storage.sql`: registry `providers_private.category_object_checks` and a category clause in `i02_objects_guard` (ambulance review conflict 1). A category registers its `(text,text,boolean) -> boolean` Storage predicate by inserting one row in its own migration. `001592_p5s_in_schedule_fix.sql`: `booking_private.in_schedule` qualifies its `period` parameter so a blackout blocks only overlapping periods (lab review). |
 | `20261117001600` to `001699` | Doctor | D's `001610`, `001620`, `001630`, `001640` keep their numbers; `001600` to `001609` are now unused doctor space; `001650` to `001699` doctor fixes. `001630` shrinks to doctor-only reads, because ops commands are shared (§6). |
 | `20261117001700` to `001799` | Lab | L's `001700`, `001710`, `001720`; `001730` to `001799` lab fixes. |
 | `20261117001800` to `001899` | Ambulance | A's `001800`, `001810`, `001820`; `001830` to `001899` ambulance fixes. |
@@ -86,7 +86,7 @@ Authoring order: AGENTS.md forbids simultaneous migration authors, so the order 
 | Suite numbers | Owner | Notes |
 |---|---|---|
 | `001` to `016` | Built | The shared ticket edits these where §7.5 says so. No other ticket edits them. |
-| `020` to `029` | Shared | Proposed: `020_p5s_transitions`, `021_p5s_resource_busy`, `022_p5s_closeout_ops`, `023_p5s_gates`, `024_p5s_projections`, `025_p5s_reasons`, `026_p5s_replay`, `027_p5s_release`, `028_p5s_category_storage`. |
+| `020` to `029` | Shared | Proposed: `020_p5s_transitions`, `021_p5s_resource_busy`, `022_p5s_closeout_ops`, `023_p5s_gates`, `024_p5s_projections`, `025_p5s_reasons`, `026_p5s_replay`, `027_p5s_release`, `028_p5s_category_storage`, `029_p5s_in_schedule`. |
 | `030` to `039` | Doctor | Replaces D's `160` to `163`. |
 | `040` to `049` | Lab | Replaces L's `020` to `024`. |
 | `050` to `059` | Ambulance | Replaces A's `030` to `034`. |

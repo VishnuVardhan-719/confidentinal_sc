@@ -50,4 +50,4 @@ Nothing here is approved. Agents build with the **default** until the owner reco
 | R-3 | Friend's frontend (`feat/fe2-*`) is based on `develop` with fixture data, not `integ/all` | Merge backend to `develop` (R-2) so the friend can switch fixtures to real APIs using `docs/HANDOFF_FRONTEND.md` |
 | R-4 | One migration author at a time (AGENTS.md) | Keep for the shared block; after it merges, allow lab/ambulance/care/P01 authors in parallel (disjoint number blocks, DB lock serialises test runs) |
 | R-5 | Keep `.context/build_b01_forward.py` and `.context/prepare_b01_suites.py` in the repo? | Move to `tools/` or delete |
-| R-6 | No `supabase/seed.sql` | Add synthetic seed for local dev and demos |
+| R-6 | No `supabase/seed.sql` | Done 2026-11-20: opt-in synthetic demo seed `supabase/seeds/local_demo.sql` (not loaded by `db reset`; see HANDOFF_FRONTEND.md) |
