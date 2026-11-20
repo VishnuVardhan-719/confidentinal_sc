@@ -583,3 +583,36 @@ The ambulance case matters most: `src/modules/ambulance/view-models.ts` emits `d
 - Proposed client patch (fe-d): in the fixture projection and before `doctorReviewListSchema`, drop rows whose status is `withdrawn`; keep the strict schema for the rest.
 - Proposed UI change (fe-d, privacy): for `pending_moderation` and `rejected`, show counts only, not per-review cards with the exact submission date (`src/app/[locale]/doctor/reviews/page.tsx:100-133`), so a doctor cannot tie an unmoderated or rejected review to a recent home visit.
 - Guard: `tests/unit/peer-guards.test.ts` lists `withdrawn` in `DOCTOR_OMITS`; remove it there only if the doctor view starts showing withdrawn reviews deliberately.
+
+## 2026-11-20 R9-E2 identity e2e run (fe-b, branch feat/fe2-e)
+
+Context: `auth`, `navigation`, `onboarding`, `profile` and `admin-verification` were run in fixture mode at 390 and 1280. Blocks that were `describe.fixme` were un-fixme'd where their pages now exist. Tests that still reach routes not built on this branch are `test.fixme` and name the route. Nothing outside fe2-e owned files was edited.
+
+### R-E9E2-01 admin dashboard links to unbuilt review pages (for the lead to assign)
+- The admin overview tiles "Providers waiting for review" and "Coverage proposals" link to `/{locale}/admin/providers` and `/{locale}/admin/coverage`, which return the localized 404 on fe2-e. The FE06 pages are not built yet. The verification logic exists in `src/modules/verification` with the fixture adapter, and `tests/e2e/admin-verification.spec.ts` is written but `describe.fixme`.
+- Interim: `navigation.spec.ts` skips these two hrefs in the verifier walk (`NOT_BUILT_HREFS`). Once the pages exist, remove the set and the `describe.fixme` in `admin-verification.spec.ts`.
+- Request: assign FE06 `/admin/providers` (queue and detail) and `/admin/coverage`. Until then, choose whether the tiles stay as dead links or render without a link.
+
+### R-E9E2-02 lift fixmes at integration (fe-int2, fe2-int)
+Routes built on other branches, but not on fe2-e: `/patient/dashboard`, `/patient/bookings` (fe2-d), `/doctor/*` (fe2-d), `/doctors` (fe2-a, R-FE06-06). After merging, apply this patch on `feat/fe2-integration` and rerun the suites:
+```diff
+--- tests/e2e/auth.spec.ts
+-  const NOT_BUILT = new Set(["/en/patient/dashboard", "/en/doctor/onboarding", "/en/admin/providers", "/en/admin/coverage"]);
++  const NOT_BUILT = new Set(["/en/doctor/onboarding", "/en/admin/providers", "/en/admin/coverage"]); // keep the rows that are still unbuilt
+--- tests/e2e/navigation.spec.ts
+   const BLOCKED: Record<string, string> = {
+-    [ACCOUNTS.patientComplete]: "...",
+-    [ACCOUNTS.doctorActive]: "...",
+   };
+-  // fixme: shared public chrome links /en/doctors ... R-FE06-06.
+-  test.fixme("auth pages link to each other and to legal drafts", ...
++  test("auth pages link to each other and to legal drafts", ...
+```
+The sign-out test in `auth.spec.ts` now signs out from `/en/account/security` instead of the patient dashboard, and the expired-session test uses `/en/patient/profile` instead of `/en/patient/bookings`. Both keep their original intent, so no revert is needed.
+
+### R-E9E2-03 CONVENTIONS wording for form errors (owner: docs/frontend/CONVENTIONS.md)
+`CONVENTIONS.md` line 20 says "error summary, focus first invalid". The shared `ErrorSummary` (`src/components/shared/error-summary.tsx`) focuses the summary itself, so screen readers announce it, and each item links to and focuses its field. That is the GOV.UK pattern. The e2e test now asserts this behaviour. Proposed wording: "error summary takes focus; each item links to and focuses its field". Alternatively, change `ErrorSummary` if focus should move straight to the field (owner fe-a).
+
+### Fixed in fe2-e (no action needed)
+- Signup: the chosen role was lost when switching between the Email and Mobile tabs. Each tab had its own uncontrolled radio group. It is now one controlled value (`auth-flow.tsx`).
+- Operations workspaces (lab, ambulance, caretaker, admin) had no Sign out control. It is now in the top bar of `AreaShell` and in `OpsFrame` (the denied and choose-organization frames), at every width.

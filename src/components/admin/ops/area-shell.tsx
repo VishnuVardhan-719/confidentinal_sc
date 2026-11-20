@@ -1,5 +1,6 @@
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { AppShell, type ShellIcon, type ShellNavItem } from "@/components/shared/app-shell";
 import { MAIN_CONTENT_ID } from "@/components/shared/skip-link";
 import { BrandLogo } from "@/components/shared/brand-logo";
@@ -14,6 +15,7 @@ const stripLocale = (href: string) => href.replace(/^\/(en|te|hi)(?=\/|$)/, "") 
 /**
  * Area shell around AppShell. Nav items come from the route permission map, so
  * a role only sees what its guard allows; the guard still decides every request.
+ * Sign out sits in the top bar so it is reachable at every width (the sidebar is desktop only).
  */
 export function AreaShell({
   workspaceLabel,
@@ -33,6 +35,8 @@ export function AreaShell({
   children: ReactNode;
 }) {
   const tk = useKeyTranslator();
+  const locale = useLocale();
+  const ts = useTranslations("auth.session");
   const items: ShellNavItem[] = nav.map((n) => ({
     href: stripLocale(n.href),
     label: tk(n.labelKey),
@@ -40,7 +44,17 @@ export function AreaShell({
     primary: primary.includes(n.route),
   }));
   return (
-    <AppShell workspaceLabel={workspaceLabel} nav={items} topbarTitle={topbarTitle} topbarActions={topbarActions}>
+    <AppShell
+      workspaceLabel={workspaceLabel}
+      nav={items}
+      topbarTitle={topbarTitle}
+      topbarActions={
+        <>
+          {topbarActions}
+          <SignOutButton locale={locale} label={ts("signOut")} variant="quiet" />
+        </>
+      }
+    >
       {children}
     </AppShell>
   );
@@ -59,13 +73,20 @@ export function AreaWorkspaceSwitcher({ area, workspace, options }: { area: Prov
   );
 }
 
-/** Minimal page frame (no area nav) for denied and choose-organization states. */
+/**
+ * Minimal page frame (no area nav) for denied and choose-organization states. Both are signed in
+ * (signed-out users are redirected to login), so Sign out stays available: a pending or
+ * suspended provider would otherwise be stuck on the denied page.
+ */
 export function OpsFrame({ children }: { children: ReactNode }) {
+  const locale = useLocale();
+  const ts = useTranslations("auth.session");
   return (
     <>
       <header className="border-b border-border">
-        <div className="mx-auto flex h-16 max-w-content items-center px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-16 max-w-content items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
           <BrandLogo />
+          <SignOutButton locale={locale} label={ts("signOut")} variant="quiet" />
         </div>
       </header>
       <main id={MAIN_CONTENT_ID} tabIndex={-1} className="mx-auto grid w-full max-w-content flex-1 content-start gap-6 px-4 py-12 outline-none sm:px-6 lg:px-8">
