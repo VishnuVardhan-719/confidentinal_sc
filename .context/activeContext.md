@@ -1,5 +1,12 @@
 # Active SureCure Visit context
 
+## Coordinator checkpoint (2026-11-20, Claude)
+
+- `integ/all` HEAD `8590f23` (pushed). CI run #58 on `77971f2`: migrations apply, pgTAP 001-125 all pass. Doctor clinical DC03-DC14 (`feat/DC-clinical-core`, `feat/DC-extras`) merged; static gate after merge: typegen, tsc, eslint exit 0, Vitest 799 pass/2 skip, `next build --webpack` exit 0.
+- CI-forced fixes: 001720 lab CASE, 001591 oidvector index, 002000 alias (all three unapplied before, fixed in place); 002200 coverage review reads; 002210 B01 `patient()` scope check (was `a.scope=a.scope`); test fixtures in `test(db): CI round 1-5` commits.
+- Left: `tests/rls/run_*_concurrency.py` runners (not in CI), owner questions (DC handoffs, OWNER_DECISIONS_PENDING), UI U01. Merge `integ/all` -> `develop` waits for the owner (R-2).
+- Read CI without login: run page `main` text shows the error annotation from `scripts/ci-annotate.sh`.
+
 ## N01 checkpoint (2026-11-20)
 
 - Delivery gate: implementation/docs through `175b3f4b4aa03826f0a3fb0330bfd096b9038da4` are committed locally. Automatic approval review rejected the requested push because origin ownership/trust and exact-destination authorization were not established. Sanitized local config identifies `https://github.com/VishnuVardhan-719/confidentinal_sc`, branch `feat/N01-notifications`; no embedded URL credential. GitHub CLI unavailable, no ownership claim made. No push occurred. Obtain explicit approval for this exact destination before retrying; do not bypass the rejection. Later documentation-only commit records this gate; use current HEAD for final SHA.
