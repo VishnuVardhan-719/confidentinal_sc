@@ -242,8 +242,9 @@ def build():
     schema = base.call(["exec", base.CONTAINER, "pg_dump", "-U", "postgres", "-d", "postgres", "--schema-only"], timeout=180)
     sql('create database "' + TARGET + '";', db="postgres")
     sql(without_cron(schema), user="supabase_admin")
-    # Every application schema the migrations create, including P01 and the lab block.
-    reset = "drop schema public cascade;"
+    # Every block's <name>_private/<name>_worker schema (doctor, lab, payments, ...), as the shared runners do.
+    reset = "do $$ declare s text;begin for s in select nspname from pg_namespace where nspname like '%\\_private' or nspname like '%\\_worker' loop execute format('drop schema %I cascade',s);end loop;end $$;"
+    reset += "drop schema public cascade;"
     for name in ("payments_private", "payments_worker", "lab_private", "identity_private", "providers_private", "catalog_private", "booking_private"):
         reset += "drop schema if exists " + name + " cascade;"
     reset += "create schema public authorization postgres;grant usage on schema public to anon,authenticated,service_role;grant all on schema public to postgres,service_role;"
