@@ -8,6 +8,7 @@ export const FEATURE_FLAGS = [
   "automatedPayouts",
   "payAfter",
   "scheduledTransport",
+  "lab",
 ] as const;
 
 export type FeatureFlag = (typeof FEATURE_FLAGS)[number];
@@ -23,6 +24,7 @@ const ENV_NAMES: Record<FeatureFlag, string> = {
   payAfter: "FEATURE_PAY_AFTER",
   // P5 ambulance admission routes only (contract A10.1); never closeout, reads or ops.
   scheduledTransport: "FEATURE_SCHEDULED_TRANSPORT",
+  lab: "FEATURE_LAB",
 };
 
 /** Server-side only. Every flag is OFF unless its env var is exactly "true". */
