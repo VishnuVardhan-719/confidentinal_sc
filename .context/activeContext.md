@@ -30,16 +30,12 @@ Steering (money): 0500117 replaces paise/100 + toFixed(2) in the lab catalogue e
 Verification: tsc 0, eslint 0, vitest 705/705, build 0. Regression: mobile-390 lab 9+1skip, ambulance 9, caretaker 8, admin-ops 9, cms 6; desktop lab 9+1skip. Server on 3350 stopped.
 Open: proxy story check queries content on every /stories/<slug> request (cheap in fixture; http adapter has no CMS contract yet so all story slugs 404 there, same as the page). te/hi strings still unreviewed.
 
-## PAUSED STATE (TASK R9-E, fe-b, shutdown 2026-11-19)
-Done (committed on feat/fe2-e, not pushed):
-- 7d04148 R9-E step 1: http/gated content -> /stories and /stories/<slug> show "Stories are not available yet" (HTTP 200); proxy 404s only real unknown slugs (fixture mode). Unit tests: stories-gated.test.ts, loaders.test.ts. Smoke on an http-mode server (port 3351): /en/stories 200, /en|te/stories/some-story 200 with the gated copy, /en/no-such-page 404; axe serious/critical none and no overflow at 390/1280.
-- Regression so far: tsc 0, eslint 0 errors (1 warning, not yet inspected), vitest 709/709, next build 0 (built after all R9-E source edits).
-Half-done (NOT run yet): R9-E step 2 Playwright regression.
-Next steps:
-1. `npx eslint .` and look at the 1 warning; fix if ours.
-2. From C:/Users/Yashwanth/fe2-e: `./.context/rebuild.ps1` (stops port 3350 and does a clean build), then for each project in desktop-1280 and mobile-390 and each spec in public, lab, ambulance, caretaker, admin-ops, cms, role-isolation, emergency-e:
-   `./.context/run-e2e.ps1 <project> tests/e2e/<spec>.spec.ts` (fresh server per spec file).
-   Then `./.context/run-e2e.ps1 desktop-1280 tests/e2e/a11y-sweep-e.spec.ts` (sets 390/1280 itself).
-   Lab clinical variant: set FEATURE_CLINICAL=true for both the server and Playwright (see handoff-fe-b-e2.md).
-3. Fix any failures, commit, then write the R9-E TASK REPORT here and in chat.
-Scripts in .context/*.ps1 are scratch (untracked, do not commit). Ports: 3350 (fixture), 3351 (http smoke only). All servers stopped.
+## TASK R9-E: DONE (fe-b, resumed 2026-11-20)
+- Source: 7d04148. In http mode (content backend gated), /stories and /stories/<slug> render "Stories are not available yet" with HTTP 200; the proxy 404s unknown slugs only in fixture mode. Unit tests: stories-gated.test.ts, loaders.test.ts. http-mode smoke (port 3351, before shutdown): /en/stories 200, /en and /te /stories/some-story 200 with the gated copy, /en/no-such-page 404, axe serious/critical none, no overflow at 390/1280.
+- Regression on c99a4c7 (fixture build, port 3350, fresh server per spec):
+  - tsc 0; eslint 0 errors, 1 warning in untracked scratch .context/probe-overflow.mjs (not source, not committed); vitest 48 files, 709/709; next build 0 (clean .next).
+  - Playwright desktop-1280 / mobile-390: public 51+1 skip / 52; lab 9+1 skip / 9+1 skip; ambulance 9/9; caretaker 8/8; admin-ops 9/9; cms 6/6; role-isolation 9/9; emergency-e 3/3.
+  - Lab with FEATURE_CLINICAL=true (server + Playwright): 9 passed, 1 skipped on both projects. Skips are by design (public: mobile-only test; lab: clinical on/off pair).
+  - a11y-sweep-e (390 and 1280): 14/14 passed.
+- Not run: auth, navigation, onboarding, profile, admin-verification specs (owned by other agents, outside the R9-E list). The http-mode story pages were not re-smoked after resume (no source change since).
+- Open: http adapter has no CMS contract, so every story slug shows the gated page in http mode. te/hi strings still unreviewed. All servers stopped.
