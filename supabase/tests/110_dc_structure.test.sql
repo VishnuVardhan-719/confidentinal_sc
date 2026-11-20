@@ -108,4 +108,6 @@ select pg_temp.assert_true(clinical_private.allergy_conflicts(jsonb_set(pg_temp.
 select pg_temp.assert_true(clinical_private.rules()->'enums'->'form' ? 'tablet' and not (clinical_private.rules()->'enums'->'form' ? 'pill'),'form enum');
 select pg_temp.assert_true(exists(select 1 from pg_constraint where conrelid='clinical_private.prescription_items'::regclass and contype='c'
  and pg_get_constraintdef(oid) like '%rules()%route%'),'route CHECK reads rules()');
+\echo 1..1
+\echo ok 1 - 110_dc_structure
 rollback;

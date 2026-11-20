@@ -94,4 +94,6 @@ select pg_temp.dc_expect(format('select public.get_clinical_record(%L)',:'r1'),'
 reset role;
 select pg_temp.assert_true(clinical_private.latest_record_id(:'v1')=:'r2'::uuid,'latest_record_id');
 select pg_temp.assert_true(clinical_private.record_document(:'r2')=((:'doc'::jsonb)),'record_document equals the public read');
+\echo 1..1
+\echo ok 1 - 114_dc_patient_view
 rollback;

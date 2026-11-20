@@ -108,4 +108,6 @@ select pg_temp.assert_true(pg_temp.dc_audits('clinical.prescription_signed',:'r2
 
 -- 10. A visit can complete before or after signing; completion does not need a record.
 select pg_temp.assert_true(pg_temp.dc_complete(:'v1','W1')=9,'signed visit completes');
+\echo 1..1
+\echo ok 1 - 112_dc_sign
 rollback;

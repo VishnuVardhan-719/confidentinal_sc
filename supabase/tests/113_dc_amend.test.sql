@@ -91,4 +91,6 @@ alter table clinical_private.clinical_records enable trigger dc_record_immutable
 set local role authenticated;
 select pg_temp.dc_as('W1');
 select pg_temp.dc_expect(format('select public.amend_clinical_record(%L,%L::jsonb,''x'',true,true,gen_random_uuid())',:'r3',:'fixed'),'42501','forbidden','amendment window closed');
+\echo 1..1
+\echo ok 1 - 113_dc_amend
 rollback;

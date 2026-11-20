@@ -148,4 +148,6 @@ update public.organization_members set status='disabled' where profile_id=pg_tem
 set local role authenticated;
 select pg_temp.dc_as('W1');
 select pg_temp.dc_expect(format('select public.save_clinical_draft(%L,4,''{}''::jsonb,gen_random_uuid())',:'v1'),'42501','forbidden','disabled membership');
+\echo 1..1
+\echo ok 1 - 111_dc_draft
 rollback;

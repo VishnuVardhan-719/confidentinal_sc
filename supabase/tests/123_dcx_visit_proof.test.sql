@@ -12,7 +12,9 @@ select pg_temp.dcx_complete((:'ids'::uuid[])[1]);
 select pg_temp.dcx_complete((:'ids'::uuid[])[2]);
 -- Distinct dates for B1 and B2, so the check proves which booking a token belongs to.
 reset role;
-select pg_temp.p5_shift(current_setting('dcx.b2')::uuid,(select start_at-interval '3 days' from public.bookings where id=current_setting('dcx.b2')::uuid));
+-- Read the new start first: p5_shift alters bookings, which a subquery in the same statement holds open.
+select start_at-interval '3 days' as b2_start from public.bookings where id=current_setting('dcx.b2')::uuid \gset
+select pg_temp.p5_shift(current_setting('dcx.b2')::uuid,:'b2_start');
 
 do $$ declare b1 uuid:=current_setting('dcx.b1')::uuid; b2 uuid:=current_setting('dcx.b2')::uuid; b3 uuid:=current_setting('dcx.b3')::uuid;
  j jsonb; t1 text; t2 text; id1 uuid; k uuid:=gen_random_uuid(); u uuid; d1 text; d2 text; begin
