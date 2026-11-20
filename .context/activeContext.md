@@ -204,3 +204,8 @@ Open: sitemap.xml (fe-a) does not list /lab-tests yet; te/hi labDirectory string
 - Second adversarial pass on int fec9da1 (incl. d 0e09eef), e d97e0a5, p 7f9fd28 (exports deleted). New: C12-1 LOW 3 rupee parsers differ; C12-2 = finding 3 (5 formatters); C12-3 LOW consultation photos [] fallback (fe-d); C12-4 LOW my 4 pages addresses [] fallback -> FIXED here; C12-5 INFO hi errorSummary (unreachable 0). Clean: analytics/console/external, gating 72/72 + no admin signup, fixture env gated + no client env reads, dialogs labelled, i18n parity/no English fallback.
 - Status refresh: 2, 4 (except C12-5), E2, R6-1, C3-2, P1 fixed at int; P2/P3 fixed on fe2-p pending; 1b/F8-2/5/C12-4 on fe2-c pending; open 3, D1-D4, R6-2.
 - tests/unit/r9c12-guards.test.ts (8). tsc 0, lint 0, vitest 70 files 1030 + 4 skipped.
+
+## TASK REPORT: R9-C13 (fe-q, feat/fe2-c)
+- docs/frontend/BACKEND_CONNECT_PLAN.md: read-only compare of int fec9da1 http adapters vs API_CONTRACTS + local PR branches I01(#1) I02(#2) C01(#3) B01(#4); #5 not local -> UNKNOWN (friend-backend / S01 candidates).
+- Key: bookings + admin send no Bearer (401) -> MISMATCH; auth/onboarding(provider)/verification/providers/doctor MATCH; /api/onboarding/patient, /api/consultations/*, collection, proof called but no backend route; reschedule/slots/addresses shapes differ (gated now).
+- tests/unit/http-routes-contract.test.ts (6; red-checked). Scripts .context/route-compare.cjs. tsc 0 lint 0 vitest 71 files 1036 + 4 skipped.
