@@ -219,3 +219,6 @@ Known limitations:
 - (2) Owned provider pages = /admin/reviews and /admin/reviews/log. Views extracted to _components/moderation-views.tsx; adapter forbidden now renders AccessDenied. tests/unit/modules-patient/moderation-states.test.ts (13): populated, empty, paged, gated, denied, error, notices, te, plus admin loading.tsx and error.tsx.
 - (3) axe + keyboard (ring, on screen, not covered) at 390/1280 en/te: admin pages and doctor dashboard/requests/detail on fe2-p builds = 0 findings. Lab/ambulance/caretaker not verifiable on fe2-p (no session; temp webpack export lacked Tailwind utilities) -> R-FE-P-R9-7. New e2e "keyboard only (en, te)" in admin-review-moderation.spec.ts.
 - (4) tsc 0, eslint 0, vitest 71 files / 1111, build 0, fep-e2e-all on 136 / off 88 / guest 14 (0 failed).
+## R9-P6 (fe-p) - in progress 2026-11-20
+- (1) done: NotificationsBody + ReminderBody extracted; tests/unit/modules-patient/inbox-states.test.ts (10, en/te/hi). Only owned provider-area pages are admin moderation (R9-P5).
+- Next: (2) te/hi 390 overflow probe on notifications/reminders/messages; (3) dead-code DELETE-CANDIDATES in REQUESTS; doc fix: NOTIFICATIONS.md says malformed rows dropped, actually whole list errors.
