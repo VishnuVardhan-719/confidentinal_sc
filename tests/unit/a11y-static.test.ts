@@ -119,7 +119,7 @@ describe("public and shared forms: every control is labelled", () => {
     submit: "Show providers",
     submitting: "Opening",
     noSignIn: "No sign-in",
-    errors: { pinRequired: "a", pinInvalid: "b", serviceRequired: "c" },
+    errors: { pinRequired: "a", pinInvalid: "b", serviceRequired: "c", offline: "d", invalidLink: "e" },
   };
   const searchLabels = {
     query: { label: "Doctor, speciality or symptom", loading: "l", empty: "e", error: "x", unavailable: "u", count: "#" },

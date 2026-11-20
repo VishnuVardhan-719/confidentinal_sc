@@ -73,7 +73,9 @@
       "errors": {
         "pinRequired": "Enter your 6-digit PIN code",
         "pinInvalid": "A PIN code has 6 digits and does not start with 0",
-        "serviceRequired": "Choose a service"
+        "serviceRequired": "Choose a service",
+        "offline": "You are offline. Your PIN and choice are kept; try again once you are connected.",
+        "invalidLink": "That search link could not be used. Enter a 6-digit PIN code and choose a service."
       }
     },
     "services": {

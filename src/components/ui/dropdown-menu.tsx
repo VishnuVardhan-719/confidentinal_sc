@@ -4,7 +4,14 @@ import * as Menu from "@radix-ui/react-dropdown-menu";
 import type { ComponentPropsWithRef } from "react";
 import { cn } from "./cn";
 
-export const DropdownMenu = Menu.Root;
+/**
+ * Non-modal by default: a modal Radix menu sets aria-hidden on the rest of the page while its links
+ * stay focusable (axe aria-hidden-focus). Non-modal follows the APG menu-button pattern: Escape or
+ * Tab closes the menu and focus returns to the trigger. Pass modal explicitly to override.
+ */
+export function DropdownMenu({ modal = false, ...props }: ComponentPropsWithRef<typeof Menu.Root>) {
+  return <Menu.Root modal={modal} {...props} />;
+}
 export const DropdownMenuTrigger = Menu.Trigger;
 export const DropdownMenuGroup = Menu.Group;
 
@@ -30,6 +37,8 @@ export function DropdownMenuItem({ className, ...props }: ComponentPropsWithRef<
       className={cn(
         "flex min-h-target cursor-pointer items-center gap-3 rounded-sm px-3 py-2 text-base outline-none select-none",
         "data-highlighted:bg-mist data-highlighted:text-forest data-disabled:text-disabled-text",
+        // Keyboard focus needs more than a pale background change (WCAG 2.4.7 / 1.4.11).
+        "focus-visible:outline-3 focus-visible:outline-solid focus-visible:-outline-offset-3 focus-visible:outline-focus",
         className,
       )}
       {...props}

@@ -14,6 +14,12 @@ import { SERVICES, type ServiceKey } from "./routes";
 
 const noopSubscribe = () => () => {};
 
+/** Whole-form problems: no connection when submitting, or a finder link (/find) that could not be used. */
+export type FinderFormError = "offline" | "invalidLink";
+
+/** Query flag /{locale}/find sets when it sends someone back with input it could not use. */
+export const FINDER_INVALID_FLAG = "finder";
+
 export type FinderLabels = {
   pinLabel: string;
   pinHint: string;
@@ -21,7 +27,7 @@ export type FinderLabels = {
   submit: string;
   submitting: string;
   noSignIn: string;
-  errors: Record<"pinRequired" | "pinInvalid" | "serviceRequired", string>;
+  errors: Record<"pinRequired" | "pinInvalid" | "serviceRequired" | FinderFormError, string>;
 };
 
 /**
@@ -36,6 +42,7 @@ export function ServiceFinder({ labels, idPrefix = "finder" }: { labels: FinderL
   const [pin, setPin] = useState("");
   const [service, setService] = useState<ServiceKey | "">("");
   const [errors, setErrors] = useState<FinderErrors>({});
+  const [formError, setFormError] = useState<FinderFormError | null>(null);
 
   // A PIN typed or a service chosen while JS was still loading is in the DOM, not in state: adopt
   // it at hydration so React does not clear it (REQUESTS R-FE-D-41).
@@ -47,6 +54,13 @@ export function ServiceFinder({ labels, idPrefix = "finder" }: { labels: FinderL
     const earlyService = SERVICES.find((s) => s.key === fd.get("service"))?.key;
     if (earlyPin) setPin(earlyPin);
     if (earlyService) setService(earlyService);
+    // Sent back by /find with input it could not use: say so once, then drop the flag from the URL.
+    const url = new URL(window.location.href);
+    if (url.searchParams.get(FINDER_INVALID_FLAG) === "invalid") {
+      setFormError("invalidLink");
+      url.searchParams.delete(FINDER_INVALID_FLAG);
+      window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+    }
   });
 
   // Progressive enhancement: native validation on the server render, inline messages once hydrated.
@@ -67,6 +81,12 @@ export function ServiceFinder({ labels, idPrefix = "finder" }: { labels: FinderL
       return;
     }
     setErrors({});
+    // Offline: keep everything as typed and say why, instead of a failed navigation to a browser error page.
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      setFormError("offline");
+      return;
+    }
+    setFormError(null);
     startTransition(() => router.push(result.href));
   }
 
@@ -162,6 +182,13 @@ export function ServiceFinder({ labels, idPrefix = "finder" }: { labels: FinderL
           })}
         </div>
       </fieldset>
+
+      {formError ? (
+        <p id={`${idPrefix}-form-error`} role="alert" className="flex items-start gap-1.5 text-sm font-medium text-danger">
+          <CircleAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
+          {labels.errors[formError]}
+        </p>
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
         <Button type="submit" size="lg" disabled={pending} aria-busy={pending}>
