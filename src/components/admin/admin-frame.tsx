@@ -17,6 +17,7 @@ const ICONS: Record<string, ShellIcon> = {
   users: "users",
   payments: "wallet",
   support: "support",
+  reviews: "star",
   cms: "file",
   audit: "clipboard",
   settings: "settings",

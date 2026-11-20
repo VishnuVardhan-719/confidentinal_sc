@@ -1,10 +1,10 @@
 import { getAdapterMode } from "@/lib/api/mode";
 import type { FixtureActor } from "@/fixtures/clinical/world";
-import type { ReviewsApi } from "./api";
-import { createReviewsFixtureApi } from "./fixture";
-import { createReviewsHttpApi } from "./http";
+import type { ReviewModerationApi, ReviewsApi } from "./api";
+import { createReviewModerationFixtureApi, createReviewsFixtureApi } from "./fixture";
+import { createReviewModerationHttpApi, createReviewsHttpApi } from "./http";
 
-export type { ReviewsApi } from "./api";
+export type { ReviewModerationApi, ReviewsApi } from "./api";
 export * from "./types";
 export * from "./schemas";
 export * from "./status";
@@ -19,4 +19,13 @@ export function getReviewsApi(env: Env = process.env, actor: FixtureActor | null
     ownerId: actor?.role === "patient" ? actor.patientId : null,
     scenario: env.FIXTURE_REVIEWS_SCENARIO === "empty" ? "empty" : "seeded",
   });
+}
+
+/**
+ * Moderation API. `moderator` must come from the server-side admin principal (capability
+ * `review:moderate`); the adapter refuses everyone else, and the backend re-checks.
+ */
+export function getReviewModerationApi(env: Env = process.env, moderator = false): ReviewModerationApi {
+  if (getAdapterMode(env) !== "fixture") return createReviewModerationHttpApi();
+  return createReviewModerationFixtureApi({ env, moderator });
 }

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RATINGS, REVIEW_ISSUES, REVIEW_STATUSES, REVIEW_TEXT_MAX, REVIEW_TEXT_MIN, type Review, type ReviewField, type ReviewInput, type ReviewIssue } from "./types";
+import { MODERATION_FILTERS, RATINGS, REJECTION_REASONS, REVIEW_ISSUES, REVIEW_STATUSES, REVIEW_TEXT_MAX, REVIEW_TEXT_MIN, type ModerationDecision, type ModerationFilter, type Review, type ReviewField, type ReviewInput, type ReviewIssue } from "./types";
 
 // Contact details and links in a public review are refused (privacy and spam); moderation also checks.
 const CONTACT = /(https?:\/\/|www\.|@[a-z0-9-]+\.[a-z]{2,}|\b\d[\d\s-]{8,}\d\b)/i;
@@ -44,4 +44,18 @@ export const reviewSchema = z.strictObject({
   text: z.string().min(1).max(REVIEW_TEXT_MAX),
   status: z.enum(REVIEW_STATUSES),
   submittedAt: z.iso.datetime({ offset: true }),
+  rejectionReason: z.enum(REJECTION_REASONS).nullable(),
+  version: z.number().int().positive(),
 }) as unknown as z.ZodType<Review>;
+
+export const versionSchema = z.number().int().positive();
+
+export const moderationDecisionSchema: z.ZodType<ModerationDecision> = z.discriminatedUnion("decision", [
+  z.strictObject({ decision: z.literal("publish") }),
+  z.strictObject({ decision: z.literal("reject"), reason: z.enum(REJECTION_REASONS) }),
+]);
+
+/** URL filter for the moderation queue; anything unknown falls back to the pending queue. */
+export function parseModerationFilter(value: unknown): ModerationFilter {
+  return (MODERATION_FILTERS as readonly unknown[]).includes(value) ? (value as ModerationFilter) : "pending_moderation";
+}

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Agent scratch helpers and session state (.context), never shipped app code.
+    ".context/**",
   ]),
 ]);
 

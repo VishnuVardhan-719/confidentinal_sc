@@ -543,3 +543,25 @@ export function Input({ disabled, ...props }: ComponentPropsWithRef<"input">) {
 // Same for Textarea, and add a shared <Select> wrapper (native <select> elements are used directly today).
 ```
 Alternative where a form must work before hydration: make it uncontrolled (`defaultValue` + `FormData` on submit), like the /verify form. Avoid `redirect()` for no-JS GET forms under `loading.tsx`; use a route handler.
+
+## 2026-11-19 R8-P2 review edit/withdraw and moderation (fe-p, feat/fe2-p)
+
+### R-FE-P-R7-3 (amended) Patient review edit and withdraw
+- `PATCH /api/patient/reviews/:bookingId` body `{ rating, text, expectedVersion }`. The review returns to `pending_moderation` with `rejectionReason: null`. Errors: `409` on a version mismatch or a withdrawn review; `422` uses the same field codes as create.
+- `POST /api/patient/reviews/:bookingId/withdraw` body `{ expectedVersion }`. Sets `withdrawn`, which is final; the booking cannot be reviewed again.
+- Review DTO gains `rejectionReason (personal_info|not_about_service|offensive|spam|null)` and `version`.
+
+### R-FE-P-R8-1 Review moderation contract and capability (owner: backend + admin)
+- New proposed capability `review:moderate` (added to `PROPOSED_ADMIN_CAPABILITIES`) and admin route `/admin/reviews`.
+- `GET /api/admin/reviews?status=pending_moderation|published|rejected` -> items `{ reviewId, bookingReference, category, providerDisplayName, rating, text, status, submittedAt, rejectionReason, version }`. Items carry no patient identity.
+- `POST /api/admin/reviews/:reviewId/decision` body `{ decision: "publish" } | { decision: "reject", reason }` plus `expectedVersion`. Only `pending_moderation` reviews can be decided; anything else returns `409`. Every decision needs an audit entry.
+- Fixture-only moderator (needs lead review): `src/modules/admin/session.ts` returns a synthetic admin holding only `review:moderate`. It applies when `FIXTURE_ADMIN_SESSION=moderator` (server env) is set in fixture mode, and is refused in production. Remove it when the auth module is adopted.
+- The http adapters (`createReviewModerationHttpApi`, patient edit/withdraw) return `gated`.
+### R-FE01-13 (to lead) — PHASE3-A gaps in src/app (outside fe-a's edit scope)
+- Add `src/app/[locale]/(public)/stories/[slug]/loading.tsx` with `export { PublicPageLoading as default } from "@/components/public/page-loading";` (the only public route rendered at request time; the others are prerendered).
+- `stories/[slug]/page.tsx` "unavailable" branch renders no `<h1>`; wrap it in `<PublicPageIntro title={t("unavailableTitle")}>` or call `notFound()` and add a key, then update `tests/unit/a11y-static.test.ts`.
+- Route-link check (`tests/unit/route-links.test.ts`): 0 dead links; 73 pending routes owned by fe2-b (login/signup), fe2-c (doctors, lab-tests, ambulances, caretakers, patient), fe2-d (doctor) and fe2-e (lab, ambulance, caretaker, admin). Remove entries from its `PENDING` map as each branch merges.
+
+### R-FE01-14 (to lead) — browser e2e un-deferred and passing on feat/fe2-a
+R-FE01-12 is resolved: with the ban lifted, all fe2-a browser specs ran against `next start` (port 3330, --workers=1):
+`public.spec.ts` + `public-nav.spec.ts` 115 passed / 1 skipped (mobile-only test on desktop); `a11y.spec.ts` 16 passed / 16 skipped (runs once on the desktop project; covers 360/768/1024/1440 x en/te/hi, 200%/400% zoom, keyboard focus, headers); `perf.spec.ts` (E2E_PERF=1, mobile-390) 4 passed. Fix made during the run: Telugu/Hindi header overflowed by 12px at 1280 -> emergency link and language trigger are compact between xl and 2xl, account buttons stay on one line.

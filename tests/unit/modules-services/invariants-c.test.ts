@@ -35,7 +35,9 @@ const OWN = /^(app\/\[locale\]\/patient\/(book|lab-tests|caretakers|ambulance)|a
 
 describe("no private data in browser storage or URLs", () => {
   it("no source file reads or writes localStorage or sessionStorage", () => {
-    expect(ALL.filter(f => /\b(localStorage|sessionStorage)\b/.test(f.text)).map(f => f.file)).toEqual([]);
+    // Code only: comments that promise "never localStorage" are fine.
+    const code = (text: string) => text.replace(/\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gm, "");
+    expect(ALL.filter(f => /\b(localStorage|sessionStorage)\b/.test(code(f.text))).map(f => f.file)).toEqual([]);
   });
 
   it("fe-c links and redirects carry only public ids and filters in the query string", () => {
@@ -117,7 +119,8 @@ describe("server-side session checks on every fe-c patient route and action", ()
   it("every owned patient page and server-action file checks the patient session on the server", () => {
     const files = ALL.filter(f => /^app\/\[locale\]\/patient\/(book|lab-tests|caretakers|ambulance)\/.*(page|actions)\.tsx?$/.test(f.file));
     expect(files.length).toBeGreaterThanOrEqual(14);
-    const missing = files.filter(f => !/getPatientSession\(\)/.test(f.text) || /^"use client"/.test(f.text)).map(f => f.file);
+    // Pages use the real guard (requirePatientSession, fe-int2 codemod); server actions re-resolve getPatientSession().
+    const missing = files.filter(f => !/(getPatientSession\(\)|requirePatientSession\()/.test(f.text) || /^"use client"/.test(f.text)).map(f => f.file);
     expect(missing).toEqual([]);
   });
 

@@ -38,3 +38,4 @@ These keys in `src/messages/te/patient.json` and `src/messages/hi/patient.json` 
 - te/hi machine-written: every key under `patientAccount.saved.*`.
 - te/hi machine-written: every key under `patientAccount.reviews.*` (including the star labels `form.ratingLabels.*`).
 - te/hi machine-written: every key under `patientAccount.reminders.*`.
+- te/hi machine-written: new keys under `patientAccount.reviews.*` (edit, withdraw, rejection reasons) and every key under `admin.reviews.*` plus `admin.nav.reviews`.

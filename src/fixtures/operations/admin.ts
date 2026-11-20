@@ -30,7 +30,7 @@ export const adminPrincipals = {
     mfaVerified: true,
     grants: [
       g("provider:verify"), g("coverage:verify"), g("security:audit"), g("membership:admin"), g("booking:operate"),
-      g("payment:read"), g("support:operate"), g("settings:read"), g("content:edit"), g("content:publish"),
+      g("payment:read"), g("support:operate"), g("settings:read"), g("content:edit"), g("content:publish"), g("review:moderate"),
     ],
   },
   /** Holds provider:verify but is also a manager of fx-prov-lab-2: must never approve it. */

@@ -118,7 +118,7 @@ describe("caretaker fixture adapter branches", () => {
 describe("admin rules and capability branches", () => {
   it("capability helpers", () => {
     expect(isAdminCapability(42)).toBe(false);
-    expect(globalCapabilities(adminPrincipals.superAdmin, NOW)).toHaveLength(10);
+    expect(globalCapabilities(adminPrincipals.superAdmin, NOW)).toHaveLength(11);
     expect(globalCapabilities(adminPrincipals.orgAuditor, NOW)).toEqual([]);
   });
 
