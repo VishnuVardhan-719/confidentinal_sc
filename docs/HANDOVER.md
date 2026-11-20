@@ -1,3 +1,5 @@
+> **Superseded (2026-11-20):** start at [`START_HERE.md`](../START_HERE.md) on branch `integ/all`. This file is kept for history; where it disagrees with `START_HERE.md`, that page wins.
+
 # Current project handover
 
 **Pack state:** Master execution instructions and source specifications prepared and verified (v2.2).  
