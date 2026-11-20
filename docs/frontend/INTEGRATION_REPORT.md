@@ -203,3 +203,50 @@ Final gate on 8737d81:
 - Integration smoke on a fresh :3320 server: **102 passed, 0 failed** (mobile-390 + desktop-1280). This adds `/en/admin/reviews/log`. The run took 18.4 min because the machine was loaded by other agents' servers.
 
 The per-branch e2e specs in 6.4 and the new fe2-c/d/e specs were not rerun on this head.
+
+### 6.7 INT4 (2026-11-20): merge of the newest heads, full rerun
+
+**Merges.** Conflicts were resolved toward the owner's version. REQUESTS.md kept both sides; `.context` kept integration's.
+
+| Branch | Tip | Merge commit | Conflicts |
+|---|---|---|---|
+| feat/fe2-c | 7e41856 | 9208e6a | `.context` only |
+| feat/fe2-d | 0e09eef | 39ec1a4 | `phone-input.tsx` (shared control; both sides are fe-a's): integration's +91 `aria-describedby` and fe2-d's pre-hydration early-input ref (R-FE-D-41) are combined |
+| feat/fe2-e | 0816fb5 | 000ac5e | docs only |
+| feat/fe2-p | f977bc0 | 2954551 | `admin-frame.tsx` `AdminRouteGate`: fe-p's `adminPagePath(locale, route, subPath)` is passed into integration's real-guard `adminPrincipal(path)` |
+| feat/fe2-p | b796bb2 | 109d01d | docs only |
+| feat/fe2-e | 6cec6a0 | fec9da1 | `auth-flow.tsx` and `hi/auth.json` take fe-b's side (signup role radios disabled until hydrated; Hindi `=0` case) |
+
+Branch heads that moved after these merges and are **not** in this run: c bdf0c54, d ff54236, e 8e3ccf6, p 7f9fd28.
+
+**Gate on fec9da1:**
+- `tsc --noEmit` exit 0.
+- `npm run lint` exit 0.
+- `vitest run`: **112 files (110 passed, 2 failed), 1545 tests (1540 passed, 5 failed)**.
+- `tests/unit/peer-guards.test.ts`: **4/4 ran and passed, 0 skipped**. Its three `describe.skipIf` blocks (review statuses, doctor review projection, proof-code redirects) now find their files.
+- `npm run build` exit 0, **529 pages**.
+
+**The 5 unit failures are owner items.** They were not edited here.
+- **Owner: fe-p.** `tests/unit/modules-operations/admin-return-path.test.ts` (1 test) and `tests/unit/modules-operations/provider-route-gates.test.ts` (4 tests). Both scan pages statically for `<AdminRouteGate>`, `<LabRouteGate>`, `<AmbulanceRouteGate>`, `<CaretakerRouteGate>` or `guardDoctorPage(...)`. The pages they flag are gated by fe-b's real guard `requireRole(<role>, { locale, path })`, which these scans do not recognize:
+  - `admin/coverage/page.tsx`
+  - `{lab,ambulance,caretaker,doctor}/onboarding/page.tsx`
+- **Suggested fix (fe-p):** accept `requireRole(` with an own-path `path:` as a page gate. These are false positives on the integrated tree, not unguarded pages.
+
+**Browser runs.** Each spec ran on a fresh `next start` on :3320 per viewport project, with `APP_ENV=test` and the fixture adapter. axe ran wherever the specs run it.
+
+| Spec | 390 px | 1280 px | Notes |
+|---|---|---|---|
+| integration-smoke | 102 passed in total across both viewports (4.1 min) | (included) | 0 failed |
+| a11y-sweep (fe2-d, ws projects) | 78/78 | 78/78 | |
+| hydration-race-e (fe2-e) | 3/3 | 3/3 | |
+| hydration-race (fe2-d, ws projects) | 2 passed, 3 failed | 2 passed, 3 failed | Owner: fe-a/fe2-d. The spec uses plain `test` without sign-in (written for fe2-d's per-actor `FIXTURE_DOCTOR_SESSION` servers). On integration the doctor pages (collection form, consultation notes, prescription draft) go to login, so the controls are not found. Needs `wsTest` / `storageFor(multi.role)`. |
+| a11y-sweep-c (fe2-c) | 20 passed, 22 failed | 20 passed, 22 failed | Owner: fe-q. Every failure is a patient route (book, lab, care, ambulance, te/hi lists, status pages, form errors). The spec has no sign-in (it relied on `FIXTURE_PATIENT_SESSION`), so it lands on login. The public routes pass. Needs `patientTest` from `support/fixture-session.ts`. |
+| onboarding (fe-b) | 6 passed, 1 failed, 2 skipped, 7 did not run (serial) | same | See the notes below this table. |
+| admin-verification (fe-b) | 1 failed, 9 did not run (serial) | same | Signed in as verifier@, the first test fails axe `landmark-main-is-top-level` on `/en/admin/providers`, for the same reason as onboarding. The other 9 tests did not run because the describe is serial. |
+
+Onboarding notes:
+- **Failure (owner: fe-b), a real defect:** axe reports `landmark-main-is-top-level` on `/en/doctor/onboarding`. `OnboardingLayout` → `AccountFrame` renders a second `<main id="main-content">` inside the role shell's `<main id="main-content">`, so there is a nested main landmark and a duplicate id. This is the known R-FE07-04 item ("AccountFrame should drop under role shells").
+- **Skipped (2 per viewport):** two `test.fixme` whose reasons are out of date on integration. "ordinary booking is blocked until the questionnaire is complete (booking page is fe-c)" and "pending review: setup dashboard and operational pages redirect (lab pages are fe-e)" both now have their pages, so fe-b can try enabling them.
+- **Did not run (7 per viewport):** the describe is serial, so the tests after the failure did not run.
+
+Not rerun in INT4: the per-branch specs from 6.4, `a11y-sweep-p`, and `admin-review-moderation`. The last one still expects fe-p's dropped `FIXTURE_ADMIN_SESSION` mode.
