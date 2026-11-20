@@ -189,3 +189,7 @@ Open: sitemap.xml (fe-a) does not list /lab-tests yet; te/hi labDirectory string
 ## TASK REPORT: R9-C9 (fe-q, feat/fe2-c)
 - Fixed 1b (service-request cancel policy from cancellationTermsFor; real -> unavailable), F8-2 (GateNotice contract_pending in 4 directory files; lab gated action "Find a doctor"), 5 partial (structuredSearchFor: exact symptom/speciality label -> taxonomy key; rest stays q, documented).
 - tests/unit/modules-services/r9c9-fixes.test.ts 11 (red on pre-fix: 10 fail). e2e fixture build on 3367 (stopped): doctor-search+service-requests+lab-directory 41 pass, 3 skip (twice; first run exit 1 unexplained). tsc 0, lint 0, vitest 69 files 1023 + 3 skipped.
+
+## TASK REPORT: R9-C10 (fe-q, feat/fe2-c)
+- docs/frontend/HANDOVER.md from feat/fe2-integration 2954551 (export deleted) + read-only backend task branches I01/I02/C01/B01: mode rules, env vars (scan of src), module map/owners, flags + per-module wired/gated table with backend route existence, tests, open decisions, connect checklist. Script .context/adapter-map.cjs.
+- Notable facts: clinical/records adapters call /api/consultations/*, /collection, /proof that no backend branch implements; B01 has reschedule, availability, patient/addresses POST but frontend adapters still gated; pharmacy/gps flags unused.
