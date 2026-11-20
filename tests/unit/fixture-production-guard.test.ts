@@ -9,7 +9,7 @@ import { assertFixtureAllowed } from "@/fixtures/clinical/world";
 import { assertFixtureMode } from "@/lib/api/fixture";
 import { fixtureRefusal, getAdapterMode, isFixtureMode } from "@/lib/api/mode";
 import { getDoctorApi } from "@/modules/doctor";
-import { getPatientSession } from "@/modules/patient-dashboard/session";
+import { assertFixtureAllowed as assertAuthFixtureAllowed } from "@/modules/auth/fixture-guard";
 import { getRecordsApi } from "@/modules/records";
 
 const FIXTURE = { FRONTEND_ADAPTER: "fixture" };
@@ -54,7 +54,8 @@ describe("fixture production guard (finding 2)", () => {
     expect(() => assertFixtureMode(env)).toThrow();
     expect(() => getDoctorApi(env)).toThrow();
     expect(() => getRecordsApi(env)).toThrow();
-    expect(() => getPatientSession({ ...env, FIXTURE_PATIENT_SESSION: "self" })).toThrow();
+    // Integration: the fe-b auth fixture guard uses the same shared check (R-FE-D-42).
+    expect(() => assertAuthFixtureAllowed(env)).toThrow();
   });
 
   it.each(REFUSED.map((e) => [label(e), e] as const))("refuses when the real env is %s, whatever is injected", (_, e) => {
@@ -64,6 +65,7 @@ describe("fixture production guard (finding 2)", () => {
     expect(() => getAdapterMode(lifted)).toThrow();
     expect(() => getAdapterMode({ ...FIXTURE })).toThrow();
     expect(() => assertFixtureAllowed(lifted)).toThrow();
+    expect(() => assertAuthFixtureAllowed(lifted)).toThrow();
     expect(() => assertFixtureMode(lifted)).toThrow();
   });
 
@@ -72,18 +74,20 @@ describe("fixture production guard (finding 2)", () => {
     expect(fixtureRefusal({ ...FIXTURE, ...e })).toBeNull();
     expect(getAdapterMode({ ...FIXTURE, ...e })).toBe("fixture");
     expect(() => assertFixtureAllowed(e)).not.toThrow();
+    expect(() => assertAuthFixtureAllowed(e)).not.toThrow();
   });
 
   it("http mode never consults the guard and never throws", () => {
     stubRealEnv({ APP_ENV: "production", NODE_ENV: "production" });
     expect(getAdapterMode({ APP_ENV: "production" })).toBe("http");
     expect(getAdapterMode({})).toBe("http");
-    expect(getPatientSession({ FRONTEND_ADAPTER: "http" })).toEqual({ status: "unauthenticated" });
+    expect(isFixtureMode({ FRONTEND_ADAPTER: "http", APP_ENV: "production" })).toBe(false);
   });
 
   it("the e2e workspace servers set an allowlisted APP_ENV (next start runs with NODE_ENV=production)", async () => {
     const { wsEnv } = await import("../e2e/workspace-servers");
-    for (const s of ["assigned", "other", "anon", "gateOff"] as const) {
+    // Integration: one fixture server per run (clinical on, or the gate-off pass).
+    for (const s of ["clinical", "gateOff"] as const) {
       const env: Record<string, string | undefined> = { NODE_ENV: "production", ...wsEnv(s) };
       expect(env.APP_ENV, s).toBe("test");
       expect(fixtureRefusal(env), s).toBeNull();

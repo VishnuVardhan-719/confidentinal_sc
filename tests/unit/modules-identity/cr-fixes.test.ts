@@ -22,7 +22,7 @@ afterEach(() => {
 describe("fixture guard", () => {
   it("process APP_ENV=production wins over an injected env without APP_ENV", () => {
     vi.stubEnv("APP_ENV", "production");
-    expect(() => assertFixtureAllowed({})).toThrow(/not allowed/);
+    expect(() => assertFixtureAllowed({})).toThrow(/not allowed|fixtures are disabled/);
     expect(() => createFixtureAuthApi({ env: { FRONTEND_ADAPTER: "fixture" } })).toThrow();
   });
 });

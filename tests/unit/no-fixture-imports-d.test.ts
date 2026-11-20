@@ -45,8 +45,9 @@ describe("no fixture value imports in src/app and src/components (R-FE-Q-R9C3-2)
 
   it("the patient dashboard takes its fixture actor from getPatientSession()", () => {
     const page = readFileSync(join(ROOT, "src/app/[locale]/patient/dashboard/page.tsx"), "utf8");
-    expect(page).toMatch(/getPatientSession\(\)/);
-    expect(page).toMatch(/fixtureActor:\s*session\.fixtureActor/);
+    // Integration pages use the real guard wrapper requirePatientSession (same session helper module).
+    expect(page).toMatch(/getPatientSession\(\)|requirePatientSession\(/);
+    expect(page).toMatch(/fixtureActor(:|\s*=)\s*session\.fixtureActor/);
     expect(page).not.toMatch(/DEFAULT_PATIENT_ACTOR/);
   });
 });

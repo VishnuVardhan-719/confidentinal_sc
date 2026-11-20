@@ -44,11 +44,11 @@ const factories = {
 
 describe("fixture refused in production", () => {
   it.each(Object.entries(getters))("%s getter throws for fixture mode in production", (_name, get) => {
-    expect(() => get(PROD_FIXTURE)).toThrow(/not allowed/);
+    expect(() => get(PROD_FIXTURE)).toThrow(/not allowed|fixtures are disabled/);
   });
 
   it.each(Object.entries(factories))("%s fixture factory throws when constructed directly in production", (_name, make) => {
-    expect(make).toThrow(/not allowed/);
+    expect(make).toThrow(/not allowed|fixtures are disabled/);
   });
 
   it.each(Object.entries(getters))("%s defaults to http and selects fixture only when asked outside production", (_name, get) => {

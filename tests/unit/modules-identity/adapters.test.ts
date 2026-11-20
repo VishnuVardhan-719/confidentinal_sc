@@ -29,9 +29,9 @@ const bodyOf = (c: Call) => JSON.parse(String(c.init.body)) as Record<string, un
 
 describe("fixture refused in production", () => {
   it("module factories throw", () => {
-    expect(() => getAuthApi({ env: PROD })).toThrow(/not allowed/);
-    expect(() => getOnboardingApi({ env: PROD })).toThrow(/not allowed/);
-    expect(() => getVerificationApi({ env: PROD })).toThrow(/not allowed/);
+    expect(() => getAuthApi({ env: PROD })).toThrow(/not allowed|fixtures are disabled/);
+    expect(() => getOnboardingApi({ env: PROD })).toThrow(/not allowed|fixtures are disabled/);
+    expect(() => getVerificationApi({ env: PROD })).toThrow(/not allowed|fixtures are disabled/);
   });
 
   it("direct fixture constructors throw too", () => {

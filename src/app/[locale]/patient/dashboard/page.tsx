@@ -17,14 +17,13 @@ import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/lib/format";
 import { AccessDenied } from "@/components/auth/access-denied";
 import { ReadinessBanner } from "@/components/onboarding/profile-glance";
-import { fixtureActorFor } from "@/modules/auth/fixture-actors";
 import { ok, fail } from "@/lib/api/result";
-import { authorizeRole, getRequestApis, isFixtureAdapter, requireRole } from "@/modules/auth/server";
+import { authorizeRole, getRequestApis } from "@/modules/auth/server";
 import { loadPatientProfile } from "@/modules/onboarding/loaders";
 import { decideProfileGate } from "@/modules/onboarding/profile-gate";
 import { createPatientApi } from "@/modules/patient/api";
 import { loadPatientDashboard, type DashboardBooking } from "@/modules/patient-dashboard/loader";
-import { dashboardBookingsApi } from "@/modules/patient-dashboard/session";
+import { dashboardBookingsApi, requirePatientSession } from "@/modules/patient-dashboard/session";
 import { getNotificationsApi, unreadCount, type NotificationsApi } from "@/modules/notifications";
 import { createPaymentsApi } from "@/modules/payments/api";
 import { getRecordsApi } from "@/modules/records";
@@ -45,11 +44,11 @@ export default async function PatientDashboardPage({ params }: PageProps<"/[loca
   const path = `/${locale}/patient/dashboard`;
   // fe-b guard: anonymous -> login?next, onboarding incomplete -> onboarding. Advisory UI guard;
   // the module adapters and backend authorize every read independently.
-  const access = await requireRole("patient", { locale, path });
-  if (access.kind === "denied") return <AccessDenied reason={access.reason} />;
-  const synthetic = isFixtureAdapter();
+  const session = await requirePatientSession(locale, path);
+  if (session.status !== "ok") return <AccessDenied reason={session.reason} />;
+  const synthetic = session.synthetic;
   // Fixture records world has one synthetic patient (REQUESTS R-FE-D-26); http uses the bearer token.
-  const fixtureActor = synthetic ? (fixtureActorFor(access.identity, "patient") ?? undefined) : undefined;
+  const fixtureActor = session.fixtureActor ?? undefined;
 
   const [t, tAll, { onboarding }] = await Promise.all([getTranslations("patient.dashboard"), getTranslations(), getRequestApis()]);
   const tk = asTk(tAll);
