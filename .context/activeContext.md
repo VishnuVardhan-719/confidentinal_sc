@@ -228,3 +228,10 @@ Commands:
 - Build: FRONTEND_ADAPTER=fixture APP_ENV=test FEATURE_CLINICAL=true FIXTURE_BOOKING_SCENARIO=accepted npm run build (build is current as of this commit's src; rebuild only if src changes).
 - Spec run: pwsh .context/int3-run.ps1 -Spec <name> -Projects mobile-390,desktop-1280 [-Env @{K='V'}] [-ClinicalOff -Grep 'gate off|flag off'] (ws specs use ws-mobile-390,ws-desktop-1280).
 - Gate: pwsh .context/int2-check.ps1. Server on 3320 stopped.
+
+## INT3 resume (2026-11-20, fe-int2)
+- Re-merged latest heads: b 5ee66b5 (1fa0ee1), c 5b92202 (55bbf1c), d f36ff67 (9975081), e c99a4c7 (ed5e701), p 149a74b (cebd96c); a 3c72d13 already in. Gate after: tsc 0, lint 0, vitest 102 files / 1437 pass.
+- Merge fixes: stories pages keep content-source + gated branch; moderation action on authorizeOperationsSession('admin'), fx-adm-super has review:moderate; reviews edit page real guard; eslint ignores .context/**.
+- Follow-up: tests/e2e/admin-review-moderation.spec.ts still expects fe-p FIXTURE_ADMIN_SESSION mode (skipped outside fe-p); port to admin lead sign-in.
+- Next: Step 2 mutation smoke + axe dialogs in integration-smoke.spec.ts, rebuild, rerun smoke, INTEGRATION_REPORT.md, commit.
+- INT3 DONE (2026-11-20): mutation flows + dialog axe added to integration-smoke.spec.ts; lab-directory 'View lab' link name fix (WCAG 2.5.3, fe2-c file, port back); rebuild 525 pages exit 0; smoke 100/100 (390+1280); gate tsc/lint 0, vitest 102/1437. INTEGRATION_REPORT.md section 6. Server on 3320 stopped.

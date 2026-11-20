@@ -313,7 +313,6 @@
     "noCollectionFee": "No home collection fee",
     "matching": "Matching tests",
     "viewLab": "View lab",
-    "viewLabFor": "View {name}",
     "request": "Request tests",
     "requestFor": "Request tests from {name}",
     "requestNote": "You sign in to send a request. Nothing is charged now.",
