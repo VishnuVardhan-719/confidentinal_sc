@@ -175,3 +175,8 @@ Open: sitemap.xml (fe-a) does not list /lab-tests yet; te/hi labDirectory string
 ## TASK REPORT: R9-C6 (fe-q, feat/fe2-c)
 - Re-reviewed heads fe2-d 7c0065d, fe2-p 8dc301a, fe2-e 87bfb6b (read-only, .context/rev-audit.cjs). 0 hard-coded strings, 0 storage/console, no personal query keys, noindex gaps only on redirect-only pages; fe2-p carries old lab-views toFixed. New: R6-1 LOW signup RadioGroup controlled pre-hydration (fe2-e auth-flow.tsx:62,128); R6-2 LOW no area-layout noindex default. fe2-d 7c0065d closes the /lab-tests sitemap item.
 - tests/unit/site-guards.test.ts (9): repo-wide strings, storage/console, personal query keys, money toFixed, private noindex, robots segments. Proven: 9/9 on fe2-c and the three head exports; broken copy 6 fail. tsc 0, lint 0, vitest 68 files 1011 passed + 3 skipped. No servers started.
+
+## TASK REPORT: R9-C7 (fe-q, feat/fe2-c)
+- Integration head ab6bedb (merges c 1a0db4f, d 7c0065d, e 87bfb6b, p 8dc301a). Clean export in .context/guard-int (deleted). site-guards 9/9, peer-guards 4/4 (none skipped), adversarial-guards 3 known fails -> recorded (dashboard UI_ALLOWED, fixture-actors GATED_BY_CALLER + importer check, hi auth.otp.attemptsLeft exempt) -> 27/27.
+- docs/frontend/QA_CHECKLIST.md: setup, accounts, per-page checks C1-C12, patient 22 steps + flows + keyboard, doctor, lab, ambulance, caretaker, admin, gated routes (flags, contract-pending), e2e fixme list, known defects.
+- tsc 0, lint 0, vitest 68 files 1012 passed + 3 skipped. No servers started.

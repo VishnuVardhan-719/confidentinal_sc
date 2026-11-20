@@ -56,8 +56,19 @@ function fixtureValueImports(): FixtureImport[] {
 /** Values with no synthetic data in them: safe in any mode. */
 const SENTINELS = new Set(["NO_ACTOR"]);
 const GATE = /\b(getAdapterMode|isFixtureMode|isFixtureAdapter|fixtureGuard|assertFixtureAllowed)\b/;
-/** Reviewed UI-layer files allowed a fixture value import (file -> reason). Keep empty if possible. */
-const UI_ALLOWED: Record<string, string> = {};
+/**
+ * Reviewed UI-layer files allowed a fixture value import (file -> reason). Each must still contain a mode check.
+ * Keep this short: prefer reading fixture actors from a session module.
+ */
+const UI_ALLOWED: Record<string, string> = {
+  "app/[locale]/patient/dashboard/page.tsx": "fe-d: DEFAULT_PATIENT_ACTOR only when isFixtureAdapter(); move to getPatientSession().fixtureActor (REQUESTS R-FE-Q-R9C3-2)",
+};
+/**
+ * Pure fixture mappers that never run on their own: every file importing them must check the adapter mode first.
+ */
+const GATED_BY_CALLER: Record<string, string> = {
+  "modules/auth/fixture-actors.ts": "maps a synthetic identity to a fixture actor; doctor/patient sessions call it only when isFixtureAdapter()",
+};
 
 describe("fixture adapter is unreachable outside fixture mode", () => {
   const imports = fixtureValueImports();
@@ -68,7 +79,7 @@ describe("fixture adapter is unreachable outside fixture mode", () => {
 
   it("pages, layouts and components never import fixture values", () => {
     const offenders = imports
-      .filter(i => /^(app|components)\//.test(i.file) && !(i.file in UI_ALLOWED))
+      .filter(i => /^(app|components)\//.test(i.file) && !(i.file in UI_ALLOWED && GATE.test(ALL.find(f => f.file === i.file)?.text ?? "")))
       .map(i => `${i.file}: ${i.names.join(", ")} from ${i.from}`);
     expect(offenders).toEqual([]);
   });
@@ -83,8 +94,17 @@ describe("fixture adapter is unreachable outside fixture mode", () => {
     const offenders = imports
       .filter(i => !/^(app|components)\//.test(i.file))
       .filter(i => i.names.some(name => !SENTINELS.has(name)))
-      .filter(i => !GATE.test(text.get(i.file) ?? ""))
+      .filter(i => !GATE.test(text.get(i.file) ?? "") && !(i.file in GATED_BY_CALLER))
       .map(i => `${i.file}: ${i.names.join(", ")}`);
+    expect(offenders).toEqual([]);
+  });
+
+  it("every importer of a caller-gated fixture mapper checks the adapter mode", () => {
+    const offenders: string[] = [];
+    for (const mapper of Object.keys(GATED_BY_CALLER)) {
+      const spec = "@/" + mapper.replace(/\.ts$/, "");
+      for (const f of ALL.filter(item => item.text.includes(`"${spec}"`))) if (!GATE.test(f.text)) offenders.push(`${f.file} imports ${spec}`);
+    }
     expect(offenders).toEqual([]);
   });
 });
@@ -194,6 +214,7 @@ const HI_PLURAL_EXEMPT = new Set([
   "hi:ambulance.dashboard.daysLeft", // fe-e
   "hi:lab.orders.testCount", // fe-e
   "hi:common.errorSummary.title", // fe-a
+  "hi:auth.otp.attemptsLeft", // fe-b (integration only)
 ]);
 
 describe("plural messages are correct for zero", () => {

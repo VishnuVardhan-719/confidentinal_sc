@@ -194,3 +194,15 @@ Guards added in `tests/unit/site-guards.test.ts` (9 tests). These apply to every
 - Each detector has a self-test.
 
 Proof: all 9 pass on `feat/fe2-c` and on exports of all three heads, with `GUARD_SRC` pointed at each export. On a broken copy of the fe2-e export, 6 failed as intended. The breakages were: a content page with no noindex and English text, a `?phone=` URL, `toFixed` on paise, `console.log`, and `caretaker` removed from `PRIVATE_SEGMENTS`. The exports were deleted afterwards.
+## R9-C7 (2026-11-20): all fe-c guards against the integration head
+
+Clean export of `feat/fe2-integration` `ab6bedb` (`git archive ab6bedb src`, made in `.context/guard-int` and deleted afterwards). It merges c `1a0db4f`, d `7c0065d`, e `87bfb6b` and p `8dc301a`. I ran `site-guards`, `peer-guards` and `adversarial-guards` from `feat/fe2-c` against it with a throwaway vitest config.
+
+- `site-guards.test.ts`: **9/9 passed**. Repo-wide: no hard-coded English, storage, console or personal query keys, no float money, every private page noindex, and robots.txt covers every private area.
+- `peer-guards.test.ts`: **4/4 passed**, none skipped. The review status sets match apart from the recorded `withdrawn` decision, the doctor projection hides unmoderated content, and the `/verify` redirects have no-referrer and no-store.
+- `adversarial-guards.test.ts`, first run: **3 failed, 10 passed**. All three are known items rather than regressions:
+  1. `app/[locale]/patient/dashboard/page.tsx` imports `DEFAULT_PATIENT_ACTOR` (fe-d, behind `isFixtureAdapter()`; R-FE-Q-R9C3-2).
+  2. `modules/auth/fixture-actors.ts` (integration's identity -> fixture actor mapper) has no mode check of its own. Its only importers, `modules/doctor/session.ts` and `modules/patient-dashboard/session.ts`, call it only when `isFixtureAdapter()` is true.
+  3. `hi:auth.otp.attemptsLeft` (fe-b) hard-codes "1" in the Hindi `one` branch (R-FE-Q-R9C3-1).
+- **Change on `feat/fe2-c`:** the guard now records the dashboard page in `UI_ALLOWED`, still requiring a mode check in that file, and `fixture-actors.ts` in a new `GATED_BY_CALLER` list. A new test requires every importer of a caller-gated mapper to check the adapter mode. `hi:auth.otp.attemptsLeft` is added to `HI_PLURAL_EXEMPT`. Rerun on the same export: **27/27 passed** across the three files, and 14/14 for `adversarial-guards` on `feat/fe2-c`.
+- The integration branch does not carry `site-guards.test.ts` yet; it has the older `adversarial-guards` and `peer-guards`, which are byte-identical to `1a0db4f`. It will pick up this version at the next merge of `feat/fe2-c`.
