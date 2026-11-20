@@ -185,3 +185,7 @@ Open: sitemap.xml (fe-a) does not list /lab-tests yet; te/hi labDirectory string
 - Final pass on integration ab6bedb (incl. INT3 72d42cd). Full export (deleted; node_modules via junction, removed safely). fe-c guards 27/27. Integration's own vitest: 1457 pass, 3 fail (its old adversarial-guards from 1a0db4f; fixed by fb7465a) -> F8-3.
 - gate-audit: 72/72 area pages gated; 92 actions, 83 gated, 9 public by design. http-mode build on 3366 (stopped, pid+cmd verified): private URLs -> login with safe next; public no-contract pages honest notices; storage 0; te/hi localized. i18n 22 namespaces parity clean except 4 hi zero plurals.
 - Fixed F8-1 (doctor profile gated/error h1, mine). Final verdict table: 23 findings, 0 HIGH open; 6 MEDIUM open (2,3,4,D1,D2,F8-3).
+
+## TASK REPORT: R9-C9 (fe-q, feat/fe2-c)
+- Fixed 1b (service-request cancel policy from cancellationTermsFor; real -> unavailable), F8-2 (GateNotice contract_pending in 4 directory files; lab gated action "Find a doctor"), 5 partial (structuredSearchFor: exact symptom/speciality label -> taxonomy key; rest stays q, documented).
+- tests/unit/modules-services/r9c9-fixes.test.ts 11 (red on pre-fix: 10 fail). e2e fixture build on 3367 (stopped): doctor-search+service-requests+lab-directory 41 pass, 3 skip (twice; first run exit 1 unexplained). tsc 0, lint 0, vitest 69 files 1023 + 3 skipped.

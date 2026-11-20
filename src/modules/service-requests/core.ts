@@ -90,11 +90,26 @@ export function totalOf(lines: readonly RequestLine[]): number {
   return lines.reduce((sum, line) => sum + line.amountPaise, 0);
 }
 
-/** Whether the patient may still cancel: always while the provider has not answered, then until the window closes. */
-export function cancelState(request: Pick<ServiceRequest<unknown>, "status" | "startAt">, nowMs: number): "open" | "closed" | "final" {
+/** Cancellation terms the page may show. Null when no approved terms exist for this request: the dialog fails closed. */
+export type CancellationTerms = { version: string; cancelWindowMinutes: number };
+
+/**
+ * Terms for one request. Only synthetic (fixture) requests carry the labelled sample window; no backend contract
+ * supplies approved terms yet, so every real request gets null and never sees an invented policy.
+ */
+export function cancellationTermsFor(request: Pick<ServiceRequest<unknown>, "synthetic">): CancellationTerms | null {
+  return request.synthetic === true ? { version: "synthetic-v1", cancelWindowMinutes: CANCEL_WINDOW_MINUTES } : null;
+}
+
+/**
+ * Whether the patient may still cancel: always while the provider has not answered, then until the window closes.
+ * Without terms (`windowMinutes` null) no window is guessed: the controls stay open and the dialog fails closed.
+ */
+export function cancelState(request: Pick<ServiceRequest<unknown>, "status" | "startAt">, nowMs: number, windowMinutes: number | null = CANCEL_WINDOW_MINUTES): "open" | "closed" | "final" {
   if (request.status === "REQUESTED") return "open";
   if (request.status !== "ACCEPTED" && request.status !== "CONFIRMED") return "final";
-  return nowMs <= Date.parse(request.startAt) - CANCEL_WINDOW_MINUTES * 60_000 ? "open" : "closed";
+  if (windowMinutes === null) return "open";
+  return nowMs <= Date.parse(request.startAt) - windowMinutes * 60_000 ? "open" : "closed";
 }
 
 /** Lead message key for the request page, by booking state. */

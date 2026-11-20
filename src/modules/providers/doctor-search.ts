@@ -107,6 +107,23 @@ export function taxonomySuggestions(query: string, labels: { speciality: (key: S
 export function normalize(text: string): string {
   return text.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/\s+/g, " ").trim();
 }
+
+/**
+ * What a submitted search box text becomes in the URL. Text that exactly matches (after normalize) a speciality or
+ * symptom label in the active language becomes `speciality=` or `symptom=` (fixed taxonomy keys), so typed
+ * health words like "fever" or "back pain" never sit in the URL, history or access logs as free text. Anything
+ * else stays `q` (doctor or clinic names, partial words): that remaining free text is a documented trade-off.
+ */
+export function structuredSearchFor(text: string, labels: { speciality: (key: Speciality) => string; symptom: (key: Symptom) => string }):
+  { symptom: Symptom } | { speciality: Speciality } | { q: string } | Record<string, never> {
+  const needle = normalize(text);
+  if (!needle) return {};
+  const symptom = SYMPTOM_KEYS.find(key => normalize(labels.symptom(key)) === needle);
+  if (symptom) return { symptom };
+  const speciality = SPECIALITIES.find(key => normalize(labels.speciality(key)) === needle || key === needle.replace(/ /g, "_"));
+  if (speciality) return { speciality };
+  return { q: text };
+}
 export function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
   const rad = (deg: number) => deg * Math.PI / 180;
   const h = Math.sin(rad(b.lat - a.lat) / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(rad(b.lng - a.lng) / 2) ** 2;

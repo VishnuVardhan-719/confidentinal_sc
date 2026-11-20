@@ -238,11 +238,11 @@ Clean export of `feat/fe2-integration` `ab6bedb` (`git archive ab6bedb src`, mad
 | # | Finding | Severity | Owner | Status at `ab6bedb` |
 |---|---|---|---|---|
 | 1 | Synthetic cancellation policy shown as approved on the real-data booking page | HIGH | fe-q | **Fixed** (`1e604fc`, in integration via `1a0db4f`; http mode gives `state: "unavailable"`) |
-| 1b | `service-requests/request-controls.tsx:41` still hard-codes an approved synthetic policy (http adapters gated) | LOW | fe-q | Open |
+| 1b | `service-requests/request-controls.tsx:41` still hard-codes an approved synthetic policy (http adapters gated) | LOW | fe-q | **Fixed on `feat/fe2-c`** (R9-C9): terms come from `cancellationTermsFor(request)`; real requests get `{ state: "unavailable" }` |
 | 2 | Fixture adapter production guard checks only `APP_ENV` (`lib/api/mode.ts:9`, `auth/fixture-guard.ts`) | MEDIUM | fe-a | Open |
 | 3 | Four paise formatters disagree ("₹800" vs "₹800.00"; admin and clinical accept negative values) | MEDIUM | fe-a + fe-e, fe-d, payments | Open |
 | 4 | Hindi `one` plural hard-codes "1" for zero (`ambulance.dashboard.daysLeft`, `lab.orders.testCount`, `common.errorSummary.title`, `auth.otp.attemptsLeft`) | MEDIUM | fe-e, fe-a, fe-b | Open (patch in R-FE-Q-R9C3-1; fe-int2 has an uncommitted `hi/auth.json` edit) |
-| 5 | Free-text `q` search in the URL (history and logs) | LOW | fe-q | Open (trade-off: map known symptoms to `symptom=`) |
+| 5 | Free-text `q` search in the URL (history and logs) | LOW | fe-q | **Partly fixed on `feat/fe2-c`** (R9-C9): typed text that exactly matches a symptom or speciality label becomes `symptom=`/`speciality=`. Still `q`: doctor and clinic names, partial or mixed text, the no-JS form post, and fe-a's hero `/find` route |
 | 6 | `toFixed` on paise in the lab catalogue editor | LOW | fe-e | **Fixed** (`0500117`) |
 | 7 | Proof-of-visit code in the URL path | LOW | fe-d, backend | Accepted by design (no-referrer, noindex, no-store; backend keeps codes short-lived and revocable) |
 | E1 | Gated story URLs answer 200 and are indexable | LOW | fe-e | **Fixed** (non-ok story sets `robots: { index: false }`) |
@@ -258,12 +258,12 @@ Clean export of `feat/fe2-integration` `ab6bedb` (`git archive ab6bedb src`, mad
 | R6-2 | No private area layout sets noindex by default (every page sets it today; guarded by `site-guards`) | LOW | area owners | Open (guarded) |
 | C3-2 | Patient dashboard page imports a fixture actor (behind `isFixtureAdapter()`) | LOW | fe-d | Open (recorded in `UI_ALLOWED`; fe-int2 fix uncommitted) |
 | F8-1 | Doctor profile gated/error state without `h1` | LOW (a11y) | fe-q | **Fixed on `feat/fe2-c`**, pending merge |
-| F8-2 | Public directory gated states don't use `GateNotice` | LOW | fe-q | Open |
+| F8-2 | Public directory gated states don't use `GateNotice` | LOW | fe-q | **Fixed on `feat/fe2-c`** (R9-C9) |
 | F8-3 | Integration head unit suite red (3 known guard items) | MEDIUM (process) | fe-int2, lead | Open: merge `fb7465a` or commit the in-progress fixes |
 
 **Verdict:**
 - Of the 23 findings, **no CRITICAL or HIGH finding is open**. The HIGH item (1) and three others (6, E1, P1) are fixed in integration, F8-1 is fixed on `feat/fe2-c`, and 7 is accepted by design.
-- 17 are open: 6 MEDIUM (2, 3, 4, D1, D2, F8-3) and 11 LOW (1b, 5, E2, P2, P3, D3, D4, R6-1, R6-2, C3-2, F8-2).
+- 17 were open at `ab6bedb`: 6 MEDIUM (2, 3, 4, D1, D2, F8-3) and 11 LOW (1b, 5, E2, P2, P3, D3, D4, R6-1, R6-2, C3-2, F8-2). R9-C9 later fixed 1b and F8-2 and partly fixed 5 on `feat/fe2-c` (see R9-C9 below).
 - **Fixture staging:** the integration head is fit for synthetic staging once F8-3 is cleared.
 - **Before real data or production,** these must close:
   - Finding 2: the production guard must not depend on one env var.
@@ -271,3 +271,26 @@ Clean export of `feat/fe2-integration` `ab6bedb` (`git archive ab6bedb src`, mad
   - Finding 4: wrong counts in Hindi safety-relevant text (licence expiry, OTP attempts).
   - D1: the page breaks on a valid status.
 - Everything else may follow, with the backend enforcing the same rules server-side.
+
+## R9-C9 (2026-11-20): fe-q fixes for its own open findings
+
+All on `feat/fe2-c`, pending merge into integration.
+
+| # | Change | Files |
+|---|---|---|
+| 1b | Service-request cancellation now takes the policy from the page. `cancellationTermsFor(request)` returns the labelled sample terms (`synthetic-v1`, 120 minutes) only when `request.synthetic` is true, and `null` otherwise. With no terms, `RequestStatusView` passes `{ state: "unavailable" }`, so the dialog refuses and never calls the server. `cancelState(..., null)` guesses no window, and the "changes closed" notice is hidden. The fixture engine still enforces its own 120-minute window. | `src/modules/service-requests/core.ts`, `src/components/service-requests/request-controls.tsx`, `src/components/service-requests/request-status.tsx` |
+| F8-2 | Every directory "not connected" state renders `GateNotice reason="contract_pending"` (so `data-gate="contract_pending"`), keeping its specific title and body: doctor search, doctor profile, lab directory list and detail, and the patient lab, care and ambulance provider lists. The lab directory's gated action is now "Find a doctor" -> `/doctors`, and the lab detail offers "Back to labs". | `src/components/directory/{doctor-search-page,doctor-profile,lab-directory}.tsx`, `src/components/service-requests/provider-directory.tsx` |
+| 5 (partial) | `structuredSearchFor(text, labels)` maps search-box text that exactly matches (after `normalize`) a symptom or speciality label in the active language to `symptom=`/`speciality=` taxonomy keys, which are already allowlisted enums. Anything else stays `q`. This mapping is safe because the taxonomy is fixed, and every symptom and speciality label is distinct after normalize in en, te and hi (a test asserts this). The search bar's submit uses it. **Still free text:** doctor and clinic names, partial or mixed phrases ("fever and cough"), the no-JS GET form, and fe-a's public hero `/find` route. These remain documented. | `src/modules/providers/doctor-search.ts`, `src/components/directory/doctor-search-bar.tsx` |
+
+**Tests:** `tests/unit/modules-services/r9c9-fixes.test.ts` (11):
+- the terms rule, and `cancelState` with no window;
+- a jsdom render of `CancelRequest` with an unavailable policy (the dialog never calls `cancel`);
+- no component hard-codes `state: "approved", version: "<literal>"`;
+- every gated branch in the four directory files uses `GateNotice`, with no hand-made lock `Notice`;
+- en/te/hi label mapping, `q` fallback and label uniqueness;
+- the search bar is wired to the mapping.
+
+**Proof:**
+- Against the pre-fix sources (temporary copies, restored afterwards): **10 failed, 1 passed**.
+- With the fixes: 11/11 passed.
+- Fixture production build on port 3367 (stopped afterwards, PID and command line checked): `doctor-search` + `service-requests` + `lab-directory` at 390 and 1280 gave 41 passed, 3 skipped on two consecutive reruns. The first run reported 26 passed, 3 skipped and exit 1, with no failure shown in the output tail; the next two runs were clean.

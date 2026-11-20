@@ -12,7 +12,8 @@ import type { ApiResult } from "@/lib/api/result";
 import { formatDateTime, formatPaise, type Locale } from "@/lib/format";
 import { bookingStatusPresentation, type StatusPresentation } from "@/modules/bookings/status";
 import { paymentStatusPresentation } from "@/modules/payments/status";
-import { cancelState, leadFor, type RequestLine, type ServiceRequest } from "@/modules/service-requests/core";
+import type { CancellationPolicyView } from "@/components/payments/cancellation-dialog";
+import { cancellationTermsFor, cancelState, leadFor, type RequestLine, type ServiceRequest } from "@/modules/service-requests/core";
 import { CancelRequest, RefreshRequest } from "./request-controls";
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
@@ -37,7 +38,11 @@ export async function RequestStatusView<D>({ request, now, segment, title, recor
   const locale = (await getLocale()) as Locale;
   const lead = leadFor(request.status);
   const tone = lead === "declined" ? "warning" : lead === "confirmed" || lead === "completed" ? "info" : "neutral";
-  const change = cancelState(request, now);
+  const terms = cancellationTermsFor(request);
+  const change = cancelState(request, now, terms?.cancelWindowMinutes ?? null);
+  const policy: CancellationPolicyView = terms
+    ? { state: "approved", version: terms.version, summary: t("policySummary"), feePaise: 0, refundPaise: null }
+    : { state: "unavailable" };
   return (
     <>
       {banner}
@@ -74,8 +79,8 @@ export async function RequestStatusView<D>({ request, now, segment, title, recor
             <section aria-labelledby="request-changes" className="grid gap-4 rounded-lg border border-border bg-surface p-5 sm:p-6">
               <h2 id="request-changes" className="text-lg font-semibold text-ink">{t("changesTitle")}</h2>
               {change === "open"
-                ? <IntlScope namespaces={["services", "payment"]}><CancelRequest id={request.id} version={request.version} cancel={cancel} /></IntlScope>
-                : <Notice tone="neutral" title={t("changesClosed")} />}
+                ? <IntlScope namespaces={["services", "payment"]}><CancelRequest id={request.id} version={request.version} policy={policy} cancel={cancel} /></IntlScope>
+                : terms ? <Notice tone="neutral" title={t("changesClosed")} /> : null}
             </section>
           ) : null}
 

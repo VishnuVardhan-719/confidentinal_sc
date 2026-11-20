@@ -5,6 +5,7 @@ import { connection } from "next/server";
 import type { ReactNode } from "react";
 import { Container } from "@/components/public/layout";
 import { FixtureNotice } from "@/components/shared/fixture-notice";
+import { GateNotice } from "@/components/shared/gate-notice";
 import { Notice } from "@/components/shared/notice";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,7 @@ export async function DoctorProfile({ params, api = createDoctorSearchApi() }: {
         {/* One h1 on every state, including gated and error (a11y; the profile name is unknown here). */}
         <h1 className="font-display text-3xl font-medium text-ink">{t("search.title")}</h1>
         {result.error.code === "gated"
-          ? <Notice tone="neutral" icon="lock" title={t("results.gatedTitle")}>{t("results.gatedBody")}</Notice>
+          ? <GateNotice reason="contract_pending" title={t("results.gatedTitle")}>{t("results.gatedBody")}</GateNotice>
           : <Notice tone="danger" title={t("results.errorTitle")}>{t("results.errorBody")}</Notice>}
       </Container>
     );

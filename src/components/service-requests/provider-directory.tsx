@@ -1,5 +1,6 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
+import { GateNotice } from "@/components/shared/gate-notice";
 import { InlineError } from "@/components/shared/inline-error";
 import { Notice } from "@/components/shared/notice";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ export async function ProviderDirectory<P extends BaseProvider>({ segment, resul
 
       {!result.ok ? (
         result.error.code === "gated"
-          ? <Notice tone="neutral" title={t("notConnectedTitle")} action={<LinkAction href="/patient/dashboard">{t("toDashboard")}</LinkAction>}>{t("notConnectedBody")}</Notice>
+          ? <GateNotice reason="contract_pending" title={t("notConnectedTitle")} action={<LinkAction href="/patient/dashboard">{t("toDashboard")}</LinkAction>}>{t("notConnectedBody")}</GateNotice>
           : <InlineError code={result.error.code} action={<><LinkAction href={pin ? `${segment}?pin=${pin}` : segment}>{t("form.retry")}</LinkAction><LinkAction href="/patient/dashboard" variant="quiet">{t("toDashboard")}</LinkAction></>} />
       ) : (
         <section aria-labelledby="provider-results" className="grid gap-4">

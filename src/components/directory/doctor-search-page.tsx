@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { Container } from "@/components/public/layout";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FixtureNotice } from "@/components/shared/fixture-notice";
+import { GateNotice } from "@/components/shared/gate-notice";
 import { Notice } from "@/components/shared/notice";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -47,7 +48,7 @@ export async function DoctorSearchResults({ searchParams }: { searchParams: Prom
             action={<Button asChild variant="secondary"><Link href="/doctors">{t("results.newSearch")}</Link></Button>} />
         ) : load.kind === "error" ? (
           load.error.code === "gated" ? (
-            <Notice tone="neutral" icon="lock" title={t("results.gatedTitle")}>{t("results.gatedBody")}</Notice>
+            <GateNotice reason="contract_pending" title={t("results.gatedTitle")}>{t("results.gatedBody")}</GateNotice>
           ) : (
             <Notice tone="danger" title={t("results.errorTitle")}
               action={<Button asChild variant="secondary"><Link href={`/doctors?${params}`}>{t("results.retry")}</Link></Button>}>{t("results.errorBody")}</Notice>
