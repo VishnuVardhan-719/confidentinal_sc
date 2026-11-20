@@ -9,7 +9,7 @@ Mark each line **P** (pass), **F** (fail: write what you saw and the URL) or **B
 ## 0. Setup
 
 1. Build and start the integration build (one server; port from `tests/e2e/integration.config.ts`):
-   `FRONTEND_ADAPTER=fixture APP_ENV=test FEATURE_CLINICAL=true FIXTURE_BOOKING_SCENARIO=accepted npx next build && npx next start --port 3320`
+   `export FRONTEND_ADAPTER=fixture APP_ENV=test FEATURE_CLINICAL=true FIXTURE_BOOKING_SCENARIO=accepted`, then `npx next build && npx next start --port 3320` (export first: an inline `VAR=x` prefix applies to `next build` only)
    For the booking journey, also set `FIXTURE_PROVIDER_RESPONSE_MS=1500` so the doctor answers within a few seconds.
 2. **Second pass, clinical gate off:** restart the same build without `FEATURE_CLINICAL`. Use this pass for every "flag off" line. Production ships with the flag off.
 3. Sign in at `/en/login` with a synthetic account. Any password of 1 to 128 characters works in fixture mode. The phone OTP is `246810`.

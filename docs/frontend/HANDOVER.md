@@ -47,9 +47,10 @@ This list comes from a scan of `src`. The Supabase keys in `.env.example` are re
 npm ci
 # Fixture mode, development server (synthetic data, clinical on):
 FRONTEND_ADAPTER=fixture APP_ENV=development FEATURE_CLINICAL=true npx next dev -p 3000
-# Fixture mode, production build (what the e2e suites use):
-FRONTEND_ADAPTER=fixture APP_ENV=test FEATURE_CLINICAL=true FIXTURE_BOOKING_SCENARIO=accepted FIXTURE_PROVIDER_RESPONSE_MS=1500 \
-  npx next build && npx next start -p 3320
+# Fixture mode, production build (what the e2e suites use). Export the env first: a `VAR=x cmd1 && cmd2`
+# prefix applies to cmd1 only, so `next start` would run without it.
+export FRONTEND_ADAPTER=fixture APP_ENV=test FEATURE_CLINICAL=true FIXTURE_BOOKING_SCENARIO=accepted FIXTURE_PROVIDER_RESPONSE_MS=1500
+npx next build && npx next start -p 3320
 # HTTP mode (real adapters; /api must be served by the same deployment, see section f):
 FRONTEND_ADAPTER=http APP_ENV=development APP_ORIGIN=http://localhost:3000 npx next dev -p 3000
 ```
@@ -235,7 +236,7 @@ On 2026-11-20 I ran every command and path in this document on `feat/fe2-c` at `
 | Unit | `npm test` | 69 files, 1023 passed, 3 skipped (the `peer-guards` blocks whose files are not on this branch) |
 | Guards | `npx vitest run tests/unit/site-guards.test.ts tests/unit/peer-guards.test.ts tests/unit/adversarial-guards.test.ts` | 3 files, 24 passed, 3 skipped |
 | Fixture dev | `FRONTEND_ADAPTER=fixture APP_ENV=development FEATURE_CLINICAL=true next dev -p 3361` | `/en/doctors` and `/en/lab-tests` render synthetic results with "Synthetic data, not live" |
-| Fixture production | `FRONTEND_ADAPTER=fixture APP_ENV=test FEATURE_CLINICAL=true FIXTURE_BOOKING_SCENARIO=accepted FIXTURE_PROVIDER_RESPONSE_MS=1500 next build && next start -p 3362` | build exit 0; server answers; `/en/login` 404 on this branch (see section a) |
+| Fixture production | `export FRONTEND_ADAPTER=fixture APP_ENV=test FEATURE_CLINICAL=true FIXTURE_BOOKING_SCENARIO=accepted FIXTURE_PROVIDER_RESPONSE_MS=1500`, then `next build && next start -p 3362` (the exported env applies to both commands) | build exit 0; server answers; `/en/login` 404 on this branch (see section a) |
 | HTTP mode | `FRONTEND_ADAPTER=http APP_ENV=development APP_ORIGIN=http://localhost:3363 next dev -p 3363` | `/en/doctors` and `/en/lab-tests` show the not-connected notice with `data-gate="contract_pending"` and no data |
 | Playwright self-start | `E2E_PORT=3364 npx playwright test tests/e2e/public-directory-smoke.spec.ts` (fixture env as above, no `PLAYWRIGHT_BASE_URL`) | built and started the app on 3364 itself and stopped it after the run; 4 passed (2 tests x `mobile-390` and `desktop-1280`), axe clean |
 | Fixture refusal rules (section a) | The integration branch's `src/lib/api/mode.ts`, in a throwaway Vitest file | 5/5: unset adapter = http; development/test/preview/staging allowed; `APP_ENV=production` or `prod` refused; unset `APP_ENV` refused under `NODE_ENV=production`, allowed under `development`; `VERCEL_ENV=production` refused |

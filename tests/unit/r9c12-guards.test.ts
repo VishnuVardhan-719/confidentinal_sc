@@ -18,6 +18,11 @@ const ALL = walk(SRC).filter(f => /\.(ts|tsx)$/.test(f) && !f.endsWith(".d.ts"))
   .map(file => ({ file: path.relative(SRC, file).replace(/\\/g, "/"), text: readFileSync(file, "utf8") }));
 const CODE = ALL.filter(f => !f.file.startsWith("fixtures/"));
 const code = (line: string) => !/^\s*(\*|\/\/|\/\*)/.test(line);
+/** True when the file starts with the "use client" directive, after any leading comments and blank lines. */
+function isClientFile(text: string): boolean {
+  const body = text.replace(/^\uFEFF/, "").replace(/^(?:\s+|\/\/[^\n]*(?:\n|$)|\/\*[\s\S]*?\*\/)*/, "");
+  return /^["']use client["']/.test(body);
+}
 const hits = (files: typeof CODE, re: RegExp) =>
   files.flatMap(f => f.text.split("\n").map((line, i) => (code(line) && re.test(line) ? `${f.file}:${i + 1}` : null)).filter((x): x is string => x !== null));
 
@@ -65,8 +70,15 @@ describe.skipIf(!existsSync(path.join(SRC, ROLES_FILE)))("C12 (c): signup never 
 
 // (d) Adapter mode and env are server decisions; a client bundle must never read them.
 describe("C12 (d): client components never read env or adapter mode", () => {
+  it("the client-file detector skips leading comments", () => {
+    expect(isClientFile('"use client";\nexport {};')).toBe(true);
+    expect(isClientFile('// licence\n/* note */\n\n"use client";')).toBe(true);
+    expect(isClientFile('import x from "y";\n"use client";')).toBe(false);
+    expect(isClientFile('// "use client" mentioned in a comment\nexport {};')).toBe(false);
+  });
+
   it("no process.env, getAdapterMode, isFixtureMode or isFixtureAdapter in a 'use client' file", () => {
-    const client = CODE.filter(f => /^\s*["']use client["']/.test(f.text));
+    const client = CODE.filter(f => isClientFile(f.text));
     expect(hits(client, /process\.env|getAdapterMode\(|isFixtureMode\(|isFixtureAdapter\(/)).toEqual([]);
   });
 });
