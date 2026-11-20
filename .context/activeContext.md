@@ -55,3 +55,8 @@ Open: proxy story check queries content on every /stories/<slug> request (cheap 
 - Finding 4: hi ambulance.dashboard.daysLeft, lab.orders.testCount, auth.otp.attemptsLeft fixed; new tests/unit/i18n-hindi-plurals.test.ts (guard over all hi files, fe-a common.errorSummary.title exempt; render checks at 0/1/n). The guard flags exactly those 4 keys on the previous HEAD.
 - R6-1: signup role radios disabled + fieldset aria-busy until hydration (src/components/auth/use-hydrated.ts); tests/e2e/hydration-race-e.spec.ts (3 tests; it failed on the old build at "toBeDisabled").
 - Checks: tsc 0, eslint 0 errors, vitest 49 files 715/715, build 0. Playwright desktop-1280/mobile-390: hydration-race-e 3/3, auth 23+4 skip, navigation 5+3 skip, lab 9+1, ambulance 9 (both sizes); a11y-sweep-e 14/14.
+## TASK R9-E5: DONE (fe-b, 2026-11-20)
+- docs/frontend/I18N_GLOSSARY.md: canonical hi/te rendering for 19 terms (plus approve), measured on fe2-e and the committed integration messages (fec9da1, git archive, read-only); disagreements D-1..D-11 with key paths and owners; extra findings (fee, test). No message file changed.
+- tests/unit/i18n-structural-parity.test.ts: every namespace from disk, en/te/hi same keys + same ICU arguments/tags (small ICU scanner). 68 tests pass on fe2-e, 92 on the integration export; on a broken copy it fails 3 of 3 planted errors.
+- REQUESTS R-E9E5-01 per owner. tsc 0, eslint 0 errors, vitest 50 files 783/783.
+- Scratch (untracked): .context/i18n-{discover,classify,details,labels,spelling}.mjs and their .txt outputs.

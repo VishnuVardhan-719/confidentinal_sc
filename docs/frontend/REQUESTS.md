@@ -362,3 +362,14 @@ Fixes for the fe-b/fe-e items in `fe2-c/docs/frontend/ADVERSARIAL_REVIEW.md`:
 - **fe-a:** `src/messages/hi/common.json` `errorSummary.title` still hard-codes "1" in `one` (patch in R-FE-Q-R9C3-1). It is listed in `EXEMPT` in `tests/unit/i18n-hindi-plurals.test.ts`. Remove that line when the patch lands; the test then requires the fix.
 - **i18n review:** the new Hindi strings "आज समाप्त" (expires today) and "कोई प्रयास बाकी नहीं" (no attempts left) need fluent review, the same as all te/hi copy (`src/messages/REVIEW_NEEDED.md`).
 - **Shared hook:** `src/components/auth/use-hydrated.ts` duplicates fe-d's `src/components/clinical/use-hydrated.ts`. Both should move to `src/lib/use-hydrated.ts` at integration, as R-FE-D-40 proposes.
+## 2026-11-20 R9-E5 te/hi terminology (fe-b, branch feat/fe2-e)
+
+### R-E9E5-01 terminology disagreements (owners: fe-a, fe-b, fe-d, fe-p, fe-q; needs fluent review)
+`docs/frontend/I18N_GLOSSARY.md` proposes one Hindi and one Telugu rendering for each domain term, and lists every key that differs (D-1 to D-11), measured on fe2-e and on the committed `src/messages` of `feat/fe2-integration` `fec9da1`. No message file was changed. Requests by owner:
+- **fe-a:** D-1 (te "వైద్యులు" in 7 `common`/`public` keys), D-2 (hi "लैबोरेटरी" and te "ల్యాబొరేటరీ" in 7 `public` keys), D-4 (hi "मना करते हैं" in 2 `public` keys), D-5 (`payment.status.refunded` te form).
+- **fe-b (own, follow-up after approval):** D-1 (`auth.roles.doctor` te, 3 `onboarding.profile.*`), D-2 (`auth.roles.lab` te, `lab.workspaceLabel` hi/te), D-3 (te "Not accepted" in 3 credential status labels plus the onboarding evidence status), D-5 (`admin.status.payment.refunded` te), D-7 (`admin.workspaceLabel`), D-9 (`onboarding.options.staffFunction.reviewer` te).
+- **fe-d:** D-5 (`doctor.common.paymentState.REFUNDED` te), D-8 (`clinical.editor.step.prescription` hi).
+- **fe-p (and fe-d for `patient.booking.*`):** D-5 (`patient.booking.payment.refunded` hi/te, `patient.dashboard.payment.refunded` te), D-6 (`patient.dashboard.card.category.caretaker` te), D-10 (`patient.booking.reschedule.gateBody` hi).
+- **fe-q:** D-11 (`booking.status.arrivalVerified` hi/te).
+- **Product:** D-3. Either the English "Not accepted" for a credential becomes "Not approved", or te moves to అంగీకరించబడలేదు.
+- **Lead / i18n reviewer:** approve or change the canonical column. After that, owners apply it and a wording lint can be added. Until then, `tests/unit/i18n-structural-parity.test.ts` checks structure only (keys and ICU placeholders in every namespace).
