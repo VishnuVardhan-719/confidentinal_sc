@@ -326,9 +326,11 @@ R-FE01-12 is resolved: with the ban lifted, all fe2-a browser specs ran against 
 | R-FE-P-R8-1 | backend + admin | Open | Review moderation contract, capability, decision log and paging |
 | R-FE-P-R9-1 | lead / fe-a | Open | public-nav hero search spec out of date (4 shared e2e failures) |
 | R-FE-P-R9-2 | fe-a | Open | Modal language menu: axe aria-hidden-focus |
-| R-FE-P-R9-3 | lead / fe-e | Fixed on fe2-p; regressed on integration (R9-P4) | Admin sign-in return path |
-| R-FE-P-R9-4 | fe-e | Open | Lab/ambulance/caretaker sign-in returns to the dashboard |
+| R-FE-P-R9-3 | lead / fe-e | Fixed on fe2-p; regressed on integration; patch in R9-6 | Admin sign-in return path |
+| R-FE-P-R9-4 | fe-e | Patch in R9-6 | Lab/ambulance/caretaker sign-in returns to the dashboard |
 | R-FE-P-R9-5 | fe-a | Open | `a11y.spec.ts` axe can run during the hero fade-in (load-dependent color-contrast) |
+| R-FE-P-R9-6 | fe-int2 | Patch ready | Return-path patch for AdminFrame and the lab/ambulance/caretaker frames (fixes R9-3 on integration and R9-4) |
+| R-FE-P-R9-7 | fe-int2 / fe-e / fe-d | Open | Provider a11y and keyboard sweep: what was and was not verified |
 
 ### R-FE-P-R7-1 Family members contract (owner: backend)
 No endpoint in docs/API_CONTRACTS.md. The http adapter (`src/modules/family-members/http.ts`) returns `gated`. Proposed:
@@ -415,6 +417,7 @@ No endpoint exists. The http adapter (`src/modules/reminder-prefs/http.ts`) retu
 - fe2-p now sends `next=/{locale}/admin/reviews/log` from the decision log: `AdminRouteGate` takes a fixed `subPath`, `adminPagePath` accepts plain lowercase segments only, and `loginRedirectPath` still reduces `next` to an internal locale-prefixed path with no query (tests/unit/modules-operations/admin-return-path.test.ts).
 - fe2-p has no login page. The consumer that reads `next` after sign-in is fe-b's `auth-page.tsx` + `normalizeInternalPath` on feat/fe2-integration, which already rejects off-site and `/api` targets. The end-to-end landing (sign in, then arrive on the log) can only be checked after integration.
 
+- R9-P5: ready-to-apply patch in R-FE-P-R9-6.
 - R9-P4 re-check: integration regressed this. On feat/fe2-integration, `AdminFrame` calls `adminPrincipal(adminPath(locale, "dashboard"))`. That call reaches `requireOperationsSession` -> `requireRole`, which redirects signed-out visitors to `/login?next=/{locale}/admin/dashboard` before the layout's "render children, let the page gate redirect" branch runs. So on integration every admin page, including the decision log, again returns to the dashboard.
   - Fix (in `admin-frame.tsx`, merge-resolved by the lead): read the session in the layout without redirecting, for example `(await authorizeOperationsSession("admin")).admin`. Keep `requireOperationsSession` with the page path in `AdminRouteGate` only.
   - `tests/e2e/admin-review-moderation.spec.ts` "redirects to login" asserts `next` equals the page path. It will fail on integration until this is fixed.
@@ -433,3 +436,162 @@ No endpoint exists. The http adapter (`src/modules/reminder-prefs/http.ts`) retu
 ### R-FE-P-R9-5 (to fe-a) - shared a11y spec audits the landing hero mid-animation under load
 - In the R9-P3 full run (4 workers, machine busy with other agents' servers), `tests/e2e/a11y.spec.ts` "axe en @360" failed once with `/: color-contrast: .scv-rise-delay`. That is the hero lead paragraph (`src/app/[locale]/(public)/page.tsx:92`) while its fade-in is still running, so axe measures a partly transparent colour. It passed 3/3 when run alone.
 - Suggested fix in the spec: `page.emulateMedia({ reducedMotion: "reduce" })` before auditing (`.scv-rise` only animates under `prefers-reduced-motion: no-preference`, see `globals.css`), or wait for `document.getAnimations()` to finish before `AxeBuilder.analyze()`. fe-p did not edit the spec (fe-a scope).
+
+### R-FE-P-R9-6 (to fe-int2) - ready-to-apply return-path patch for the area layouts (fixes R9-3 on integration and R9-4)
+Integration owns `src/components/admin/admin-frame.tsx`, `src/components/admin/ops/server.ts` and `src/components/{lab,ambulance,caretaker}/*-frame.tsx`, so fe-p did not edit them.
+
+- **What it changes:** a new `isSignedOut(area)` in `ops/server.ts` calls `authorizeOperationsSession(area)`, which never redirects, and returns true only when `guard === null` (nobody signed in). Each area layout calls it first. When it is true, the layout renders `<>{children}</>` with no shell, and the page's own `*RouteGate` redirects with that page's path as `next`.
+- **What stays the same for signed-in users:** the existing redirecting read still runs, so a wrong role still goes to the user's own landing page, a user without grants still gets the denied view, and allowed users get the shell.
+- **Base:** `feat/fe2-integration` at `fec9da1`. The `index` lines carry the blob ids, so `git apply --3way` also works after small drift.
+- **Apply:** save the block below as `r9-6.diff`, then run `git apply --check r9-6.diff && git apply r9-6.diff` on the integration branch.
+
+**How fe-p verified it (R9-P5, no integration branch or worktree touched):**
+- `git apply --cached --check` passed on a temporary index read from `feat/fe2-integration`.
+- On a `git archive` export of integration with the patch applied (`node_modules` linked from fe2-p): `next typegen` + `tsc --noEmit` 0 errors, eslint on the 5 files 0 errors, `next build --webpack` passed.
+- Served on port 3384, signed out:
+  - `/en/lab/orders` -> `next=%2Fen%2Flab%2Forders`
+  - `/te/ambulance/trips` -> `next=%2Fte%2Fambulance%2Ftrips`
+  - `/hi/caretaker/shifts` -> `next=%2Fhi%2Fcaretaker%2Fshifts`
+  - `/en/admin/reviews/log` -> `next=%2Fen%2Fadmin%2Freviews%2Flog`
+  - `/en/admin/bookings` -> `next=%2Fen%2Fadmin%2Fbookings`
+  - `/en/doctor/visits` -> unchanged (`next=%2Fen%2Fdoctor%2Fvisits`)
+- Served on port 3384, signed in through the fe-b form:
+  - lab manager on `/en/lab/orders`: page with shell
+  - lab manager on `/en/admin/reviews`: sent to `/en/lab/dashboard` (own landing)
+  - patient on `/en/lab/orders`: sent to `/en/patient/dashboard`
+  - admin lead on `/en/admin/reviews/log`: page with shell
+  - admin without grants on `/en/admin/dashboard`: denied view
+  - care manager and ambulance operator: their pages with shell
+- **Suggested follow-up test:** add a frame check to `tests/unit/modules-operations/provider-route-gates.test.ts`. Each `*Frame` body should call `isSignedOut` before any redirecting session read.
+
+```diff
+diff --git a/src/components/admin/admin-frame.tsx b/src/components/admin/admin-frame.tsx
+index f1c6139..c2910af 100644
+--- a/src/components/admin/admin-frame.tsx
++++ b/src/components/admin/admin-frame.tsx
+@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
+ import { redirect } from "next/navigation";
+ import type { ReactNode } from "react";
+ import { AreaShell, OpsFrame } from "@/components/admin/ops/area-shell";
+-import { adminPrincipal, currentLocale } from "@/components/admin/ops/server";
++import { adminPrincipal, currentLocale, isSignedOut } from "@/components/admin/ops/server";
+ import { AccessDenied } from "@/components/admin/ops/states";
+ import type { ShellIcon } from "@/components/shared/app-shell";
+ import type { AppLocale } from "@/i18n/routing";
+@@ -33,6 +33,8 @@ const PRIMARY = ["dashboard", "bookings", "support", "cms"] as const;
+  */
+ export async function AdminFrame({ children }: { children: ReactNode }) {
+   const locale = await currentLocale();
++  // Signed out: no shell, and the page's AdminRouteGate redirects with its own path as `next`.
++  if (await isSignedOut("admin")) return <>{children}</>;
+   const principal = await adminPrincipal(adminPath(locale, "dashboard"));
+   const access = decideAdminRoute(principal, "dashboard", locale, adminPath(locale, "dashboard"));
+   if (access.kind === "unauthenticated") return <>{children}</>;
+diff --git a/src/components/admin/ops/server.ts b/src/components/admin/ops/server.ts
+index 6bfcceb..46963e3 100644
+--- a/src/components/admin/ops/server.ts
++++ b/src/components/admin/ops/server.ts
+@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
+ import { isAppLocale, type AppLocale } from "@/i18n/routing";
+ import type { AdminPrincipal } from "@/modules/admin/capabilities";
+ import type { AreaAccess, GuardSession } from "@/modules/admin/access";
+-import { requestedWorkspaceKey, requireOperationsSession } from "@/modules/admin/session";
++import { authorizeOperationsSession, requestedWorkspaceKey, requireOperationsSession, type OperationsArea } from "@/modules/admin/session";
+ import type { ProviderArea } from "@/modules/admin/workspace";
+ 
+ /** SERVER-ONLY helpers shared by the lab, ambulance, caretaker and admin route segments. */
+@@ -28,6 +28,15 @@ export async function providerAreaAccess(
+   return decide(guard, key);
+ }
+ 
++/**
++ * True only when nobody is signed in. Never redirects. Area layouts call this first: signed out,
++ * they render their children without a shell so the page's own gate redirects with the page's
++ * path as `next` (a layout cannot read the URL, so a layout redirect always used the dashboard).
++ */
++export async function isSignedOut(area: OperationsArea): Promise<boolean> {
++  return (await authorizeOperationsSession(area)).guard === null;
++}
++
+ export async function adminPrincipal(path?: string): Promise<AdminPrincipal | null> {
+   const locale = await currentLocale();
+   return (await requireOperationsSession("admin", { locale, path })).admin;
+diff --git a/src/components/ambulance/ambulance-frame.tsx b/src/components/ambulance/ambulance-frame.tsx
+index f990315..adc5c02 100644
+--- a/src/components/ambulance/ambulance-frame.tsx
++++ b/src/components/ambulance/ambulance-frame.tsx
+@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
+ import { redirect } from "next/navigation";
+ import type { ReactNode } from "react";
+ import { AreaChooser, AreaShell, AreaWorkspaceSwitcher, OpsFrame } from "@/components/admin/ops/area-shell";
+-import { currentLocale, providerAreaAccess } from "@/components/admin/ops/server";
++import { currentLocale, isSignedOut, providerAreaAccess } from "@/components/admin/ops/server";
+ import { AccessDenied } from "@/components/admin/ops/states";
+ import type { ShellIcon } from "@/components/shared/app-shell";
+ import type { AppLocale } from "@/i18n/routing";
+@@ -40,6 +40,8 @@ async function Call112() {
+ 
+ export async function AmbulanceFrame({ children }: { children: ReactNode }) {
+   const locale = await currentLocale();
++  // Signed out: no shell, and the page's AmbulanceRouteGate redirects with its own path as `next`.
++  if (await isSignedOut("ambulance")) return <>{children}</>;
+   const access = await providerAreaAccess("ambulance", (s, key) => decideAmbulanceRoute(s, "dashboard", locale, ambulancePath(locale, "dashboard"), key), ambulancePath(locale, "dashboard"));
+   if (access.kind === "unauthenticated") redirect(access.loginPath);
+   if (access.kind === "denied") {
+diff --git a/src/components/caretaker/caretaker-frame.tsx b/src/components/caretaker/caretaker-frame.tsx
+index 8df560a..1418d6b 100644
+--- a/src/components/caretaker/caretaker-frame.tsx
++++ b/src/components/caretaker/caretaker-frame.tsx
+@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
+ import { redirect } from "next/navigation";
+ import type { ReactNode } from "react";
+ import { AreaChooser, AreaShell, AreaWorkspaceSwitcher, OpsFrame } from "@/components/admin/ops/area-shell";
+-import { currentLocale, providerAreaAccess } from "@/components/admin/ops/server";
++import { currentLocale, isSignedOut, providerAreaAccess } from "@/components/admin/ops/server";
+ import { AccessDenied } from "@/components/admin/ops/states";
+ import type { ShellIcon } from "@/components/shared/app-shell";
+ import type { AppLocale } from "@/i18n/routing";
+@@ -25,6 +25,8 @@ const PRIMARY = ["dashboard", "requests", "assignments", "shifts"] as const;
+ 
+ export async function CaretakerFrame({ children }: { children: ReactNode }) {
+   const locale = await currentLocale();
++  // Signed out: no shell, and the page's CaretakerRouteGate redirects with its own path as `next`.
++  if (await isSignedOut("caretaker")) return <>{children}</>;
+   const access = await providerAreaAccess("caretaker", (s, key) => decideCaretakerRoute(s, "dashboard", locale, caretakerPath(locale, "dashboard"), key), caretakerPath(locale, "dashboard"));
+   if (access.kind === "unauthenticated") redirect(access.loginPath);
+   if (access.kind === "denied") {
+diff --git a/src/components/lab/lab-frame.tsx b/src/components/lab/lab-frame.tsx
+index c9a82d3..aa4f38f 100644
+--- a/src/components/lab/lab-frame.tsx
++++ b/src/components/lab/lab-frame.tsx
+@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
+ import { redirect } from "next/navigation";
+ import type { ReactNode } from "react";
+ import { AreaChooser, AreaShell, AreaWorkspaceSwitcher, OpsFrame } from "@/components/admin/ops/area-shell";
+-import { currentLocale, providerAreaAccess } from "@/components/admin/ops/server";
++import { currentLocale, isSignedOut, providerAreaAccess } from "@/components/admin/ops/server";
+ import { AccessDenied } from "@/components/admin/ops/states";
+ import type { ShellIcon } from "@/components/shared/app-shell";
+ import type { WorkspaceLoaderContext } from "@/modules/admin/access";
+@@ -25,6 +25,8 @@ const PRIMARY = ["dashboard", "orders", "collections", "reports"] as const;
+ /** Lab layout body: unauthenticated -> login, no lab workspace -> denied, several -> choose, else shell. */
+ export async function LabFrame({ children }: { children: ReactNode }) {
+   const locale = await currentLocale();
++  // Signed out: no shell, and the page's LabRouteGate redirects with its own path as `next`.
++  if (await isSignedOut("lab")) return <>{children}</>;
+   const access = await providerAreaAccess("lab", (s, key) => decideLabRoute(s, "dashboard", locale, labPath(locale, "dashboard"), key), labPath(locale, "dashboard"));
+   if (access.kind === "unauthenticated") redirect(access.loginPath);
+   if (access.kind === "denied") {
+```
+
+### R-FE-P-R9-7 (to fe-int2 / fe-e / fe-d) - provider dashboards and request detail pages: axe and keyboard-only check (R9-P5)
+- **Check:** axe WCAG 2.1 A/AA (moderate and above fail) plus horizontal overflow. A keyboard walk tabs through every stop until focus wraps around and requires each stop to have a visible focus ring (outline of 2px or more, or a box-shadow), to be on screen, and not to be covered by a sticky bar (`elementFromPoint`). Run at 390 and 1280, in en and te, with reduced motion. The probe script is `.context/r9p5-fep-a11y.mjs` in the fe2-p worktree. It is untracked and takes `admin` or `doctor` as its argument.
+- **Verified on fe2-p's own build (real CSS), 0 findings:**
+  - admin dashboard, `/admin/reviews`, `/admin/reviews?status=rejected`, `/admin/reviews/log` (fixture moderator)
+  - doctor dashboard, `/doctor/requests`, `/doctor/requests/<id>` (`FIXTURE_DOCTOR_SESSION=assigned`)
+  - The fe-p moderation pages are now in e2e: `admin-review-moderation.spec.ts` "keyboard only (en, te)".
+- **Not verified:** the lab, ambulance and caretaker dashboards and detail pages.
+  - fe2-p has no session for those areas.
+  - The patched integration export above rendered and passed axe and the keyboard walk for all of them (lab `orders/fx-lab-order-1`, ambulance `trips/fx-trip-1`, caretaker `assignments/fx-care-asg-1`, admin dashboard). However, that `--webpack` build from a temp folder shipped almost no Tailwind utilities (no `lg:hidden`; the sidebar showed at 390). So contrast, overflow and focus-ring results from that run do not count.
+  - Please run the same probe on a real integration build: sign in as `ops.lab.manager`, `ops.ambulance.operator`, `ops.care.manager` and `ops.admin.lead` (all `@example.invalid`).
+- **Observation for fe-d:** on `/te/doctor/requests/<id>` the h1 is the fixture service title "Home doctor visit (synthetic)" in English. That is synthetic data, not a UI string, but real service names will need a localized display name or a `lang` attribute when the backend sends one.
