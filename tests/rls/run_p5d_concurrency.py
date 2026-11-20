@@ -116,6 +116,25 @@ def concurrency():
     print("PASS: duplicate issuance key: one challenge", flush=True)
 
 
+def build():
+    """The shared p5s.build() with three more schemas in the scratch reset. After a local
+    `supabase db reset` the cloned schema already holds doctor_private (001610) and the P01a
+    payments_private/payments_worker schemas, which the migration replay creates again."""
+    base = p5s.base
+    schema = base.call(["exec", base.CONTAINER, "pg_dump", "-U", "postgres", "-d", "postgres", "--schema-only"], timeout=180)
+    sql('create database "' + TARGET + '";', db="postgres")
+    sql(p5s.without_cron(schema), user="supabase_admin")
+    reset = "drop schema if exists doctor_private cascade;drop schema if exists payments_private cascade;drop schema if exists payments_worker cascade;"
+    reset += "drop schema public cascade;drop schema if exists identity_private cascade;drop schema if exists providers_private cascade;drop schema if exists catalog_private cascade;drop schema if exists booking_private cascade;create schema public authorization postgres;grant usage on schema public to anon,authenticated,service_role;grant all on schema public to postgres,service_role;"
+    reset += "do $$ declare p record;begin for p in select schemaname,tablename,policyname from pg_policies where schemaname='storage' and tablename in ('objects','buckets') loop execute format('drop policy %I on %I.%I',p.policyname,p.schemaname,p.tablename);end loop;end $$;"
+    sql(reset, user="supabase_admin")
+    paths = sorted((ROOT / "supabase/migrations").glob("*.sql"))
+    for path in paths:
+        text = path.read_text(encoding="utf-8")
+        sql(p5s.without_cron(text) if path.name.startswith("20261117000670_") else text)
+    print("PASS: fresh replay of every migration through " + paths[-1].name, flush=True)
+
+
 def drop():
     assert re.fullmatch(r"p5d_doctor_[0-9a-f]{12}", TARGET)
     sql('drop database if exists "' + TARGET + '" with (force);', db="postgres", user="supabase_admin")
@@ -125,7 +144,7 @@ def drop():
 def main():
     p5s.base.assert_local_target()
     try:
-        p5s.build()
+        build()
         concurrency()
     finally:
         drop()

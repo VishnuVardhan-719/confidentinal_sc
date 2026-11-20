@@ -36,6 +36,9 @@
 -- behind its own database gate `doctor_arrival_fallback`, seeded off.
 begin;
 
+-- hmac() and gen_random_bytes(); Supabase ships pgcrypto in `extensions`. No-op when present.
+create extension if not exists pgcrypto with schema extensions;
+
 insert into booking_private.feature_gates(key) values ('doctor_arrival_fallback') on conflict do nothing;
 
 create table doctor_private.arrival_key (
