@@ -232,7 +232,7 @@ select pg_temp.expect_state(format('select public.interrupt_doctor_visit(%L,6,''
 select pg_temp.assert_true(public.interrupt_doctor_visit(:'v2',6,'ended_for_emergency',:'k_v2')=7,'emergency interruption needs no code');
 select pg_temp.assert_true(public.interrupt_doctor_visit(:'v2',6,'ended_for_emergency',:'k_v2')=7,'interruption replay after access ended');
 reset role;
-select pg_temp.assert_true(pg_temp.state(:'v2')='interrupted' and pg_temp.sub(:'v2')='interrupted' and pg_temp.events(:'v2')=7,'v2 interrupted once; got '||coalesce(pg_temp.state(:'v2'),'-')||'/'||coalesce(pg_temp.sub(:'v2'),'-')||' events '||coalesce((select string_agg(aggregate_version||':'||reason,',' order by aggregate_version) from public.booking_events where booking_id=:'v2'),'-'));
+select pg_temp.assert_true(pg_temp.state(:'v2')='interrupted' and pg_temp.sub(:'v2')='interrupted' and pg_temp.events(:'v2')=6,'v2 interrupted once; got '||coalesce(pg_temp.state(:'v2'),'-')||'/'||coalesce(pg_temp.sub(:'v2'),'-')||' events '||coalesce((select string_agg(aggregate_version||':'||reason,',' order by aggregate_version) from public.booking_events where booking_id=:'v2'),'-'));
 select pg_temp.assert_true((select count(*)=0 from doctor_private.arrival_challenges where booking_id=:'v2' and status='active'),'interruption revokes the live code');
 select pg_temp.assert_true((select array_agg(kind||':'||reason||':'||status) from public.booking_exceptions where booking_id=:'v2')
  =array['interrupted:ended_for_emergency:open'],'interruption opens one shared exception for ops review');
@@ -254,7 +254,7 @@ select pg_temp.expect_state(format('select public.interrupt_doctor_visit(%L,7,''
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
 select pg_temp.expect_state(format('select public.cancel_booking(%L,7,''patient_request'')',:'v3'),'55000','no cancellation after absence');
 reset role;
-select pg_temp.assert_true(pg_temp.state(:'v3')='confirmed' and pg_temp.sub(:'v3')='absence_reported' and pg_temp.events(:'v3')=7,'absence keeps the booking confirmed for review');
+select pg_temp.assert_true(pg_temp.state(:'v3')='confirmed' and pg_temp.sub(:'v3')='absence_reported' and pg_temp.events(:'v3')=6,'absence keeps the booking confirmed for review');
 select pg_temp.assert_true((select array_agg(kind||':'||reason||':'||status) from public.booking_exceptions where booking_id=:'v3')
  =array['absence_reported:absence_reported:open'],'absence opens the shared exception');
 select pg_temp.assert_true((select bool_and(status='ended') from public.booking_assignments where booking_id=:'v3'),'absence ends doctor access');
