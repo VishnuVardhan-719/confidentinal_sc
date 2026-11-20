@@ -101,3 +101,13 @@ Status: DONE. Commit 51a59d1 (+ this report).
 (2) D1 withdrawn rows dropped before strict parse (fixture emits one); D2 unpublished reviews counts only, filters removed, new en/te/hi strings; D3 relative 303 Location via proofCheckLocation (no Host header); D4 aria-busy + HydrationStatus on all 7 useHydrated forms, with a guard; C3-2 already compliant on fe2-d (no-fixture-imports-d test). REQUESTS R-FE-D-45.
 Evidence: tsc exit 0; eslint exit 0; vitest 33 files / 497 passed; build OK; Playwright ws-desktop-1280 + ws-mobile-390 + desktop-1280 + mobile-390 on a fresh build and cold servers: 449 passed / 0 failed / 1 skipped.
 Open: R-FE-D-44 page fix (owner); te/hi strings for doctorReviews.unpublished need native review.
+
+## R9-D9 IN PROGRESS (fe-a, fe2-d)
+Plan: public-a11y.spec.ts (keyboard/focus/dialogs/overflow/SEO), finder offline + /find invalid states (relative redirect), dropdown item focus ring, unit seo-guard + find-route tests. Directory filter drawers (/doctors, /lab-tests) are fe2-c, not on this branch.
+
+## TASK REPORT - R9-D9 (fe-a, worktree fe2-d, branch feat/fe2-d; not pushed) - 2026-11-20
+Status: DONE (the "R9-D9 IN PROGRESS" note above is superseded). Commit 2b33411.
+Fixed: dropdown menu focus ring (outline-none zeroed --tw-outline-style); shared DropdownMenu non-modal (axe aria-hidden-focus with menu open); /find relative 303 via finderRedirectPath; finder offline alert (input kept) and unusable-link alert (?finder=invalid, flag removed from URL); en/te/hi strings.
+Added: tests/e2e/public-a11y.spec.ts (keyboard, skip link, header order + rings, menus, mobile dialog trap/restore, finder keyboard, overflow/clipping on every public page x locale x 390/1280, finder offline/bad link/FAQ zero results, SEO per page, 404 noindex, robots.txt); tests/unit/seo-guard.test.ts; tests/unit/finder-route.test.ts. REQUESTS R-FE-D-46.
+Evidence: tsc 0; eslint 0; vitest 35 files / 511 passed; build OK; public projects (desktop-1280 + mobile-390, public + public-a11y specs) 251 passed / 0 failed / 7 skipped (viewport-specific skips + 1 existing). Full four-project run: 594 passed / 1 failed / 7 skipped; the failure was a 60 s timeout in doctor-consultation (notes keyboard test) under load, no doctor file touched; rerun of that spec on fresh servers: first 37/38 (a different 60 s timeout, prescription discard), then 38/38 in 33 s.
+Not covered: /doctors and /lab-tests filter drawers and zero-result states (feat/fe2-c); no-JS explanation for bad /find links. Open: doctor-consultation serial tests time out under heavy load (60 s budget).
