@@ -18,8 +18,9 @@ if [ "$code" -ne 0 ]; then
     { echo "### ${1} ${2:-} failed (exit $code)"
       echo '```'
       grep -E 'Applying migration' "$log" | tail -n 2
-      grep -iE 'ERROR|FATAL|not ok|SQLSTATE|At statement|Failed test|Result:' "$log" | grep -v '^#' \
-        | sed -e 's#^psql:[^ ]*/supabase/tests/##' | cut -c1-400 | head -n 300
+      # Each error with the CONTEXT/DETAIL lines psql prints after it (function and line).
+      grep -iE -A6 'ERROR|FATAL|not ok|SQLSTATE|At statement|Failed test|Result:' "$log" \
+        | grep -vE '^(#|ok [0-9])' | sed -e 's#^psql:[^ ]*/supabase/tests/##' | cut -c1-400 | head -n 600
       echo '```'; } >> "$GITHUB_STEP_SUMMARY"
   fi
 fi
