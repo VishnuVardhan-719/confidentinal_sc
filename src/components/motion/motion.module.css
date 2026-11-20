@@ -1,0 +1,54 @@
+/* Word-mask reveal. Text is visible by default; motion only offsets words that start below the fold. */
+.mask {
+  display: inline-block;
+  overflow: clip;
+  vertical-align: bottom;
+  /* room for descenders inside the clip */
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+}
+
+.word {
+  display: inline-block;
+}
+
+/* Step track: an SVG connector replaces the CSS pseudo-element line so it can be drawn. */
+.trackWrap {
+  position: relative;
+}
+
+.trackWrap > ol::before {
+  display: none;
+}
+
+.connector {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+  color: rgb(250 248 242 / 0.45);
+}
+
+.vertical {
+  top: 1.25rem;
+  bottom: 1.25rem;
+  left: calc(1.25rem - 0.5px);
+  width: 1px;
+  height: calc(100% - 2.5rem);
+}
+
+.horizontal {
+  display: none;
+  top: calc(1.25rem - 0.5px);
+  left: 1.25rem;
+  width: 66.667%;
+  height: 1px;
+}
+
+@media (min-width: 64rem) {
+  .vertical {
+    display: none;
+  }
+  .horizontal {
+    display: block;
+  }
+}

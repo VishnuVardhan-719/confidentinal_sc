@@ -1,0 +1,85 @@
+{
+  "$meta": {
+    "locale": "en",
+    "review": "Source language. Copy matches the shipped English UI."
+  },
+  "language": {
+    "label": "Language",
+    "change": "Change language",
+    "partial": "Only some parts of the site are available in this language so far."
+  },
+  "nav": {
+    "skipToContent": "Skip to main content",
+    "main": "Main",
+    "footer": "Footer",
+    "home": "Home",
+    "howItWorks": "How it works",
+    "exploreServices": "Explore services",
+    "about": "About",
+    "faq": "Questions",
+    "providers": "For providers",
+    "contact": "Contact",
+    "privacy": "Privacy (draft)",
+    "terms": "Terms (draft)",
+    "accessibility": "Accessibility",
+    "findCare": "Find care",
+    "signIn": "Sign in",
+    "createAccount": "Create account",
+    "dashboard": "Dashboard",
+    "signOut": "Sign out",
+    "menu": "Menu",
+    "account": "Account"
+  },
+  "footer": {
+    "tagline": "Doctor visits, lab services, scheduled ambulance transport and non-clinical caretaker support.",
+    "bookingNotOpen": "Online booking is not open yet.",
+    "emergencyCall": "For emergencies in India, call {phone}.",
+    "emergencyNote": "SureCure Visit is not an emergency response service. Scheduled ambulance transport is for planned journeys.",
+    "groups": {
+      "care": "Care",
+      "account": "Account",
+      "info": "Information",
+      "policies": "Policies"
+    }
+  },
+  "landing": {
+    "heroTitle": "Care you choose, arranged with clarity.",
+    "heroLead": "Doctor visits, lab services, scheduled ambulance transport and non-clinical caretaker support. You pick the provider, and the provider accepts your request.",
+    "servicesTitle": "Four kinds of care",
+    "servicesLead": "What each service is for, and where it stops.",
+    "flowTitle": "You choose. The provider accepts.",
+    "flowLead": "A request only becomes a booking when the provider says yes. Until then, nothing is confirmed."
+  },
+  "buttons": {
+    "exploreServices": "Explore services",
+    "howItWorks": "How it works",
+    "readHowItWorks": "Read how it works",
+    "goHome": "Go to the home page",
+    "tryAgain": "Try again",
+    "back": "Back",
+    "continue": "Continue",
+    "cancel": "Cancel",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "checkMessage": "Check message",
+    "clearForm": "Clear form"
+  },
+  "categories": {
+    "doctor": "Doctor visits",
+    "lab": "Lab services",
+    "ambulance": "Scheduled ambulance",
+    "caretaker": "Caretaker support"
+  },
+  "roles": {
+    "patient": "Patient",
+    "doctor": "Doctor",
+    "lab": "Lab",
+    "ambulance": "Scheduled ambulance",
+    "caretaker": "Caretaker",
+    "admin": "Admin"
+  },
+  "demo": {
+    "signedInAs": "Demo: {role}",
+    "label": "Demo"
+  }
+}

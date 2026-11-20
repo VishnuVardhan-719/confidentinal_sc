@@ -1,0 +1,13 @@
+# PHASE 2 - do this right after your current task is finished and green (lint/typecheck/test)
+
+Owner decision: use SYNTHETIC DEMO DATA so every page is fully clickable. Rules:
+- Copy C:\Users\Yashwanth\.claude-scratch-tasks\demo-data.ts to src/lib/demo/data.ts EXACTLY (identical in every worktree so merges are clean). Do not edit it. Extra demo rows go in your own file src/lib/demo/<area>.ts.
+- Every screen showing demo rows must render a visible "Demo data — not real" badge (DEMO_LABEL). Never imply real doctors, prices, reviews, ratings, ETAs, verification or payment. Payment = "not collected". Ambulance = scheduled only.
+- Do NOT git commit/push. Stay inside your file ownership. Run lint + typecheck + test + build before reporting.
+
+Per agent:
+- t1y [src/components/motion/**, hero*, src/app/page.tsx, src/app/categories/**]: finish landing; then /categories/[slug] browsable provider lists from demo data (cards: name, speciality, city, languages, "from ₹X", Demo badge) with city/language filters; and /providers/[id] profile with services + slot picker linking to /book?provider=..&service=..&slot=..
+- t22 [src/app/(app)/**, src/components/app/**]: dashboards driven by demo data: patient /dashboard (upcoming/past), /book 4-step flow fully working client-side with demo providers/slots and a confirmation screen (requested, payment not collected), /provider (incoming requests with accept/decline updating local state, schedule), /provider/onboarding, /admin (verification queue approve/reject in local state), /account. Local state only, no network.
+- t23 [next.config.ts, src/proxy.ts, docs/SECURITY_*.md, tests/e2e/**, tests/unit/security-*]: finish audit; then Playwright e2e specs for the full demo journey (landing -> category -> provider -> book -> confirm; sign-in; provider accept; admin approve) plus axe on every route; run against `next start`; report failures with file:line.
+- t27 [src/app/(auth)/**, src/lib/validation/**, src/lib/demo/auth*.ts]: finish auth; then demo sign-in: "Try demo as <role>" panel on /sign-in (six roles from DEMO_USERS) that sets a demo-role cookie via a server action and redirects to the matching dashboard; sign-out; helper getDemoSession(). Clearly labelled DEMO; only enabled when NEXT_PUBLIC_DEMO_MODE=true.
+- t28 [src/app/(site)/**, src/components/marketing/** (not hero*), src/components/i18n/**]: finish public pages; then language switcher (English / Telugu / Hindi) with dictionaries src/messages/{en,te,hi}.json for nav, footer, landing headings, common buttons; cookie-based locale (no route moves); set html lang; Telugu/Hindi line-height rules per docs/FE_REVIEW_U01.md P1-2.

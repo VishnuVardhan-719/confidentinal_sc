@@ -1,0 +1,123 @@
+/* Declare Tailwind's layer order first: if this file loads before globals.css, a bare @layer components
+   would otherwise be ordered before base, and the preflight reset would override every component rule. */
+@layer theme, base, components, utilities;
+
+/*
+ * Styles for the public (site) pages. Co-located so globals.css stays untouched.
+ * Uses the tokens declared in globals.css (:root). Class names are prefixed `mk-` to avoid collisions.
+ */
+
+@layer components {
+  /* Two-column reading layout: a short index on the left, content on the right. */
+  .mk-split { display: grid; gap: 2.5rem; }
+  .mk-aside { font-size: .9375rem; }
+  .mk-aside-title { font-family: var(--font-body), sans-serif; font-size: .9375rem; font-weight: 700; letter-spacing: 0; }
+  .mk-toc { margin: .75rem 0 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+  .mk-toc li { border-bottom: 1px solid var(--line); }
+  .mk-toc a { display: flex; min-height: 44px; align-items: center; color: var(--ink); text-decoration: none; }
+  .mk-toc a:hover { color: var(--forest); text-decoration: underline; }
+
+  /* Draft marker for legal pages. A full hairline frame, not a thick side stripe. */
+  .mk-draft { display: grid; gap: .5rem; max-width: 46rem; margin-bottom: 3rem; padding: 1.25rem 1.5rem; border: 1px solid var(--warning); border-radius: var(--radius); background: #fdf6ec; }
+  .mk-draft-label { display: inline-flex; align-items: center; gap: .5rem; font-weight: 700; color: var(--warning); text-transform: uppercase; letter-spacing: .08em; font-size: .8125rem; }
+  .mk-draft-label::before { content: ""; width: .5rem; height: .5rem; border-radius: 999px; background: currentColor; }
+
+  /* Legal/statement body: numbered sections help people cite a clause. */
+  .mk-legal { max-width: 42rem; counter-reset: clause; }
+  .mk-legal > section { padding-block: 2rem; border-top: 1px solid var(--line); scroll-margin-top: 1.5rem; }
+  .mk-legal > section:first-child { padding-top: 0; border-top: 0; }
+  .mk-legal h2 { font-size: clamp(1.5rem, 2.4vw, 1.875rem); counter-increment: clause; }
+  .mk-legal h2::before { content: counter(clause) ". "; color: var(--forest); }
+  .mk-legal section > * + * { margin-top: 1rem; }
+  .mk-legal ul { margin-bottom: 0; padding-left: 1.25rem; list-style: disc; }
+  .mk-legal li + li { margin-top: .5rem; }
+  .mk-legal li::marker { color: var(--forest); }
+  .mk-pending { color: var(--warning); font-weight: 700; }
+
+  /* FAQ accordion: native <details>, so it works without JavaScript and find-in-page can open it. */
+  .mk-faq-group + .mk-faq-group { margin-top: 3.5rem; }
+  .mk-faq-group > h2 { margin-bottom: 1rem; scroll-margin-top: 1.5rem; }
+  .mk-faq-list { border-top: 1px solid var(--ink); }
+  .mk-faq { border-bottom: 1px solid var(--line); }
+  .mk-faq summary {
+    display: flex; align-items: center; justify-content: space-between; gap: 1.5rem;
+    min-height: 44px; padding: 1.125rem .25rem; cursor: pointer; list-style: none;
+    font-size: 1.125rem; font-weight: 600; line-height: 1.4;
+    transition: background-color .25s var(--ease-out);
+  }
+  .mk-faq summary::-webkit-details-marker { display: none; }
+  .mk-faq summary:hover { background: var(--mist); }
+  .mk-faq summary:focus-visible { outline-offset: 2px; }
+  .mk-faq-icon { flex: none; width: 1.75rem; height: 1.75rem; padding: .35rem; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--forest); transition: transform .35s var(--ease-out), background-color .25s var(--ease-out); }
+  .mk-faq-v { transform-origin: center; transition: transform .3s var(--ease-out); }
+  .mk-faq[open] .mk-faq-v { transform: scaleY(0); }
+  .mk-faq[open] .mk-faq-icon { background: var(--forest); color: var(--paper); border-color: var(--forest); }
+  .mk-faq-answer { max-width: 40rem; padding: 0 .25rem 1.5rem; color: var(--ink); }
+  .mk-faq-answer > * + * { margin-top: .75rem; }
+  .mk-faq[open] .mk-faq-answer { animation: mk-reveal .35s var(--ease-out); }
+
+  /* Provider join: numbered process track (the order matters) and a hairline evidence table. */
+  .mk-process { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; counter-reset: proc; border-top: 1px solid var(--ink); }
+  .mk-process li { display: grid; grid-template-columns: 3rem 1fr; gap: .25rem 1rem; padding-block: 1.5rem; border-bottom: 1px solid var(--line); counter-increment: proc; }
+  .mk-process li::before { content: counter(proc); grid-row: span 2; font-family: var(--font-editorial), serif; font-size: 2rem; line-height: 1; color: var(--forest); }
+  .mk-process h3 { font-size: clamp(1.375rem, 2vw, 1.625rem); }
+  .mk-process p { max-width: 36rem; color: var(--ink-soft); }
+
+  .mk-statuses { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+  .mk-statuses li { display: inline-flex; align-items: center; min-height: 2rem; padding: .25rem .75rem; border: 1px solid var(--line-strong); border-radius: 999px; font-size: .875rem; font-weight: 600; background: var(--paper-raised); }
+  .mk-statuses li[data-tone="ok"] { border-color: var(--forest); color: var(--forest); }
+  .mk-statuses li[data-tone="warn"] { border-color: var(--warning); color: var(--warning); }
+
+  .mk-evidence { display: grid; margin: 0; border-top: 1px solid var(--ink); }
+  .mk-evidence > div { display: grid; gap: .75rem; padding-block: 1.75rem; border-bottom: 1px solid var(--line); }
+  .mk-evidence dt { font-family: var(--font-editorial), serif; font-size: clamp(1.5rem, 2.4vw, 1.875rem); line-height: 1.15; }
+  .mk-evidence dd { margin: 0; }
+  .mk-evidence ul { margin: 0; padding-left: 1.25rem; list-style: disc; }
+  .mk-evidence li + li { margin-top: .375rem; }
+  .mk-evidence li::marker { color: var(--forest); }
+  .mk-evidence .mk-limit { margin-top: .75rem; color: var(--ink-soft); font-size: .9375rem; }
+
+  /* About: principle list as a definition list with a hairline rule. */
+  .mk-principles { display: grid; gap: 0; margin: 0; border-top: 1px solid var(--ink); }
+  .mk-principles > div { display: grid; gap: .5rem; padding-block: 1.5rem; border-bottom: 1px solid var(--line); }
+  .mk-principles dt { font-family: var(--font-editorial), serif; font-size: clamp(1.375rem, 2vw, 1.625rem); line-height: 1.2; }
+  .mk-principles dd { margin: 0; max-width: 38rem; color: var(--ink-soft); }
+
+  /* Contact form */
+  .mk-form { display: grid; gap: 1.5rem; max-width: 36rem; }
+  .mk-textarea, .mk-select {
+    width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff;
+    padding: .625rem .875rem; font: inherit; font-size: 1rem; color: var(--ink);
+    transition: border-color .15s ease;
+  }
+  .mk-textarea { min-height: 9rem; resize: vertical; line-height: 1.5; }
+  .mk-textarea:hover, .mk-select:hover { border-color: var(--forest); }
+  .mk-textarea:focus-visible, .mk-select:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .mk-textarea[aria-invalid="true"], .mk-select[aria-invalid="true"] { border: 2px solid var(--warning); }
+  .mk-textarea::placeholder { color: #5d6f72; }
+  .mk-count { font-size: .875rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .mk-result { padding: 1.25rem 1.5rem; border: 1px solid var(--forest); border-radius: var(--radius); background: var(--mist); }
+  .mk-result > * + * { margin-top: .5rem; }
+  .mk-result:focus { outline: 3px solid var(--focus); outline-offset: 4px; }
+
+  .mk-related { margin-top: 5rem; padding-top: 2rem; border-top: 1px solid var(--line); }
+  .mk-related ul { display: grid; gap: 0 2rem; margin: 1rem 0 0; padding: 0; list-style: none; }
+  .mk-related li { padding-block: .75rem; border-bottom: 1px solid var(--line); }
+  .mk-related a { display: inline-flex; min-height: 44px; align-items: center; font-weight: 700; }
+  .mk-related p { color: var(--ink-soft); font-size: .9375rem; }
+}
+
+@keyframes mk-reveal { from { opacity: 0; transform: translateY(-4px); } }
+
+@media (min-width: 48rem) {
+  .mk-split { grid-template-columns: 14rem minmax(0, 1fr); gap: 4rem; align-items: start; }
+  .mk-split > .mk-aside { position: sticky; top: 1.5rem; }
+  .mk-evidence > div { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 2rem; }
+  .mk-principles > div { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 2rem; }
+  .mk-related ul { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-faq summary, .mk-faq-icon, .mk-faq-v, .mk-textarea, .mk-select { transition: none; }
+  .mk-faq[open] .mk-faq-answer { animation: none; }
+}

@@ -1,0 +1,94 @@
+/* Declare Tailwind's layer order first: if this file loads before globals.css, a bare @layer components
+   would otherwise be ordered before base, and the preflight reset would override every component rule. */
+@layer theme, base, components, utilities;
+
+/*
+ * Header and footer layout. Co-located so globals.css stays untouched; class names are prefixed `sh-`.
+ * Reuses globals tokens and the .brand, .site-nav, .menu-icon, .footer-note and .emergency-note rules.
+ */
+
+@layer components {
+  /* Utility strip: the emergency number stays visible on every page, with the language choice beside it. */
+  .sh-utility { border-bottom: 1px solid var(--line); background: var(--mist); font-size: .875rem; }
+  .sh-utility-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .25rem 1rem; padding-block: .25rem; }
+  .sh-emergency { color: var(--ink); }
+  .sh-tel { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 44px; padding-inline: .125rem; font-weight: 700; }
+  .sh-utility .i18n-option { min-height: 40px; padding: 0 .625rem; font-size: .875rem; }
+
+  /* Main row */
+  .sh-row { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1rem; padding-block: .5rem; }
+  .sh-brand-link { color: inherit; text-decoration: none; }
+  .sh-brand-link:hover .brand { color: var(--ink); }
+
+  .sh-toggle {
+    display: inline-flex; align-items: center; gap: .625rem; min-width: 44px; min-height: 44px; margin-left: auto;
+    padding: 0 .875rem; border: 1px solid var(--line-strong); border-radius: var(--radius); background: transparent;
+    color: var(--ink); font: inherit; font-size: .9375rem; font-weight: 600; cursor: pointer; touch-action: manipulation;
+  }
+  .sh-toggle:hover { border-color: var(--forest); color: var(--forest); }
+  .sh-toggle[aria-expanded="true"] { border-color: var(--forest); background: var(--mist); color: var(--forest); }
+  .sh-toggle[aria-expanded="true"] .menu-icon::before { top: calc(50% - 1px); transform: rotate(45deg); }
+  .sh-toggle[aria-expanded="true"] .menu-icon::after { bottom: calc(50% - 1px); transform: rotate(-45deg); }
+  .sh-toggle[aria-expanded="true"] .menu-icon > span { opacity: 0; }
+
+  /* Below 64rem the links and account actions live in a disclosure panel that pushes content down. */
+  .sh-panel { display: none; flex-basis: 100%; min-width: 0; flex-direction: column; gap: 1rem; padding-bottom: 1rem; }
+  .sh-panel[data-open="true"] { display: flex; }
+  .site-header .sh-panel .sh-nav { flex-direction: column; flex-wrap: nowrap; gap: 0; }
+  .site-header .sh-panel .sh-nav a { min-height: 48px; padding-inline: .25rem; border-top: 1px solid var(--line); font-size: 1rem; }
+
+  .sh-actions { display: flex; flex-direction: column; gap: .75rem; }
+  .sh-actions > * { width: 100%; }
+  .sh-signin {
+    display: inline-flex; min-height: 44px; align-items: center; justify-content: center;
+    border: 1px solid var(--forest); border-radius: var(--radius); color: var(--forest);
+    font-size: .9375rem; font-weight: 600; text-decoration: none;
+  }
+  .sh-signin:hover { background: var(--mist); }
+  .sh-demo {
+    display: inline-flex; align-items: center; justify-content: center; min-height: 2rem; padding: .125rem .75rem;
+    border: 1px dashed var(--warning); border-radius: 999px; color: var(--warning);
+    font-size: .8125rem; font-weight: 700;
+  }
+
+  /* Footer */
+  .sh-foot { display: grid; gap: 2.5rem; }
+  .sh-foot-brand > * + * { margin-top: 1rem; }
+  .sh-foot-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem 1.5rem; }
+  .sh-foot-title { font-family: var(--font-body), sans-serif; font-size: .8125rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
+  .sh-foot-title:lang(te), .sh-foot-title:lang(hi) { text-transform: none; letter-spacing: 0; font-size: .9375rem; }
+  .sh-foot-nav ul { margin: .5rem 0 0; padding: 0; list-style: none; }
+  .sh-foot-nav a { display: inline-flex; min-height: 44px; align-items: center; color: var(--ink); font-size: .9375rem; text-decoration: none; }
+  .sh-foot-nav a:hover { color: var(--forest); text-decoration: underline; }
+  .site-footer .emergency-note .sh-tel { min-height: 44px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sh-toggle .menu-icon::before, .sh-toggle .menu-icon::after, .sh-toggle .menu-icon > span {
+    transition: transform .2s var(--ease-out), top .2s var(--ease-out), bottom .2s var(--ease-out), opacity .15s linear;
+  }
+}
+
+@media (max-width: 63.99rem) and (prefers-reduced-motion: no-preference) {
+  .sh-panel[data-open="true"] { animation: nav-reveal .2s var(--ease-out); }
+}
+
+@media (min-width: 48rem) {
+  .sh-foot { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 3rem; }
+  .sh-foot-nav { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .site-footer .emergency-note { grid-column: 1 / -1; }
+  .sh-actions { flex-direction: row; flex-wrap: wrap; }
+  .sh-actions > * { width: auto; }
+  .sh-signin { padding-inline: 1.25rem; }
+}
+
+@media (min-width: 64rem) {
+  .sh-row { flex-wrap: nowrap; justify-content: space-between; gap: 2rem; padding-block: .75rem; }
+  .sh-toggle { display: none; }
+  .sh-panel { display: flex; flex-basis: auto; flex-direction: row; align-items: center; gap: 2rem; padding-bottom: 0; }
+  .site-header .sh-panel .sh-nav { flex-direction: row; flex-wrap: wrap; gap: 0 1.5rem; }
+  .site-header .sh-panel .sh-nav a { min-height: 44px; padding-inline: 0; border-top: 0; font-size: .9375rem; }
+  .sh-actions { flex-wrap: nowrap; align-items: center; }
+  .sh-signin { border-color: transparent; padding-inline: .75rem; }
+  .sh-signin:hover { border-color: var(--forest); }
+}
