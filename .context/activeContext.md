@@ -166,3 +166,8 @@ Open: sitemap.xml (fe-a) does not list /lab-tests yet; te/hi labDirectory string
 ## TASK REPORT: R9-C4 (fe-q, feat/fe2-c)
 - e2e on own prod build port 3365 (fixture): booking-journey 10/10, a11y-sweep-c --grep book 12/12, 390+1280, axe clean; no expectation changes. Server 3365 left running (pid in .context/server-3365.pid; started detached because tool background processes die).
 - Review appended to ADVERSARIAL_REVIEW.md: fe2-e 0813f7b..9fc525c (E1 LOW soft-404 gated stories, E2 LOW paiseToRupeesString no int guard, E3 carried hi plurals); fe2-p 8f7ca31..8dc301a (P1 MEDIUM FIXTURE_ADMIN_SESSION moderator for every request + int conflict, P2 LOW no pagination, P3 LOW action args unvalidated).
+
+## TASK REPORT: R9-C5 (fe-q, feat/fe2-c)
+- Stopped own server 3365 (pid 27192, cmd "node node_modules/next/dist/bin/next start -p 3365", port listener verified). No servers of mine running now.
+- Reviewed fe2-d b8e6215...f36ff67: D1 MEDIUM doctor-reviews lacks `withdrawn` -> page fails; D2 MEDIUM pending/rejected cards with exact date (re-identification); D3 LOW verify/check absolute redirect from Host; D4 LOW a11y disabled-until-hydrated with no status. REQUESTS R-FE-Q-R9C5-1.
+- tests/unit/peer-guards.test.ts (4; 3 skip locally until files integrate). Proven vs export of fe2-d + fe2-p reviews: 4/4 pass; broken copies 3 fail. tsc 0, lint 0, vitest 67 files 1002 passed + 3 skipped.
