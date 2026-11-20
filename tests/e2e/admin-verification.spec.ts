@@ -5,7 +5,7 @@ import { ACCOUNTS, COPY, signIn } from "./support/identity";
 /**
  * FE06 admin provider verification + coverage (FRONTEND_MASTER s15) on SYNTHETIC data.
  * Decisions mutate shared dev-server fixture memory, so the suite runs serially and in order.
- * test.describe.fixme until /admin/providers and /admin/coverage exist.
+ * test.describe.fixme until /admin/providers and /admin/coverage exist (still not built, checked 2026-11-20, R9-E2).
  */
 
 const LAB = "00000000-0000-4000-8000-000000003001";

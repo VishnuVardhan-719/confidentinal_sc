@@ -58,6 +58,8 @@ export function AuthFlow({
   const [method, setMethod] = useState<Method>("email_password");
   const [phone, setPhone] = useState("");
   const [attempt, setAttempt] = useState(0);
+  // Shared by the Email and Mobile tabs so switching method keeps the chosen role.
+  const [role, setRole] = useState<string>(initialRole ?? "");
 
   if (state.status === "otp") {
     return (
@@ -123,7 +125,7 @@ export function AuthFlow({
         <legend className="text-base font-semibold text-ink">{t("signup.roleLegend")}</legend>
         <p className="-mt-1 text-sm text-muted">{t("signup.roleHint")}</p>
         {fieldError("role") ? <p className="text-sm font-medium text-danger">{fieldError("role")}</p> : null}
-        <RadioGroup name="role" defaultValue={values.role ?? initialRole ?? undefined} className="grid gap-2 sm:grid-cols-2">
+        <RadioGroup name="role" value={role || values.role || ""} onValueChange={setRole} className="grid gap-2 sm:grid-cols-2">
           {SIGNUP_ROLES.map((role) => (
             <label
               key={role}

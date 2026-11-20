@@ -39,3 +39,10 @@ Open: proxy story check queries content on every /stories/<slug> request (cheap 
   - a11y-sweep-e (390 and 1280): 14/14 passed.
 - Not run: auth, navigation, onboarding, profile, admin-verification specs (owned by other agents, outside the R9-E list). The http-mode story pages were not re-smoked after resume (no source change since).
 - Open: http adapter has no CMS contract, so every story slug shows the gated page in http mode. te/hi strings still unreviewed. All servers stopped.
+
+## TASK R9-E2: DONE (fe-b, 2026-11-20)
+- Ran auth, navigation, onboarding, profile, admin-verification in fixture mode at 390/1280 (port 3350, fresh server per spec). Before: profile 1 failed (both sizes); the other four were almost entirely describe.fixme.
+- Fixes (own files): profile/auth wrong-role assertions now expect the guard's redirect to the user's landing page; auth/navigation un-fixme'd, stale selectors fixed (route announcer alert, "patient" radio, Mobile tab label, two 112 links, hidden Activity duplicate); signup role choice kept across the Email/Mobile tabs (auth-flow.tsx); Sign out added to AreaShell top bar and OpsFrame (area-shell.tsx).
+- Still fixme (named routes not built on fe2-e): auth 4 (anon redirects for /patient/dashboard, /doctor/onboarding, /admin/providers, /admin/coverage); navigation 3 (auth-page links -> /doctors, patient + doctor walks); onboarding 15 (wizards not built); admin-verification 10 (pages not built). REQUESTS.md R-E9E2-01..03.
+- Results after fixes: auth 23 passed/4 skipped, navigation 5/3, profile 6/0, onboarding 0/15, admin-verification 0/10 at both sizes. Regression: public 51+1/52, lab 9+1, ambulance 9, caretaker 8, admin-ops 9, cms 6, role-isolation 9, emergency-e 3 (both sizes), a11y-sweep 14/14. tsc 0, eslint 0 errors (1 warning in untracked scratch), vitest 709/709, build 0.
+- Greps: toFixed only in onboarding/coordinates.ts (lat/lng, not money); paise helpers integer-safe. No hard-coded UI copy found in src tsx/ts (heuristic greps); fixture adapter audit notes in modules/verification/fixture.ts are synthetic data.

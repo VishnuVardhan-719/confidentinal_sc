@@ -64,9 +64,10 @@ test.describe("patient profile at a glance", () => {
   });
 
   test("other roles cannot open the patient profile", async ({ page }) => {
+    // Wrong role: the guard sends the user to their own landing page (see role-isolation.spec.ts).
     await signIn(page, ACCOUNTS.verifier);
     await page.goto("/en/patient/profile", { waitUntil: "domcontentloaded" });
-    await expect(page.getByText(COPY.accessDenied)).toBeVisible();
+    await expect(page).toHaveURL((u) => u.pathname === "/en/admin/dashboard");
     await expect(page.getByTestId("profile-completion")).toHaveCount(0);
   });
 

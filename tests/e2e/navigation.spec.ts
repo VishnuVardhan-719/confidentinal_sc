@@ -3,8 +3,8 @@ import { ACCOUNTS, COPY, signIn, signOut, visible } from "./support/identity";
 
 /**
  * USER-REQ-1 A: every link reachable from the signed-in chrome and the auth pages resolves to a
- * real page (no 404, no error boundary). Role dashboards and most role pages are owned by other
- * workstreams; their walk is `fixme` until those routes exist on this branch.
+ * real page (no 404, no error boundary). Walks that reach routes not built on this branch yet are
+ * `fixme` with the route named.
  */
 
 async function expectRealPage(page: Page, href: string) {
@@ -28,12 +28,11 @@ test.describe("navigation: auth and account pages", () => {
     }
   });
 
-  // fixme: My workspace for an incomplete patient opens /en/patient/onboarding (PHASE2-B wizard, not built yet). R-FE06-07.
-  test.fixme("signed-in chrome: My workspace, account pages and sign out all work", async ({ page }) => {
+  test("signed-in chrome: My workspace, account pages and sign out all work", async ({ page }) => {
     await signIn(page, ACCOUNTS.patientNew, "/en/account/security");
     await expect(page).toHaveURL("/en/account/security");
     for (const href of await internalLinks(page)) {
-      // Role pages owned by other workstreams are covered by the fixme walk below.
+      // Role pages owned by other workstreams are covered by the role-workspace walk below.
       if (/^\/(en|te|hi)\/(patient|doctor|lab|ambulance|caretaker|admin)\/(dashboard|bookings)/.test(href)) continue;
       await expectRealPage(page, href);
     }
@@ -56,13 +55,23 @@ test.describe("navigation: auth and account pages", () => {
   });
 });
 
-test.describe.fixme("navigation: role workspaces (pages owned by other workstreams)", () => {
+test.describe("navigation: role workspaces", () => {
+  // Landing pages that cannot be walked on this branch yet.
+  const BLOCKED: Record<string, string> = {
+    [ACCOUNTS.patientComplete]: "/en/patient/dashboard and /en/doctors are not built on this branch yet (R-FE06-06)",
+    [ACCOUNTS.doctorActive]: "the doctor workspace is not built on this branch yet",
+  };
+  // Linked from built pages but not built yet: listed in REQUESTS.md R-E9E2-01, skipped in the walk.
+  const NOT_BUILT_HREFS = new Set(["/en/admin/providers", "/en/admin/coverage"]);
   const ROLE_ACCOUNTS = [ACCOUNTS.patientComplete, ACCOUNTS.doctorActive, ACCOUNTS.labOwner, ACCOUNTS.verifier];
   for (const account of ROLE_ACCOUNTS) {
     test(`every nav item for ${account} resolves`, async ({ page }) => {
+      test.fixme(account in BLOCKED, BLOCKED[account]);
       await signIn(page, account);
-      for (const href of await internalLinks(page)) await expectRealPage(page, href);
-      await expect(page.getByRole("button", { name: COPY.signOut }).first()).toBeVisible();
+      // Sign out must be reachable from the landing page itself, at every width. lab.owner's lab is
+      // pending review, so it lands on the denied frame, which must still offer Sign out.
+      await expect(visible(page.getByRole("button", { name: COPY.signOut }))).toBeVisible();
+      for (const href of await internalLinks(page)) if (!NOT_BUILT_HREFS.has(href)) await expectRealPage(page, href);
     });
   }
 });

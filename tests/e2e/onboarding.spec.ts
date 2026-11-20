@@ -5,7 +5,9 @@ import { ACCOUNTS, COPY, expectNoPrivateBrowserStorage, signIn } from "./support
 /**
  * FE05 onboarding wizards per role (FRONTEND_MASTER s8) against SYNTHETIC fixtures.
  * Dev-server fixture drafts are shared process memory: suites run serially.
- * test.describe.fixme until the wizard pages exist.
+ * test.describe.fixme until the wizard pages exist. Checked 2026-11-20 (R9-E2): /patient/onboarding still
+ * forwards to the health profile form (no stepped questionnaire), and /{doctor,lab,ambulance,caretaker}/onboarding
+ * are not built on this branch.
  */
 
 test.describe.configure({ mode: "serial" });

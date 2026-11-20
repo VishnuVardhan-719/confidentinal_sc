@@ -1,16 +1,21 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
-import { ACCOUNTS, COPY, FIXTURE_OTP, emailInput, expectCleanUrl, passwordInput, expectNoPrivateBrowserStorage, signIn, signOut } from "./support/identity";
+import { expect, test, type Page } from "@playwright/test";
+import { ACCOUNTS, COPY, FIXTURE_OTP, emailInput, expectCleanUrl, passwordInput, expectNoPrivateBrowserStorage, signIn, signOut, visible } from "./support/identity";
 
 /**
  * FE03/FE04 auth journeys against the SYNTHETIC fixture adapter.
- * test.describe.fixme: pages (/login, /signup, guards) are built after the fe2-a merge.
+ * Routes not built on this branch yet (patient dashboard, doctor area, admin provider review and
+ * coverage) only change the URL, so tests that need their content are `test.fixme` with the route
+ * named. The Next.js route announcer is also role="alert", so alerts are matched by text.
  */
 
-test.describe.fixme("sign in", () => {
+const PATIENT_HOME = "/en/patient/dashboard";
+const alertWith = (page: Page, text: RegExp) => page.getByRole("alert").filter({ hasText: text });
+
+test.describe("sign in", () => {
   test("shows the synthetic-data notice and passes axe", async ({ page }) => {
     await page.goto("/en/login");
-    await expect(page.getByText(COPY.fixtureNotice)).toBeVisible();
+    await expect(visible(page.getByText(COPY.fixtureNotice))).toBeVisible();
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations).toEqual([]);
   });
@@ -39,14 +44,14 @@ test.describe.fixme("sign in", () => {
     await emailInput(page).fill("nobody@example.invalid");
     await passwordInput(page).fill("wrong-password");
     await page.getByRole("button", { name: COPY.signIn }).click();
-    await expect(page.getByRole("alert")).toContainText(COPY.invalidCredentials);
+    await expect(alertWith(page, COPY.invalidCredentials)).toBeVisible();
     await expect(emailInput(page)).toHaveValue("nobody@example.invalid");
     await expect(passwordInput(page)).toHaveValue("");
   });
 
   test("restricted account cannot sign in", async ({ page }) => {
     await signIn(page, ACCOUNTS.disabled, undefined, { expectSuccess: false });
-    await expect(page.getByRole("alert")).toContainText(COPY.accountRestricted);
+    await expect(alertWith(page, COPY.accountRestricted)).toBeVisible();
     await expect(page).toHaveURL(/\/en\/login/);
   });
 
@@ -58,13 +63,14 @@ test.describe.fixme("sign in", () => {
   });
 
   test("sign out clears the session; private pages then require sign-in", async ({ page }) => {
-    await signIn(page, ACCOUNTS.patientComplete);
+    // Signs out from an account page: the patient dashboard is not built on this branch yet.
+    await signIn(page, ACCOUNTS.patientComplete, "/en/account/security");
     await signOut(page);
     await expect(page.getByText(COPY.signedOut)).toBeVisible();
     const cookies = await page.context().cookies();
     expect(cookies.filter((c) => c.name === "scv_at" || c.name === "scv_rt")).toEqual([]);
-    await page.goto("/en/patient/dashboard");
-    await expect(page).toHaveURL("/en/login?next=%2Fen%2Fpatient%2Fdashboard");
+    await page.goto("/en/account/security");
+    await expect(page).toHaveURL("/en/login?next=%2Fen%2Faccount%2Fsecurity");
   });
 
   test("session cookies are httpOnly and SameSite=Lax", async ({ page }) => {
@@ -84,17 +90,17 @@ test.describe.fixme("sign in", () => {
     const refresh = (await context.cookies()).find((c) => c.name === "scv_rt");
     await context.clearCookies();
     if (refresh) await context.addCookies([refresh]);
-    await page.goto("/en/patient/bookings");
-    await expect(page).toHaveURL(/\/en\/login\?next=%2Fen%2Fpatient%2Fbookings&reason=session_expired/);
-    await expect(page.getByText(COPY.sessionExpired)).toBeVisible();
+    await page.goto("/en/patient/profile");
+    await expect(page).toHaveURL(/\/en\/login\?next=%2Fen%2Fpatient%2Fprofile&reason=session_expired/);
+    await expect(page.getByRole("main").getByText(COPY.sessionExpired)).toBeVisible();
   });
 });
 
-test.describe.fixme("sign up", () => {
+test.describe("sign up", () => {
   test("offers patient and four provider roles, never admin", async ({ page }) => {
     await page.goto("/en/signup");
     const roles = page.getByRole("radiogroup");
-    for (const name of [/patient/i, /doctor/i, /lab/i, /ambulance/i, /caretaker|caregiver/i]) {
+    for (const name of [/^patient/i, /^doctor/i, /^laboratory/i, /^ambulance/i, /^(caretaker|caregiver)/i]) {
       await expect(roles.getByRole("radio", { name })).toBeVisible();
     }
     await expect(roles.getByRole("radio", { name: /admin/i })).toHaveCount(0);
@@ -104,18 +110,21 @@ test.describe.fixme("sign up", () => {
 
   test("missing consent shows an error summary and focuses the first invalid field", async ({ page }) => {
     await page.goto("/en/signup");
-    await page.getByRole("radio", { name: /patient/i }).check();
+    await page.getByRole("radio", { name: /^patient/i }).check();
     await emailInput(page).fill("new.person@example.invalid");
     await passwordInput(page).fill("a-long-enough-password");
     await page.getByRole("button", { name: COPY.createAccount }).click();
-    await expect(page.getByRole("alert")).toBeVisible();
+    // The shared ErrorSummary takes focus (announced first); its link moves focus to the field.
+    const summary = page.getByRole("alert").filter({ hasText: /\S/ }).first();
+    await expect(summary).toBeFocused();
+    await summary.getByRole("link").first().click();
     await expect(page.getByLabel(COPY.acceptTerms)).toBeFocused();
   });
 
   test("email signup always shows the same confirmation (no account enumeration)", async ({ page }) => {
     for (const email of [ACCOUNTS.patientComplete, "brand.new@example.invalid"]) {
       await page.goto("/en/signup");
-      await page.getByRole("radio", { name: /patient/i }).check();
+      await page.getByRole("radio", { name: /^patient/i }).check();
       await emailInput(page).fill(email);
       await passwordInput(page).fill("a-long-enough-password");
       await page.getByLabel(COPY.acceptTerms).check();
@@ -126,9 +135,9 @@ test.describe.fixme("sign up", () => {
 
   test("phone OTP: wrong code, throttled resend, paste with spaces, then onboarding of chosen role", async ({ page }) => {
     await page.goto("/en/signup");
-    await page.getByRole("radio", { name: /doctor/i }).check();
+    await page.getByRole("radio", { name: /^doctor/i }).check();
     await page.getByRole("tab", { name: /mobile/i }).click();
-    await page.getByLabel(COPY.phoneLabel).fill("+916000000002");
+    await page.getByRole("textbox", { name: COPY.phoneLabel }).fill("+916000000002");
     await page.getByLabel(COPY.acceptTerms).check();
     await page.getByRole("button", { name: COPY.sendCode }).click();
 
@@ -141,8 +150,8 @@ test.describe.fixme("sign up", () => {
 
     await otp.fill("000000");
     await page.getByRole("button", { name: COPY.verify }).click();
-    await expect(page.getByRole("alert")).toContainText(COPY.otpInvalid);
-    await expect(page.locator("[aria-live]")).toContainText(COPY.otpInvalid);
+    // The error Notice is role="alert", an implicit assertive live region, so it is announced.
+    await expect(alertWith(page, COPY.otpInvalid)).toBeVisible();
 
     await otp.fill(` ${FIXTURE_OTP.slice(0, 3)} ${FIXTURE_OTP.slice(3)} `);
     await page.getByRole("button", { name: COPY.verify }).click();
@@ -152,21 +161,27 @@ test.describe.fixme("sign up", () => {
   });
 });
 
-test.describe.fixme("direct URL access", () => {
+test.describe("direct URL access", () => {
   const PRIVATE = ["/en/patient/dashboard", "/en/doctor/onboarding", "/en/admin/providers", "/en/admin/coverage", "/en/workspace/select", "/en/account/security"];
+
+  // Not built on this branch: no page means no guard runs, so the localized 404 shows instead.
+  const NOT_BUILT = new Set(["/en/patient/dashboard", "/en/doctor/onboarding", "/en/admin/providers", "/en/admin/coverage"]);
 
   for (const path of PRIVATE) {
     test(`anonymous ${path} redirects to login with next`, async ({ page }) => {
+      test.fixme(NOT_BUILT.has(path), `${path} is not built on this branch yet`);
       await page.goto(path);
       await expect(page).toHaveURL(`/en/login?next=${encodeURIComponent(path)}`);
     });
   }
 
   test("a patient cannot open admin or another role's workspace, and sees no private data", async ({ page }) => {
+    // Wrong role: the guard redirects to the user's own landing page (see role-isolation.spec.ts).
+    // /admin/providers, /admin/coverage and /doctor/* are not built yet, so built pages stand in.
     await signIn(page, ACCOUNTS.patientComplete);
-    for (const path of ["/en/admin/providers", "/en/admin/providers/00000000-0000-4000-8000-000000003001", "/en/admin/coverage", "/en/doctor/dashboard"]) {
+    for (const path of ["/en/admin/dashboard", "/en/admin/audit", "/en/admin/users", "/en/lab/orders"]) {
       await page.goto(path);
-      await expect(page.getByText(COPY.accessDenied)).toBeVisible();
+      await expect(page).toHaveURL((u) => u.pathname === PATIENT_HOME);
       await expect(page.getByText(/synthetic diagnostics/i)).toHaveCount(0);
     }
   });
@@ -181,9 +196,9 @@ test.describe.fixme("direct URL access", () => {
 
   test("emergency guidance works signed out and for incomplete patients", async ({ page }) => {
     await page.goto("/en/emergency");
-    await expect(page.getByRole("link", { name: /112/ })).toHaveAttribute("href", "tel:112");
+    await expect(page.getByRole("link", { name: "Call 112", exact: true })).toHaveAttribute("href", "tel:112");
     await signIn(page, ACCOUNTS.patientNew);
     await page.goto("/en/emergency");
-    await expect(page.getByRole("link", { name: /112/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Call 112", exact: true })).toBeVisible();
   });
 });
