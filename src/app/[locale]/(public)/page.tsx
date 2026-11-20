@@ -37,6 +37,8 @@ export default async function LandingPage() {
       pinRequired: t("finder.errors.pinRequired"),
       pinInvalid: t("finder.errors.pinInvalid"),
       serviceRequired: t("finder.errors.serviceRequired"),
+      offline: t("finder.errors.offline"),
+      invalidLink: t("finder.errors.invalidLink"),
     },
   };
 

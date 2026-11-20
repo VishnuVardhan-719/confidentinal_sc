@@ -1,4 +1,5 @@
 import { toAsciiDigits } from "@/components/shared/input-format";
+import { DEFAULT_LOCALE, isAppLocale } from "@/i18n/routing";
 import { SERVICES, type ServiceKey } from "./routes";
 
 /** Indian PIN shape: 6 digits, first digit 1-9. Shape only; the server decides whether it is served. */
@@ -34,4 +35,14 @@ export function validateFinder(input: { pin?: string | null; service?: string | 
   if (!isServiceKey(input.service)) errors.service = "serviceRequired";
   if (errors.pin || errors.service) return { ok: false, errors };
   return { ok: true, href: finderHref(input.service as ServiceKey, pin) };
+}
+
+/**
+ * Relative Location for GET /{locale}/find (no Host header involved). Valid -> /{locale}/{service}?pin=;
+ * otherwise back to the landing finder with ?finder=invalid#finder. Unknown locales fall back to en.
+ */
+export function finderRedirectPath(rawLocale: string, pin: string | null, service: string | null): string {
+  const locale = isAppLocale(rawLocale) ? rawLocale : DEFAULT_LOCALE;
+  const result = validateFinder({ pin, service });
+  return result.ok ? `/${locale}${result.href}` : `/${locale}?finder=invalid#finder`;
 }
