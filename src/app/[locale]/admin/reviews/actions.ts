@@ -14,7 +14,7 @@ export async function decideReviewAction(reviewId: string, decision: unknown, ex
   if (!admin) return fail("unauthenticated");
   if (!can(admin, "review:moderate")) return fail("forbidden");
   try {
-    return await getReviewModerationApi(process.env, true).decide(reviewId, decision, expectedVersion);
+    return await getReviewModerationApi(process.env, true, admin.profileId).decide(reviewId, decision, expectedVersion);
   } catch {
     return fail("unavailable");
   }

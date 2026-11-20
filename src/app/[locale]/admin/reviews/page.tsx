@@ -1,4 +1,4 @@
-import { Star } from "lucide-react";
+import { History, Star } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { AdminRouteGate } from "@/components/admin/admin-frame";
 import { privateMetadata } from "@/components/admin/ops/metadata";
@@ -36,7 +36,21 @@ export default async function ReviewModerationPage({ searchParams }: PageProps<"
     <AdminRouteGate route="reviews">
       {async (ctx) => {
         const [t, format] = await Promise.all([getTranslations("admin.reviews"), getFormatter()]);
-        const header = <PageHeader title={t("title")} description={t("description")} />;
+        const header = (
+          <PageHeader
+            title={t("title")}
+            description={t("description")}
+            actions={
+              <Link
+                href="/admin/reviews/log"
+                className="inline-flex min-h-target items-center gap-2 rounded-md border border-border bg-surface px-4 font-semibold text-ink transition-colors hover:border-forest hover:bg-mist focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              >
+                <History aria-hidden className="size-4" />
+                {t("log.link")}
+              </Link>
+            }
+          />
+        );
         const result = await getReviewModerationApi(process.env, can(ctx.principal, "review:moderate")).listQueue(filter).catch(() => fail("unavailable"));
         if (!result.ok) {
           return (

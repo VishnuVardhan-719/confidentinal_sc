@@ -17,5 +17,6 @@ export function createReviewModerationHttpApi(): ReviewModerationApi {
   return {
     listQueue: async () => fail("gated"),
     decide: async () => fail("gated"),
+    listDecisions: async () => fail("gated"),
   };
 }

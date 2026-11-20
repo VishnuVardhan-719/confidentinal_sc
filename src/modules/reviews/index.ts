@@ -23,9 +23,10 @@ export function getReviewsApi(env: Env = process.env, actor: FixtureActor | null
 
 /**
  * Moderation API. `moderator` must come from the server-side admin principal (capability
- * `review:moderate`); the adapter refuses everyone else, and the backend re-checks.
+ * `review:moderate`); the adapter refuses everyone else, and the backend re-checks. `actorId` is the
+ * principal's profile id: decisions are attributed to it and the log marks the caller's own rows.
  */
-export function getReviewModerationApi(env: Env = process.env, moderator = false): ReviewModerationApi {
+export function getReviewModerationApi(env: Env = process.env, moderator = false, actorId: string | null = null): ReviewModerationApi {
   if (getAdapterMode(env) !== "fixture") return createReviewModerationHttpApi();
-  return createReviewModerationFixtureApi({ env, moderator });
+  return createReviewModerationFixtureApi({ env, moderator, actorId });
 }

@@ -190,31 +190,9 @@ Known limitations:
 - Next: R8 usability audit te/hi 390/768/1280 via .context/fep2-audit.mjs, fix CSS/components, small commits, handoff-fe-p2.md.
 
 
-## PAUSED STATE: R9-P (fe-p, feat/fe2-p, port 3384), paused for shutdown 2026-11-19
-Done:
-- ca1a8d3 merged feat/fe2-a (3c72d13) into feat/fe2-p. Conflicts in .context/activeContext.md and docs/frontend/REQUESTS.md were resolved by keeping both sides.
-- 022b4ed a11y-static test: added the DoctorSearchIntro and DoctorProfile h1 components (fe2-c pages unknown to fe-a's test).
-- After the merge:
-  - typecheck 0, lint 0, build 0 (382 pages)
-  - vitest 1037 pass after the static-test fix (2 failures before it)
-
-Half-done:
-- Shared public + public-nav + a11y suites on the guest server: 130 passed, 4 failed. All 4 are tests/e2e/public-nav.spec.ts "hero doctor search ...", both projects, `locator.fill` timeout 60s.
-  - The Telugu 12px header overflow is gone: none of the "render in every locale te" tests failed.
-  - The 4 failures are not yet diagnosed. The hero doctor search in fe2-p comes from fe2-c/integration, and fe-a's spec may expect fe-a's landing search markup.
-- Not started: the moderation audit-log view (read-only list of decisions, no undo) with tests.
-
-Next steps:
-1. Diagnose public-nav hero search: run `npx playwright test tests/e2e/public-nav.spec.ts -g "hero doctor search" --workers=1` and read test-results/*/error-context.md for the locator it waits on. Compare `src/components/public/doctor-search.tsx` (fe-a) with the landing page markup on fe2-p (`src/app/[locale]/(public)/page.tsx`).
-2. Audit-log view:
-   - Data: `ModerationDecisionLog` entries (reviewId, bookingReference, decision, reason, decidedAt, moderator display label, no patient identity) appended in `createReviewModerationFixtureApi.decide`, plus a `listDecisions()` method; the http adapter is gated.
-   - UI: `/admin/reviews/log` (or a "Decision log" section/filter on /admin/reviews), read-only, newest first, no undo.
-   - Tests: unit + e2e in tests/e2e/admin-review-moderation.spec.ts (on mode). Update REQUESTS R-FE-P-R8-1.
-3. Rerun everything: lint, typecheck, vitest, build, `pwsh .context/fep-e2e-all.ps1`, then the shared suites on the guest server. Then write the TASK REPORT.
-
-Commands:
-- Build: `$env:FRONTEND_ADAPTER='fixture'; $env:APP_ENV='test'; npm run build`
-- Server: `pwsh .context/fep-serve.ps1 -Mode on|off|guest -Port 3384`. Stop only the `next start -p 3384` process.
-- fe-p e2e (all modes): `pwsh .context/fep-e2e-all.ps1`
-- Shared suites: guest server, then `$env:PLAYWRIGHT_BASE_URL='http://localhost:3384'; npx playwright test tests/e2e/public.spec.ts tests/e2e/public-nav.spec.ts tests/e2e/a11y.spec.ts --workers=4`
-- Port 3380 was held by fe2-d's server earlier; use 3384.
+## TASK REPORT: R9-P (fe-p, feat/fe2-p, port 3384), 2026-11-20 (replaces the PAUSED STATE)
+- Merge: feat/fe2-a (3c72d13) merged in ca1a8d3 before the shutdown; feat/fe2-a has no newer commits. Telugu header overflow cleared: every "render in every locale te" test passes.
+- Shared suites (guest server): public + public-nav + a11y 130 passed, 4 failed, 20 skipped. The 4 failures are public-nav hero search (:81, :93, both projects): the spec expects fe-a's DoctorSearch labels, the landing renders fe-c's DoctorSearchBar since f18d7cb (R-C2-4). Logged as REQUESTS R-FE-P-R9-1; spec and landing page are outside fe-p scope.
+- Decision log: `/admin/reviews/log` (read-only, newest first, no undo, `review:moderate`), linked from /admin/reviews as "Decision log". `ReviewModerationApi.listDecisions()`; fixture log is append-only, seeded with 3 past decisions (SYN-BKG-0204/0206/0207, another synthetic moderator); `decide` refuses without an attributable actor and logs only successful decisions; rows expose `decidedBySelf`, never ids, patient or review text. http adapter gated. en/te/hi messages.
+- Checks: tsc 0, lint 0, vitest 1040/1040, build 0, fep-e2e-all on 118 pass / off 74 / guest 14 (0 failed).
+- Next: lead decides R-FE-P-R9-1 and whether moderation decisions join /admin/audit.
