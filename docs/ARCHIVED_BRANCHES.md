@@ -39,3 +39,19 @@ Deleted from GitHub on 2026-11-20 after `main`, `develop` and `integ/all` were a
 | `task/S00-erd-draft` | `87f5b5ffb10f4ab1537e196761325b6499d8bbbe` |
 | `task/docs-ic-fixes` | `5d33bfe4e9596970e4563d1542ad1befc58394d1` |
 | `test/Q01-gaps` | `6ed9995a25239a3871b712ee4836da5de9d83920` |
+
+## Superseded, not merged (deleted 2026-11-20)
+
+These held early drafts that later branches replaced. Their commits are **not** in `main`. Local refs `refs/archive/<branch>` in `C:\SURECUREVISIT` keep them; restore with `git push origin <commit>:refs/heads/<branch>`. Deleting `docs/backend-handoff` closed its open PR.
+
+| Branch | Commit | Commits not in `main` |
+|---|---|---|
+| `docs/backend-handoff` | `2b0506e2e32549d52ab13dc2330421287322632f` | 4 |
+| `docs/backend-status` | `6ef6dc06c3eba721a98fa784462b876ada32bf66` | 1 |
+| `docs/handoff-2026-11-18` | `5d837fd51d197e478a17a224f62b6028236d1623` | 1 |
+| `ours/I02-provider-onboarding` | `21989aafa806a079295eb42bc3eb5a5b6921e334` | 7 |
+| `task/C01-catalog` | `373251fd40d596a66767bdef934b71e8f69558a7` | 1 |
+| `task/P01-design` | `a1c32fb80a74e1a8961e546089c943cc92928088` | 7 |
+| `task/S01-design` | `e2abee9e56ba7d58b44205089e3c27c19baaf95b` | 7 |
+| `wip/B01-fix-round1` | `7801cbb73cdfbe07d83246660b237fe8d9138ba9` | 1 |
+| `wip/Q01a-rls-runner` | `2a5501469734b9f078a304995b9ea1b4f43cc14a` | 2 |
