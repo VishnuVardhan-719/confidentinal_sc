@@ -1,7 +1,7 @@
 import { Phone } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { CursorPager } from "@/components/admin/ops/cursor-pager";
-import { formatDate, formatDateTime, formatPaise, formatWindow } from "@/components/admin/ops/format";
+import { formatDate, formatDateTime, formatPaiseOrDash, formatWindow } from "@/components/admin/ops/format";
 import { MetricTile } from "@/components/admin/ops/metric-tile";
 import { OpsAction } from "@/components/admin/ops/ops-action";
 import { OpsStatus, useKeyTranslator } from "@/components/admin/ops/ops-status";
@@ -221,10 +221,10 @@ export function RequestsView({
                   cell: (r) =>
                     r.quote ? (
                       <div className="grid gap-1">
-                        <span className="font-semibold tabular">{formatPaise(r.quote.totalPaise, locale)}</span>
+                        <span className="font-semibold tabular">{formatPaiseOrDash(r.quote.totalPaise)}</span>
                         <span className="text-sm text-muted">
-                          {t("quoteBreakdown", { base: formatPaise(r.quote.basePaise, locale), distance: formatPaise(r.quote.distancePaise, locale), km: r.quote.distanceKm })}
-                          {r.quote.fees.length ? ` ${t("quoteFees", { fees: formatPaise(r.quote.fees.reduce((a, f) => a + f.amountPaise, 0), locale) })}` : ""}
+                          {t("quoteBreakdown", { base: formatPaiseOrDash(r.quote.basePaise), distance: formatPaiseOrDash(r.quote.distancePaise), km: r.quote.distanceKm })}
+                          {r.quote.fees.length ? ` ${t("quoteFees", { fees: formatPaiseOrDash(r.quote.fees.reduce((a, f) => a + f.amountPaise, 0)) })}` : ""}
                         </span>
                         <OpsStatus status={r.quote.status} />
                       </div>

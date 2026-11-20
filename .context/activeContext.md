@@ -60,3 +60,9 @@ Open: proxy story check queries content on every /stories/<slug> request (cheap 
 - tests/unit/i18n-structural-parity.test.ts: every namespace from disk, en/te/hi same keys + same ICU arguments/tags (small ICU scanner). 68 tests pass on fe2-e, 92 on the integration export; on a broken copy it fails 3 of 3 planted errors.
 - REQUESTS R-E9E5-01 per owner. tsc 0, eslint 0 errors, vitest 50 files 783/783.
 - Scratch (untracked): .context/i18n-{discover,classify,details,labels,spelling}.mjs and their .txt outputs.
+## TASK R9-E6: DONE (fe-b, 2026-11-20)
+- Canonical money lib src/lib/money/index.ts: formatPaise / formatSignedPaise / paiseToDecimalString / isValidPaise (null for invalid; 2 decimals; en-IN grouping; Latin digits; integer split, exact Intl decimal string).
+- Migrated fe-b call sites: ops/format.ts (formatPaiseOrDash), admin/ambulance/caretaker/lab views (13 calls), lab catalogue prefill, onboarding paiseToRupeesInput.
+- Tests: tests/unit/money.test.ts (table), tests/unit/money-guard.test.ts (repo-wide; allowlists the exact 9 offender lines of fe-q/fe-a/fe-d on integration fec9da1; stale-entry check). Integration export: flags only fe-b's old code; with this change overlaid: 12/12 pass. A temporary comparison (deleted) showed canonical == lib/format == clinical output for en/te/hi, payments differs only by ".00".
+- REQUESTS R-E9E6-01 (fe-q lib/format), -02 (fe-a payments, visible .00 change + 2 test updates), -03 (fe-d clinical), -04 (fe-p none).
+- Checks: tsc 0, eslint 0 errors, vitest 52 files 858/858, build 0; e2e lab/ambulance/caretaker/admin-ops at 1280 and 390 pass (caretaker desktop touch-target check flaked once, passed on 2 reruns).

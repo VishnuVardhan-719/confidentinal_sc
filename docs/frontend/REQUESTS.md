@@ -373,3 +373,110 @@ Fixes for the fe-b/fe-e items in `fe2-c/docs/frontend/ADVERSARIAL_REVIEW.md`:
 - **fe-q:** D-11 (`booking.status.arrivalVerified` hi/te).
 - **Product:** D-3. Either the English "Not accepted" for a credential becomes "Not approved", or te moves to అంగీకరించబడలేదు.
 - **Lead / i18n reviewer:** approve or change the canonical column. After that, owners apply it and a wording lint can be added. Until then, `tests/unit/i18n-structural-parity.test.ts` checks structure only (keys and ICU placeholders in every namespace).
+## 2026-11-20 R9-E6 one canonical paise formatter (fe-b, branch feat/fe2-e)
+
+ADVERSARIAL_REVIEW finding 3: one amount rendered as "₹800" on payment pages and "₹800.00" elsewhere, and admin and clinical accepted negative or non-integer values.
+
+**Canonical:** `src/lib/money/index.ts` (new; no other branch has `src/lib/money`).
+
+| Function | Valid input | Output | Invalid input |
+|---|---|---|---|
+| `formatPaise(paise)` | safe integer ≥ 0 | "₹800.00": always 2 decimals, en-IN lakh/crore grouping, Latin digits, same in en/te/hi | `null` (also for negative, non-integer, null, undefined, NaN, ±Infinity, 2^53, strings) |
+| `formatSignedPaise(paise)` | any safe integer | "-₹250.50" (only for adjustments or differences) | `null` |
+| `paiseToDecimalString(paise)` | safe integer ≥ 0 | "800.50" for form inputs | `null` |
+| `isValidPaise(value)` | | type guard: safe integer ≥ 0 | |
+
+- **No float maths:** rupees and paise are split with integer operations, and Intl formats an exact decimal string. `Number.MAX_SAFE_INTEGER` gives "₹9,00,71,99,25,47,409.91".
+- **Tests:** `tests/unit/money.test.ts` (behaviour table). `tests/unit/money-guard.test.ts` scans `src` and fails on new division or modulo by 100 on a money line, `style: "currency"`, money `toFixed`, or string-built "₹". It allowlists the exact current offender lines below and fails when an allowlist entry goes stale. Proof:
+  - On the committed integration export `fec9da1` it flags only fe-b's old `ops/format.ts` and `onboarding/form-models.ts` (migrated here), plus the missing `src/lib/money`.
+  - With this commit's files overlaid it passes 12/12.
+- **Migrated in fe-b files (this commit):**
+  - `src/components/admin/ops/format.ts`: `paiseToRupeesString` and `formatPaise` removed. `formatPaiseOrDash(paise)` = `formatPaise(paise) ?? "—"`.
+  - Call sites changed in `admin-views.tsx` (1), `ambulance-views.tsx` (4), `caretaker-views.tsx` (3) and `lab-views.tsx` (5). The catalogue prefill uses `paiseToDecimalString(...) ?? ""`.
+  - `src/modules/onboarding/form-models.ts` `paiseToRupeesInput` now calls `paiseToDecimalString`.
+  - Visible change: a negative amount on an operations screen now shows "—" instead of "-₹…". No operations view shows negative amounts by design (R-E16).
+
+### R-E9E6-01 fe-q: `src/lib/format/index.ts` delegates (same output, same throwing contract)
+```diff
++import { formatPaise as formatCanonicalPaise } from "@/lib/money";
+@@
+ export function formatPaise(paise: number, locale: Locale = "en"): string {
+-  if (!Number.isSafeInteger(paise) || paise < 0) throw new RangeError("Expected nonnegative integer paise");
+-  const formatter = new Intl.NumberFormat(localeTags[locale], { style: "currency", currency: "INR", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+-  const fraction = new Intl.NumberFormat(localeTags[locale], { useGrouping: false, minimumIntegerDigits: 2 }).format(paise % 100);
+-  return formatter.formatToParts(Math.floor(paise / 100)).map(part => part.type === "fraction" ? fraction : part.value).join("");
++  // Canonical formatter (en-IN grouping, Latin digits, 2 decimals; identical in en/te/hi).
++  const text = formatCanonicalPaise(paise);
++  if (text === null) throw new RangeError(`Expected nonnegative integer paise (${locale})`);
++  return text;
+ }
+```
+- Existing tests keep passing unchanged: `foundations.test.ts` (₹0.00, ₹0.01, ₹1.00, `.91` at MAX_SAFE, throws on 1.5, -1, Infinity, MAX+1) and `invariants-c.test.ts` ("₹12,34,567.50" in en/te/hi, throws on 10.5 and -1). No call site changes.
+- After applying: delete the three `lib/format/index.ts` entries from `ALLOWED` in `tests/unit/money-guard.test.ts`.
+- In `tests/unit/adversarial-guards.test.ts`, remove `components/admin/ops/format.ts` and `modules/onboarding/form-models.ts` from `PAISE_TO_RUPEES_ALLOWED` (they no longer divide), and add `lib/money/index.ts`. `MONEY_EXEMPT` (`lab-views.tsx`) can go too.
+
+### R-E9E6-02 fe-a: `src/components/payments/money.ts` delegates (visible change: whole rupees gain ".00")
+```diff
+-import { LOCALE_TAGS, isAppLocale } from "@/i18n/routing";
++import { formatPaise as formatCanonicalPaise, isValidPaise } from "@/lib/money";
++
++export { isValidPaise };
+-/** Integer, non-negative, safe paise amount. Anything else is not displayable money. */
+-export function isValidPaise(value: unknown): value is number {
+-  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+-}
+@@
+-export function formatPaise(paise: unknown, locale: string): string | null {
+-  if (!isValidPaise(paise)) return null;
+-  const tag = isAppLocale(locale) ? LOCALE_TAGS[locale] : "en-IN";
+-  return new Intl.NumberFormat(tag, {
+-    style: "currency",
+-    currency: "INR",
+-    numberingSystem: "latn",
+-    minimumFractionDigits: paise % 100 === 0 ? 0 : 2,
+-    maximumFractionDigits: 2,
+-  }).format(paise / 100);
+-}
++export function formatPaise(paise: unknown): string | null {
++  return formatCanonicalPaise(paise);
++}
+```
+- Call sites drop the locale argument:
+  - `cancellation-dialog.tsx:91` and `:96`: `formatPaise(policy.feePaise, locale)` becomes `formatPaise(policy.feePaise)`, and the same for `refundPaise`.
+  - `payment-summary.tsx:53`: `formatPaise(paise, locale)` becomes `formatPaise(paise)`.
+  - If `locale` is then unused in those components, remove it.
+- Tests to update in `tests/unit/ui-phase2.test.ts`:
+  - `:138` `"₹1,23,45,678"` becomes `"₹1,23,45,678.00"`.
+  - `:171` `"₹0"` becomes `"₹0.00"`.
+  - `:135-137` and `:144` pass unchanged.
+- e2e `patient-bookings.spec.ts:34,67` uses `toContainText("₹500")` and still passes against "₹500.00".
+- After applying: delete the three `components/payments/money.ts` entries from `ALLOWED`.
+
+### R-E9E6-03 fe-d: clinical money uses the canonical formatter (same output for valid amounts)
+```diff
+--- src/components/clinical/kit.ts
+-/** Display-only conversion of server integer paise to an INR amount (never used for totals). */
+-export const rupees = (paise: number): number => paise / 100;
+--- src/components/clinical/server-format.ts
+-import { asTk, rupees, type Tk } from "./kit";
++import { formatPaise } from "@/lib/money";
++import { asTk, type Tk } from "./kit";
+@@
+-    money: (paise) => f.number(rupees(paise), { style: "currency", currency: "INR", maximumFractionDigits: 2 }),
++    money: (paise) => formatPaise(paise) ?? "—",
+--- src/components/clinical/use-format.ts
+-import { asTk, rupees, type Tk } from "./kit";
++import { formatPaise } from "@/lib/money";
++import { asTk, type Tk } from "./kit";
+@@
+-      money: (paise: number) => f.number(rupees(paise), { style: "currency", currency: "INR", maximumFractionDigits: 2 }),
++      money: (paise: number) => formatPaise(paise) ?? "—",
+```
+- Output is the same "₹800.00" for valid paise. A negative, fractional or NaN amount now shows "—" instead of "-₹…" or "₹NaN".
+- `getFormatter`/`useFormatter` stay in use for dates.
+- e2e `doctor-workspace.spec.ts:184` (`getByText("₹800")`) and `hydration-race.spec.ts:51` (`/collection recorded: ₹800/`) match "₹800.00" as substrings and still pass.
+- `parseRupeesToPaise` (input parsing) is not formatting and stays.
+- After applying: delete the three clinical entries from `ALLOWED`.
+
+### R-E9E6-04 fe-p: no change needed
+`src/app/[locale]/patient/**` formats through `@/lib/format` `formatPaise` (R-E9E6-01), so output is unchanged ("₹500.00"). There are no ad-hoc conversions in fe-p files on `fec9da1`.

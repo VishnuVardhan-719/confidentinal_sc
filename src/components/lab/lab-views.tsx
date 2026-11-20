@@ -1,5 +1,6 @@
 import { useLocale, useTranslations } from "next-intl";
-import { formatDateTime, formatPaise, formatWindow, paiseToRupeesString } from "@/components/admin/ops/format";
+import { formatDateTime, formatPaiseOrDash, formatWindow } from "@/components/admin/ops/format";
+import { paiseToDecimalString } from "@/lib/money";
 import { MetricTile } from "@/components/admin/ops/metric-tile";
 import { OpsAction } from "@/components/admin/ops/ops-action";
 import { OpsStatus, useKeyTranslator } from "@/components/admin/ops/ops-status";
@@ -146,7 +147,6 @@ export function LabBranchesView({ result }: { result: LoaderResult<BranchRowVM[]
 export function LabCatalogView({ result }: { result: LoaderResult<CatalogRowVM[]> }) {
   const t = useTranslations("lab.catalog");
   const tk = useKeyTranslator();
-  const locale = useAppLocale();
   return (
     <div className="grid gap-8">
       <PageHeader title={t("title")} description={t("description")} />
@@ -161,7 +161,7 @@ export function LabCatalogView({ result }: { result: LoaderResult<CatalogRowVM[]
               { key: "kind", header: t("columns.kind"), cell: (r) => (r.kind === "package" ? t("kind.package", { count: r.includedCount }) : t("kind.test")) },
               { key: "specimen", header: t("columns.specimen"), cell: (r) => tk(r.specimenKey) },
               { key: "preparation", header: t("columns.preparation"), cell: (r) => r.preparation },
-              { key: "price", header: t("columns.price"), cell: (r) => <span className="tabular">{formatPaise(r.pricePaise, locale)}</span> },
+              { key: "price", header: t("columns.price"), cell: (r) => <span className="tabular">{formatPaiseOrDash(r.pricePaise)}</span> },
               { key: "collection", header: t("columns.collection"), cell: (r) => tk(r.collectionTypeKey) },
               { key: "turnaround", header: t("columns.turnaround"), cell: (r) => (r.turnaroundHours === null ? t("turnaroundHidden") : t("turnaroundHours", { hours: r.turnaroundHours })) },
               { key: "status", header: t("columns.status"), cell: (r) => <OpsStatus status={r.active} /> },
@@ -170,7 +170,7 @@ export function LabCatalogView({ result }: { result: LoaderResult<CatalogRowVM[]
                 header: t("columns.actions"),
                 cell: (r) => (
                   <CatalogEditForm
-                    initial={{ price: paiseToRupeesString(r.pricePaise), preparation: r.preparation, active: r.active.labelKey === "lab.status.catalog.active" }}
+                    initial={{ price: paiseToDecimalString(r.pricePaise) ?? "", preparation: r.preparation, active: r.active.labelKey === "lab.status.catalog.active" }}
                     run={labCatalogAction.bind(null, { itemId: r.id, expectedVersion: r.version })}
                     labels={{
                       edit: t("edit"),
@@ -277,7 +277,7 @@ export function LabOrdersView({ result, queue }: { result: LoaderResult<{ rows: 
               {
                 key: "total",
                 header: t("columns.total"),
-                cell: (r) => (r.totalsConsistent ? <span className="tabular">{formatPaise(r.totalPaise, locale)}</span> : <span className="text-danger">{t("totalsMismatch")}</span>),
+                cell: (r) => (r.totalsConsistent ? <span className="tabular">{formatPaiseOrDash(r.totalPaise)}</span> : <span className="text-danger">{t("totalsMismatch")}</span>),
               },
               { key: "collector", header: t("columns.collector"), cell: (r) => r.collectorName ?? t("unassigned") },
               { key: "status", header: t("columns.status"), cell: (r) => <OpsStatus status={r.status} /> },
@@ -349,13 +349,13 @@ export function LabOrderDetailView({ result }: { result: LoaderResult<OrderDetai
                 columns={[
                   { key: "name", header: t("lineColumns.name"), primary: true, cell: (l) => l.name },
                   { key: "qty", header: t("lineColumns.quantity"), cell: (l) => <span className="tabular">{l.quantity}</span> },
-                  { key: "unit", header: t("lineColumns.unitPrice"), cell: (l) => <span className="tabular">{formatPaise(l.unitPricePaise, locale)}</span> },
-                  { key: "line", header: t("lineColumns.lineTotal"), cell: (l) => <span className="tabular">{formatPaise(l.lineTotalPaise, locale)}</span> },
+                  { key: "unit", header: t("lineColumns.unitPrice"), cell: (l) => <span className="tabular">{formatPaiseOrDash(l.unitPricePaise)}</span> },
+                  { key: "line", header: t("lineColumns.lineTotal"), cell: (l) => <span className="tabular">{formatPaiseOrDash(l.lineTotalPaise)}</span> },
                 ]}
               />
               {o.totalsConsistent ? (
                 <p className="text-lg font-semibold text-ink">
-                  {t("total")}: <span className="tabular">{formatPaise(o.totalPaise, locale)}</span>
+                  {t("total")}: <span className="tabular">{formatPaiseOrDash(o.totalPaise)}</span>
                 </p>
               ) : (
                 <Notice tone="danger">{t("totalsMismatch")}</Notice>

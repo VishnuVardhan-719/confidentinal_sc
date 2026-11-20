@@ -1,5 +1,5 @@
 import { useLocale, useTranslations } from "next-intl";
-import { formatDateTime, formatPaise, formatWindow } from "@/components/admin/ops/format";
+import { formatDateTime, formatPaiseOrDash, formatWindow } from "@/components/admin/ops/format";
 import { MetricTile } from "@/components/admin/ops/metric-tile";
 import { OpsAction } from "@/components/admin/ops/ops-action";
 import { OpsStatus, useKeyTranslator } from "@/components/admin/ops/ops-status";
@@ -53,7 +53,6 @@ export function CareDashboardView({ result, workspaceName }: { result: LoaderRes
 export function CareServicesView({ result }: { result: LoaderResult<ServiceRowVM[]> }) {
   const t = useTranslations("caretaker.services");
   const tk = useKeyTranslator();
-  const locale = useAppLocale();
   return (
     <div className="grid gap-8">
       <PageHeader title={t("title")} description={t("description")} />
@@ -74,7 +73,7 @@ export function CareServicesView({ result }: { result: LoaderResult<ServiceRowVM
                   <ul className="grid gap-1">
                     {r.rates.map((rate) => (
                       <li key={rate.period.labelKey} className="tabular">
-                        {formatPaise(rate.amountPaise, locale)} {tk(rate.period.labelKey)}
+                        {formatPaiseOrDash(rate.amountPaise)} {tk(rate.period.labelKey)}
                         {rate.periodSupportedByBackend ? null : <span className="ml-2 text-sm text-warning-text">({t("periodPending")})</span>}
                       </li>
                     ))}
@@ -143,10 +142,10 @@ export function CareRequestsView({ result }: { result: LoaderResult<{ rows: Care
                 cell: (r) => (
                   <span className="tabular">
                     {t("rateLine", {
-                      amount: formatPaise(r.rate.amountPaise, locale),
+                      amount: formatPaiseOrDash(r.rate.amountPaise),
                       period: tk(r.rate.period.labelKey),
                       units: r.rate.units,
-                      total: formatPaise(r.rate.totalPaise, locale),
+                      total: formatPaiseOrDash(r.rate.totalPaise),
                     })}
                   </span>
                 ),

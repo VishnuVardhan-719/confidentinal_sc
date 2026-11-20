@@ -1,4 +1,5 @@
 import { LOCALE_TAGS, type AppLocale } from "@/i18n/routing";
+import { formatPaise } from "@/lib/money";
 
 /**
  * Display formatting for operations screens. Money arrives as integer paise and
@@ -9,25 +10,11 @@ const TIME_ZONE = "Asia/Kolkata";
 const DASH = "—";
 
 /**
- * Integer paise -> exact "rupees.paise" decimal string (no floating-point division).
- * Negative amounts keep their sign. Used for display and for prefilled form inputs.
- * Anything that is not a safe integer (10.5, NaN, Infinity, 2^53) returns DASH instead of a
- * malformed amount; a prefilled price input then fails validation rather than saving a guess.
+ * Money for operations screens: the canonical formatter (src/lib/money) with this module's dash
+ * for a missing or invalid amount. Amounts are never formatted or converted anywhere else.
  */
-export function paiseToRupeesString(paise: number): string {
-  if (!Number.isSafeInteger(paise)) return DASH;
-  const sign = paise < 0 ? "-" : "";
-  const abs = Math.abs(paise);
-  const rest = abs % 100;
-  return `${sign}${(abs - rest) / 100}.${String(rest).padStart(2, "0")}`;
-}
-
-export function formatPaise(paise: number, locale: AppLocale): string {
-  if (!Number.isSafeInteger(paise)) return DASH;
-  // Intl formats the decimal string exactly (rupees and paise kept as integers until here).
-  return new Intl.NumberFormat(LOCALE_TAGS[locale], { style: "currency", currency: "INR", minimumFractionDigits: 2 }).format(
-    paiseToRupeesString(paise) as `${number}`,
-  );
+export function formatPaiseOrDash(paise: unknown): string {
+  return formatPaise(paise) ?? DASH;
 }
 
 function valid(iso: string | null | undefined): Date | null {
