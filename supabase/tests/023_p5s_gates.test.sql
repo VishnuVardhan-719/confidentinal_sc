@@ -7,8 +7,9 @@ begin;
 -- 'on'; start is refused only under 'suspended'; closeout, reads and config never check.
 
 -- Seed and privileges. The fixture switched all four on; the migration seeds them off (OD-5).
-select pg_temp.assert_true((select array_agg(key order by key) from booking_private.feature_gates)=array['ambulance','caretaker','doctor','lab'],'four category gates');
-select pg_temp.assert_true((select count(*)=4 from booking_private.feature_gate_events where from_state is null and to_state='off' and version=1),'seeded off by the migration');
+-- Later blocks add their own gates (doctor_arrival_fallback, notify_*); this suite owns the four category gates.
+select pg_temp.assert_true((select array_agg(key order by key) from booking_private.feature_gates where key in ('ambulance','caretaker','doctor','lab'))=array['ambulance','caretaker','doctor','lab'],'four category gates');
+select pg_temp.assert_true((select count(*)=4 from booking_private.feature_gate_events where key in ('ambulance','caretaker','doctor','lab') and from_state is null and to_state='off' and version=1),'seeded off by the migration');
 do $$ declare t text; r text; p text; begin
  foreach t in array array['feature_gates','feature_gate_events','reason_codes','category_reasons','category_paths','exception_kinds'] loop
   foreach r in array array['anon','authenticated','service_role'] loop

@@ -86,7 +86,7 @@ do $$ declare state_code text; ev uuid; subject_case uuid; ar uuid; b uuid; ex u
  foreach state_code in array array['submitted','under_review','approved','rejected','suspended','expired'] loop
   insert into public.provider_verification_events(provider_id,actor_profile_id,from_state,to_state,reason,public_reason,provider_version)
   values(pg_temp.p5_provider('lab'),case when state_code='expired' then null else 'c1000000-0000-4000-8000-000000000004'::uuid end,
-   'submitted',state_code,'Synthetic free-text never copied','Synthetic public reason never copied',1) returning id into ev;
+   case when state_code='expired' then 'approved' else 'submitted' end,state_code,'Synthetic free-text never copied','Synthetic public reason never copied',1) returning id into ev;
   perform pg_temp.assert_true((select count(*)=1 from notify_private.events where source_kind='provider_verification' and source_id=ev),'provider intake '||state_code);
  end loop;
  select id into subject_case from public.provider_verification_cases where provider_id=pg_temp.p5_provider('lab') and subject_profile_id='c1000000-0000-4000-8000-000000000002';

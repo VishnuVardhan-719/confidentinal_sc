@@ -53,7 +53,7 @@ CI (`.github/workflows/ci.yml`, `docs/CI.md`) runs the app checks and `supabase 
 | Agent and repo rules | `AGENTS.md`, `CLAUDE.md` |
 | CI | `docs/CI.md` |
 
-Numbering: each block owns a migration range and a suite range (shared 001550-001599 / 020-029, doctor 0016xx / 030-039, lab 0017xx / 040-049, ambulance 0018xx / 050-059, care 0019xx / 060-069, P01a 002000 / 070-089, integration - / 090-099, N01 002110-002160 / 100-109, DC core 0023xx / 110-119, DC extras 0024xx / 120-129). New work takes a new range.
+Numbering: each block owns a migration range and a suite range (shared 001550-001599 / 020-029, doctor 0016xx / 030-039, lab 0017xx / 040-049, ambulance 0018xx / 050-059, care 0019xx / 060-069, P01a 002000 / 070-089, integration - / 090-099, N01 002110-002160 / 100-109, cross-block integration fixes 0022xx / -, DC core 0023xx / 110-119, DC extras 0024xx / 120-129). New work takes a new range.
 
 ## 4. What is left
 
