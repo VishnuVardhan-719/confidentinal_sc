@@ -250,3 +250,22 @@ Onboarding notes:
 - **Did not run (7 per viewport):** the describe is serial, so the tests after the failure did not run.
 
 Not rerun in INT4: the per-branch specs from 6.4, `a11y-sweep-p`, and `admin-review-moderation`. The last one still expects fe-p's dropped `FIXTURE_ADMIN_SESSION` mode.
+
+### 6.8 INT6 (2026-11-20, lead): fe-d R9-D9 and fe-p R9-P5/P6 merged
+
+Merged into `feat/fe2-integration`: fe2-c cbd9b5f (R9-C14), fe2-d 2562920 (R9-D9), fe2-p f7a860c (R9-P6). The Kiro monthly limit was hit on all five agent windows, so the lead resolved the conflicts and fixed the cross-branch guards directly.
+
+Conflicts and decisions:
+- `src/components/public/finder.ts`: kept both `doctorSearchHref` (integration) and `finderRedirectPath` (fe-d).
+- `src/app/[locale]/(public)/find/route.ts`: the doctor-search branch plus fe-d's relative `Location` 303 with `Cache-Control: no-store` (never uses the Host header).
+- `patient/notifications/page.tsx`: kept the integration page (`guardPatientPage`, `getNotificationsApi`). fe-p's `_components/notifications-body` and its `inbox-states` tests are merged but the page does not use the body yet (overlap 4aa02f8, open decision R-INT6-01).
+- `patient/settings/reminders/page.tsx`: fe-p's `ReminderBody` with the integration `requirePatientSession` + `AccessDenied`.
+
+Guard tests reconciled with integrated pages (no weakening of what they protect):
+- `seo-guard`: `privateMetadata()` counts as noindex; `/doctors` and `/lab-tests` own their metadata through `pageMetadata()`.
+- `provider-route-gates`: the onboarding wizard is sign-in-only and intentionally not role-gated; dynamic guard-path segments compare by position.
+- `admin-return-path`: pages that call `requireRole("admin", ...)` inline (coverage, providers) count as gated.
+- `a11y-static`: finder labels gained `offline` and `invalidLink`.
+- Real fix: the signup role group in `auth-flow.tsx` now renders `HydrationStatus` + `hydrationBusy` (it had `aria-busy` with no status text).
+
+Results at 009d4b7: tsc 0 errors, eslint 0, vitest 125 files / 1815 tests passed, `next build` exit 0 (`FRONTEND_ADAPTER=fixture APP_ENV=test`). Smoke: see 6.9.
