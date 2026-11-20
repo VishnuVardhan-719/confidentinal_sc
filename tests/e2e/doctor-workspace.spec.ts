@@ -148,7 +148,8 @@ test.describe("doctor guard and shell", () => {
 
   test("availability: read-only 7-day IST schedule with booked visits and an honest edit notice", async ({ page }) => {
     await page.goto(`${D}/availability`);
-    await expect(page.getByText(/editing weekly hours is not connected yet/i)).toBeVisible();
+    // Scoped to main: during streaming a second, hidden copy of the notice can briefly exist.
+    await expect(page.getByRole("main").getByText(/editing weekly hours is not connected yet/i)).toBeVisible();
     const schedule = page.getByRole("region", { name: /next 7 days/i });
     await expect(schedule.getByRole("heading", { level: 3 })).toHaveCount(7);
     await expect(schedule.getByRole("heading", { level: 3 }).first()).toHaveText(/^today/i);

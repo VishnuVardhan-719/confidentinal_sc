@@ -86,6 +86,23 @@ export function ConsultationEditor({
   const [signMessage, setSignMessage] = useState<{ tone: "danger" | "warning"; text: string } | null>(null);
   const signKey = useRef<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  // Sticky header and action bar heights (they wrap per locale) feed the scroll margins below, so a
+  // focused field or step heading is scrolled clear of both instead of landing underneath them.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const contextRef = useRef<HTMLElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || typeof ResizeObserver === "undefined") return;
+    const measure = () => {
+      root.style.setProperty("--cx-top", `${contextRef.current?.offsetHeight ?? 0}px`);
+      root.style.setProperty("--cx-bottom", `${barRef.current?.offsetHeight ?? 0}px`);
+    };
+    const ro = new ResizeObserver(measure);
+    for (const el of [contextRef.current, barRef.current]) if (el) ro.observe(el);
+    measure();
+    return () => ro.disconnect();
+  }, []);
   const pendingFocus = useRef<string | null>(null);
 
   const warnings = useMemo(() => vitalWarnings(content, vitalRules), [content, vitalRules]);
@@ -173,16 +190,16 @@ export function ConsultationEditor({
   const conflict = auto.conflict;
 
   return (
-    <div className="grid gap-6">
+    <div ref={rootRef} className="grid gap-6 [&_:is(input,textarea,select,h2)]:scroll-mt-[calc(var(--cx-top,0px)+0.75rem)] [&_:is(input,textarea,select,h2)]:scroll-mb-[calc(var(--cx-bottom,0px)+4.25rem)]">
       {/* Persistent compact context header */}
-      <section aria-label={t("context.label")} className="sticky top-16 z-20 -mx-4 grid gap-3 border-b border-border bg-paper/95 px-4 py-3 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <section ref={contextRef} aria-label={t("context.label")} className="sticky top-16 z-20 -mx-4 grid gap-3 border-b border-border bg-paper/95 px-4 py-3 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
           <div className="grid min-w-0 gap-0.5">
             <p className="truncate text-lg font-semibold text-ink">
               {visit.patient.displayName}
               {visit.patient.ageYears !== null ? <span className="font-normal text-muted"> · {tk("doctor.common.age", { age: visit.patient.ageYears })}</span> : null}
             </p>
-            <p className="text-sm text-muted tabular">
+            <p className="text-sm text-muted tabular break-words">
               {t("context.reference", { reference: visit.publicReference })} · {t("context.appointment", { time: dateTime(visit.scheduledStartAt) })}
             </p>
           </div>
@@ -315,22 +332,22 @@ export function ConsultationEditor({
       </div>
 
       {/* Sticky safe action area: above the mobile bottom nav, never over the content's end. */}
-      <div role="toolbar" aria-label={t("editor.actions")} className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 flex items-center justify-between gap-2 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:bottom-0 lg:-mx-8 lg:px-8">
-        <Button variant="quiet" onClick={() => prevStep(step) && goTo(prevStep(step)!)} disabled={!prevStep(step)}>
+      <div ref={barRef} role="toolbar" aria-label={t("editor.actions")} className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 flex min-w-0 items-center justify-between gap-2 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:bottom-0 lg:-mx-8 lg:px-8">
+        <Button variant="quiet" className="shrink-0 max-sm:min-w-target max-sm:px-3" onClick={() => prevStep(step) && goTo(prevStep(step)!)} disabled={!prevStep(step)}>
           <ArrowLeft aria-hidden />
           <span className="max-sm:sr-only">{t("editor.back")}</span>
         </Button>
-        <Button variant="secondary" onClick={() => auto.saveNow()} disabled={disabled || !isDirty(auto.draft) || !!auto.draft.inFlight || !!conflict}>
+        <Button variant="secondary" className="min-w-0 whitespace-normal text-center leading-tight" onClick={() => auto.saveNow()} disabled={disabled || !isDirty(auto.draft) || !!auto.draft.inFlight || !!conflict}>
           <Save aria-hidden />
           {t("draft.save")}
         </Button>
         {nextStep(step) ? (
-          <Button onClick={() => goTo(nextStep(step)!)}>
+          <Button className="shrink-0 max-sm:min-w-target max-sm:px-3" onClick={() => goTo(nextStep(step)!)}>
             <span className="max-sm:sr-only">{t("editor.next")}</span>
             <ArrowRight aria-hidden />
           </Button>
         ) : (
-          <span className="min-w-target" aria-hidden />
+          <span className="min-w-target shrink-0" aria-hidden />
         )}
       </div>
     </div>
