@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MODERATION_FILTERS, RATINGS, REJECTION_REASONS, REVIEW_ISSUES, REVIEW_STATUSES, REVIEW_TEXT_MAX, REVIEW_TEXT_MIN, type ModerationDecision, type ModerationFilter, type Review, type ReviewField, type ReviewInput, type ReviewIssue } from "./types";
+import { MODERATION_FILTERS, MODERATION_PAGE_MAX, MODERATION_PAGE_SIZE, RATINGS, REJECTION_REASONS, REVIEW_ISSUES, REVIEW_STATUSES, REVIEW_TEXT_MAX, REVIEW_TEXT_MIN, type ModerationDecision, type ModerationFilter, type Review, type ReviewField, type ReviewInput, type ReviewIssue } from "./types";
 
 // Contact details and links in a public review are refused (privacy and spam); moderation also checks.
 const CONTACT = /(https?:\/\/|www\.|@[a-z0-9-]+\.[a-z]{2,}|\b\d[\d\s-]{8,}\d\b)/i;
@@ -58,4 +58,20 @@ export const moderationDecisionSchema: z.ZodType<ModerationDecision> = z.discrim
 /** URL filter for the moderation queue; anything unknown falls back to the pending queue. */
 export function parseModerationFilter(value: unknown): ModerationFilter {
   return (MODERATION_FILTERS as readonly unknown[]).includes(value) ? (value as ModerationFilter) : "pending_moderation";
+}
+
+/** Review ids are uuids. Checked again by every adapter and the backend. */
+export const reviewIdSchema = z.uuid();
+
+/** Opaque cursor token (base64url-style, bounded). Its content is the server's business. */
+export const moderationCursorSchema = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
+
+export const moderationPageRequestSchema = z.strictObject({
+  limit: z.number().int().min(1).max(MODERATION_PAGE_MAX).default(MODERATION_PAGE_SIZE),
+  cursor: moderationCursorSchema.optional(),
+});
+
+/** URL cursor for the moderation pages: a single well-formed token, else none (first page). */
+export function parseModerationCursor(value: unknown): string | undefined {
+  return typeof value === "string" && moderationCursorSchema.safeParse(value).success ? value : undefined;
 }

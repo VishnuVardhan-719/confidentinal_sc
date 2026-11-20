@@ -208,3 +208,9 @@ Known limitations:
 - (2) tests/unit/modules-operations/provider-route-gates.test.ts: 5 tests (lab, ambulance, caretaker gate route = URL segment and every route has a page; doctor guard path = page path; doctor layout has no redirect). Mutation-checked.
 - (3) docs/frontend/NOTIFICATIONS.md; REQUESTS fe-p entries in one section with a status index (R7-NAV resolved, R7-3 amendment folded in, R9-4 and R9-5 new).
 - (4) tsc 0, lint 0, vitest 69 files / 1072, build 0, fep-e2e-all on 132 / off 88 / guest 14 (0 failed). Shared public+nav+a11y: 129 passed, 5 failed (4 known R9-1 hero search; 1 axe en@360 hero fade-in under load, 3/3 alone, R9-5), 20 skipped.
+## TASK REPORT: R9-P4 (fe-p, feat/fe2-p, port 3384), 2026-11-20
+- (1) admin-review-moderation.spec.ts uses tests/e2e/support/fep-moderator.ts: fe2-p on-mode -> server FIXTURE_ADMIN_SESSION; integration (E2E_FEP_MODE unset) -> fe-b login as ops.admin.lead@example.invalid (fx-adm-super), worker-cached storage. Fixture decide() now accepts fixture profile ids as actor (integration ids are not uuids).
+- (2) decideReviewAction validates reviewId (uuid), expectedVersion (positive int) and decision (zod) before session/adapter; tests/unit/modules-patient/review-moderation-action.test.ts (22).
+- (3) Paging: ReviewModerationApi listQueue/listDecisions take { limit 1..50 (20), cursor } and return { items, nextCursor }; fixture offset cursors (no ids); pager (first/next/end) on both pages; malformed cursor ignored, foreign -> first page. REQUESTS R8-1 updated.
+- (4) R9-3 regressed on integration (AdminFrame -> adminPrincipal(dashboard) -> requireRole redirect); R9-4 still fe-e. Both documented; no fix possible in fe2-p files.
+- Checks: tsc 0, eslint 0, vitest 70 files / 1098, build 0, fep-e2e-all on 134 / off 88 / guest 14 (0 failed).

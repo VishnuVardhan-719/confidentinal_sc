@@ -1,5 +1,5 @@
 import type { ApiResult } from "@/lib/api/result";
-import type { ModerationFilter, ModerationItem, ModerationLogEntry, Review, ReviewableVisit } from "./types";
+import type { ModerationFilter, ModerationItem, ModerationLogEntry, ModerationPage, ModerationPageRequest, Review, ReviewableVisit } from "./types";
 
 /**
  * Post-visit reviews for the signed-in patient. The server decides eligibility (completed booking,
@@ -19,9 +19,13 @@ export type ReviewsApi = {
 
 /** Review moderation for admins holding `review:moderate`. Items carry no patient identity. */
 export type ReviewModerationApi = {
-  listQueue: (filter: ModerationFilter) => Promise<ApiResult<ModerationItem[]>>;
+  /**
+   * One page of the queue. `limit` 1..50 (default 20); `cursor` is the previous page's `nextCursor`.
+   * A malformed, foreign or stale cursor returns `validation`.
+   */
+  listQueue: (filter: ModerationFilter, page?: ModerationPageRequest) => Promise<ApiResult<ModerationPage<ModerationItem>>>;
   /** Publish or reject one pending review. Version-checked; a decided review returns `conflict`. */
   decide: (reviewId: string, decision: unknown, expectedVersion: number) => Promise<ApiResult<ModerationItem>>;
   /** Read-only decision log, newest first. There is no undo; a later edit by the patient starts a new review cycle. */
-  listDecisions: () => Promise<ApiResult<ModerationLogEntry[]>>;
+  listDecisions: (page?: ModerationPageRequest) => Promise<ApiResult<ModerationPage<ModerationLogEntry>>>;
 };

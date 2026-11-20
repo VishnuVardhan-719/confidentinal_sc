@@ -7,10 +7,11 @@ import { InlineError } from "@/components/shared/inline-error";
 import { PageHeader } from "@/components/shared/page-header";
 import { RetryAction } from "@/components/shared/retry-action";
 import { KeyedStatusBadge } from "@/components/shared/status-badge";
-import { Link } from "@/i18n/navigation";
+import { Link, redirect } from "@/i18n/navigation";
 import { fail } from "@/lib/api/result";
 import { can } from "@/modules/admin/capabilities";
-import { describeReviewStatus, getReviewModerationApi } from "@/modules/reviews";
+import { describeReviewStatus, getReviewModerationApi, MODERATION_PAGE_SIZE, parseModerationCursor } from "@/modules/reviews";
+import { ModerationPager } from "../_components/moderation-pager";
 
 export async function generateMetadata() {
   return privateMetadata((await getTranslations("admin.reviews.log"))("title"));
@@ -22,10 +23,13 @@ export async function generateMetadata() {
  * Rows show the booking reference, provider, outcome, reason and time; never the patient, the
  * review text or another moderator's identity.
  */
-export default async function ModerationLogPage() {
+export default async function ModerationLogPage({ searchParams }: PageProps<"/[locale]/admin/reviews/log">) {
+  // Opaque server cursor (no ids); anything malformed is ignored and the first page is shown.
+  const cursor = parseModerationCursor((await searchParams).cursor);
+  const logHref = (c?: string) => (c ? `/admin/reviews/log?cursor=${c}` : "/admin/reviews/log");
   return (
     <AdminRouteGate route="reviews" subPath="log">
-      {async (ctx) => {
+      {async (ctx, locale) => {
         const [t, tr, format] = await Promise.all([getTranslations("admin.reviews.log"), getTranslations("admin.reviews"), getFormatter()]);
         const header = (
           <PageHeader
@@ -43,8 +47,10 @@ export default async function ModerationLogPage() {
           />
         );
         const result = await getReviewModerationApi(process.env, can(ctx.principal, "review:moderate"), ctx.principal.profileId)
-          .listDecisions()
+          .listDecisions({ limit: MODERATION_PAGE_SIZE, ...(cursor ? { cursor } : {}) })
           .catch(() => fail("unavailable"));
+        // A cursor the server no longer accepts: start again from the newest decisions.
+        if (!result.ok && result.error.code === "validation" && cursor) redirect({ href: logHref(), locale });
         if (!result.ok) {
           return (
             <div className="grid gap-8">
@@ -53,15 +59,16 @@ export default async function ModerationLogPage() {
             </div>
           );
         }
-        const entries = result.data;
+        const { items: entries, nextCursor } = result.data;
+        const paged = Boolean(cursor || nextCursor);
         return (
           <div className="grid gap-8">
             {header}
             <section aria-labelledby="moderation-log" className="grid gap-4">
               <h2 id="moderation-log" className="text-lg font-semibold text-ink">
-                {t("count", { count: entries.length })}
+                {paged ? t("countPage", { count: entries.length }) : t("count", { count: entries.length })}
               </h2>
-              {entries.length === 0 ? (
+              {entries.length === 0 && !cursor ? (
                 <p className="text-muted">{t("empty")}</p>
               ) : (
                 <ol className="grid gap-3">
@@ -81,6 +88,12 @@ export default async function ModerationLogPage() {
                   ))}
                 </ol>
               )}
+              <ModerationPager
+                label={tr("pager.label")}
+                firstHref={cursor ? logHref() : null}
+                nextHref={nextCursor ? logHref(nextCursor) : null}
+                text={{ first: tr("pager.first"), next: tr("pager.next"), end: t("end") }}
+              />
             </section>
           </div>
         );

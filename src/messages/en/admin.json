@@ -446,6 +446,7 @@
       "rejected": "Not published"
     },
     "count": "{count, plural, =0 {No reviews} one {# review} other {# reviews}}",
+    "countPage": "{count, plural, one {# review on this page} other {# reviews on this page}}",
     "item": "{provider} · Booking {reference}",
     "submitted": "Submitted {date}",
     "stars": "{rating, plural, one {# star out of 5} other {# stars out of 5}}",
@@ -476,6 +477,12 @@
       "rejected": "No reviews have been turned down."
     },
     "gated": "Review moderation is not connected yet. Nothing here is saved.",
+    "pager": {
+      "label": "Review pages",
+      "first": "Back to first page",
+      "next": "Next page",
+      "end": "End of this list"
+    },
     "log": {
       "link": "Decision log",
       "title": "Moderation decision log",
@@ -485,7 +492,9 @@
       "empty": "No moderation decisions have been recorded yet.",
       "bySelf": "Decided by you",
       "byOther": "Decided by another moderator",
-      "gated": "The decision log is not connected yet. Nothing here is saved."
+      "gated": "The decision log is not connected yet. Nothing here is saved.",
+      "countPage": "{count, plural, one {# decision on this page} other {# decisions on this page}}",
+      "end": "End of the decision log"
     }
   }
 }

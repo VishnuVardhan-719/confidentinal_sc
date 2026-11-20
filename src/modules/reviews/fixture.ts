@@ -2,9 +2,9 @@ import { z } from "zod";
 import { fixtureGuard, type FixtureEnvironment } from "@/lib/api/fixture";
 import { fail, ok } from "@/lib/api/result";
 import type { ReviewModerationApi, ReviewsApi } from "./api";
-import { moderationDecisionSchema, validateReviewInput, versionSchema } from "./schemas";
+import { moderationDecisionSchema, moderationPageRequestSchema, validateReviewInput, versionSchema } from "./schemas";
 import { canChangeReview, canModerate } from "./status";
-import type { ModerationFilter, ModerationItem, ModerationLogEntry, Review, ReviewableVisit } from "./types";
+import type { ModerationFilter, ModerationItem, ModerationLogEntry, ModerationPage, Review, ReviewableVisit } from "./types";
 
 type Store = { visits: Map<string, ReviewableVisit>; keys: Map<string, string> };
 type World = Map<string, Store>;
@@ -169,6 +169,31 @@ export function createReviewsFixtureApi(options: ReviewsFixtureOptions): Reviews
  * Synthetic moderation adapter over every synthetic patient's reviews. The queue owner is seeded so
  * there is always work to moderate. Items carry the booking reference and provider only.
  */
+/** Actor ids: uuids (fe2-p fixture session) or fixture profile ids such as `fx-adm-super` (integration sign-in). */
+const ACTOR_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
+
+/**
+ * Fixture cursor: a list code plus an offset (`p20`). Opaque to the UI, which only passes it back; it
+ * carries no review or patient id, so the page URL stays free of identifiers. A cursor from another
+ * list is refused. (The backend defines its own token.)
+ */
+const SCOPE_CODE: Record<string, string> = { pending_moderation: "p", published: "u", rejected: "r", log: "l" };
+const encodeCursor = (scope: string, offset: number) => `${SCOPE_CODE[scope]}${offset}`;
+function decodeCursor(scope: string, cursor: string): number | null {
+  const m = /^([purl])(0|[1-9]\d{0,5})$/.exec(cursor);
+  return m && m[1] === SCOPE_CODE[scope] ? Number(m[2]) : null;
+}
+
+/** Slice one page. An offset past the end (rows were decided since) is an empty last page, not an error. */
+function pageOf<T>(rows: T[], scope: string, raw: unknown): { ok: true; page: ModerationPage<T> } | { ok: false } {
+  const req = moderationPageRequestSchema.safeParse(raw ?? {});
+  if (!req.success) return { ok: false };
+  const offset = req.data.cursor === undefined ? 0 : decodeCursor(scope, req.data.cursor);
+  if (offset === null) return { ok: false };
+  const end = offset + req.data.limit;
+  return { ok: true, page: { items: rows.slice(offset, end), nextCursor: end < rows.length ? encodeCursor(scope, end) : null } };
+}
+
 export function createReviewModerationFixtureApi(options: { env?: FixtureEnvironment; moderator: boolean; actorId?: string | null; now?: () => Date }): ReviewModerationApi {
   const guard = fixtureGuard(options.env);
   const now = options.now ?? (() => new Date());
@@ -190,19 +215,20 @@ export function createReviewModerationFixtureApi(options: { env?: FixtureEnviron
   });
 
   return {
-    async listQueue(filter: ModerationFilter) {
+    async listQueue(filter: ModerationFilter, page) {
       guard();
       if (!options.moderator) return fail("forbidden");
       // Oldest first for the pending queue (first in, first decided); newest first otherwise.
       const rows = all().filter((v) => v.review.status === filter).map(item);
       rows.sort((a, b) => (filter === "pending_moderation" ? a.submittedAt.localeCompare(b.submittedAt) : b.submittedAt.localeCompare(a.submittedAt)));
-      return ok(rows);
+      const p = pageOf(rows, filter, page);
+      return p.ok ? ok(p.page) : fail("validation");
     },
     async decide(reviewId, decision, expectedVersion) {
       guard();
       if (!options.moderator) return fail("forbidden");
       // A decision without a known decider is refused: every log row must be attributable.
-      const actorId = options.actorId && idSchema.safeParse(options.actorId).success ? options.actorId.toLowerCase() : null;
+      const actorId = options.actorId && ACTOR_ID.test(options.actorId) ? options.actorId.toLowerCase() : null;
       if (!actorId) return fail("forbidden");
       if (!idSchema.safeParse(reviewId).success || !versionSchema.safeParse(expectedVersion).success) return fail("validation");
       const parsed = moderationDecisionSchema.safeParse(decision);
@@ -228,13 +254,14 @@ export function createReviewModerationFixtureApi(options: { env?: FixtureEnviron
       });
       return ok(item(v));
     },
-    async listDecisions() {
+    async listDecisions(page) {
       guard();
       if (!options.moderator) return fail("forbidden");
       const self = options.actorId?.toLowerCase() ?? null;
       const rows = decisionLog(now()).map(({ decidedBy, ...rest }) => ({ ...rest, decidedBySelf: self !== null && decidedBy === self }));
       rows.sort((a, b) => b.decidedAt.localeCompare(a.decidedAt));
-      return ok(rows);
+      const p = pageOf(rows, "log", page);
+      return p.ok ? ok(p.page) : fail("validation");
     },
   };
 }
