@@ -351,3 +351,14 @@ This index tidies the entries above without editing them (the file is append-onl
 | R-FE07-02 ops session needs | Open (backend) | MFA status and admin grants are not in the I01 session |
 | R-FE07-03 interim guards | fe2-e rows done | `admin/session.ts` uses `requireRole`; the rows for other branches belong to their owners |
 | R-E9E2-01 to R-E9E2-03 | Open | see the R9-E2 section |
+## 2026-11-20 R9-E4 review fixes (fe-b, branch feat/fe2-e)
+
+Fixes for the fe-b/fe-e items in `fe2-c/docs/frontend/ADVERSARIAL_REVIEW.md`:
+- **E2:** `paiseToRupeesString` (`src/components/admin/ops/format.ts`) returns the em dash unless its input is a safe integer. Callers are unchanged: `formatPaise` already checked, and the lab catalogue prefill gets the dash, which `rupeesToPaise` rejects.
+- **Finding 4 (Hindi):** applied the R-FE-Q-R9C3-1 patch to `hi/ambulance.json` `dashboard.daysLeft` (adds `=0`), `hi/lab.json` `orders.testCount` (`#`), and `hi/auth.json` `otp.attemptsLeft` (adds `=0`). The new guard `tests/unit/i18n-hindi-plurals.test.ts` checks every hi namespace, and render tests check counts 0, 1 and n.
+- **R6-1:** the signup role radios are disabled and their fieldset is `aria-busy` until hydration (`src/components/auth/use-hydrated.ts`). Before hydration they looked enabled but ignored taps. Covered by `tests/e2e/hydration-race-e.spec.ts`.
+
+### R-E9E4-01 still open for other owners
+- **fe-a:** `src/messages/hi/common.json` `errorSummary.title` still hard-codes "1" in `one` (patch in R-FE-Q-R9C3-1). It is listed in `EXEMPT` in `tests/unit/i18n-hindi-plurals.test.ts`. Remove that line when the patch lands; the test then requires the fix.
+- **i18n review:** the new Hindi strings "आज समाप्त" (expires today) and "कोई प्रयास बाकी नहीं" (no attempts left) need fluent review, the same as all te/hi copy (`src/messages/REVIEW_NEEDED.md`).
+- **Shared hook:** `src/components/auth/use-hydrated.ts` duplicates fe-d's `src/components/clinical/use-hydrated.ts`. Both should move to `src/lib/use-hydrated.ts` at integration, as R-FE-D-40 proposes.

@@ -11,8 +11,11 @@ const DASH = "—";
 /**
  * Integer paise -> exact "rupees.paise" decimal string (no floating-point division).
  * Negative amounts keep their sign. Used for display and for prefilled form inputs.
+ * Anything that is not a safe integer (10.5, NaN, Infinity, 2^53) returns DASH instead of a
+ * malformed amount; a prefilled price input then fails validation rather than saving a guess.
  */
 export function paiseToRupeesString(paise: number): string {
+  if (!Number.isSafeInteger(paise)) return DASH;
   const sign = paise < 0 ? "-" : "";
   const abs = Math.abs(paise);
   const rest = abs % 100;

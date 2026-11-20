@@ -86,7 +86,7 @@
     "expiringNone": "अगले 30 दिनों में किसी वाहन या ड्राइवर के प्रमाणपत्र समाप्त नहीं हो रहे।",
     "expiringUnavailable": "प्रमाणपत्रों की समाप्ति जाँची नहीं जा सकी।",
     "expiredDays": "समाप्त",
-    "daysLeft": "{count, plural, one {1 दिन बाकी} other {# दिन बाकी}}",
+    "daysLeft": "{count, plural, =0 {आज समाप्त} one {# दिन बाकी} other {# दिन बाकी}}",
     "driverSection": "आपकी यात्रा",
     "noCurrentTrip": "अभी आपकी कोई यात्रा नहीं है।"
   },

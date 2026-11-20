@@ -212,7 +212,7 @@
       "collector": "कलेक्टर",
       "status": "स्थिति"
     },
-    "testCount": "{count, plural, one {1 जाँच} other {# जाँचें}}",
+    "testCount": "{count, plural, one {# जाँच} other {# जाँचें}}",
     "unassigned": "सौंपा नहीं गया",
     "totalsMismatch": "कीमत की जाँच विफल",
     "emptyTitle": "इस कतार में कुछ नहीं",
