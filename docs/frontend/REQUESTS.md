@@ -911,3 +911,279 @@ ADVERSARIAL_REVIEW finding 3: one amount rendered as "₹800" on payment pages a
 - **R-INT5-01 (to fe-b): one main landmark under role shells.** `OnboardingLayout` put `AccountFrame` (which renders `<main id="main-content">`) inside the role shells' `<main id="main-content">` on `/{doctor,lab,ambulance,caretaker}/onboarding` and `/admin/{providers,coverage}` (axe `landmark-main-is-top-level`, duplicate id). Integration fix: `AccountFrame` takes `nested` and then renders a plain `<div>`; `OnboardingLayout` passes `nested`. Standalone `/account/*`, `/workspace/*` and patient intake keep their one `<main>` (checked: exactly 1 `main` and 1 `#main-content` on all nine routes). Please adopt on feat/fe2-b, or drop AccountFrame under role shells as R-FE06-04 planned.
 - **R-INT5-02 (to fe-a): hydration-race.spec.ts signs in.** The spec used plain `test` with fe2-d's per-actor `FIXTURE_DOCTOR_SESSION` servers; on integration the doctor pages redirect to login. Integration now uses `wsTest` (real sign-in as multi.role). Please carry this to feat/fe2-d.
 - **R-INT5-03 (to fe-b): onboarding.spec.ts un-fixme'd.** The two `test.fixme` (booking blocked until the questionnaire is complete; pending lab owner redirected from dashboard/orders) run on integration. There is no `/patient/bookings/new`; the booking page is `/patient/book`, so the first test now targets that.
+## 2026-11-20 - R9-C14 backend-connect patches (fe-q, from docs/frontend/BACKEND_CONNECT_PLAN.md)
+Ready-to-apply patches for the MISMATCH rows. Each one was applied to a scratch export of `feat/fe2-integration` `9fac4f5` (never to another owner's worktree) and checked there:
+- `next typegen && tsc --noEmit`: exit 0.
+- `eslint` on the touched files: exit 0.
+- The listed tests pass.
+
+The full scratch run (`vitest run`) had 1786 passed and 7 failed. All 7 failures also fail on the **unpatched** `9fac4f5`, so they predate these patches (see R-FE-Q-C14-4).
+
+**Apply in this order.** C14-1 and C14-2 belong together, because `sessionHttpAuth` (C14-2, fe-b) is used by C14-1. Then C14-4 (integration) and C14-5 (fe-q, already on `feat/fe2-c`).
+
+**Who already does it right:**
+- `src/modules/clinical/http-util.ts` (`getAccessToken` -> `Authorization: Bearer`, `null` -> `unauthenticated` with no request, `redirect: "error"`).
+- `src/modules/auth/http-client.ts`.
+- `src/modules/doctor/session.ts` `sessionHttp()` (token read per call from the httpOnly cookie, origin from `APP_ORIGIN` only).
+
+The patches copy that pattern into the shared client and the admin wrapper, and promote `sessionHttp()` to one exported helper.
+
+### R-FE-Q-C14-1 (fe-a, fe-d): bearer token on the shared client; dashboard bookings use it
+Why: `src/lib/api/http.ts` `createHttpClient()` sends no `Authorization`, and B01 requires `Bearer` on every booking route (`src/lib/db/request-client.ts` `bearerToken`), so the dashboard, bookings list and detail, and the cancel action (fe-p pages) would all get 401.
+
+fe-a, `src/lib/api/http.ts`. The option is optional, so the public catalog client is unchanged:
+```diff
+--- a/src/lib/api/http.ts
++++ b/src/lib/api/http.ts
+@@ -35,7 +35,13 @@ export function serverApiOrigin(env: Record<string, string | undefined> = proces
+   }
+ }
+ 
+-export function createHttpClient(config: { fetch?: typeof fetch; timeoutMs?: number; baseUrl?: string } = {}): HttpClient {
++/**
++ * Token source for private routes. Absent: no Authorization header (public routes such as /api/catalog).
++ * Present: every request needs a token; null means "no session" and the request is not sent.
++ */
++export type AccessTokenSource = () => string | null | Promise<string | null>;
++
++export function createHttpClient(config: { fetch?: typeof fetch; timeoutMs?: number; baseUrl?: string; getAccessToken?: AccessTokenSource } = {}): HttpClient {
+   const fetcher = config.fetch ?? globalThis.fetch;
+   const timeout = config.timeoutMs ?? 15_000;
+   if (!Number.isFinite(timeout) || timeout <= 0) throw new Error("Invalid request timeout");
+@@ -44,6 +50,11 @@ export function createHttpClient(config: { fetch?: typeof fetch; timeoutMs?: num
+   return {
+     async request(path, schema, options = {}) {
+       if (!/^\/api\/[a-zA-Z0-9/_-]+(?:\?[a-zA-Z0-9=&%_,.:-]*)?$/.test(path) || /%0[ad]/i.test(path)) return fail("validation");
++      let token: string | null = null;
++      if (config.getAccessToken) {
++        try { token = await config.getAccessToken(); } catch { return fail("unavailable"); }
++        if (!token) return fail("unauthenticated");
++      }
+       const controller = new AbortController();
+       const abort = () => controller.abort();
+       if (options.signal?.aborted) controller.abort();
+@@ -53,6 +64,8 @@ export function createHttpClient(config: { fetch?: typeof fetch; timeoutMs?: num
+         const headers = new Headers({ Accept: "application/json" });
+         if (options.body !== undefined) headers.set("Content-Type", "application/json");
+         if (options.idempotencyKey) headers.set("Idempotency-Key", options.idempotencyKey);
++        // redirect: "error" below: a bearer token is never sent on to another location.
++        if (token) headers.set("Authorization", `Bearer ${token}`);
+         const response = await fetcher(origin + path, {
+           method: options.method ?? "GET", headers,
+           credentials: "same-origin", redirect: "error", cache: "no-store",
+```
+fe-d, `src/modules/patient-dashboard/session.ts`. fe-q's `src/modules/bookings/api.ts` takes the optional client (C14-4 applies that file):
+```diff
+--- a/src/modules/patient-dashboard/session.ts
++++ b/src/modules/patient-dashboard/session.ts
+@@ -1,10 +1,11 @@
+ import { fail, ok, type ApiResult } from "@/lib/api/result";
++import { createHttpClient } from "@/lib/api/http";
+ import { getAdapterMode } from "@/lib/api/mode";
+ import { connection } from "next/server";
+ import type { FixtureActor } from "@/fixtures/clinical/world";
+ import { fixtureActorFor } from "@/modules/auth/fixture-actors";
+ import type { DeniedReason, GuardOutcome } from "@/modules/auth/guard";
+-import { authorizeRole, isFixtureAdapter, requireRole } from "@/modules/auth/server";
++import { authorizeRole, isFixtureAdapter, requireRole, sessionHttpAuth } from "@/modules/auth/server";
+ import { createBookingsApi, type BookingsApi } from "@/modules/bookings/api";
+ import { createBookingsFixtureApi } from "@/modules/bookings/fixture";
+ 
+@@ -62,7 +63,7 @@ const BOOKING_SCENARIOS = ["empty", "requested", "accepted", "declined", "cancel
+  * synthetic dashboard can be reviewed. http mode is unchanged.
+  */
+ export function dashboardBookingsApi(env: Env = process.env): BookingsApi {
+-  if (getAdapterMode(env) !== "fixture") return createBookingsApi(env);
++  if (getAdapterMode(env) !== "fixture") return createBookingsApi(env, createHttpClient(sessionHttpAuth()));
+   const scenario = BOOKING_SCENARIOS.find((s) => s === env.FIXTURE_BOOKING_SCENARIO);
+   return createBookingsFixtureApi({ env, scenario });
+ }
+```
+```diff
+--- a/src/modules/bookings/api.ts
++++ b/src/modules/bookings/api.ts
+@@ -2,6 +2,7 @@ import type { ApiResult } from "@/lib/api/result";
+ import { getAdapterMode } from "@/lib/api/mode";
+ import type { FixtureEnvironment } from "@/lib/api/fixture";
+ import type { Booking, BookingAccept, BookingDecision, BookingEvent, BookingList, BookingReschedule, CreateBooking } from "./schemas";
++import type { HttpClient } from "@/lib/api/http";
+ import { createBookingsHttpApi } from "./http";
+ import { createBookingsFixtureApi } from "./fixture";
+ export interface BookingsApi {
+@@ -14,6 +15,7 @@ export interface BookingsApi {
+   timeline(id: string): Promise<ApiResult<{ items: BookingEvent[] }>>;
+   reschedule(id: string, input: BookingReschedule): Promise<ApiResult<{ version: number }>>;
+ }
+-export function createBookingsApi(env?: FixtureEnvironment): BookingsApi {
+-  return getAdapterMode(env) === "fixture" ? createBookingsFixtureApi({ env }) : createBookingsHttpApi();
++/** http mode needs `http` built with the session token (createHttpClient(sessionHttpAuth())); without it calls are 401. */
++export function createBookingsApi(env?: FixtureEnvironment, http?: HttpClient): BookingsApi {
++  return getAdapterMode(env) === "fixture" ? createBookingsFixtureApi({ env }) : createBookingsHttpApi(http);
+ }
+```
+Test (add as `tests/unit/c14-bearer.test.ts`; the full file is in `feat/fe2-c` `.context/c14-tests/c14-bearer.test.ts.txt`, stored as .txt because it imports modules that are not on that branch):
+- Bearer is sent.
+- A `null` token gives `unauthenticated` and no fetch.
+- A throwing token source gives `unavailable`.
+- The public client sends no `Authorization`.
+- Static check that the call sites use `sessionHttpAuth()`.
+
+### R-FE-Q-C14-2 (fe-b, fe-e): one session-auth helper; admin wrapper gets Bearer; questionnaire submit fails closed
+fe-b, `src/modules/auth/server.ts`: export the helper (same body as `doctor/session.ts` `sessionHttp()`; fe-d may switch to it later):
+```diff
+--- a/src/modules/auth/server.ts
++++ b/src/modules/auth/server.ts
+@@ -44,6 +44,15 @@ function httpOptions(token: string | null): HttpAdapterOptions {
+   return { baseUrl: apiOrigin(), getAccessToken: () => token };
+ }
+ 
++/**
++ * Server-side HTTP auth for module adapters (bookings, admin, ...): APP_ORIGIN plus the session bearer token,
++ * read per request from the httpOnly cookie. Same pattern as doctor/session.ts `sessionHttp()`.
++ */
++export function sessionHttpAuth(): { baseUrl?: string; getAccessToken: () => Promise<string | null> } {
++  const baseUrl = apiOrigin();
++  return { ...(baseUrl ? { baseUrl } : {}), getAccessToken: async () => readAccessToken(await cookies()) };
++}
++
+ /** Synthetic user ID behind a fixture token (fixture mode only; ignored by the HTTP adapter). */
+ function fixtureActorId(token: string | null): string | undefined {
+   const scenario = fixtureScenarioFromToken(token);
+```
+fe-e, `src/modules/admin/http-util.ts` and `src/modules/admin/index.ts` (`POST /api/admin/providers/:id/review` needs Bearer on I02). Callers can still override with `options.http`:
+```diff
+--- a/src/modules/admin/http-util.ts
++++ b/src/modules/admin/http-util.ts
+@@ -16,6 +16,8 @@ export type HttpOptions = {
+   fetchImpl?: typeof fetch;
+   /** Extra headers (for example, forwarded auth on the server). Never log these. */
+   headers?: () => Record<string, string>;
++  /** Bearer token for private routes (I02 requires it). Present and null -> "unauthenticated", no request. */
++  getAccessToken?: () => string | null | Promise<string | null>;
+ };
+ 
+ export type HttpRequest<T> = {
+@@ -38,7 +40,13 @@ export function createHttpClient(options: HttpOptions = {}) {
+   const fetchImpl = options.fetchImpl ?? fetch;
+ 
+   return async function request<T>(req: HttpRequest<T>): Promise<ApiResult<T>> {
++    let token: string | null = null;
++    if (options.getAccessToken) {
++      try { token = await options.getAccessToken(); } catch { return fail("unavailable"); }
++      if (!token) return fail("unauthenticated");
++    }
+     const headers: Record<string, string> = { Accept: "application/json", ...(options.headers?.() ?? {}) };
++    if (token) headers.Authorization = `Bearer ${token}`;
+     if (req.body !== undefined) headers["Content-Type"] = "application/json";
+     if (req.idempotencyKey !== undefined) headers["Idempotency-Key"] = req.idempotencyKey;
+```
+```diff
+--- a/src/modules/admin/index.ts
++++ b/src/modules/admin/index.ts
+@@ -1,4 +1,5 @@
+ import { getAdapterMode } from "@/lib/api/mode";
++import { sessionHttpAuth } from "@/modules/auth/server";
+ import type { AdminApi } from "./api";
+ import { createAdminFixtureApi, createAdminFixtureStore, type AdminFixtureOptions, type AdminFixtureStore } from "./fixture";
+ import { createAdminHttpApi, type AdminHttpOptions } from "./http";
+@@ -16,6 +17,6 @@ let sharedStore: AdminFixtureStore | undefined;
+ 
+ export function getAdminApi(options: GetAdminApiOptions = {}): AdminApi {
+   const env = options.env ?? process.env;
+-  if (getAdapterMode(env) !== "fixture") return createAdminHttpApi({ ...options.http, env });
++  if (getAdapterMode(env) !== "fixture") return createAdminHttpApi({ ...sessionHttpAuth(), ...options.http, env });
+   return createAdminFixtureApi({ ...options, env, store: options.store ?? (sharedStore ??= createAdminFixtureStore()) });
+ }
+```
+fe-b, `src/modules/onboarding/http.ts`: no backend branch implements `POST /api/onboarding/patient` (I01 to B01), so submit returns `gated` after validation instead of a 404 the patient would see. Restore the call when the route exists (R-FE03-10). After this, `ok`, `toApiResult` and `z` may still be used elsewhere in the file; eslint passed on the scratch copy.
+```diff
+--- a/src/modules/onboarding/http.ts
++++ b/src/modules/onboarding/http.ts
+@@ -86,13 +86,9 @@ export function createHttpOnboardingApi(options: HttpAdapterOptions = {}): Onboa
+     async submitPatientQuestionnaire(input) {
+       const valid = validateInput(patientQuestionnaireSchema, input);
+       if (!valid.ok) return valid.result;
+-      const result = await client.request({
+-        method: "POST",
+-        path: "/api/onboarding/patient",
+-        body: valid.data,
+-        schema: z.unknown(),
+-      });
+-      return result.ok ? ok({ status: "submitted" }) : toApiResult(result);
++      // No backend implements POST /api/onboarding/patient yet (I01 to B01; R-FE03-10, BACKEND_CONNECT_PLAN).
++      // Fail closed instead of sending a request that would 404. Restore the call once the route exists.
++      return fail("gated");
+     },
+ 
+     async createProvider(input) {
+```
+Tests (same file as C14-1):
+- The admin wrapper sends Bearer and refuses without a token.
+- Onboarding submit never calls fetch, and the adapter no longer contains the `/api/onboarding/patient` request.
+
+### R-FE-Q-C14-3 (fe-p): no code change; verify after C14-1
+fe-p's bookings pages and cancel action (`app/[locale]/patient/bookings/page.tsx`, `[id]/page.tsx`, `actions.ts`) call `dashboardBookingsApi()` (fe-d), so they get the token through C14-1. The moderation and reviews adapters are `gated`, with no backend route. After C14-1, rerun `tests/e2e/patient-bookings.spec.ts` in fixture mode (unchanged behaviour). In http mode, a signed-out cancel must show the sign-in prompt (the action's `unauthenticated` path), never a generic error.
+
+### R-FE-Q-C14-4 (integration, fe-int2): apply order, fe-q call site, pre-existing red tests
+1. Apply C14-2 (`auth/server.ts`) first, then C14-1, then the fe-q call site below, which needs `sessionHttpAuth`, so it can't compile on `feat/fe2-c` (no auth module there):
+```diff
+--- a/src/modules/bookings/journey.ts
++++ b/src/modules/bookings/journey.ts
+@@ -1,5 +1,7 @@
+ import "server-only";
++import { createHttpClient } from "@/lib/api/http";
+ import { getAdapterMode } from "@/lib/api/mode";
++import { sessionHttpAuth } from "@/modules/auth/server";
+ import { SYNTHETIC_CANCELLATION_POLICY, sharedSyntheticMarketplace } from "@/fixtures/marketplace/booking-store";
+ import { createPatientHttpApi, type PatientApi } from "@/modules/patient/api";
+ import { createPatientFixtureApi } from "@/modules/patient/fixture";
+@@ -29,7 +31,7 @@ export type JourneyApis = {
+ export function journeyApis(env: Record<string, string | undefined> = process.env): JourneyApis {
+   const doctors = createDoctorSearchApi(env);
+   if (getAdapterMode(env) !== "fixture") {
+-    return { bookings: createBookingsHttpApi(), payments: createPaymentsHttpApi(), patient: createPatientHttpApi(), slots: createSlotsHttpApi(), doctors, cancellationTerms: null };
++    return { bookings: createBookingsHttpApi(createHttpClient(sessionHttpAuth())), payments: createPaymentsHttpApi(), patient: createPatientHttpApi(), slots: createSlotsHttpApi(), doctors, cancellationTerms: null };
+   }
+   const store = sharedSyntheticMarketplace(env);
+   return {
+```
+2. Merge `feat/fe2-c` for C14-5 and the updated `tests/unit/http-routes-contract.test.ts` (new B01 exceptions: `/api/availability`, `/api/bookings/:id/reschedule`, `/api/patient/addresses`).
+3. Run `npm run typecheck && npm test`. **Already red on `9fac4f5` before any patch** (7 tests, for their owners to fix):
+   - `tests/unit/r9c12-guards.test.ts` "currency formatters": fe-e's new `src/lib/money/index.ts` (`8e3ccf6`, the canonical formatter for finding 3) is not in fe-q's allowlist. **fe-q will add it on `feat/fe2-c`** (this commit).
+   - `tests/unit/hydration-status.test.ts` (D4): `src/components/auth/auth-flow.tsx` gates on `useHydrated()` without the busy state (fe-b).
+   - `tests/unit/modules-operations/admin-return-path.test.ts`: `admin/coverage/page.tsx` is not inside `AdminRouteGate` (fe-b/fe-e).
+   - `tests/unit/modules-operations/provider-route-gates.test.ts` (4): the `{lab,ambulance,caretaker,doctor}/onboarding/page.tsx` pages gate through `ProviderOnboarding` -> `requireRole`, not the area `RouteGate` the test expects (fe-p's test vs fe-b's pages: decide which is canonical).
+
+### R-FE-Q-C14-5 (fe-q, applied on `feat/fe2-c`): B01 shape mappings, ready to enable
+New files, unused until enabled: `src/modules/bookings/b01-http.ts` and `src/modules/patient/b01-http.ts`. Test: `tests/unit/modules-marketplace/b01-mappings.test.ts` (11).
+- **Slots:** `createSlotsB01HttpApi(http)` calls `GET /api/availability` (keys `provider`, `service`, `date`) once per offered IST day and maps `{ slots: [{ start_at, end_at, advisory }], advisory: true }` to `{ items: [{ startAt, endAt }] }`, sorted and de-duplicated. One failing day fails the list. To enable, in `journey.ts` replace `createSlotsHttpApi()` with `createSlotsB01HttpApi(createHttpClient(sessionHttpAuth()))`.
+- **Reschedule:** `rescheduleViaB01(http, id, { expectedVersion, startAt }, idempotencyKey)` returns B01's `{ id }`. Enabling needs `BookingsApi.reschedule` to return `{ id }` (not `{ version }`), an idempotency key per intent in `RequestActions`, and a refetch after success.
+- **Address:** `toB01AddressBody` / `saveAddressViaB01` map to B01's `{ patientId, line1, locality, pin, contactName, phone (+91), expectedVersion, addressId? }`, with `toB01Phone` normalising Indian mobiles. Enabling needs three new form fields (line1, contact name, phone) and an owner decision on `label` and `city`, which B01 does not store. `listAddresses` stays gated (no `GET /api/patient/addresses`).
+
+### R-FE-Q-C14-6 (backend): routes the clinical and records frontend needs but no backend branch has
+Checked against `origin/task/{I01-auth-rls,I02-provider-onboarding,C01-catalog,B01-booking}` and `origin/integ/friend-backend`. None has `/api/consultations/**`, a booking collection or proof route, or an OTP route.
+
+**Called today by http adapters** (behind `FEATURE_CLINICAL`, which is off; a 404 would map to `not_found`):
+
+| Route | Caller | Expected (frontend proposal) |
+|---|---|---|
+| `POST /api/consultations/:id/draft` | `clinical.saveDraft` | body: draft content + `expectedVersion`; response `{ version, savedAt }`; 409 on version |
+| `POST /api/consultations/:id/finalize` (Idempotency-Key) | `clinical.finalize` | response: signed consultation (immutable), audit entry |
+| `GET /api/consultations/:id` | `clinical.getConsultation`, `records.getMyRecord` | discriminated by `status` draft/final; the patient sees final only |
+| `POST /api/bookings/:id/collection` (Idempotency-Key) | `records.recordCollection` | provider cash/direct-UPI claim -> collection view (P01) |
+| `POST /api/bookings/:id/proof` (Idempotency-Key) | `records.issueProof`, `proof-of-visit` | revocable short-lived proof token |
+
+**Gated today, routes needed to enable** (proposals in REQUESTS FE10-12 items 6 to 11, R-FE-D-29/30/33/34/37/38/39):
+- Draft read for conflict recovery (`clinical.getDraft`).
+- `POST /api/consultations/:id/amend` (`clinical.amend`).
+- PDF link `GET /api/consultations/:id/pdf` -> `{ consultationId, version, url, expiresAt }` (`requestPdfLink`, `requestMyRecordPdfLink`).
+- Arrival challenge: read (expiry, attempts, resends; never the code), resend, and `POST /api/bookings/:id/verify-arrival { challengeId, code }` (`getArrivalChallenge`, `resendArrivalCode`, `verifyArrival`). B01 `/arrive` only advances the substate.
+- Doctor DTOs: request list (pre-accept minimal fields), visit list, visit detail (`listRequests`, `listVisits`, `getVisit`), and a resource list (B01 has only `POST /api/provider/booking/resources`; `listAcceptResources`).
+- Records:
+  - patient record list (final only, `listMyRecords`);
+  - health facts list, confirm and correct (`listHealthFacts`, `confirmHealthFacts`, `correctHealthFact`);
+  - photo consent read and record, upload registration, list and view link (`getPhotoConsent`, `recordPhotoConsent`, `registerPhotoUpload`, `listPhotos`, `requestPhotoViewLink`);
+  - proof public check and revoke (`verifyProof`, `revokeProof`);
+  - collection read (`getCollection`).
+- Consultation notes (R-FE-D-37), prescription drafts (R-FE-D-38), doctor reviews (R-FE-D-39) and patient notifications `GET /api/me/notifications` (R-FE-D-34).
+- Approved clinical policy values (OTP validity, attempts and resends, proof lifetime, signed-link lifetime, photo size, vital thresholds, finalize minimum) are needed before any of these ship.

@@ -9,7 +9,12 @@ const found = new Set();
 // Every backticked span and markdown link target, split into path-like tokens.
 const spans = [...doc.matchAll(/`([^`]+)`/g)].map(m => m[1]).concat([...doc.matchAll(/\]\(([^)\s#]+)\)/g)].map(m => m[1]));
 for (const span of spans) for (const raw of span.split(/[\s,]+/)) {
-  const tok = raw.replace(/^[("']+|[)"'.;:]+$/g, "").replace(/\(.*$/, "");
+  // Keep Next.js route groups such as "(public)/" intact: cutting at "(" would turn a missing page into its
+  // parent folder and make it pass. Only strip wrapping punctuation and a trailing call suffix like "fn()".
+  let tok = raw.replace(/^["']+|["'.;:,]+$/g, "");
+  if (tok.startsWith("(") && !/^\([a-z0-9-]+\)\//.test(tok)) tok = tok.slice(1);
+  if (tok.endsWith(")") && !tok.includes("(")) tok = tok.slice(0, -1);
+  tok = tok.replace(/\(\)$/, "");
   if (!tok || tok === "/" || /^\/?api\//.test(tok) || /^\/[a-z]{2}\//.test(tok) || /https?:|[*{}<>|=$]|\.\.\./.test(tok)) continue;
   if (/\.(tsx?|mts|mjs|cjs|md|json)$/.test(tok) || /\/$/.test(tok) || /^(src|docs|tests)\//.test(tok)) found.add(tok);
 }

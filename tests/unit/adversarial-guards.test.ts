@@ -21,6 +21,11 @@ function sources(dir = SRC): string[] {
     return /\.(ts|tsx)$/.test(name) && !name.endsWith(".d.ts") ? [full] : [];
   });
 }
+/** True when the file starts with the "use client" directive, after any leading comments and blank lines. */
+function isClientFile(text: string): boolean {
+  const body = text.replace(/^\uFEFF/, "").replace(/^(?:\s+|\/\/[^\n]*(?:\n|$)|\/\*[\s\S]*?\*\/)*/, "");
+  return /^["']use client["']/.test(body);
+}
 const ALL = sources().map(file => ({ file: path.relative(SRC, file).replace(/\\/g, "/"), text: readFileSync(file, "utf8") }));
 
 // ---------------------------------------------------------------------------------------------------------
@@ -85,7 +90,7 @@ describe("fixture adapter is unreachable outside fixture mode", () => {
   });
 
   it("client components never import fixture values", () => {
-    const client = new Set(ALL.filter(f => /^\s*["']use client["']/.test(f.text)).map(f => f.file));
+    const client = new Set(ALL.filter(f => isClientFile(f.text)).map(f => f.file));
     expect(imports.filter(i => client.has(i.file)).map(i => i.file)).toEqual([]);
   });
 
