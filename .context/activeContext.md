@@ -203,3 +203,8 @@ Known limitations:
 - (3) Overlay sweep: notifications + reminders, en/te/hi, 390 (menu sheet dialog) and 1280 (language menu), moderate+ axe, focus in overlay, Escape returns focus. 12/12. Known: aria-hidden-focus behind Radix modal language menu at 1280, accepted only with the Tab trap verified; REQUESTS R-FE-P-R9-2 to fe-a.
 - (4) Notifications leftovers: every file referenced (page imports ./actions, ./api, NotificationsInbox). Nothing deleted.
 - Checks: tsc 0, lint 0, vitest 68 files / 1067 tests, build 0, fep-e2e-all on 132 / off 88 / guest 14 passed, 0 failed.
+## TASK REPORT: R9-P3 (fe-p, feat/fe2-p, port 3384), 2026-11-20
+- (1) lab/ambulance/caretaker frames (fe-e) redirect from the layout with next=/{locale}/<area>/dashboard (measured on the guest server). Doctor layout already defers to pages. REQUESTS R-FE-P-R9-4; no edits to fe-e files.
+- (2) tests/unit/modules-operations/provider-route-gates.test.ts: 5 tests (lab, ambulance, caretaker gate route = URL segment and every route has a page; doctor guard path = page path; doctor layout has no redirect). Mutation-checked.
+- (3) docs/frontend/NOTIFICATIONS.md; REQUESTS fe-p entries in one section with a status index (R7-NAV resolved, R7-3 amendment folded in, R9-4 and R9-5 new).
+- (4) tsc 0, lint 0, vitest 69 files / 1072, build 0, fep-e2e-all on 132 / off 88 / guest 14 (0 failed). Shared public+nav+a11y: 129 passed, 5 failed (4 known R9-1 hero search; 1 axe en@360 hero fade-in under load, 3/3 alone, R9-5), 20 skipped.

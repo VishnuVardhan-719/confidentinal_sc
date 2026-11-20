@@ -303,7 +303,32 @@ Per user rule, no Playwright/browser runs from agents. `tests/e2e/doctor-workspa
 - Lab, ambulance and caretaker billing and support pages, and caretaker availability, render a "not connected" notice. There is no contract for them yet.
 - Browser e2e for these areas is deferred by user rule: `tests/e2e/{lab,ambulance,caretaker,admin-ops,cms}.spec.ts` stay `test.describe.fixme` and are not run. Verification uses lint, typecheck, unit/jsdom tests and build only.
 
-## 2026-11-19 R7-P patient account features (fe-p, branch feat/fe2-p)
+## fe-a requests carried in by the feat/fe2-a merge
+
+### R-FE01-13 (to lead) — PHASE3-A gaps in src/app (outside fe-a's edit scope)
+- Add `src/app/[locale]/(public)/stories/[slug]/loading.tsx` with `export { PublicPageLoading as default } from "@/components/public/page-loading";` (the only public route rendered at request time; the others are prerendered).
+- `stories/[slug]/page.tsx` "unavailable" branch renders no `<h1>`; wrap it in `<PublicPageIntro title={t("unavailableTitle")}>` or call `notFound()` and add a key, then update `tests/unit/a11y-static.test.ts`.
+- Route-link check (`tests/unit/route-links.test.ts`): 0 dead links; 73 pending routes owned by fe2-b (login/signup), fe2-c (doctors, lab-tests, ambulances, caretakers, patient), fe2-d (doctor) and fe2-e (lab, ambulance, caretaker, admin). Remove entries from its `PENDING` map as each branch merges.
+
+### R-FE01-14 (to lead) — browser e2e un-deferred and passing on feat/fe2-a
+R-FE01-12 is resolved: with the ban lifted, all fe2-a browser specs ran against `next start` (port 3330, --workers=1):
+`public.spec.ts` + `public-nav.spec.ts` 115 passed / 1 skipped (mobile-only test on desktop); `a11y.spec.ts` 16 passed / 16 skipped (runs once on the desktop project; covers 360/768/1024/1440 x en/te/hi, 200%/400% zoom, keyboard focus, headers); `perf.spec.ts` (E2E_PERF=1, mobile-390) 4 passed. Fix made during the run: Telugu/Hindi header overflowed by 12px at 1280 -> emergency link and language trigger are compact between xl and 2xl, account buttons stay on one line.
+
+## fe-p requests (feat/fe2-p, R7-P to R9-P3)
+
+| ID | To | Status | Summary |
+|---|---|---|---|
+| R-FE-P-R7-1 | backend | Open | Family members contract |
+| R-FE-P-R7-NAV | fe2-d | Resolved | Patient shell links to the R7 pages |
+| R-FE-P-R7-2 | backend | Open | Saved providers contract |
+| R-FE-P-R7-3 | backend + admin | Open | Patient reviews contract, incl. edit and withdraw |
+| R-FE-P-R7-4 | backend + notifications | Open | Reminder preferences contract; opt-in wording needs product/legal |
+| R-FE-P-R8-1 | backend + admin | Open | Review moderation contract, capability and decision log |
+| R-FE-P-R9-1 | lead / fe-a | Open | public-nav hero search spec out of date (4 shared e2e failures) |
+| R-FE-P-R9-2 | fe-a | Open | Modal language menu: axe aria-hidden-focus |
+| R-FE-P-R9-3 | lead / fe-b / fe-e | Fixed on fe2-p, needs review | Admin sign-in return path |
+| R-FE-P-R9-4 | fe-e | Open | Lab/ambulance/caretaker sign-in returns to the dashboard |
+| R-FE-P-R9-5 | fe-a | Open | `a11y.spec.ts` axe can run during the hero fade-in (load-dependent color-contrast) |
 
 ### R-FE-P-R7-1 Family members contract (owner: backend)
 No endpoint in docs/API_CONTRACTS.md. The http adapter (`src/modules/family-members/http.ts`) returns `gated`. Proposed:
@@ -316,10 +341,11 @@ No endpoint in docs/API_CONTRACTS.md. The http adapter (`src/modules/family-memb
 - Owner-only (RLS). A non-owned id returns 404, the same as an unknown one.
 - Needs product confirmation: the limit of 10 per account (`MAX_FAMILY_MEMBERS`), and guardian consent or invite flows for adult members (FRONTEND_MASTER "consent/invite or guardian flow"). The UI stores name, relation and DOB only, with no health data.
 
-### R-FE-P-R7-NAV Patient nav links (owner: fe2-d patient shell)
+### R-FE-P-R7-NAV Patient nav links (owner: fe2-d patient shell) - RESOLVED
 fe-p must not edit `PatientShell` or the dashboard nav. Please add these links:
 - `/patient/family` (icon `users`, label: new `patient.shell.nav.family` key, "Family")
 - `/patient/saved`, `/patient/reviews` and `/patient/settings/reminders`: these pages are coming in R7-P.
+- Resolved: the patient shell links Family, Saved doctors, Reviews and Reminders (checked by `tests/e2e/a11y-sweep-p.spec.ts` "dashboard and shell nav reach every R7 patient page").
 
 ### R-FE-P-R7-2 Saved providers contract (owner: backend)
 No endpoint exists. The http adapter (`src/modules/saved-providers/http.ts`) returns `gated`. Proposed:
@@ -340,6 +366,11 @@ No endpoint exists. The http adapter (`src/modules/reviews/http.ts`) returns `ga
 - The server must enforce completion, ownership and one review per booking. It also needs moderation before publishing (admin queue, not built), and a published rating aggregate for `doctorResultSchema.rating`.
 - Needs product confirmation: whether patients may edit or withdraw a pending review (not offered), the review window after completion (none enforced), and the contact/link filter rule.
 
+**Amended in R8-P2: edit and withdraw**
+- `PATCH /api/patient/reviews/:bookingId` body `{ rating, text, expectedVersion }`. The review returns to `pending_moderation` with `rejectionReason: null`. Errors: `409` on a version mismatch or a withdrawn review; `422` uses the same field codes as create.
+- `POST /api/patient/reviews/:bookingId/withdraw` body `{ expectedVersion }`. Sets `withdrawn`, which is final; the booking cannot be reviewed again.
+- Review DTO gains `rejectionReason (personal_info|not_about_service|offensive|spam|null)` and `version`.
+
 ### R-FE-P-R7-4 Reminder preferences contract (owner: backend + notifications)
 No endpoint exists. The http adapter (`src/modules/reminder-prefs/http.ts`) returns `gated`. Proposed:
 - `GET /api/patient/reminder-preferences` -> `{ channels: { sms, whatsapp, email }, quietHours: { enabled, start "HH:MM", end "HH:MM" }, version, updatedAt }`. Quiet hours are IST wall-clock times and may span midnight; end is exclusive.
@@ -351,13 +382,7 @@ No endpoint exists. The http adapter (`src/modules/reminder-prefs/http.ts`) retu
   - the defaults: SMS on, quiet hours 21:00-07:00 IST
   - whether safety and critical booking messages bypass quiet hours (the UI says only visit reminders are affected)
   - the WhatsApp/SMS consent and opt-in wording (TRAI/DLT)
-
-## 2026-11-19 R8-P2 review edit/withdraw and moderation (fe-p, feat/fe2-p)
-
-### R-FE-P-R7-3 (amended) Patient review edit and withdraw
-- `PATCH /api/patient/reviews/:bookingId` body `{ rating, text, expectedVersion }`. The review returns to `pending_moderation` with `rejectionReason: null`. Errors: `409` on a version mismatch or a withdrawn review; `422` uses the same field codes as create.
-- `POST /api/patient/reviews/:bookingId/withdraw` body `{ expectedVersion }`. Sets `withdrawn`, which is final; the booking cannot be reviewed again.
-- Review DTO gains `rejectionReason (personal_info|not_about_service|offensive|spam|null)` and `version`.
+- Module summary, channels, quiet-hours rule and the opt-in wording TODOs: `docs/frontend/NOTIFICATIONS.md`.
 
 ### R-FE-P-R8-1 Review moderation contract and capability (owner: backend + admin)
 - New proposed capability `review:moderate` (added to `PROPOSED_ADMIN_CAPABILITIES`) and admin route `/admin/reviews`.
@@ -371,14 +396,6 @@ No endpoint exists. The http adapter (`src/modules/reminder-prefs/http.ts`) retu
 ### R-FE-P-R9-1 (to lead / fe-a) - shared public-nav hero search spec is out of date after the R-C2-4 swap
 - `tests/e2e/public-nav.spec.ts:81` and `:93` (4 failures, both projects) wait for fe-a's `DoctorSearch` labels ("City or PIN code" textbox, "Doctor, speciality or symptom" combobox; hi "शहर या पिन कोड", searchbox, "डॉक्टर खोजें"). Since f18d7cb (integration) the landing page renders fe-c's `DoctorSearchBar idPrefix="hero"`, whose fields are "Search doctors, specialities or symptoms" (combobox) and "City" (textbox), with a "Search" button and a separate "PIN code" finder below.
 - This is a spec/markup mismatch, not a regression from fe2-a's header fix or from fe-p. fe-p did not edit the spec (fe-a's file) or the landing page (integration). Fix: update the two tests to the DoctorSearchBar labels and URL contract (`/doctors?q=&city=|pin=`), or decide which component the hero keeps.
-### R-FE01-13 (to lead) — PHASE3-A gaps in src/app (outside fe-a's edit scope)
-- Add `src/app/[locale]/(public)/stories/[slug]/loading.tsx` with `export { PublicPageLoading as default } from "@/components/public/page-loading";` (the only public route rendered at request time; the others are prerendered).
-- `stories/[slug]/page.tsx` "unavailable" branch renders no `<h1>`; wrap it in `<PublicPageIntro title={t("unavailableTitle")}>` or call `notFound()` and add a key, then update `tests/unit/a11y-static.test.ts`.
-- Route-link check (`tests/unit/route-links.test.ts`): 0 dead links; 73 pending routes owned by fe2-b (login/signup), fe2-c (doctors, lab-tests, ambulances, caretakers, patient), fe2-d (doctor) and fe2-e (lab, ambulance, caretaker, admin). Remove entries from its `PENDING` map as each branch merges.
-
-### R-FE01-14 (to lead) — browser e2e un-deferred and passing on feat/fe2-a
-R-FE01-12 is resolved: with the ban lifted, all fe2-a browser specs ran against `next start` (port 3330, --workers=1):
-`public.spec.ts` + `public-nav.spec.ts` 115 passed / 1 skipped (mobile-only test on desktop); `a11y.spec.ts` 16 passed / 16 skipped (runs once on the desktop project; covers 360/768/1024/1440 x en/te/hi, 200%/400% zoom, keyboard focus, headers); `perf.spec.ts` (E2E_PERF=1, mobile-390) 4 passed. Fix made during the run: Telugu/Hindi header overflowed by 12px at 1280 -> emergency link and language trigger are compact between xl and 2xl, account buttons stay on one line.
 
 ### R-FE-P-R9-2 (to fe-a) - modal language menu aria-hides a focusable page (axe aria-hidden-focus, serious)
 - At 1280, with the `LocaleSwitcher` dropdown open (`src/components/shared/locale-switcher.tsx`), axe reports `aria-hidden-focus` on the shell's skip link, sidebar, top bar and main content. Radix `DropdownMenu` is modal by default and aria-hides everything outside the menu.
@@ -386,6 +403,20 @@ R-FE01-12 is resolved: with the ban lifted, all fe2-a browser specs ran against 
 - Suggested fix: `<DropdownMenu modal={false}>` in the locale switcher (the WAI-ARIA menu button pattern is non-modal). After that, the exception in the sweep can be removed. fe-p did not edit the component (fe-a scope).
 
 ### R-FE-P-R9-3 (to lead / fe-b) - sign-in return to the decision log
-- Root cause: `AdminFrame` (admin layout, fe-e) redirected signed-out visitors itself with `next=/{locale}/admin/dashboard`, so every admin page returned to the dashboard. The layout now renders no shell when signed out and leaves the redirect to the page gate; a unit test checks every admin page is gated. fe-e please review. The lab/ambulance/caretaker frames were not checked for the same pattern.
+- Root cause: `AdminFrame` (admin layout, fe-e) redirected signed-out visitors itself with `next=/{locale}/admin/dashboard`, so every admin page returned to the dashboard. The layout now renders no shell when signed out and leaves the redirect to the page gate; a unit test checks every admin page is gated. fe-e please review. The lab, ambulance and caretaker frames have the same problem: see R-FE-P-R9-4.
 - fe2-p now sends `next=/{locale}/admin/reviews/log` from the decision log: `AdminRouteGate` takes a fixed `subPath`, `adminPagePath` accepts plain lowercase segments only, and `loginRedirectPath` still reduces `next` to an internal locale-prefixed path with no query (tests/unit/modules-operations/admin-return-path.test.ts).
 - fe2-p has no login page. The consumer that reads `next` after sign-in is fe-b's `auth-page.tsx` + `normalizeInternalPath` on feat/fe2-integration, which already rejects off-site and `/api` targets. The end-to-end landing (sign in, then arrive on the log) can only be checked after integration.
+
+### R-FE-P-R9-4 (to fe-e) - lab, ambulance and caretaker sign-in returns to the dashboard
+- `LabFrame`, `AmbulanceFrame` and `CaretakerFrame` (`src/components/{lab,ambulance,caretaker}/*-frame.tsx`, fe-e) redirect signed-out visitors from the layout with the dashboard path, before the page gate runs. Measured on the fe2-p guest server (R9-P3):
+  - `/en/lab/orders` -> `/en/login?next=%2Fen%2Flab%2Fdashboard`
+  - `/te/ambulance/trips` -> `/te/login?next=%2Fte%2Fambulance%2Fdashboard`
+  - `/hi/caretaker/shifts` and `/en/caretaker/assignments/<id>` -> `next=/{locale}/caretaker/dashboard`
+  - For comparison, `/en/doctor/visits` -> `next=%2Fen%2Fdoctor%2Fvisits` (the doctor layout already leaves the redirect to the page) and `/en/admin/reviews/log` -> `next=%2Fen%2Fadmin%2Freviews%2Flog` (fixed in R9-P2).
+- Suggested fix (same as `AdminFrame` in f977bc0): when `access.kind === "unauthenticated"`, return `<>{children}</>` instead of `redirect(access.loginPath)`, and let `*RouteGate` redirect. That is safe because every lab, ambulance and caretaker page renders inside its `*RouteGate` with the route of its URL, and the index pages redirect to the dashboard. `tests/unit/modules-operations/provider-route-gates.test.ts` checks this and fails if a page is added without a gate.
+- Secondary: the gates build `next` from the route root, so detail pages (`/lab/orders/[orderId]`, `/ambulance/trips/[tripId]`, `/caretaker/assignments/[assignmentId]`) return to their list. Decide whether that is intended (it keeps ids out of `next`); the patient and doctor areas keep the detail path.
+- fe-p did not edit these files (fe-e scope).
+
+### R-FE-P-R9-5 (to fe-a) - shared a11y spec audits the landing hero mid-animation under load
+- In the R9-P3 full run (4 workers, machine busy with other agents' servers), `tests/e2e/a11y.spec.ts` "axe en @360" failed once with `/: color-contrast: .scv-rise-delay`. That is the hero lead paragraph (`src/app/[locale]/(public)/page.tsx:92`) while its fade-in is still running, so axe measures a partly transparent colour. It passed 3/3 when run alone.
+- Suggested fix in the spec: `page.emulateMedia({ reducedMotion: "reduce" })` before auditing (`.scv-rise` only animates under `prefers-reduced-motion: no-preference`, see `globals.css`), or wait for `document.getAnimations()` to finish before `AxeBuilder.analyze()`. fe-p did not edit the spec (fe-a scope).
