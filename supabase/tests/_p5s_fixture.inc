@@ -95,8 +95,12 @@ declare cat text; prior boolean; v integer; result integer; begin
  select category,version into cat,v from public.bookings where id=p_booking;
  select generic_accept into prior from booking_private.category_paths where category=cat;
  update booking_private.category_paths set generic_accept=true where category=cat;
+ -- Shared suites accept caretaker bookings without a care plan, which the care guard
+ -- refuses; it is switched off for caretaker only (031, 048, 056 need the other guards).
+ if cat='caretaker' then perform pg_temp.p5_category_guards(false); end if;
  perform pg_temp.as_user('c1000000-0000-4000-8000-000000000001');
  result:=public.accept_booking(p_booking,v,p_resources);
+ if cat='caretaker' then perform pg_temp.p5_category_guards(true); end if;
  update booking_private.category_paths set generic_accept=prior where category=cat;
  return result;
 end $$;
