@@ -307,36 +307,41 @@ export function AuditView({
   const tk = useKeyTranslator();
   const locale = useAppLocale();
   const selectClass = "min-h-target rounded-md border border-border-strong bg-surface px-3 text-base text-ink";
+  // Filters only where there is (or could be) data: never on a denied, gated or not-found page.
+  const filterable = result.status === "ok" || result.status === "empty" || result.status === "error";
+  const filters = (
+    <form method="get" aria-label={t("filtersLabel")} className="flex flex-wrap items-end gap-4">
+      <label className="grid gap-1 text-base font-semibold text-ink">
+        {t("categoryLabel")}
+        <select name="category" defaultValue={category ?? ""} className={selectClass}>
+          <option value="">{t("all")}</option>
+          {AUDIT_CATEGORIES.map((c) => (
+            <option key={c} value={c}>
+              {t(`category.${c}`)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="grid gap-1 text-base font-semibold text-ink">
+        {t("outcomeLabel")}
+        <select name="outcome" defaultValue={outcome ?? ""} className={selectClass}>
+          <option value="">{t("all")}</option>
+          {AUDIT_OUTCOMES.map((o) => (
+            <option key={o} value={o}>
+              {t(`outcome.${o}`)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button type="submit" className="min-h-target rounded-md border border-forest bg-surface px-5 text-base text-forest hover:bg-mist">
+        {t("apply")}
+      </button>
+    </form>
+  );
   return (
     <div className="grid gap-8">
       <PageHeader title={t("title")} description={t("description")} />
-      <form method="get" aria-label={t("filtersLabel")} className="flex flex-wrap items-end gap-4">
-        <label className="grid gap-1 text-base font-semibold text-ink">
-          {t("categoryLabel")}
-          <select name="category" defaultValue={category ?? ""} className={selectClass}>
-            <option value="">{t("all")}</option>
-            {AUDIT_CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {t(`category.${c}`)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="grid gap-1 text-base font-semibold text-ink">
-          {t("outcomeLabel")}
-          <select name="outcome" defaultValue={outcome ?? ""} className={selectClass}>
-            <option value="">{t("all")}</option>
-            {AUDIT_OUTCOMES.map((o) => (
-              <option key={o} value={o}>
-                {t(`outcome.${o}`)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button type="submit" className="min-h-target rounded-md border border-forest bg-surface px-5 text-base text-forest hover:bg-mist">
-          {t("apply")}
-        </button>
-      </form>
+      {filterable ? filters : null}
       <LoaderState result={result} empty={{ title: t("emptyTitle"), description: t("emptyBody") }}>
         {(d) => (
           <>
