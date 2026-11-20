@@ -1,4 +1,4 @@
-> **Superseded (2026-11-20):** start at [`START_HERE.md`](../START_HERE.md) on branch `integ/all`. This file is kept for history; where it disagrees with `START_HERE.md`, that page wins.
+> **Superseded (2026-11-20):** start at [`START_HERE.md`](../../START_HERE.md) on branch `main`. This file is kept for history; where it disagrees with `START_HERE.md`, that page wins.
 
 # Start prompt for the frontend developer
 

@@ -49,3 +49,11 @@
 - Six SQL migrations, suites100–109, four-case race runner and notification app layer authored. SQL **DB NOT EXECUTED** under the owner's static-only rule. Gates OFF; no Docker/Supabase command, dependency install, `.env` access or activation.
 - Static evidence: Vitest278 passed/2 pre-existing skipped (N01 39 tests); Next typegen, standalone tsc, full ESLint and Webpack production build exit0. All six new route paths dynamic. Read-only SQL/app reviews completed and concrete findings corrected.
 - [N01 handoff](handoffs/N01_codex_2026-11-20.md) records commands, category reseed/native-command integration, source-ledger hardening prerequisite, shared suite023 compatibility and frontend/activation work. Database acceptance remains pending. Feature-branch commit/push authorized; use final branch HEAD for the resulting SHA.
+
+## 2026-11-20 — Coordinator: CI green, DC merge, handover (Claude)
+
+- Merged `feat/DC-clinical-core` and `feat/DC-extras` into `integ/all`. Drove the database suites to green in GitHub Actions over several `test(db): CI round N` commits: run #55 (`e0f6a23`, suites 001-109), run #58 (`77971f2`, all 94 suite files 001-125).
+- Real bug found by suite 114: B01 `booking_private.patient` compared `a.scope=scope`, which in a SQL function is the column compared with itself, so revoking one scope ended nothing. Fixed by migration `20261117002210_integ_patient_scope.sql`. Also migration 002200 (coverage review trail hidden from the area's own owner). Other fixes were test fixtures and missing `\echo` plan lines.
+- Owner decided R-2: `main` and `develop` fast-forwarded to `integ/all` (`3a223e2`); CI run #65 on `main` green. 35 merged or superseded branches deleted from GitHub, listed with commits in `docs/ARCHIVED_BRANCHES.md`. The earlier UI merge left in a local worktree was saved as `wip/U01a-onto-integ` (unverified).
+- Handover docs refreshed for the friend: `START_HERE.md` (setup, branches, verify, done / not done / next), `docs/FEATURE_STATUS.md`, `docs/TEST_EVIDENCE.md`, `docs/RISKS_AND_BLOCKERS.md`, `docs/IMPLEMENTATION_TASKS.md`, `docs/HANDOFF_FRONTEND.md` (DC routes added to the §11 index). Superseded entry docs moved to `docs/archive/`.
+- Not done: race runners (need Docker), UI, owner questions, staging/release.

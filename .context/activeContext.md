@@ -2,6 +2,7 @@
 
 ## Coordinator checkpoint (2026-11-20, Claude)
 
+- **Handover (latest):** `main` = `develop` = `integ/all`; CI #65 green on `main`. Friend starts at `START_HERE.md` (setup, status, next steps). Superseded entry docs in `docs/archive/`; deleted branches in `docs/ARCHIVED_BRANCHES.md`; unverified UI merge on `wip/U01a-onto-integ`. Merge to `develop` (R-2) is done; the line below about waiting is history.
 - `integ/all` HEAD `8590f23` (pushed). CI run #58 on `77971f2`: migrations apply, pgTAP 001-125 all pass. Doctor clinical DC03-DC14 (`feat/DC-clinical-core`, `feat/DC-extras`) merged; static gate after merge: typegen, tsc, eslint exit 0, Vitest 799 pass/2 skip, `next build --webpack` exit 0.
 - CI-forced fixes: 001720 lab CASE, 001591 oidvector index, 002000 alias (all three unapplied before, fixed in place); 002200 coverage review reads; 002210 B01 `patient()` scope check (was `a.scope=a.scope`); test fixtures in `test(db): CI round 1-5` commits.
 - Left: `tests/rls/run_*_concurrency.py` runners (not in CI), owner questions (DC handoffs, OWNER_DECISIONS_PENDING), UI U01. Merge `integ/all` -> `develop` waits for the owner (R-2).

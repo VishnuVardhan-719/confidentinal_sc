@@ -34,4 +34,4 @@ Claude assigns precise task IDs, branches/base commits, file ownership, dependen
 Routine local coding, tests and feature-branch commits may proceed autonomously within project scope. Never force-push, destructively reset/clean user work, expose secrets, migrate real patient data, enable live charges, alter production/DNS or deploy production without the approvals and gates in `README.md` and `docs/PERMISSIONS.md`. The owner remains final approver for material decisions and sensitive operations.
 
 ## Required continuity
-Keep `docs/IMPLEMENTATION_TASKS.md`, `docs/FEATURE_STATUS.md`, `docs/HANDOVER.md`, `docs/SESSION_LOG.md`, `docs/TEST_EVIDENCE.md`, `docs/DECISIONS.md` and `docs/RISKS_AND_BLOCKERS.md` current. Never end a substantial session with important state only in chat.
+Keep `docs/IMPLEMENTATION_TASKS.md`, `docs/FEATURE_STATUS.md`, `START_HERE.md`, `docs/SESSION_LOG.md`, `docs/TEST_EVIDENCE.md`, `docs/DECISIONS.md` and `docs/RISKS_AND_BLOCKERS.md` current. Never end a substantial session with important state only in chat.

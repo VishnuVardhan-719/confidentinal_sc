@@ -1,4 +1,4 @@
-> **Superseded (2026-11-20):** start at [`START_HERE.md`](../START_HERE.md) on branch `integ/all`. This file is kept for history; where it disagrees with `START_HERE.md`, that page wins.
+> **Superseded (2026-11-20):** start at [`START_HERE.md`](../../START_HERE.md) on branch `main`. This file is kept for history; where it disagrees with `START_HERE.md`, that page wins.
 
 # Current project handover
 
@@ -37,4 +37,4 @@ The owner begins both frontend and backend. When the friend joins, Claude select
 
 ## N01 implementation handoff — 2026-11-20
 
-Codex authored the notification database/app layer on `feat/N01-notifications`, base `integ/all` `51c7439`. SQL/RLS/concurrency are **DB NOT EXECUTED** under the owner policy; all notification gates remain OFF. Static app checks and a Webpack production build passed. Native category integration, reviewed category-rule reseed, database acceptance and frontend UI acceptance remain pending. Read [the N01 handoff](handoffs/N01_codex_2026-11-20.md) for exact migrations, suite cases, API contracts, category code list and teammate commands. No existing ops/contact route was recreated.
+Codex authored the notification database/app layer on `feat/N01-notifications`, base `integ/all` `51c7439`. SQL/RLS/concurrency are **DB NOT EXECUTED** under the owner policy; all notification gates remain OFF. Static app checks and a Webpack production build passed. Native category integration, reviewed category-rule reseed, database acceptance and frontend UI acceptance remain pending. Read [the N01 handoff](../handoffs/N01_codex_2026-11-20.md) for exact migrations, suite cases, API contracts, category code list and teammate commands. No existing ops/contact route was recreated.

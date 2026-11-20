@@ -1,19 +1,15 @@
 # Risks and blockers
 
-## Verified from supplied material
-- The uploaded v1.5 source kit is a documentation/specification/skills/scripts pack, not a runnable application repository. It contains no package.json, application src tree or applied migrations. The actual repository and separately uploaded project archive must be inspected in Phase 0 before creating a new app or assuming nothing exists.
-- The detailed v1.5 specs were recovered from the nested ZIP and are available in `docs/specs/`; they are not missing.
-- The v1.5 and v1.1/v1.3 schema concepts overlap but use different names/groupings. Canonical ERD/schema reconciliation is a P0 blocker before first migration.
-- The dated 17–23 November plan is aggressive and must be rebaselined if work begins after its original dates.
-
-- The v1.5 detailed consultation spec/day plan request all 14 consultation capabilities for the November 23 target, while the release-contract blueprint defers clinical records/prescriptions from the initial public release. Preserve every capability; obtain client clarification on milestone acceptance. Real-patient activation remains gated independently.
-- The owner reports an expiring Fable/reset allowance. Verify exact Fable 5.2 entitlement/expiry and usage treatment in the account UI before heavy use; do not assume the older Fable 5 promotion applies to Fable 5.2.
-
-## Must verify during Phase 0
-- Claude/Codex/Kiro CLI versions, account-exposed models/effort, permissions, hooks, skills and actual delegation capabilities.
-- Existing application repository, Git status, branches, lockfile, build/tests and code ownership.
-- Existing website source, Firebase inventory, data migration and rollback feasibility.
-- Domain/DNS ownership/access and production account ownership.
+## Technical risks and open work (2026-11-20, `main` at `3a223e2`)
+- **Race runners never executed.** The pgTAP suites pass in CI, but `tests/rls/run_*_concurrency.py` (double-booking, double-accept, payment and notification races) have never run. Run `npm run verify:db` on a machine with Docker before any activation.
+- **Repository is public** (R-1 in `docs/OWNER_DECISIONS_PENDING.md`) and holds confidential specs plus an email address in commit metadata. Owner should make it private.
+- **B01 `service_role` writes are not hardened** on booking events and the outbox (`docs/handoffs/N01_codex_2026-11-20.md`). Real SMS/email/WhatsApp delivery must wait for it.
+- **Doctor clinical answers missing:** the DC owner questions (`docs/handoffs/DC_clinical_core_kiro_2026-11-20.md`, `DC_extras_kiro_2026-11-20.md`) and D-CLIN / D-PRIV are open. Clinical gates stay off until answered.
+- **Caretaker design gaps:** admission without a task list and closeout after suspension (`docs/handoffs/P5_care_kiro_2026-11-20.md`).
+- **No ops or finance assignee** (OD-2, D-1, D-13): incidents cannot be closed and no booking can become paid.
+- **UI not built.** The only UI work (`wip/U01a-onto-integ`) is an unverified merge onto an older backend.
+- **PDF report** prints Latin text only; Hindi/Telugu need an embedded font.
+- **No staging, monitoring or backup** yet (R02, Q01).
 
 ## Client/business approvals still open
 - Legal business identity and approved legal copy.

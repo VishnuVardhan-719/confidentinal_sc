@@ -6,10 +6,10 @@ This file is for a frontend developer who has never seen the repository. The own
 
 ## 1. Where things stand
 
-- **Update 2026-11-20 (Claude):** `integ/all` now also holds the doctor, lab, ambulance and caretaker workflows, pay-after payments (P01a) and notifications (N01): 116 API routes, listed in section 11 with the document that describes each block's bodies and errors. Sections 2-10 below were written at `e7165fd` and cover the earlier routes in detail. All SQL added since is **DB NOT EXECUTED**. Start at `START_HERE.md` in the repo root.
-- `integ/all` contains the backend and **no UI**. `src/app/page.tsx` is a one-line placeholder and `src/app/layout.tsx` is the default Next.js layout.
-- `develop` is 120 commits behind `integ/all` (2026-11-20) and does not contain the backend routes. Branch from `integ/all` unless the owner names a different base.
-- Unmerged, unreviewed UI work exists on `origin/feat/fe2-*` (newest: `feat/fe2-integration`, 2026-11-19, with `docs/frontend/RESUME_HERE.md`) and older `origin/task/U01-*`, `task/U02-*`, `task/U03-integration`, `fix/U01a-*`, `wip/frontend-pause-2026-11-18`. Its own resume note says its `http` adapter follows `docs/API_CONTRACTS.md`. **That file is the original proposal and does not match the implemented routes** (section 6 lists the differences). Ask the owner whether to continue that work or start fresh before picking a ticket. Do not merge those branches yourself.
+- **Update 2026-11-20 (Claude):** `main` (= `develop` = `integ/all`) now holds the doctor (including clinical records DC03-DC14), lab, ambulance and caretaker workflows, pay-after payments (P01a) and notifications (N01): 134 route files, listed in section 11 with the document that describes each block's bodies and errors. Sections 2-10 below were written at `e7165fd` and cover the earlier routes in detail. Every migration and pgTAP suite now passes in CI (`docs/TEST_EVIDENCE.md`); the race runners have not been run. Start at `START_HERE.md` in the repo root.
+- `main` contains the backend and **no UI**. `src/app/page.tsx` is a one-line placeholder and `src/app/layout.tsx` is the default Next.js layout.
+- `main`, `develop` and `integ/all` point at the same commit (aligned 2026-11-20). Branch from `main` and open a pull request into it.
+- Unmerged, unreviewed UI work exists on `origin/wip/U01a-onto-integ` (the U01a work merged onto an older `integ/all`, conflicts resolved, never built or tested), `origin/feat/fe2-*` (newest: `feat/fe2-integration`, 2026-11-19, with `docs/frontend/RESUME_HERE.md`) and older `origin/task/U01-*`, `task/U02-*`, `task/U03-integration`, `fix/U01a-*`, `wip/frontend-pause-2026-11-18`. Its own resume note says its `http` adapter follows `docs/API_CONTRACTS.md`. **That file is the original proposal and does not match the implemented routes** (section 6 lists the differences). Ask the owner whether to continue that work or start fresh before picking a ticket. Do not merge those branches yourself.
 - `docs/API_CONTRACTS.md` still says "Nothing below is implemented". Use section 5 of this file as the contract instead.
 
 ## 2. Setup
@@ -18,8 +18,8 @@ This file is for a frontend developer who has never seen the repository. The own
 
 | Tool | Version | Source |
 |---|---|---|
-| Node.js | 24 | `.github/workflows/ci.yml` (`node-version: 24`). `package.json` has no `engines` field. |
-| npm | the one bundled with Node 24 | `package-lock.json` is committed; use `npm ci` |
+| Node.js | 22 | `.github/workflows/ci.yml` (`node-version: 22`). `package.json` has no `engines` field. |
+| npm | the one bundled with Node 22 | `package-lock.json` is committed; use `npm ci` |
 | Docker Desktop | any current | needed only for local Supabase |
 | Supabase CLI | not pinned in the repo; run with `npx supabase` | **UNVERIFIED** which CLI version the owner uses |
 
@@ -30,7 +30,7 @@ Stack from `package.json`: Next.js 16.4.6 (App Router), React 19.3.0, TypeScript
 ```
 git clone https://github.com/VishnuVardhan-719/confidentinal_sc.git
 cd confidentinal_sc
-git checkout integ/all
+git checkout main
 git checkout -b task/<TICKET-ID>-short-name
 npm ci
 ```
@@ -394,7 +394,7 @@ Partly blocked tickets (build only the parts the routes allow, and list the gap 
 | UI-12 | Provider services, prices and coverage | Needs a catalog-type list route and PIN directory data |
 | UI-13 | Admin provider review and coverage queue | Needs MFA (`aal2`) and a provider review queue; nothing works locally |
 
-Backend now available for (DB NOT EXECUTED, see section 11): lab, ambulance and caretaker journeys (S01), pay-after payments (P01a), arrival code (DC02), notifications (N01). Still blocked: clinical screens (DC03-DC14, in progress on `feat/DC-clinical-core` and `feat/DC-extras`) and the payment gateway (P01b, deferred).
+Backend now available for (DB suites pass in CI, see section 11): lab, ambulance and caretaker journeys (S01), pay-after payments (P01a), arrival code (DC02), clinical records, prescriptions, health facts, visit proof, photos and PDF report (DC03-DC14), notifications (N01). Clinical screens stay behind their gates until the owner answers the DC questions in `START_HERE.md` §4. Still blocked: the payment gateway (P01b, deferred).
 
 ## 10. Limitations of this handover
 
@@ -404,7 +404,7 @@ Backend now available for (DB NOT EXECUTED, see section 11): lab, ambulance and 
 - The unmerged `feat/fe2-*` and `task/U0*` branches were not reviewed; only their file lists and resume note were read.
 - `docs/API_CONTRACTS.md` and `docs/IMPLEMENTATION_TASKS.md` were left unchanged to keep this task's file scope to this document.
 
-## 11. Route index (generated 2026-11-20 from `src/app/api/**/route.ts` on `integ/all`)
+## 11. Route index (generated 2026-11-20 from `src/app/api/**/route.ts`; DC rows added after the DC merge)
 
 Every implemented route, grouped by the block that added it. The last column names where its request body, response and error codes are described; the Zod schema in `src/lib/validation/` is the source of truth for bodies. Category routes stay unavailable until their DB feature gate is turned on (all seeded off).
 
@@ -526,3 +526,21 @@ Every implemented route, grouped by the block that added it. The last column nam
 | Ambulance (P5) | POST | `/api/provider/ambulance/vehicles` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
 | Ambulance (P5) | POST | `/api/provider/ambulance/vehicles/[id]/documents` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
 | Ambulance (P5) | POST | `/api/provider/ambulance/vehicles/[id]/submit` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Doctor clinical (DC03-DC08) | GET, PUT | `/api/bookings/[id]/consultation/draft` | `docs/handoffs/DC_clinical_core_kiro_2026-11-20.md`, `src/lib/validation/clinical.ts` |
+| Doctor clinical (DC03-DC08) | GET | `/api/bookings/[id]/consultation/records` | `docs/handoffs/DC_clinical_core_kiro_2026-11-20.md`, `src/lib/validation/clinical.ts` |
+| Doctor clinical (DC03-DC08) | POST | `/api/bookings/[id]/consultation/sign` | `docs/handoffs/DC_clinical_core_kiro_2026-11-20.md`, `src/lib/validation/clinical.ts` |
+| Doctor clinical (DC03-DC08) | GET | `/api/clinical-records/[id]` | `docs/handoffs/DC_clinical_core_kiro_2026-11-20.md`, `src/lib/validation/clinical.ts` |
+| Doctor clinical (DC03-DC08) | POST | `/api/clinical-records/[id]/amend` | `docs/handoffs/DC_clinical_core_kiro_2026-11-20.md`, `src/lib/validation/clinical.ts` |
+| Doctor extras (DC09-DC14) | GET | `/api/bookings/[id]/progress` | `docs/handoffs/DC_extras_kiro_2026-11-20.md` |
+| Doctor extras (DC09-DC14) | GET | `/api/bookings/[id]/visit-payment` | `docs/handoffs/DC_extras_kiro_2026-11-20.md` |
+| Doctor extras (DC09-DC14) | GET, POST | `/api/patients/[id]/health-facts` | `docs/handoffs/DC_extras_kiro_2026-11-20.md` |
+| Doctor extras (DC09-DC14) | POST | `/api/health-facts/[id]/revise` | `docs/handoffs/DC_extras_kiro_2026-11-20.md` |
+| Doctor extras (DC09-DC14) | POST | `/api/health-facts/[id]/verify` | `docs/handoffs/DC_extras_kiro_2026-11-20.md` |
+| Doctor extras (DC09-DC14) | GET, POST | `/api/bookings/[id]/visit-proofs` | `docs/handoffs/DC_extras_kiro_2026-11-20.md` |
+| Doctor extras (DC09-DC14) | POST | `/api/visit-proofs/verify` | `docs/handoffs/DC_extras_kiro_2026-11-20.md` |
+| Doctor extras (DC09-DC14) | POST | `/api/visit-proofs/[id]/revoke` | `docs/handoffs/DC_extras_kiro_2026-11-20.md` |
+| Doctor extras (DC09-DC14) | POST | `/api/bookings/[id]/photo-consents` | `docs/handoffs/DC_extras_kiro_2026-11-20.md` |
+| Doctor extras (DC09-DC14) | POST | `/api/photo-consents/[id]/withdraw` | `docs/handoffs/DC_extras_kiro_2026-11-20.md` |
+| Doctor extras (DC09-DC14) | GET, POST | `/api/bookings/[id]/photos` | `docs/handoffs/DC_extras_kiro_2026-11-20.md` |
+| Doctor extras (DC09-DC14) | POST | `/api/visit-photos/[id]/read-ticket` | `docs/handoffs/DC_extras_kiro_2026-11-20.md` |
+| Doctor extras (DC09-DC14) | POST | `/api/clinical-records/[id]/report` | `docs/handoffs/DC_extras_kiro_2026-11-20.md` |

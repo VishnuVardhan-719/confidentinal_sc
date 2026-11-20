@@ -72,7 +72,7 @@ These are starting choices, not assumptions about account access. Verify each mo
 
 ## Mandatory session-start checks
 
-1. Read this README, `docs/MODEL_SELECTION.md`, `CLAUDE.md`, `AGENTS.md`, `docs/IMPLEMENTATION_TASKS.md`, `docs/FEATURE_STATUS.md`, `docs/SESSION_LOG.md`, `docs/DECISIONS.md` and `docs/HANDOVER.md`.
+1. Read this README, `docs/MODEL_SELECTION.md`, `CLAUDE.md`, `AGENTS.md`, `docs/IMPLEMENTATION_TASKS.md`, `docs/FEATURE_STATUS.md`, `docs/SESSION_LOG.md`, `docs/DECISIONS.md` and `START_HERE.md`.
 2. Verify Claude Code is v2.1.321 or later for Fable 5.2 support. Select Fable 5.2 for the owner's current reset window if the account picker exposes it; verify `/status`. Otherwise use the strongest supported alternative (Opus 5.5 is Anthropic's general-workload recommendation).
 3. Verify actual Claude Code effort choices using `/effort`. Start Fable at `high`; do not assume that `max` or `xhigh` is supported by every model.
 4. Verify Codex CLI version, available models and reasoning levels. Prefer GPT-6 Astra only if shown in the actual CLI picker; otherwise choose the strongest stable CLI model (GPT-6.1 Sol if available). Use supported CLI controls only.
@@ -93,7 +93,7 @@ Read these sources before substantial work. Do not skip the detailed v1.5 docume
 5. `docs/DECISIONS.md` — current owner decisions and unresolved approvals.
 6. `docs/AGENT_COORDINATION.md` and `docs/PERMISSIONS.md` — current human-controlled orchestration and autonomy limits.
 7. `docs/API_CONTRACTS.md` — v1.5 proposed API contracts; reconcile against implementation before use.
-8. `docs/IMPLEMENTATION_TASKS.md`, `docs/FEATURE_STATUS.md`, `docs/SESSION_LOG.md`, `docs/TEST_EVIDENCE.md`, `docs/HANDOVER.md` and `docs/VERIFICATION_REPORT_v2.2.md` — live execution continuity and the last documentation-pack verification.
+8. `docs/IMPLEMENTATION_TASKS.md`, `docs/FEATURE_STATUS.md`, `docs/SESSION_LOG.md`, `docs/TEST_EVIDENCE.md`, `START_HERE.md` and `docs/VERIFICATION_REPORT_v2.2.md` — live execution continuity and the last documentation-pack verification.
 9. `docs/RELEASE_CHECKLIST.md` and `docs/RISKS_AND_BLOCKERS.md` — release and risk gates.
 10. `DESIGN.md` and `docs/TOOLKIT.md` — current proposed design and tool guidance.
 11. `.claude/skills/*/SKILL.md` — booking, design, release and security guidance.
@@ -579,7 +579,7 @@ The owner begins both frontend and backend. Keep the task ledger accurate so the
 Maintain:
 - `docs/IMPLEMENTATION_TASKS.md` — master task board.
 - `docs/FEATURE_STATUS.md` — feature-by-feature truth.
-- `docs/HANDOVER.md` — current human handover.
+- `START_HERE.md` — current human handover (older handover files are in `docs/archive/`).
 - `docs/handoffs/` — per-agent/per-developer handoffs.
 - `docs/SESSION_LOG.md` — session continuity.
 - `docs/TEST_EVIDENCE.md` — actual test evidence.

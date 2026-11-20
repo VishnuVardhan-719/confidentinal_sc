@@ -1,30 +1,31 @@
 # Feature status
 
-**Snapshot:** 17 November 2026 — master execution pack v2.2 verified.  
-Update only from inspected repository evidence, commits and executed tests.
+**Snapshot:** 20 November 2026, `main` = `develop` = `integ/all` at `3a223e2` (CI run #65 green).
+Update only from inspected repository evidence, commits and executed tests. Task-level detail: `docs/IMPLEMENTATION_TASKS.md`.
+
+"CI-verified" means every migration applies on a clean database and the block's pgTAP suites pass in GitHub Actions. The Python concurrency race runners (`tests/rls/run_*_concurrency.py`) have **not** been run for any block. All features are behind database gates seeded **off**; synthetic data only.
 
 | Area | Status | Evidence / limitation |
 |---|---|---|
-| Master execution README and agent governance | DONE_VERIFIED | Root README and Claude/Codex/Kiro contracts prepared and cross-checked |
-| v1.5 detailed specification recovery | DONE_VERIFIED | Extracted source specs under `docs/specs/`; original 44-entry ZIP preserved under `docs/source/` |
-| Model/effort recommendation guide | DONE_VERIFIED | Official vendor docs checked; actual account/CLI model availability still PENDING until CLI verification |
-| Schema reconciliation crosswalk | IN_PROGRESS | Candidate crosswalk drafted (SCHEMA_RECONCILIATION.md, CANONICAL_SCHEMA_DRAFT.md); canonical ERD PENDING owner approval |
-| Existing application source/repository audit | PENDING | No runnable app source was in the inspected v1.5 spec archive; inspect actual repository and other upload before scaffolding |
-| Application foundation | PENDING | No verified app implementation evidence in this execution pack |
-| Authentication and roles | PENDING | No verified implementation evidence |
-| Provider verification | PENDING | No verified implementation evidence |
-| Public discovery/catalog | PENDING | No verified implementation evidence |
-| Booking engine | PENDING | No verified implementation evidence |
-| Doctor consultation (14 requested capabilities) | PENDING / GATED | All 14 capabilities individually tracked as DC01–DC14 in the task ledger; milestone acceptance conflict is OPEN; real-patient activation requires separate governance/security/release gates |
-| Lab workflow | PENDING | No verified implementation evidence |
-| Scheduled ambulance workflow | PENDING | No verified implementation evidence; emergency dispatch disabled |
-| Caretaker workflow | PENDING | No verified implementation evidence |
-| Pay-after/payment | IN_PROGRESS | P01a app plus SQL authored: 14 matching RPCs, private worker, suites 070–089 and 9 race cases. Database execution/RLS/concurrency NOT VERIFIED pending shared merge; activation OFF. P01b excluded under D-14 option A. [SQL handoff](handoffs/P01a_sql_codex_2026-11-19.md) |
-| Security/RLS/E2E | PENDING | Must be executed against actual app and role tokens |
-| Notifications (N01) | IN_PROGRESS — authored, DB NOT EXECUTED | Six migrations, suites100–109, four race cases and validated app routes/dispatcher authored. Notification gates OFF; category merge/reseed and DB/UI acceptance pending. [Handoff](handoffs/N01_codex_2026-11-20.md) |
-| Staging and release | PENDING | No deployment evidence |
-| Friend frontend handover | PENDING | Prepare from actual pending work when the friend joins |
+| Master execution pack, specs, schema crosswalk | DONE | `README.md`, `docs/specs/`, `docs/SCHEMA_RECONCILIATION.md` (S00 approved defaults) |
+| Application foundation (F01) | CI-verified | Next.js 16, strict TS, env validation, feature flags; CI `app` job green |
+| Authentication, roles, organizations (I01) | CI-verified | Suites 001, 002, 010, 014; Q01 gap suite 018 |
+| Provider onboarding and verification (I02, Q06) | CI-verified | Suites 003, 016; Storage policies |
+| Public discovery and catalog (C01) | CI-verified | Suites 004, 015; only approved providers are public |
+| Booking engine (B01) | CI-verified, race runner not run | Suites 005, 011-013; scope bug fixed in migration 002210 |
+| Shared category engine (P5) | CI-verified, race runner not run | Suites 020-029, integration 090 |
+| Doctor visits (S01, DC01-DC02) | CI-verified, race runner not run | Suites 030-032 |
+| Doctor clinical (DC03-DC14) | CI-verified, race runner not run; owner questions open | Suites 110-114, 120-125; questions in `docs/handoffs/DC_*_kiro_2026-11-20.md`; PDF prints Latin text only |
+| Lab workflow | CI-verified, race runner not run | Suites 040-048 |
+| Scheduled ambulance | CI-verified, race runner not run | Suites 050-056; emergency dispatch disabled |
+| Caretaker workflow | CI-verified, race runner not run; two design gaps | Suites 060-069; gaps in `docs/handoffs/P5_care_kiro_2026-11-20.md` |
+| Pay-after payments (P01a) | CI-verified, race runner not run | Suites 070-089 |
+| Payment gateway (P01b) | DEFERRED | Decision D-14 |
+| Notifications (N01) | CI-verified, race runner not run | Suites 100-109; SMS/email/WhatsApp adapters log-only |
+| UI (U01) | NOT STARTED on `main` | Placeholder page only; unverified earlier work on `wip/U01a-onto-integ` |
+| Security / E2E / accessibility / performance / backup (Q01) | PARTIAL | RLS denial tests in pgTAP and CI done; E2E, accessibility, performance, backup/restore not done |
+| Frontend handover (H01) | DONE | `START_HERE.md`, `docs/HANDOFF_FRONTEND.md` (§11 route index) |
+| Staging and release (R02) | NOT STARTED | No deployment |
+| Emergency dispatch, pharmacy, subscriptions, GPS, payouts | OUT OF SCOPE | Gates stay off |
 
-**Important:** Documentation pack verification is not application implementation, application testing, legal compliance, security certification or production readiness.
-
-**v2.3 note:** Four pre-start review documents have been added. All application features remain unverified; no implementation status has changed.
+**Important:** CI-verified database behaviour is not legal compliance, security certification, clinical approval or production readiness. Real-patient use needs the release gates in `docs/RELEASE_CHECKLIST.md` and the owner decisions in `docs/OWNER_DECISIONS_PENDING.md`.
