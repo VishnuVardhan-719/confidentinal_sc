@@ -906,3 +906,8 @@ ADVERSARIAL_REVIEW finding 3: one amount rendered as "₹800" on payment pages a
 
 ### R-E9E6-04 fe-p: no change needed
 `src/app/[locale]/patient/**` formats through `@/lib/format` `formatPaise` (R-E9E6-01), so output is unchanged ("₹500.00"). There are no ad-hoc conversions in fe-p files on `fec9da1`.
+
+## INT5 integration fixes on feat/fe2-integration (fe-int2, 2026-11-20) - owner follow-ups
+- **R-INT5-01 (to fe-b): one main landmark under role shells.** `OnboardingLayout` put `AccountFrame` (which renders `<main id="main-content">`) inside the role shells' `<main id="main-content">` on `/{doctor,lab,ambulance,caretaker}/onboarding` and `/admin/{providers,coverage}` (axe `landmark-main-is-top-level`, duplicate id). Integration fix: `AccountFrame` takes `nested` and then renders a plain `<div>`; `OnboardingLayout` passes `nested`. Standalone `/account/*`, `/workspace/*` and patient intake keep their one `<main>` (checked: exactly 1 `main` and 1 `#main-content` on all nine routes). Please adopt on feat/fe2-b, or drop AccountFrame under role shells as R-FE06-04 planned.
+- **R-INT5-02 (to fe-a): hydration-race.spec.ts signs in.** The spec used plain `test` with fe2-d's per-actor `FIXTURE_DOCTOR_SESSION` servers; on integration the doctor pages redirect to login. Integration now uses `wsTest` (real sign-in as multi.role). Please carry this to feat/fe2-d.
+- **R-INT5-03 (to fe-b): onboarding.spec.ts un-fixme'd.** The two `test.fixme` (booking blocked until the questionnaire is complete; pending lab owner redirected from dashboard/orders) run on integration. There is no `/patient/bookings/new`; the booking page is `/patient/book`, so the first test now targets that.

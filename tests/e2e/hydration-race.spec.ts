@@ -9,13 +9,13 @@
  * Uses bookings no other spec mutates: the past booking's collection form and patient B's
  * completed booking for notes / prescription drafts.
  */
-import { expect, test as base, type Locator, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 import { FIXTURE_IDS as I } from "../../src/fixtures/clinical/world";
-import { wsOrigin } from "./workspace-servers";
+import { wsTest } from "./workspace-servers";
 
-const test = base.extend({
-  baseURL: async ({}, provide, testInfo) => provide(wsOrigin(testInfo.project.name, "assigned")),
-});
+// Integration (fe-int2 INT5): signed in through the real fe-b guards as the assigned doctor (multi.role),
+// replacing fe2-d's per-actor FIXTURE_DOCTOR_SESSION servers. Owner request: REQUESTS R-INT5-02.
+const test = wsTest;
 
 /** Load the server HTML but hold every JS chunk until `release()`: a very slow phone, deterministically. */
 async function loadWithoutJs(page: Page, url: string): Promise<() => Promise<void>> {

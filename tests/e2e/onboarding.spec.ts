@@ -25,9 +25,10 @@ test.describe("patient questionnaire", () => {
     expect(results.violations).toEqual([]);
   });
 
-  test.fixme("ordinary booking is blocked until the questionnaire is complete (booking page is fe-c)", async ({ page }) => {
+  // Integration (fe-int2 INT5): un-fixme'd; the fe-c booking page is /patient/book (there is no /patient/bookings/new).
+  test("ordinary booking is blocked until the questionnaire is complete (booking page is fe-c)", async ({ page }) => {
     await signIn(page, ACCOUNTS.patientNew);
-    await goto(page, "/en/patient/bookings/new");
+    await goto(page, "/en/patient/book");
     await expect(page).toHaveURL("/en/patient/onboarding");
   });
 
@@ -124,7 +125,8 @@ test.describe("lab onboarding", () => {
     await expect(page.getByRole("button", { name: COPY.saveContinue })).toHaveCount(0);
   });
 
-  test.fixme("pending review: setup dashboard and operational pages redirect (lab pages are fe-e)", async ({ page }) => {
+  // Integration (fe-int2 INT5): un-fixme'd; /lab/dashboard and /lab/orders exist here.
+  test("pending review: setup dashboard and operational pages redirect (lab pages are fe-e)", async ({ page }) => {
     await signIn(page, ACCOUNTS.labOwner);
     await expect(page).toHaveURL("/en/lab/dashboard");
     await goto(page, "/en/lab/orders");
