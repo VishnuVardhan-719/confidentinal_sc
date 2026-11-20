@@ -245,3 +245,5 @@ fe-a (t49) and fe-b (t4g) returned "You've reached your monthly usage limit". fe
 Pushed heads: c f829a75, d 2562920, e 8e3ccf6, p 746686e, int a63d1c4.
 Uncommitted work: fe2-d (R9-D10 consultation flake + public content pass, in progress), fe2-e (R9-E7 caretaker touch-target, date guard, in progress), fe2-p (R9-P6), fe2-c (R9-C14 patches in REQUESTS), int (INT5 smoke run).
 Needs user: Kiro credit top-up/next-month reset, or Claude (lead) finishes the remaining tasks directly.
+
+SHUTDOWN 2026-11-20 ~23:30 IST: see docs/frontend/RESUME_HERE.md "STATE AT SHUTDOWN". Smoke triage is first on resume.

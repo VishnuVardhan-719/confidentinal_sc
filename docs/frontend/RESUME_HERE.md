@@ -76,12 +76,12 @@ R5  Provider ops           88% [#################...]   70% [##############.....
 R6  Other workflows        82% [################....]   65% [#############.......]
 R7  Clinical expansion     82% [################....]   60% [############........]
 R8  Design / lang / UX     78% [###############.....]   60% [############........]
-R9  Regression / handover  35% [#######.............]   25% [#####...............]
+R9  Regression / handover  62% [############........]   45% [#########...........]
 R10 Lab directory (C)      90% [##################..]   80% [################....]
-OVERALL                    ~84% [################....]  ~70% [##############......]
+OVERALL                    ~91% [##################..]  ~80% [################....]
 ```
 
-Remaining: about 3 hours of agent time plus review (about 1,900 more Kiro credits). Test totals at last checks: unit 988/988 (fe2-c), 995/995 (fe2-p); e2e fe2-c 135 passed, fe2-p three modes 0 failures; earlier integration build exit 0 (446 pages) and smoke 84/84 at 390 and 1280 with axe.
+Remaining: about 3 hours of agent or lead time plus review, about 700 Kiro credits (needs the monthly limit to reset or a top-up) or the same work done by Claude directly.
 
 ## Open items and known gaps
 
