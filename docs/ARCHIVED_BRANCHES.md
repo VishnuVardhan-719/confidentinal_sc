@@ -42,7 +42,7 @@ Deleted from GitHub on 2026-11-20 after `main`, `develop` and `integ/all` were a
 
 ## Superseded, not merged (deleted 2026-11-20)
 
-These held early drafts that later branches replaced. Their commits are **not** in `main`. Local refs `refs/archive/<branch>` in `C:\SURECUREVISIT` keep them; restore with `git push origin <commit>:refs/heads/<branch>`. Deleting `docs/backend-handoff` closed its open PR.
+These held early drafts that later branches replaced. Their commits are **not** in `main`. Tags `archive/<branch>` on GitHub keep them; restore with `git push origin archive/<branch>:refs/heads/<branch>`. Deleting `docs/backend-handoff` closed its open PR.
 
 | Branch | Commit | Commits not in `main` |
 |---|---|---|
