@@ -42,8 +42,8 @@ end $$;
 
 -- 3. Before the first save the author sees an empty draft.
 select pg_temp.dc_as('W1');
-select pg_temp.assert_true((select d->>'status'='none' and (d->>'version')::integer=0 and d->'content'='{}'::jsonb)
- from public.get_clinical_draft(:'v1') d,'empty draft for the author');
+select pg_temp.assert_true((select d->>'status'='none' and (d->>'version')::integer=0 and d->'content'='{}'::jsonb
+ from public.get_clinical_draft(:'v1') d),'empty draft for the author');
 
 -- 4. Create, version checks, keyed replay.
 select '40000000-0000-4000-8000-000000000001' as k1 \gset
@@ -54,8 +54,8 @@ select pg_temp.dc_expect(format('select public.save_clinical_draft(%L,0,''{}''::
 select pg_temp.dc_expect(format('select public.save_clinical_draft(%L,5,''{}''::jsonb,gen_random_uuid())',:'v1'),'40001','stale_version','future version');
 select pg_temp.assert_true(public.save_clinical_draft(:'v1',1,pg_temp.dc_content(),gen_random_uuid())=2,'expected version 1 saves version 2');
 select pg_temp.assert_true(public.save_clinical_draft(:'v1',0,'{"vitals":{"spo2_pct":85}}',:'k1')=1,'old key still replays its own result');
-select pg_temp.assert_true((select d->>'status'='draft' and (d->>'version')::integer=2 and d->'content'=pg_temp.dc_content())
- from public.get_clinical_draft(:'v1') d,'author reads the saved draft');
+select pg_temp.assert_true((select d->>'status'='draft' and (d->>'version')::integer=2 and d->'content'=pg_temp.dc_content()
+ from public.get_clinical_draft(:'v1') d),'author reads the saved draft');
 
 -- 5. DC04 validation at the database (the route check is not trusted).
 do $$ declare bad text; begin
@@ -68,12 +68,14 @@ do $$ declare bad text; begin
  perform pg_temp.dc_expect(format('select public.save_clinical_draft(%L,2,null,gen_random_uuid())',current_setting('dc.v1')),'22023','invalid_input','null content');
  perform pg_temp.dc_expect(format('select public.save_clinical_draft(%L,2,''{}''::jsonb,null)',current_setting('dc.v1')),'22023','invalid_input','null key');
 end $$;
+reset role;
 select pg_temp.assert_true(pg_temp.dc_draft_version(:'v1')=2,'rejected saves change nothing');
+set local role authenticated;
 
 -- 6. Dangerous but plausible readings are kept as entered and flagged (DC04).
 select pg_temp.assert_true(public.save_clinical_draft(:'v1',2,jsonb_set(pg_temp.dc_content(),'{vitals,spo2_pct}','85'),gen_random_uuid())=3,'low SpO2 saved');
-select pg_temp.assert_true((select (d#>>'{content,vitals,spo2_pct}')::integer=85 and d->'vital_warnings'='["spo2_low"]'::jsonb)
- from public.get_clinical_draft(:'v1') d,'value preserved, warning reported');
+select pg_temp.assert_true((select (d#>>'{content,vitals,spo2_pct}')::integer=85 and d->'vital_warnings'='["spo2_low"]'::jsonb
+ from public.get_clinical_draft(:'v1') d),'value preserved, warning reported');
 
 -- 7. Gate: writes need on; the draft stays readable.
 reset role;

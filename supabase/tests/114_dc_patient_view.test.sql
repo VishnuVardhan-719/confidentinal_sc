@@ -33,7 +33,7 @@ select pg_temp.assert_true((:'doc'::jsonb)#>>'{content,plan,advice}'='Synthetic 
  and (:'doc'::jsonb)->'vital_warnings'='[]'::jsonb and length((:'doc'::jsonb)->>'content_sha256')=64,'amended document');
 select pg_temp.assert_true(position('+91' in :'doc')=0 and position('Synthetic exact address' in :'doc')=0 and position('b2000000-0000-4000-8000-000000000001' in :'doc')=0
  and position('amount' in :'doc')=0,'no phone, address, patient id or amount');
-select pg_temp.assert_true((select (d->>'is_latest')::boolean=false and d#>>'{content,plan,advice}'='Synthetic rest and fluids') from public.get_clinical_record(:'r1') d,
+select pg_temp.assert_true((select (d->>'is_latest')::boolean=false and d#>>'{content,plan,advice}'='Synthetic rest and fluids' from public.get_clinical_record(:'r1') d),
  'original version still readable as issued');
 
 -- 2. Every read is audited with ids only.
