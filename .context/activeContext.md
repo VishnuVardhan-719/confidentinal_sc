@@ -1,5 +1,11 @@
 # Active SureCure Visit context
 
+## Final handover (2026-11-20, Claude)
+
+- Friend takes over. `main` = `develop` = `integ/all` at `84a6b0d`; CI #73/#77 on `main` green. Start at `START_HERE.md` §"To do next": run `npm run verify:db` on his Docker machine first, then UI (U01) for the Nov 23 demo.
+- Nine superseded unmerged branches deleted from GitHub; kept as `archive/*` tags (`docs/ARCHIVED_BRANCHES.md`). 0 open PRs.
+- Owner to-do: make the repo private (R-1) and add the friend as collaborator; answer `docs/OWNER_DECISIONS_PENDING.md` (OD-2, D-1 first) and the DC questions.
+
 ## Coordinator checkpoint (2026-11-20, Claude)
 
 - **Handover (latest):** `main` = `develop` = `integ/all`; CI #65 green on `main`. Friend starts at `START_HERE.md` (setup, status, next steps). Superseded entry docs in `docs/archive/`; deleted branches in `docs/ARCHIVED_BRANCHES.md`; unverified UI merge on `wip/U01a-onto-integ`. Merge to `develop` (R-2) is done; the line below about waiting is history.
