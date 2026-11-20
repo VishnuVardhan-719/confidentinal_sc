@@ -269,7 +269,7 @@ declare actor uuid:=identity_private.require_actor(); hash text; prior record; b
   result:=booking_private.transition(b.id,'in_progress','sample_collected',p_request_key);
   update public.lab_orders set substate='collected',version=version+1 where booking_id=b.id;
  else
-  if b.state<>'in_progress' or o.substate<>case when p_step='collection_failed' then 'collecting' else 'collected' end then
+  if b.state<>'in_progress' or o.substate<>(case when p_step='collection_failed' then 'collecting' else 'collected' end) then
    raise exception using errcode='55000',message='invalid_transition'; end if;
   result:=booking_private.assignee_finish(b.id,case when p_step='handed_over' then 'completed' else 'interrupted' end,
    case when p_step='handed_over' then 'sample_handed_over' else p_step end,p_request_key);
