@@ -28,6 +28,18 @@ const ORG_SCOPED_OK: ReadonlySet<AdminRoute> = new Set(["dashboard", "audit"]);
 /** Locale-prefixed path. Dashboard is `/{locale}/admin/dashboard` (auth module ROLE_HOME_PATH). */
 export const adminPath = (locale: AppLocale, route: AdminRoute): string => `/${locale}/admin/${route}`;
 
+const SUB_PATH = /^[a-z0-9-]+(\/[a-z0-9-]+)*$/;
+
+/**
+ * The page's own path for the sign-in return (`next`): the route root plus a fixed, code-supplied
+ * sub path such as `"log"`. Anything that is not plain lowercase segments falls back to the route
+ * root, and `loginRedirectPath` re-validates the result as an internal, locale-prefixed path.
+ */
+export function adminPagePath(locale: AppLocale, route: AdminRoute, subPath?: string): string {
+  const root = adminPath(locale, route);
+  return subPath !== undefined && SUB_PATH.test(subPath) ? `${root}/${subPath}` : root;
+}
+
 export function decideAdminRoute(principal: AdminPrincipal | null, route: AdminRoute, locale: AppLocale, path: string, now?: Date): AdminAccess {
   return decideAdminAccess({ principal, anyOf: ADMIN_ROUTE_CAPABILITIES[route], locale, path, now, orgScopedOk: ORG_SCOPED_OK.has(route) });
 }

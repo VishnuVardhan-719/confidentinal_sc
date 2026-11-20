@@ -129,6 +129,8 @@ test.describe("review moderation (no admin session)", () => {
     for (const path of ["/en/admin/reviews", "/en/admin/reviews/log"]) {
       await page.goto(path);
       await expect(page).toHaveURL(/\/en\/login\?/);
+      // Sign-in returns to the page that was asked for (internal path only, no query).
+      expect(new URL(page.url()).searchParams.get("next")).toBe(path);
     }
   });
 });

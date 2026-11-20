@@ -24,7 +24,7 @@ export async function generateMetadata() {
  */
 export default async function ModerationLogPage() {
   return (
-    <AdminRouteGate route="reviews">
+    <AdminRouteGate route="reviews" subPath="log">
       {async (ctx) => {
         const [t, tr, format] = await Promise.all([getTranslations("admin.reviews.log"), getTranslations("admin.reviews"), getFormatter()]);
         const header = (

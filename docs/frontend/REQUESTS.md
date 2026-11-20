@@ -700,3 +700,13 @@ This index tidies the entries above without editing them (the file is append-onl
 | R-FE07-02 ops session needs | Open (backend) | MFA status and admin grants are not in the I01 session |
 | R-FE07-03 interim guards | fe2-e rows done | `admin/session.ts` uses `requireRole`; the rows for other branches belong to their owners |
 | R-E9E2-01 to R-E9E2-03 | Open | see the R9-E2 section |
+
+### R-FE-P-R9-2 (to fe-a) - modal language menu aria-hides a focusable page (axe aria-hidden-focus, serious)
+- At 1280, with the `LocaleSwitcher` dropdown open (`src/components/shared/locale-switcher.tsx`), axe reports `aria-hidden-focus` on the shell's skip link, sidebar, top bar and main content. Radix `DropdownMenu` is modal by default and aria-hides everything outside the menu.
+- fe-p's overlay sweep (`tests/e2e/a11y-sweep-p.spec.ts`, notifications and reminders, en/te/hi) checks that Tab and Shift+Tab stay inside the menu, and while that holds it accepts only this rule, only in the menu case.
+- Suggested fix: `<DropdownMenu modal={false}>` in the locale switcher (the WAI-ARIA menu button pattern is non-modal). After that, the exception in the sweep can be removed. fe-p did not edit the component (fe-a scope).
+
+### R-FE-P-R9-3 (to lead / fe-b) - sign-in return to the decision log
+- Root cause: `AdminFrame` (admin layout, fe-e) redirected signed-out visitors itself with `next=/{locale}/admin/dashboard`, so every admin page returned to the dashboard. The layout now renders no shell when signed out and leaves the redirect to the page gate; a unit test checks every admin page is gated. fe-e please review. The lab/ambulance/caretaker frames were not checked for the same pattern.
+- fe2-p now sends `next=/{locale}/admin/reviews/log` from the decision log: `AdminRouteGate` takes a fixed `subPath`, `adminPagePath` accepts plain lowercase segments only, and `loginRedirectPath` still reduces `next` to an internal locale-prefixed path with no query (tests/unit/modules-operations/admin-return-path.test.ts).
+- fe2-p has no login page. The consumer that reads `next` after sign-in is fe-b's `auth-page.tsx` + `normalizeInternalPath` on feat/fe2-integration, which already rejects off-site and `/api` targets. The end-to-end landing (sign in, then arrive on the log) can only be checked after integration.
