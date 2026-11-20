@@ -196,3 +196,10 @@ Known limitations:
 - Decision log: `/admin/reviews/log` (read-only, newest first, no undo, `review:moderate`), linked from /admin/reviews as "Decision log". `ReviewModerationApi.listDecisions()`; fixture log is append-only, seeded with 3 past decisions (SYN-BKG-0204/0206/0207, another synthetic moderator); `decide` refuses without an attributable actor and logs only successful decisions; rows expose `decidedBySelf`, never ids, patient or review text. http adapter gated. en/te/hi messages.
 - Checks: tsc 0, lint 0, vitest 1040/1040, build 0, fep-e2e-all on 118 pass / off 74 / guest 14 (0 failed).
 - Next: lead decides R-FE-P-R9-1 and whether moderation decisions join /admin/audit.
+
+## TASK REPORT: R9-P2 (fe-p, feat/fe2-p, port 3384), 2026-11-20
+- (1) Sign-in return: the admin layout redirected first with next=/admin/dashboard for every page. Layout now defers to the page gate; AdminRouteGate takes subPath; log page subPath="log" -> next=/en/admin/reviews/log. Unit: tests/unit/modules-operations/admin-return-path.test.ts (27). Login consumer lives on fe-b/integration (normalizeInternalPath). REQUESTS R-FE-P-R9-3.
+- (2) Reminders flake root cause: input/click before hydration (typed values reverted and old values saved; or native GET put the form in the URL). Reproduced with a JS-chunk delay probe (.context/r9p2-hydration-probe.mjs). Fix: form controls in a disabled fieldset until hydrated. New e2e holds JS chunks and checks disabled -> enabled -> validation. Stress: 60/60 at 4 workers x5.
+- (3) Overlay sweep: notifications + reminders, en/te/hi, 390 (menu sheet dialog) and 1280 (language menu), moderate+ axe, focus in overlay, Escape returns focus. 12/12. Known: aria-hidden-focus behind Radix modal language menu at 1280, accepted only with the Tab trap verified; REQUESTS R-FE-P-R9-2 to fe-a.
+- (4) Notifications leftovers: every file referenced (page imports ./actions, ./api, NotificationsInbox). Nothing deleted.
+- Checks: tsc 0, lint 0, vitest 68 files / 1067 tests, build 0, fep-e2e-all on 132 / off 88 / guest 14 passed, 0 failed.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useId, useState } from "react";
+import { useId, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/components/ui/cn";
@@ -18,7 +18,13 @@ import { REMINDER_CHANNELS, REMINDER_ISSUES, type ReminderField, type ReminderIs
 const checkboxRow =
   "flex min-h-target cursor-pointer items-start gap-3 rounded-md border border-border bg-surface p-3 has-[:checked]:border-forest has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus";
 
-/** Channel checkboxes and quiet hours (IST). Version-checked save; a stale version shows a reload prompt. */
+const noopSubscribe = () => () => {};
+
+/**
+ * Channel checkboxes and quiet hours (IST). Version-checked save; a stale version shows a reload prompt.
+ * The controls stay disabled until hydration: before it, typed values never reached React state (they
+ * were reverted and the old values saved) and Save did a native GET that put the form in the URL.
+ */
 export function ReminderForm({ prefs, save }: { prefs: ReminderPrefs; save: (input: unknown, version: number) => Promise<ApiResult<ReminderPrefs>> }) {
   const t = useTranslations("patientAccount.reminders");
   const router = useRouter();
@@ -32,6 +38,7 @@ export function ReminderForm({ prefs, save }: { prefs: ReminderPrefs; save: (inp
   const [apiError, setApiError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
+  const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
 
   const fieldError = (f: ReminderField) => errors.find((e) => e.fieldId === ids[f])?.message;
   const toSummary = (issues: { field: ReminderField; code: ReminderIssue }[]) => issues.map((i) => ({ fieldId: ids[i.field], message: t(`errors.${i.code}`) }));
@@ -71,99 +78,101 @@ export function ReminderForm({ prefs, save }: { prefs: ReminderPrefs; save: (inp
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid max-w-form gap-8">
-      <ErrorSummary errors={errors} focusKey={attempt} />
+    <form onSubmit={onSubmit} noValidate aria-busy={!hydrated || undefined} className="max-w-form">
+      <fieldset role="none" disabled={!hydrated} className="grid min-w-0 gap-8">
+        <ErrorSummary errors={errors} focusKey={attempt} />
 
-      <fieldset className="grid gap-3" aria-describedby={`${base}-channels-hint`}>
-        <legend className="mb-1 font-display text-xl font-medium text-ink">{t("channelsLegend")}</legend>
-        <p id={`${base}-channels-hint`} className="text-sm text-muted">
-          {t("channelsHint")}
-        </p>
-        {REMINDER_CHANNELS.map((c) => (
-          <label key={c} className={checkboxRow}>
+        <fieldset className="grid gap-3" aria-describedby={`${base}-channels-hint`}>
+          <legend className="mb-1 font-display text-xl font-medium text-ink">{t("channelsLegend")}</legend>
+          <p id={`${base}-channels-hint`} className="text-sm text-muted">
+            {t("channelsHint")}
+          </p>
+          {REMINDER_CHANNELS.map((c) => (
+            <label key={c} className={checkboxRow}>
+              <input
+                type="checkbox"
+                name={`channel-${c}`}
+                checked={channels[c]}
+                onChange={(e) => {
+                  setSaved(false);
+                  setChannels((prev) => ({ ...prev, [c]: e.target.checked }));
+                }}
+                aria-describedby={`${base}-${c}-hint`}
+                className="mt-0.5 size-5 shrink-0 accent-forest"
+              />
+              <span className="grid gap-0.5">
+                <span className="font-semibold text-ink">{t(`channels.${c}`)}</span>
+                <span id={`${base}-${c}-hint`} className="text-sm text-muted">
+                  {t(`channelHints.${c}`)}
+                </span>
+              </span>
+            </label>
+          ))}
+          {allOff ? <Notice tone="warning">{t("allOff")}</Notice> : null}
+        </fieldset>
+
+        <fieldset className="grid gap-4" aria-describedby={`${base}-quiet-hint`}>
+          <legend className="mb-1 font-display text-xl font-medium text-ink">{t("quietLegend")}</legend>
+          <p id={`${base}-quiet-hint`} className="text-sm text-muted">
+            {t("quietHint")}
+          </p>
+          <label className={checkboxRow}>
             <input
               type="checkbox"
-              name={`channel-${c}`}
-              checked={channels[c]}
+              name="quiet-enabled"
+              checked={quiet.enabled}
               onChange={(e) => {
                 setSaved(false);
-                setChannels((prev) => ({ ...prev, [c]: e.target.checked }));
+                setQuiet((q) => ({ ...q, enabled: e.target.checked }));
               }}
-              aria-describedby={`${base}-${c}-hint`}
               className="mt-0.5 size-5 shrink-0 accent-forest"
             />
-            <span className="grid gap-0.5">
-              <span className="font-semibold text-ink">{t(`channels.${c}`)}</span>
-              <span id={`${base}-${c}-hint`} className="text-sm text-muted">
-                {t(`channelHints.${c}`)}
-              </span>
-            </span>
+            <span className="font-semibold text-ink">{t("quietToggle")}</span>
           </label>
-        ))}
-        {allOff ? <Notice tone="warning">{t("allOff")}</Notice> : null}
-      </fieldset>
+          {quiet.enabled ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field id={ids.quietStart} label={t("quietStart")} required error={fieldError("quietStart")}>
+                {(control) => (
+                  <Input {...control} type="time" name="quiet-start" value={quiet.start} onChange={(e) => { setSaved(false); setQuiet((q) => ({ ...q, start: e.target.value })); }} className="max-w-40 tabular" />
+                )}
+              </Field>
+              <Field id={ids.quietEnd} label={t("quietEnd")} required error={fieldError("quietEnd")}>
+                {(control) => (
+                  <Input {...control} type="time" name="quiet-end" value={quiet.end} onChange={(e) => { setSaved(false); setQuiet((q) => ({ ...q, end: e.target.value })); }} className="max-w-40 tabular" />
+                )}
+              </Field>
+              {errors.length === 0 && /^\d{2}:\d{2}$/.test(quiet.start) && /^\d{2}:\d{2}$/.test(quiet.end) && quiet.start !== quiet.end ? (
+                <p className={cn("text-sm text-ink sm:col-span-2")}>
+                  {t("quietSummary", { start: quiet.start, end: quiet.end })} {spansMidnight(quiet) ? t("quietOvernight") : null}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+        </fieldset>
 
-      <fieldset className="grid gap-4" aria-describedby={`${base}-quiet-hint`}>
-        <legend className="mb-1 font-display text-xl font-medium text-ink">{t("quietLegend")}</legend>
-        <p id={`${base}-quiet-hint`} className="text-sm text-muted">
-          {t("quietHint")}
-        </p>
-        <label className={checkboxRow}>
-          <input
-            type="checkbox"
-            name="quiet-enabled"
-            checked={quiet.enabled}
-            onChange={(e) => {
-              setSaved(false);
-              setQuiet((q) => ({ ...q, enabled: e.target.checked }));
-            }}
-            className="mt-0.5 size-5 shrink-0 accent-forest"
-          />
-          <span className="font-semibold text-ink">{t("quietToggle")}</span>
-        </label>
-        {quiet.enabled ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field id={ids.quietStart} label={t("quietStart")} required error={fieldError("quietStart")}>
-              {(control) => (
-                <Input {...control} type="time" name="quiet-start" value={quiet.start} onChange={(e) => { setSaved(false); setQuiet((q) => ({ ...q, start: e.target.value })); }} className="max-w-40 tabular" />
-              )}
-            </Field>
-            <Field id={ids.quietEnd} label={t("quietEnd")} required error={fieldError("quietEnd")}>
-              {(control) => (
-                <Input {...control} type="time" name="quiet-end" value={quiet.end} onChange={(e) => { setSaved(false); setQuiet((q) => ({ ...q, end: e.target.value })); }} className="max-w-40 tabular" />
-              )}
-            </Field>
-            {errors.length === 0 && /^\d{2}:\d{2}$/.test(quiet.start) && /^\d{2}:\d{2}$/.test(quiet.end) && quiet.start !== quiet.end ? (
-              <p className={cn("text-sm text-ink sm:col-span-2")}>
-                {t("quietSummary", { start: quiet.start, end: quiet.end })} {spansMidnight(quiet) ? t("quietOvernight") : null}
-              </p>
-            ) : null}
-          </div>
+        {apiError === "conflict" ? (
+          <Notice
+            tone="warning"
+            action={
+              <Button type="button" variant="secondary" onClick={() => router.refresh()}>
+                {t("reload")}
+              </Button>
+            }
+          >
+            {t("conflict")}
+          </Notice>
+        ) : apiError ? (
+          <InlineError code={apiError} />
         ) : null}
+        <div role="status" className="empty:hidden">
+          {saved ? <Notice tone="info">{t("saved")}</Notice> : null}
+        </div>
+        <div>
+          <Button type="submit" disabled={busy} aria-busy={busy}>
+            {busy ? t("saving") : t("save")}
+          </Button>
+        </div>
       </fieldset>
-
-      {apiError === "conflict" ? (
-        <Notice
-          tone="warning"
-          action={
-            <Button type="button" variant="secondary" onClick={() => router.refresh()}>
-              {t("reload")}
-            </Button>
-          }
-        >
-          {t("conflict")}
-        </Notice>
-      ) : apiError ? (
-        <InlineError code={apiError} />
-      ) : null}
-      <div role="status" className="empty:hidden">
-        {saved ? <Notice tone="info">{t("saved")}</Notice> : null}
-      </div>
-      <div>
-        <Button type="submit" disabled={busy} aria-busy={busy}>
-          {busy ? t("saving") : t("save")}
-        </Button>
-      </div>
     </form>
   );
 }

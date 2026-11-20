@@ -96,3 +96,60 @@ test.describe("fe-p patient routes a11y sweep", () => {
     }
   });
 });
+/**
+ * R9-P2 final sweep with the overlay open, notifications and reminders, en/te/hi. Under 1024px the
+ * shell menu is a modal sheet (role dialog); at 1280 these pages have no dialog, so the open overlay
+ * is the language menu. Moderate axe issues fail here. Checks: focus moves into the overlay, nothing
+ * overflows, Escape closes it and focus returns to the trigger. Triggers are found by aria-haspopup,
+ * so the test does not depend on translated labels.
+ */
+test.describe("fe-p notifications and reminders a11y with overlays open", () => {
+  test.skip(MODE !== "session", "needs a session-mode fixture server");
+
+  for (const locale of ["en", "te", "hi"]) {
+    for (const route of ["/patient/notifications", "/patient/settings/reminders"]) {
+      test(`overlay a11y ${locale}${route}`, async ({ page }) => {
+        await page.goto(`/${locale}${route}`);
+        await expect(page.locator("html")).toHaveAttribute("lang", locale);
+        await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toBeVisible();
+        const narrow = (page.viewportSize()?.width ?? 1280) < 1024;
+        const kind = narrow ? "dialog" : "menu";
+        const trigger = page.locator(`header button[aria-haspopup="${kind}"]:visible`);
+        await expect(trigger).toHaveCount(1);
+        const overlay = page.getByRole(kind);
+        // A click before hydration does nothing; retry until the overlay opens.
+        await expect(async () => {
+          if (!(await overlay.isVisible())) await trigger.click();
+          await expect(overlay).toBeVisible({ timeout: 1000 });
+        }).toPass();
+        await expect(trigger).toHaveAttribute("aria-expanded", "true");
+        await expect.poll(() => overlay.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+
+        const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+        // Radix's modal language menu aria-hides the page behind it, and axe reports the page's
+        // focusable controls (aria-hidden-focus). That is only harmless while focus cannot leave the
+        // menu, so the exception applies to the menu case alone and the trap is checked below.
+        // Logged for fe-a as REQUESTS R-FE-P-R9-2 (non-modal menu would remove it).
+        const menuHidesPage = (v: { id: string }) => !narrow && v.id === "aria-hidden-focus";
+        const blocking = results.violations
+          .filter((v) => ["moderate", "serious", "critical"].includes(v.impact ?? "") && !menuHidesPage(v))
+          .map((v) => `${v.impact} ${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`);
+        expect(blocking).toEqual([]);
+        if (results.violations.some(menuHidesPage)) {
+          test.info().annotations.push({ type: "known", description: "aria-hidden-focus behind the modal language menu (R-FE-P-R9-2)" });
+          for (const key of ["Tab", "Shift+Tab"]) {
+            await page.keyboard.press(key);
+            await expect(overlay).toBeVisible();
+            expect(await overlay.evaluate((el) => el.contains(document.activeElement)), `${key} must not leave the menu`).toBe(true);
+          }
+        }
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+        expect(overflow, "horizontal overflow in px").toBeLessThanOrEqual(1);
+
+        await page.keyboard.press("Escape");
+        await expect(overlay).toBeHidden();
+        await expect(trigger).toBeFocused();
+      });
+    }
+  }
+});

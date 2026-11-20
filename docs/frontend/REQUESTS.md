@@ -379,3 +379,13 @@ No endpoint exists. The http adapter (`src/modules/reminder-prefs/http.ts`) retu
 ### R-FE01-14 (to lead) — browser e2e un-deferred and passing on feat/fe2-a
 R-FE01-12 is resolved: with the ban lifted, all fe2-a browser specs ran against `next start` (port 3330, --workers=1):
 `public.spec.ts` + `public-nav.spec.ts` 115 passed / 1 skipped (mobile-only test on desktop); `a11y.spec.ts` 16 passed / 16 skipped (runs once on the desktop project; covers 360/768/1024/1440 x en/te/hi, 200%/400% zoom, keyboard focus, headers); `perf.spec.ts` (E2E_PERF=1, mobile-390) 4 passed. Fix made during the run: Telugu/Hindi header overflowed by 12px at 1280 -> emergency link and language trigger are compact between xl and 2xl, account buttons stay on one line.
+
+### R-FE-P-R9-2 (to fe-a) - modal language menu aria-hides a focusable page (axe aria-hidden-focus, serious)
+- At 1280, with the `LocaleSwitcher` dropdown open (`src/components/shared/locale-switcher.tsx`), axe reports `aria-hidden-focus` on the shell's skip link, sidebar, top bar and main content. Radix `DropdownMenu` is modal by default and aria-hides everything outside the menu.
+- fe-p's overlay sweep (`tests/e2e/a11y-sweep-p.spec.ts`, notifications and reminders, en/te/hi) checks that Tab and Shift+Tab stay inside the menu, and while that holds it accepts only this rule, only in the menu case.
+- Suggested fix: `<DropdownMenu modal={false}>` in the locale switcher (the WAI-ARIA menu button pattern is non-modal). After that, the exception in the sweep can be removed. fe-p did not edit the component (fe-a scope).
+
+### R-FE-P-R9-3 (to lead / fe-b) - sign-in return to the decision log
+- Root cause: `AdminFrame` (admin layout, fe-e) redirected signed-out visitors itself with `next=/{locale}/admin/dashboard`, so every admin page returned to the dashboard. The layout now renders no shell when signed out and leaves the redirect to the page gate; a unit test checks every admin page is gated. fe-e please review. The lab/ambulance/caretaker frames were not checked for the same pattern.
+- fe2-p now sends `next=/{locale}/admin/reviews/log` from the decision log: `AdminRouteGate` takes a fixed `subPath`, `adminPagePath` accepts plain lowercase segments only, and `loginRedirectPath` still reduces `next` to an internal locale-prefixed path with no query (tests/unit/modules-operations/admin-return-path.test.ts).
+- fe2-p has no login page. The consumer that reads `next` after sign-in is fe-b's `auth-page.tsx` + `normalizeInternalPath` on feat/fe2-integration, which already rejects off-site and `/api` targets. The end-to-end landing (sign in, then arrive on the log) can only be checked after integration.

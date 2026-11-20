@@ -74,6 +74,37 @@ test.describe("reminder preferences (signed-in)", () => {
     await expect(main.getByLabel("Quiet from")).toHaveValue(/^(22:15|23:00)$/);
   });
 
+  test("controls stay disabled until hydration, so early input is never lost or put in the URL", async ({ page }) => {
+    // Hold the JS chunks: the streamed form is on screen but not hydrated (a slow phone or a loaded CI box).
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    await page.route(/\/_next\/static\/chunks\/.*\.js(\?.*)?$/, async (route) => {
+      await gate;
+      await route.continue();
+    });
+    try {
+      await page.goto(PATH, { waitUntil: "commit" });
+      const main = page.getByRole("main");
+      const save = main.getByRole("button", { name: "Save preferences" });
+      await expect(save).toBeVisible();
+      await expect(save).toBeDisabled();
+      await expect(main.getByRole("checkbox", { name: /^SMS text message/ })).toBeDisabled();
+      release();
+      await expect(save).toBeEnabled();
+      const quiet = main.getByRole("checkbox", { name: "Do not send reminders during quiet hours" });
+      if (!(await quiet.isChecked())) await quiet.check();
+      // Role queries skip the hidden streamed copy React may still hold while it swaps in the client tree.
+      await main.getByRole("textbox", { name: "Quiet from" }).fill("07:00");
+      await main.getByRole("textbox", { name: "Quiet until" }).fill("07:00");
+      await save.click();
+      await expect(main.getByRole("alert").filter({ hasText: "Start and end cannot be the same time." })).toBeFocused();
+      expect(new URL(page.url()).search).toBe("");
+    } finally {
+      release();
+      await page.unrouteAll({ behavior: "ignoreErrors" });
+    }
+  });
+
   test("turning every channel off warns before saving; keyboard toggles a channel", async ({ page }) => {
     await page.goto(PATH);
     const main = page.getByRole("main");
