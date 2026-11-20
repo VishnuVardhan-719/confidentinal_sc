@@ -1,6 +1,6 @@
 # DC clinical core (DC04-DC09) handoff
 
-Task: `C:\tmp\scv_logs\dc_core_task.md`. Agent: Kiro. Branch `feat/DC-clinical-core`, created from `origin/integ/all` at `bed2877`, merged with `origin/integ/all` at `34947a2` before the final push. Design: `docs/specs/DC_clinical_core_design.md`; it was committed and pushed first, at `5c0b8b2`.
+Task: `C:\tmp\scv_logs\dc_core_task.md`. Agent: Kiro. Branch `feat/DC-clinical-core`, created from `origin/integ/all` at `bed2877`, merged with `origin/integ/all` at `f2cc9dc` before the final push. Design: `docs/specs/DC_clinical_core_design.md`; it was committed and pushed first, at `5c0b8b2`.
 
 **DB NOT EXECUTED.** Both migrations, the five pgTAP suites, the fixture and the concurrency runner were written and desk-checked only. No Docker, `supabase` or database command was run. CI (`.github/workflows/ci.yml`) runs `supabase db reset` and `supabase test db` on pushes to `feat/**`, so the CI run for this push is the first real execution. I could not read it from here (no `gh`, private repository).
 
@@ -66,7 +66,7 @@ A quote-aware parenthesis check over every DC SQL file is clean.
 
 ## Conflicts
 
-- The merge of `origin/integ/all` (8 commits through `34947a2`) had no conflicts.
+- The two merges of `origin/integ/all` (10 commits through `f2cc9dc`, CI pgTAP rounds 1-3) had no conflicts. None of their fixes touches DC files. Round 3's rule (read an audit row in a later statement than the call that writes it) already holds in suite 114.
 - `023_p5s_gates` used to assert exactly four gate rows. `34947a2` scoped it to the four category gates, so the new `doctor_clinical` row no longer breaks it.
 - `023` and the per-category suites flip every gate with `update booking_private.feature_gates set state='on'`. That now also turns `doctor_clinical` on inside those rollback-only suites, which is harmless.
 
