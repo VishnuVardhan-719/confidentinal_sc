@@ -32,7 +32,7 @@ The opt-in Storage HTTP test (`I02_STORAGE_HTTP=1`) is skipped in CI because it 
 Supabase CLI 3.2.0 installed by `supabase/setup-cli@v3`.
 
 1. `supabase start -x studio,imgproxy,mailpit,edge-runtime,logflare,vector,realtime,postgres-meta,supavisor`. Postgres, Auth, Storage, PostgREST and Kong still start, because the SQL suites use the `auth` and `storage` schemas.
-2. `supabase db reset`: replays every file in `supabase/migrations` on a fresh database. `supabase/seed.sql` does not exist, so nothing is seeded.
+2. `supabase db reset`: replays every file in `supabase/migrations` on a fresh database. `supabase/seed.sql` does not exist, so nothing is seeded (the opt-in demo seed `supabase/seeds/local_demo.sql` is never loaded in CI).
 3. `supabase test db`: runs `pg_prove` on `supabase/tests/*.test.sql`. The `.inc` helpers are pulled in by `\ir` and are not run on their own.
 
 On failure, `supabase status`, `docker ps -a` and `docker logs` of every `supabase_*` container are uploaded as the `supabase-logs` artifact (kept 7 days).
