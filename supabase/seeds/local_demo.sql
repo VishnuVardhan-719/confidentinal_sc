@@ -1,10 +1,12 @@
--- Synthetic LOCAL development seed (R-6). Loaded only by `npx supabase db reset` (config.toml [db.seed]).
+-- Synthetic LOCAL development seed (R-6). Opt-in: NOT loaded by `npx supabase db reset`, because the DB
+-- suites' fixtures insert the same synthetic PINs (unique pin_directory) and count visible services.
+-- Load it by hand after a reset, and reset again before running supabase/tests (docs/HANDOFF_FRONTEND.md).
 -- Every person, email, phone, address and PIN here is fictional. Never load this file into a shared or
 -- production database: it creates accounts with a published demo password (docs/HANDOFF_FRONTEND.md §2).
 -- Mirrors supabase/tests/_b01_fixture.inc, which the booking suites prove is searchable and bookable.
 do $$ begin
   if exists (select 1 from auth.users) then
-    raise exception 'seed.sql is for an empty local database only (auth.users is not empty)';
+    raise exception 'local_demo.sql is for an empty local database only (auth.users is not empty)';
   end if;
 end $$;
 
