@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { useRouter } from "@/i18n/navigation";
 import type { ApiResult } from "@/lib/api/result";
-import { doctorSearchParams, SUGGESTION_GROUPS, taxonomySuggestions, SYMPTOMS, type Suggestion } from "@/modules/providers/doctor-search";
+import { doctorSearchParams, structuredSearchFor, SUGGESTION_GROUPS, taxonomySuggestions, SYMPTOMS, type Speciality, type Suggestion, type Symptom } from "@/modules/providers/doctor-search";
 import { suggestDoctorsAction } from "./actions";
 
 type Remote = { status: "idle" | "loading" | "error" } | { status: "ready"; items: Suggestion[] };
@@ -42,9 +42,10 @@ export function DoctorSearchBar({ defaultQuery = "", defaultCity = "", idPrefix 
   const sequence = useRef(0);
   useEffect(() => () => clearTimeout(timer.current), []);
 
-  const local = useMemo(() => taxonomySuggestions(query, {
-    speciality: key => t(`specialities.${key}`), symptom: key => t(`symptoms.${key}`),
-  }), [query, t]);
+  const taxonomyLabels = useMemo(() => ({
+    speciality: (key: Speciality) => t(`specialities.${key}`), symptom: (key: Symptom) => t(`symptoms.${key}`),
+  }), [t]);
+  const local = useMemo(() => taxonomySuggestions(query, taxonomyLabels), [query, taxonomyLabels]);
   const options = useMemo(() => {
     const all = [...local, ...(remote.status === "ready" ? remote.items : [])];
     return SUGGESTION_GROUPS.flatMap(group => all.filter(item => item.group === group));
@@ -83,8 +84,9 @@ export function DoctorSearchBar({ defaultQuery = "", defaultCity = "", idPrefix 
   }
   function submit() {
     if (expanded && active >= 0 && options[active]) { choose(options[active]); return; }
+    // Typed text that is exactly a symptom or speciality label goes into the URL as its taxonomy key, not free text.
     const q = cleanSearchText(query, 80);
-    go(q ? { q } : {});
+    go(q ? structuredSearchFor(q, taxonomyLabels) : {});
   }
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {

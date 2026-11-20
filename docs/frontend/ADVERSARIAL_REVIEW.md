@@ -238,11 +238,11 @@ Clean export of `feat/fe2-integration` `ab6bedb` (`git archive ab6bedb src`, mad
 | # | Finding | Severity | Owner | Status at `ab6bedb` |
 |---|---|---|---|---|
 | 1 | Synthetic cancellation policy shown as approved on the real-data booking page | HIGH | fe-q | **Fixed** (`1e604fc`, in integration via `1a0db4f`; http mode gives `state: "unavailable"`) |
-| 1b | `service-requests/request-controls.tsx:41` still hard-codes an approved synthetic policy (http adapters gated) | LOW | fe-q | Open |
+| 1b | `service-requests/request-controls.tsx:41` still hard-codes an approved synthetic policy (http adapters gated) | LOW | fe-q | **Fixed on `feat/fe2-c`** (R9-C9): terms come from `cancellationTermsFor(request)`; real requests get `{ state: "unavailable" }` |
 | 2 | Fixture adapter production guard checks only `APP_ENV` (`lib/api/mode.ts:9`, `auth/fixture-guard.ts`) | MEDIUM | fe-a | Open |
 | 3 | Four paise formatters disagree ("₹800" vs "₹800.00"; admin and clinical accept negative values) | MEDIUM | fe-a + fe-e, fe-d, payments | Open |
 | 4 | Hindi `one` plural hard-codes "1" for zero (`ambulance.dashboard.daysLeft`, `lab.orders.testCount`, `common.errorSummary.title`, `auth.otp.attemptsLeft`) | MEDIUM | fe-e, fe-a, fe-b | Open (patch in R-FE-Q-R9C3-1; fe-int2 has an uncommitted `hi/auth.json` edit) |
-| 5 | Free-text `q` search in the URL (history and logs) | LOW | fe-q | Open (trade-off: map known symptoms to `symptom=`) |
+| 5 | Free-text `q` search in the URL (history and logs) | LOW | fe-q | **Partly fixed on `feat/fe2-c`** (R9-C9): typed text that exactly matches a symptom or speciality label becomes `symptom=`/`speciality=`. Still `q`: doctor and clinic names, partial or mixed text, the no-JS form post, and fe-a's hero `/find` route |
 | 6 | `toFixed` on paise in the lab catalogue editor | LOW | fe-e | **Fixed** (`0500117`) |
 | 7 | Proof-of-visit code in the URL path | LOW | fe-d, backend | Accepted by design (no-referrer, noindex, no-store; backend keeps codes short-lived and revocable) |
 | E1 | Gated story URLs answer 200 and are indexable | LOW | fe-e | **Fixed** (non-ok story sets `robots: { index: false }`) |
@@ -258,12 +258,12 @@ Clean export of `feat/fe2-integration` `ab6bedb` (`git archive ab6bedb src`, mad
 | R6-2 | No private area layout sets noindex by default (every page sets it today; guarded by `site-guards`) | LOW | area owners | Open (guarded) |
 | C3-2 | Patient dashboard page imports a fixture actor (behind `isFixtureAdapter()`) | LOW | fe-d | Open (recorded in `UI_ALLOWED`; fe-int2 fix uncommitted) |
 | F8-1 | Doctor profile gated/error state without `h1` | LOW (a11y) | fe-q | **Fixed on `feat/fe2-c`**, pending merge |
-| F8-2 | Public directory gated states don't use `GateNotice` | LOW | fe-q | Open |
+| F8-2 | Public directory gated states don't use `GateNotice` | LOW | fe-q | **Fixed on `feat/fe2-c`** (R9-C9) |
 | F8-3 | Integration head unit suite red (3 known guard items) | MEDIUM (process) | fe-int2, lead | Open: merge `fb7465a` or commit the in-progress fixes |
 
 **Verdict:**
 - Of the 23 findings, **no CRITICAL or HIGH finding is open**. The HIGH item (1) and three others (6, E1, P1) are fixed in integration, F8-1 is fixed on `feat/fe2-c`, and 7 is accepted by design.
-- 17 are open: 6 MEDIUM (2, 3, 4, D1, D2, F8-3) and 11 LOW (1b, 5, E2, P2, P3, D3, D4, R6-1, R6-2, C3-2, F8-2).
+- 17 were open at `ab6bedb`: 6 MEDIUM (2, 3, 4, D1, D2, F8-3) and 11 LOW (1b, 5, E2, P2, P3, D3, D4, R6-1, R6-2, C3-2, F8-2). R9-C9 later fixed 1b and F8-2 and partly fixed 5 on `feat/fe2-c` (see R9-C9 below).
 - **Fixture staging:** the integration head is fit for synthetic staging once F8-3 is cleared.
 - **Before real data or production,** these must close:
   - Finding 2: the production guard must not depend on one env var.
@@ -271,3 +271,119 @@ Clean export of `feat/fe2-integration` `ab6bedb` (`git archive ab6bedb src`, mad
   - Finding 4: wrong counts in Hindi safety-relevant text (licence expiry, OTP attempts).
   - D1: the page breaks on a valid status.
 - Everything else may follow, with the backend enforcing the same rules server-side.
+
+## R9-C9 (2026-11-20): fe-q fixes for its own open findings
+
+All on `feat/fe2-c`, pending merge into integration.
+
+| # | Change | Files |
+|---|---|---|
+| 1b | Service-request cancellation now takes the policy from the page. `cancellationTermsFor(request)` returns the labelled sample terms (`synthetic-v1`, 120 minutes) only when `request.synthetic` is true, and `null` otherwise. With no terms, `RequestStatusView` passes `{ state: "unavailable" }`, so the dialog refuses and never calls the server. `cancelState(..., null)` guesses no window, and the "changes closed" notice is hidden. The fixture engine still enforces its own 120-minute window. | `src/modules/service-requests/core.ts`, `src/components/service-requests/request-controls.tsx`, `src/components/service-requests/request-status.tsx` |
+| F8-2 | Every directory "not connected" state renders `GateNotice reason="contract_pending"` (so `data-gate="contract_pending"`), keeping its specific title and body: doctor search, doctor profile, lab directory list and detail, and the patient lab, care and ambulance provider lists. The lab directory's gated action is now "Find a doctor" -> `/doctors`, and the lab detail offers "Back to labs". | `src/components/directory/{doctor-search-page,doctor-profile,lab-directory}.tsx`, `src/components/service-requests/provider-directory.tsx` |
+| 5 (partial) | `structuredSearchFor(text, labels)` maps search-box text that exactly matches (after `normalize`) a symptom or speciality label in the active language to `symptom=`/`speciality=` taxonomy keys, which are already allowlisted enums. Anything else stays `q`. This mapping is safe because the taxonomy is fixed, and every symptom and speciality label is distinct after normalize in en, te and hi (a test asserts this). The search bar's submit uses it. **Still free text:** doctor and clinic names, partial or mixed phrases ("fever and cough"), the no-JS GET form, and fe-a's public hero `/find` route. These remain documented. | `src/modules/providers/doctor-search.ts`, `src/components/directory/doctor-search-bar.tsx` |
+
+**Tests:** `tests/unit/modules-services/r9c9-fixes.test.ts` (11):
+- the terms rule, and `cancelState` with no window;
+- a jsdom render of `CancelRequest` with an unavailable policy (the dialog never calls `cancel`);
+- no component hard-codes `state: "approved", version: "<literal>"`;
+- every gated branch in the four directory files uses `GateNotice`, with no hand-made lock `Notice`;
+- en/te/hi label mapping, `q` fallback and label uniqueness;
+- the search bar is wired to the mapping.
+
+**Proof:**
+- Against the pre-fix sources (temporary copies, restored afterwards): **10 failed, 1 passed**.
+- With the fixes: 11/11 passed.
+- Fixture production build on port 3367 (stopped afterwards, PID and command line checked): `doctor-search` + `service-requests` + `lab-directory` at 390 and 1280 gave 41 passed, 3 skipped on two consecutive reruns. The first run reported 26 passed, 3 skipped and exit 1, with no failure shown in the output tail; the next two runs were clean.
+## R9-C12 (2026-11-20): second adversarial pass on the current heads
+
+**Heads** (read-only, via `git archive` into `.context/c12`, deleted afterwards):
+- `feat/fe2-integration` `fec9da1`, which contains `feat/fe2-d` `0e09eef`.
+- `feat/fe2-e` `d97e0a5`: one docs/test commit ahead of integration, no `src` changes.
+- `feat/fe2-p` `7f9fd28`: 11 `src` files ahead of integration (moderation paging and action validation).
+
+**Method:**
+- The existing fe-c guards on each head: on integration, `site-guards`, `peer-guards` and `adversarial-guards` gave 27/27.
+- The role-gating audit (`.context/gate-audit.cjs`).
+- i18n parity (`.context/i18n-rev-audit.cjs`) and a new leftover-English scan (`.context/latin-audit.cjs`).
+- Targeted searches for each topic below.
+- Line numbers are at `fec9da1` unless a branch is named.
+
+### Findings
+
+| # | Topic | Severity | Owner | Where | Finding | Proposed fix | Status |
+|---|---|---|---|---|---|---|---|
+| C12-1 | (a) money | LOW | fe-d, fe-e, fe-b | `src/components/clinical/kit.ts:38`, `src/modules/lab/rules.ts:193`, `src/modules/onboarding/form-models.ts:10` | Three rupee-to-paise parsers. All do integer maths (no float), but each accepts different input: up to 7 digits and positive only; up to 8 digits with no commas; up to 9 digits with commas, "₹" and spaces stripped. The same typed price ("1,250.00") is accepted on one form and rejected on another. | One shared `parseRupeesToPaise(input, { maxPaise, allowZero })` in `src/lib/format`, used by all three. | Open; pinned by `r9c12-guards` (no fourth parser) |
+| C12-2 | (a) money | MEDIUM (finding 3, carried) | fe-a + owners | `src/lib/format/index.ts:10`, `src/components/payments/money.ts:17` (0 decimals for whole rupees), `src/components/admin/ops/format.ts:28`, `src/components/clinical/server-format.ts:11`, `src/components/clinical/use-format.ts:16` | Five `Intl` currency formatters remain; payment pages show "₹800", the others "₹800.00". | One formatter (see finding 3). | Open; pinned by `r9c12-guards` (no sixth formatter) |
+| C12-3 | (e) gated shown as working | LOW | fe-d | `src/app/[locale]/doctor/visits/[id]/consultation/page.tsx:102` | `photos={photos.ok ? photos.data : []}`: when consent loads but the photo list fails, the panel shows "no photos" as if that were true. In http mode consent is gated first, so this is latent. | Pass the result and render `PageStateView`/`InlineError` for the photo list. | Open; exempt in `r9c12-guards` (`EMPTY_FALLBACK_EXEMPT`) |
+| C12-4 | (e) gated shown as working | LOW | fe-q | `src/app/[locale]/patient/book/page.tsx:82`, `patient/lab-tests/request/page.tsx:64`, `patient/caretakers/request/page.tsx:64`, `patient/ambulance/request/page.tsx:67` | `addresses.ok ? addresses.data.items : []`: a failed address list read as "no saved addresses" and offered "add a new address", which would then fail. Latent in http mode, because the members list is gated first. | Treat a failed address list like a failed members list: `InlineError` with the code and a back link. | **Fixed on `feat/fe2-c`** in this commit; integration shows the old code until merge (`r9c12-guards` fails on `fec9da1` for exactly these four lines) |
+| C12-5 | (g) i18n | INFO | fe-a | `src/messages/hi/common.json` `errorSummary.title` | Still hard-codes "1" in the Hindi `one` branch. It cannot show for zero: `ErrorSummary` returns `null` when there are no errors (`src/components/shared/error-summary.tsx:26`). | Use `#` for consistency. | Open (cosmetic); still exempt in `adversarial-guards` |
+
+### Checked, no new finding
+
+- **(b) PHI and identifiers:**
+  - No analytics or telemetry SDK, `gtag`/`dataLayer`, `sendBeacon` or web-vitals reporting in `src`.
+  - No `fetch` to an external origin.
+  - No `console`, logger or stdout use.
+  - Error boundaries render the digest only.
+  - No page title or metadata uses a patient name.
+  - URL query keys and storage are clean (`site-guards` 9/9 on integration).
+  - Opaque cursors (fe2-p `7f9fd28` paging) are the only new URL value.
+- **(c) Role gating:**
+  - 72/72 `/admin /doctor /lab /ambulance /caretaker` pages are gated on the server; the 3 provider onboarding pages gate through `ProviderOnboarding` -> `requireRole`.
+  - 92 server actions: 83 check the session or role; 9 are public by design (search and auth).
+  - **No public admin signup:** `SIGNUP_ROLES` excludes `admin` and `signupRoleSchema = z.enum(SIGNUP_ROLES)` (`src/modules/auth/roles.ts`). No UI grants an admin role.
+- **(d) Fixture leaks in production:**
+  - The allowlist in `src/lib/api/mode.ts` (`FIXTURE_APP_ENVS`; refused for `VERCEL_ENV=production` or `APP_ENV` unset under `next start`) is present (finding 2 fixed).
+  - Every `FIXTURE_*` env read outside `src/fixtures` sits behind `getAdapterMode() === "fixture"` or a guarded fixture constructor: `patient/notifications/api.ts`, `admin/clock.ts`, `family-members`, `patient-dashboard/session.ts`, `reviews`, `saved-providers`, `service-requests/fixture-engine.ts`.
+  - No `"use client"` file reads `process.env` or the adapter mode.
+  - The patient dashboard no longer imports a fixture value (R-FE-Q-R9C3-2 fixed).
+- **(e) Gated features shown as working:**
+  - No payment, checkout, dispatch or subscription control exists in `src`.
+  - Slot pickers show an error on failure, not an empty list (`components/service-requests/form-parts.tsx:111`).
+  - Only C12-3 and C12-4 above.
+- **(f) Dialogs:**
+  - All 9 files rendering `DialogContent`/`SheetContent` also render the matching `Title` and a `Description` (or `aria-describedby`).
+  - Confirm dialogs use `role="alertdialog"` (`components/shared/confirm-dialog.tsx:78`, `components/clinical/editor/step-forms.tsx:252`).
+  - Radix provides the focus trap, Escape and focus return (`components/ui/dialog.tsx`). Results after closing are announced with `role="status"` notices.
+- **(g) te/hi:**
+  - All namespaces have exactly the en keys with the same placeholders, on integration and fe2-e/fe2-p.
+  - No English fallback can show: `src/i18n/request.ts` loads only the requested locale, with no merge from `en`, so a missing key would render the raw key, and the parity tests block that.
+  - The leftover-English scan found only the CMS slug example `how-booking-works` (an intended ASCII example).
+  - Hindi zero plurals for ambulance, lab and auth are fixed at integration (`=0 {आज समाप्त}` etc.); only C12-5 remains.
+
+### Status refresh of earlier findings at `fec9da1`
+
+- **Fixed in integration:**
+  - 2 (fixture allowlist).
+  - 4, apart from the cosmetic C12-5.
+  - E2 (`paiseToRupeesString` integer guard).
+  - R6-1 (signup role radios wait for hydration).
+  - C3-2 (dashboard fixture import).
+  - P1.
+- **Fixed on a branch, pending merge:**
+  - fe-q `feat/fe2-c`: 1b and F8-2 (`6bd8e66`), 5 partial (`6bd8e66`), C12-4 (this commit).
+  - fe-p `feat/fe2-p` `7f9fd28`: P2 (cursor paging) and P3 (`decideReviewAction` validates `reviewId`, `expectedVersion` and `decision` with Zod before the session lookup).
+- **Still open:**
+  - 3 / C12-2.
+  - D1 (`doctor-reviews` statuses).
+  - D2 (exact date on unpublished reviews).
+  - D3 (`verify/check/route.ts:16` absolute URL from `req.nextUrl.origin`).
+  - D4 (no `aria-busy` while waiting for hydration; for example, `components/doctor/note-editor.tsx` disables controls with no status).
+  - R6-2.
+  - C12-1, C12-3, C12-5.
+
+### Guards added
+
+`tests/unit/r9c12-guards.test.ts` (8 tests; `GUARD_SRC` runs it on any export):
+- Currency formatters and rupee parsers are limited to the reviewed files.
+- No analytics SDK, beacon or web-vitals reporting.
+- `SIGNUP_ROLES` excludes admin (skips when `modules/auth` is absent, as on `feat/fe2-c`).
+- No env or adapter-mode read in a client component.
+- No `x.ok ? x.data… : []` in route files (C12-3 exempt).
+- Every dialog and sheet content has a title and a description.
+
+**Results:**
+- `feat/fe2-c`: 7 passed, 1 skipped.
+- fe2-e head: 8/8.
+- fe2-p head: 7 passed, 1 skipped.
+- Integration `fec9da1`: 7 passed, 1 failed, on exactly the four C12-4 lines fixed in this commit.

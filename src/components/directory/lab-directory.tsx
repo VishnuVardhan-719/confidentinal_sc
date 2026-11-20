@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { Container } from "@/components/public/layout";
 import { InlineError } from "@/components/shared/inline-error";
 import { FixtureNotice } from "@/components/shared/fixture-notice";
+import { GateNotice } from "@/components/shared/gate-notice";
 import { Notice } from "@/components/shared/notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +55,7 @@ export async function LabDirectoryResults({ searchParams }: { searchParams: Prom
   await connection();
   const t = await getTranslations("services.labDirectory");
   const ts = await getTranslations("services");
+  const tb = await getTranslations("booking.search");
   const locale = (await getLocale()) as Locale;
   const api = await createLabDirectoryApi();
   const result = await api.list(filter).catch(() => unavailable);
@@ -86,7 +88,7 @@ export async function LabDirectoryResults({ searchParams }: { searchParams: Prom
       {result.ok && result.data.synthetic ? <FixtureNotice /> : null}
       {!result.ok ? (
         result.error.code === "gated"
-          ? <Notice tone="neutral" icon="lock" title={ts("common.notConnectedTitle")} action={<Button asChild variant="secondary"><Link href="/doctors">{ts("errorPage.back.book")}</Link></Button>}>{ts("common.notConnectedBody")}</Notice>
+          ? <GateNotice reason="contract_pending" title={ts("common.notConnectedTitle")} action={<Button asChild variant="secondary"><Link href="/doctors">{tb("title")}</Link></Button>}>{ts("common.notConnectedBody")}</GateNotice>
           : <InlineError code={result.error.code} action={<Button asChild variant="secondary"><Link href={query ? `/lab-tests?${query}` : "/lab-tests"}>{ts("common.form.retry")}</Link></Button>} />
       ) : (
         <section aria-labelledby="lab-results" className="grid gap-4">
@@ -152,7 +154,7 @@ export async function LabDetail({ params }: { params: Promise<{ id: string }> })
         ) : result.error.code === "gated" ? (
           <>
             <h1 className="font-display text-3xl font-medium text-ink">{t("title")}</h1>
-            <Notice tone="neutral" icon="lock" title={ts("common.notConnectedTitle")}>{ts("common.notConnectedBody")}</Notice>
+            <GateNotice reason="contract_pending" title={ts("common.notConnectedTitle")} action={<Button asChild variant="secondary"><Link href="/lab-tests">{t("back")}</Link></Button>}>{ts("common.notConnectedBody")}</GateNotice>
           </>
         ) : (
           <>

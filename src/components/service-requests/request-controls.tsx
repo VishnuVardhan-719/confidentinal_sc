@@ -3,7 +3,7 @@
 import { Loader2, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
-import { CancellationDialog } from "@/components/payments/cancellation-dialog";
+import { CancellationDialog, type CancellationPolicyView } from "@/components/payments/cancellation-dialog";
 import { Notice } from "@/components/shared/notice";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
@@ -27,9 +27,10 @@ export function RefreshRequest({ updatedAt }: { updatedAt: string }) {
 /**
  * Patient cancellation through the shared CancellationDialog (reason + terms acknowledgement, closes only after
  * the server confirms). Sends the version the page was rendered with; on a conflict the page reloads its data so
- * the patient sees what changed before trying again.
+ * the patient sees what changed before trying again. `policy` comes from the server page: `{ state: "unavailable" }`
+ * whenever no approved terms exist, and the dialog then refuses to cancel.
  */
-export function CancelRequest({ id, version, cancel }: { id: string; version: number; cancel: (id: unknown, version: unknown) => Promise<ApiResult<{ version: number }>> }) {
+export function CancelRequest({ id, version, policy, cancel }: { id: string; version: number; policy: CancellationPolicyView; cancel: (id: unknown, version: unknown) => Promise<ApiResult<{ version: number }>> }) {
   const t = useTranslations("services.common.status");
   const router = useRouter();
   const [done, setDone] = useState(false);
@@ -38,7 +39,7 @@ export function CancelRequest({ id, version, cancel }: { id: string; version: nu
       {done ? <Notice tone="info" title={t("cancelled")} role="status" /> : null}
       <div>
         <CancellationDialog
-          policy={{ state: "approved", version: "synthetic-v1", summary: t("policySummary"), feePaise: 0, refundPaise: null }}
+          policy={policy}
           trigger={<Button type="button" variant="secondary">{t("cancel")}</Button>}
           onConfirm={async () => {
             const result = await cancel(id, version).catch(() => ({ ok: false as const, error: { code: "unavailable" as const } }));
