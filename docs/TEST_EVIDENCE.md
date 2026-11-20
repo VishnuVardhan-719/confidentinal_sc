@@ -46,6 +46,7 @@ GitHub Actions (`.github/workflows/ci.yml`), Ubuntu, Node 22, `supabase start` /
 | #55 | `e0f6a23` (`integ/all`, before the DC merge) | Green: app job and database job; suites 001-109 pass |
 | #58 | `77971f2` (`integ/all`, DC core + extras merged) | Green: all 94 suite files 001-125 pass |
 | #65 | `3a223e2` (`main` after fast-forward; same tree as `integ/all`) | Green |
+| #68 | `5d25190` (`main`, docs-only commit) | **Failed**: suite 013:79 got 40001 instead of 55000. Time-of-day flake: the care booking at `now()+2 days 4 hours` crossed IST midnight (run at 14:19 UTC) and left the 00:00-23:59 fixture schedule. Test now books a fixed 10:00 IST slot; see the next run |
 
 Failures CI found on the way and how they were fixed (commits on `integ/all`, titled `test(db): CI round N` or `fix(db): ...`):
 - `booking_private.patient` ignored its scope argument (`a.scope=scope` resolved to the column): revoking one scope ended nothing. Real bug, fixed by migration `20261117002210_integ_patient_scope.sql`, caught by suite 114.

@@ -131,4 +131,5 @@ Numbering: each block owns a migration range and a suite range (shared 001550-00
 - Migrations are append-only: never edit a merged migration, add a new one in your range.
 - In `language sql` functions a column name wins over a parameter of the same name (`a.scope=scope` compared the column with itself; fixed in 002210). Prefix parameters `p_` or use `$1`.
 - Every suite must end with `\echo 1..1` and `\echo ok 1 - <name>` before `rollback;`, or pg_prove reports "No plan found".
+- Book test slots at a fixed IST time (`(:'day'||' 10:00 Asia/Kolkata')::timestamptz`), not `now()+interval 'N hours'`: fixture schedules run 00:00-23:59 IST, so a slot that crosses IST midnight fails only at certain times of day. Older suites still use `now()+N days`; if one fails only near 18:30 UTC, this is why.
 - Do not claim something works without running its check and reading the output.

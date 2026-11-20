@@ -71,10 +71,12 @@ do $$ declare m text; begin
 end $$;
 
 -- Caretaker: generic create with the gate on; generic accept refused until care's block.
+-- Fixed 10:00 IST slot: now()+N hours crossed IST midnight when CI ran near 14:00-18:30 UTC, and
+-- the fixture schedule (00:00-23:59 per day) then refused it with 40001 schedule_changed.
 update booking_private.feature_gates set state='on';
 set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000001"}',true);
-select public.create_booking_request('b2000000-0000-4000-8000-000000000001',:'care_service','b5000000-0000-4000-8000-000000000001',now()+interval '2 days 4 hours',gen_random_uuid()) as care_booking \gset
+select public.create_booking_request('b2000000-0000-4000-8000-000000000001',:'care_service','b5000000-0000-4000-8000-000000000001',(:'day'||' 10:00 Asia/Kolkata')::timestamptz,gen_random_uuid()) as care_booking \gset
 select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000002"}',true);
 select pg_temp.expect_state(format('select public.accept_booking(%L,2,array[''b6000000-0000-4000-8000-000000000001''::uuid])',:'care_booking'),'55000','caretaker acceptance deferred to the care block');
 select pg_temp.assert_true(public.get_booking(:'care_booking')->>'state'='requested','caretaker remains requested');
