@@ -17,7 +17,7 @@ import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/lib/format";
 import { AccessDenied } from "@/components/auth/access-denied";
 import { ReadinessBanner } from "@/components/onboarding/profile-glance";
-import { DEFAULT_PATIENT_ACTOR } from "@/fixtures/clinical/world";
+import { fixtureActorFor } from "@/modules/auth/fixture-actors";
 import { ok, fail } from "@/lib/api/result";
 import { authorizeRole, getRequestApis, isFixtureAdapter, requireRole } from "@/modules/auth/server";
 import { loadPatientProfile } from "@/modules/onboarding/loaders";
@@ -49,7 +49,7 @@ export default async function PatientDashboardPage({ params }: PageProps<"/[loca
   if (access.kind === "denied") return <AccessDenied reason={access.reason} />;
   const synthetic = isFixtureAdapter();
   // Fixture records world has one synthetic patient (REQUESTS R-FE-D-26); http uses the bearer token.
-  const fixtureActor = synthetic ? DEFAULT_PATIENT_ACTOR : undefined;
+  const fixtureActor = synthetic ? (fixtureActorFor(access.identity, "patient") ?? undefined) : undefined;
 
   const [t, tAll, { onboarding }] = await Promise.all([getTranslations("patient.dashboard"), getTranslations(), getRequestApis()]);
   const tk = asTk(tAll);

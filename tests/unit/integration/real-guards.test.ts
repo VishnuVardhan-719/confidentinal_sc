@@ -37,6 +37,9 @@ const WRONG_ROLE: GuardOutcome = { kind: "redirect", to: "/en/patient/dashboard"
 beforeEach(() => {
   vi.clearAllMocks();
   auth.isFixtureAdapter.mockReturnValue(true);
+  // fixtureActorFor itself refuses outside fixture mode.
+  vi.stubEnv("FRONTEND_ADAPTER", "fixture");
+  vi.stubEnv("APP_ENV", "test");
 });
 
 describe("fixture identity -> synthetic world actor", () => {
@@ -51,6 +54,11 @@ describe("fixture identity -> synthetic world actor", () => {
     expect(fixtureActorFor(identity("admin"), "doctor")).toBeNull();
     expect(fixtureActorFor(identity("admin"), "patient")).toBeNull();
     expect(fixtureActorFor(identity("patient_complete"), "patient")).toEqual(DEFAULT_PATIENT_ACTOR);
+  });
+
+  it("gives no actor outside fixture mode", () => {
+    expect(fixtureActorFor(identity("doctor_active"), "doctor", { FRONTEND_ADAPTER: "http" })).toBeNull();
+    expect(fixtureActorFor(identity("patient_complete"), "patient", {})).toBeNull();
   });
 
   it("treats only the sign-in redirect as signed out", () => {

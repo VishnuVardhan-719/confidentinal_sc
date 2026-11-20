@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { fail, ok } from "@/lib/api/result";
 import { createBookingsApi } from "@/modules/bookings/api";
 import { createPatientFixtureApi } from "@/modules/patient/fixture";
@@ -143,9 +143,13 @@ describe("patient dashboard: session from fe-b guard", () => {
   });
 
   it("fixture mode maps the patient to the synthetic world; http mode carries no fixture actor", () => {
+    // fixtureActorFor also checks the adapter mode itself.
+    vi.stubEnv("FRONTEND_ADAPTER", "fixture");
+    vi.stubEnv("APP_ENV", "test");
     const allowed = { kind: "allowed" as const, identity: identity("patient_complete"), workspaces: [] };
     expect(patientSessionFrom(allowed, true)).toEqual({ status: "ok", synthetic: true, fixtureActor: DEFAULT_PATIENT_ACTOR });
     expect(patientSessionFrom(allowed, false)).toEqual({ status: "ok", synthetic: false, fixtureActor: null });
+    vi.unstubAllEnvs();
   });
 
   it("login redirect keeps only safe patient paths in next", () => {

@@ -28,7 +28,7 @@ const AREAS: Area[] = [
   { name: "lab", email: PERSONA_EMAILS.labManager, routes: ["/en/lab/dashboard", "/en/lab/orders", "/en/lab/collections"] },
   { name: "ambulance", email: PERSONA_EMAILS.ambulanceOperator, routes: ["/en/ambulance/dashboard", "/en/ambulance/requests", "/en/ambulance/fleet"] },
   { name: "caretaker", email: PERSONA_EMAILS.agencyManager, routes: ["/en/caretaker/dashboard", "/en/caretaker/requests", "/en/caretaker/shifts"] },
-  { name: "admin", email: PERSONA_EMAILS.adminLead, routes: ["/en/admin/dashboard", "/en/admin/providers", "/en/admin/bookings", "/en/admin/cms", "/en/admin/reviews"] },
+  { name: "admin", email: PERSONA_EMAILS.adminLead, routes: ["/en/admin/dashboard", "/en/admin/providers", "/en/admin/bookings", "/en/admin/cms", "/en/admin/reviews", "/en/admin/reviews/log"] },
 ];
 
 const ERROR_TEXT = /something went wrong|application error|unhandled runtime error/i;
