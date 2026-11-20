@@ -10,9 +10,9 @@
 -- requirements), c6..04 V02 (basic, seated); a6..01 org B vehicle; a6..02 org A vehicle
 -- (unregistered); a6..03 IO vehicle; a6..04 IO person; a6..05 S3 person; a6..06 WB person.
 --
--- Storage objects for vehicle documents are inserted as the fixture owner, not through
--- the authenticated upload path: the shared i02_objects_guard does not yet admit vehicle
--- objects (see 20261117001810 and the handoff). Every other step uses the public RPCs.
+-- Storage objects for vehicle documents are inserted as the fixture owner for brevity; the
+-- authenticated upload path through the shared category hook (20261117001591) is exercised
+-- in 051_amb_storage. Every other step uses the public RPCs.
 reset role;
 insert into auth.users(id,email) select ('a1000000-0000-4000-8000-00000000000'||n)::uuid,'p5a-'||n||'@example.invalid' from generate_series(1,5) n;
 update public.profiles set display_name='Synthetic driver one' where id='c1000000-0000-4000-8000-000000000002';

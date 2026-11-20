@@ -5,9 +5,9 @@ begin;
 \ir _p5s_fixture.inc
 \ir _p5a_fixture.inc
 -- P5 ambulance vehicle evidence in Storage (design §5.4, test plan 031; migration 20261117001810).
--- The shared restrictive guard is not extended by a category block (contract §1 rule 1),
--- so this suite checks the predicate directly and asserts that, until the shared fix
--- lands, the authenticated Storage path fails closed. Authored, DB NOT EXECUTED.
+-- The shared restrictive guard admits vehicle objects through the category registry of
+-- 20261117001591; the ambulance block never rebuilds it (contract §1 rule 1). This suite
+-- checks the predicate, the registry row and the authenticated Storage path. Authored, DB NOT EXECUTED.
 
 select pg_temp.as_user('c1000000-0000-4000-8000-000000000001');
 select public.register_ambulance_vehicle(pg_temp.amb_provider(),'a6000000-0000-4000-8000-000000000002','basic',array['seated'],0);
@@ -72,23 +72,54 @@ select pg_temp.assert_true(ambulance_private.vehicle_object_access('provider-ver
 select pg_temp.as_user('c1000000-0000-4000-8000-000000000002');
 select pg_temp.expect_state(format('select * from public.authorize_vehicle_document_read(%L,''owner_view'')',:'doc_id'),'42501','staff cannot take an owner view ticket');
 
--- 031-3 built provider and staff paths are untouched; this file adds two permissive policies only.
+-- 031-3 the ambulance block adds two permissive policies and one registry row. The shared
+-- restrictive guard (001591) reaches the predicate through providers_private.category_object_access;
+-- the built provider and Q06 clauses are unchanged.
 select pg_temp.assert_true((select count(*)=2 from pg_policies where schemaname='storage' and tablename='objects' and policyname like 'amb\_%'
  and permissive='PERMISSIVE'),'two permissive ambulance policies');
-select pg_temp.assert_true((select qual not like '%vehicle_object_access%' and with_check not like '%vehicle_object_access%' from pg_policies
- where schemaname='storage' and tablename='objects' and policyname='i02_objects_guard'),'shared guard unchanged by the ambulance block');
-select pg_temp.assert_true((select qual like '%staff_document_upload%' from pg_policies where schemaname='storage' and tablename='objects' and policyname='i02_objects_guard'),'Q06 read-back clause still present');
--- Until the shared guard admits vehicle objects, the authenticated path fails closed.
+select pg_temp.assert_true(exists(select 1 from providers_private.category_object_checks
+ where checker='ambulance_private.vehicle_object_access(text,text,boolean)'::regprocedure),'ambulance predicate registered with the shared Storage hook');
+select pg_temp.assert_true((select qual like '%category_object_access%' and with_check like '%category_object_access%'
+ and qual not like '%vehicle_object_access%' and with_check not like '%vehicle_object_access%' from pg_policies
+ where schemaname='storage' and tablename='objects' and policyname='i02_objects_guard'),'shared guard admits categories through the registry only');
+select pg_temp.assert_true((select qual like '%staff_document_upload%' and qual like '%object_access%' from pg_policies
+ where schemaname='storage' and tablename='objects' and policyname='i02_objects_guard'),'provider and Q06 clauses still present');
+select pg_temp.as_user('a1000000-0000-4000-8000-000000000001');
+select pg_temp.assert_true(providers_private.category_object_access('provider-verification',:'obj',false),'shared hook answers through the ambulance predicate');
+select pg_temp.as_user('c1000000-0000-4000-8000-000000000002');
+select pg_temp.assert_true(not providers_private.category_object_access('provider-verification',:'obj',false),'shared hook refuses without a ticket');
+
+-- End to end through the authenticated Storage path (RLS evaluated as the caller).
 select pg_temp.as_user('a1000000-0000-4000-8000-000000000002');
 select public.register_ambulance_vehicle('a3000000-0000-4000-8000-000000000001','a6000000-0000-4000-8000-000000000003','basic',array['seated'],0);
 select (public.add_vehicle_document('a6000000-0000-4000-8000-000000000003','insurance','application/pdf',now()+interval '1 year',1))->>'object_name' as io_obj \gset
-select pg_temp.assert_true(ambulance_private.vehicle_object_access('provider-verification',:'io_obj',true),'predicate admits the reserved upload');
-select set_config('p5a.io_obj',:'io_obj',true);
+select (public.add_vehicle_document('a6000000-0000-4000-8000-000000000003','permit','application/pdf',now()+interval '1 year',2))->>'object_name' as io_obj2 \gset
+select set_config('p5a.io_obj',:'io_obj',true), set_config('p5a.io_obj2',:'io_obj2',true), set_config('p5a.obj',:'obj',true);
+set local role authenticated;
+-- The uploading editor stores the reserved object.
+insert into storage.objects(bucket_id,name) values ('provider-verification',current_setting('p5a.io_obj'));
+reset role;
+select pg_temp.assert_true(exists(select 1 from storage.objects where bucket_id='provider-verification' and name=:'io_obj'),'editor upload accepted by the guard');
+-- Another member cannot store someone else's reservation.
+select pg_temp.as_user('c1000000-0000-4000-8000-000000000002');
 set local role authenticated;
 do $$ begin
- insert into storage.objects(bucket_id,name) values ('provider-verification',current_setting('p5a.io_obj'));
- raise exception 'FAIL: restrictive guard admitted a vehicle object before the shared fix';
+ insert into storage.objects(bucket_id,name) values ('provider-verification',current_setting('p5a.io_obj2'));
+ raise exception 'FAIL: guard admitted a vehicle object for a non-uploader';
 exception when insufficient_privilege then null;
+end $$;
+-- Downloads: no ticket, no row.
+do $$ begin
+ if exists(select 1 from storage.objects where bucket_id='provider-verification' and name=current_setting('p5a.obj')) then
+  raise exception 'FAIL: vehicle object visible without a ticket'; end if;
+end $$;
+reset role;
+-- The reader with a live admin_review ticket sees the row.
+select pg_temp.as_user('a1000000-0000-4000-8000-000000000001');
+set local role authenticated;
+do $$ begin
+ if not exists(select 1 from storage.objects where bucket_id='provider-verification' and name=current_setting('p5a.obj')) then
+  raise exception 'FAIL: ticket holder cannot read the vehicle object'; end if;
 end $$;
 reset role;
 \echo 1..1

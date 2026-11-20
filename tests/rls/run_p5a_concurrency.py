@@ -34,7 +34,8 @@ PROVIDER = "c3000000-0000-4000-8000-000000000003"
 R_W1, R_W2 = "c6000000-0000-4000-8000-000000000001", "c6000000-0000-4000-8000-000000000002"
 R_V1, R_V2 = "c6000000-0000-4000-8000-000000000003", "c6000000-0000-4000-8000-000000000004"
 HOLD_SECONDS = 20
-# Application schemas a scratch clone must drop before replaying every migration.
+# Application schemas a scratch clone must drop before replaying every migration. Every
+# <name>_private/<name>_worker schema (doctor_private and later blocks) is dropped by a loop too.
 APP_SCHEMAS = ("public", "identity_private", "providers_private", "catalog_private", "booking_private",
                "payments_private", "payments_worker", "ambulance_private")
 
@@ -198,7 +199,8 @@ def build():
     schema = base.call(["exec", base.CONTAINER, "pg_dump", "-U", "postgres", "-d", "postgres", "--schema-only"], timeout=180)
     sql('create database "' + TARGET + '";', db="postgres")
     sql(without_cron(schema), user="supabase_admin")
-    reset = "".join("drop schema if exists " + s + " cascade;" for s in APP_SCHEMAS)
+    reset = "do $$ declare s text;begin for s in select nspname from pg_namespace where nspname like '%\\_private' or nspname like '%\\_worker' loop execute format('drop schema %I cascade',s);end loop;end $$;"
+    reset += "".join("drop schema if exists " + s + " cascade;" for s in APP_SCHEMAS)
     reset += "create schema public authorization postgres;grant usage on schema public to anon,authenticated,service_role;grant all on schema public to postgres,service_role;"
     reset += "do $$ declare p record;begin for p in select schemaname,tablename,policyname from pg_policies where schemaname='storage' and tablename in ('objects','buckets') loop execute format('drop policy %I on %I.%I',p.policyname,p.schemaname,p.tablename);end loop;end $$;"
     sql(reset, user="supabase_admin")
