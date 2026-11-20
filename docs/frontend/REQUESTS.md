@@ -461,9 +461,13 @@ Machine-written te/hi for: `patient.records.*`, `patient.notifications.*`, `pati
 | R-FE-P-R8-1 | backend + admin | Open | Review moderation contract, capability, decision log and paging |
 | R-FE-P-R9-1 | lead / fe-a | Open | public-nav hero search spec out of date (4 shared e2e failures) |
 | R-FE-P-R9-2 | fe-a | Open | Modal language menu: axe aria-hidden-focus |
-| R-FE-P-R9-3 | lead / fe-e | Fixed on fe2-p; regressed on integration (R9-P4) | Admin sign-in return path |
-| R-FE-P-R9-4 | fe-e | Open | Lab/ambulance/caretaker sign-in returns to the dashboard |
+| R-FE-P-R9-3 | lead / fe-e | Fixed on fe2-p; regressed on integration; patch in R9-6 | Admin sign-in return path |
+| R-FE-P-R9-4 | fe-e | Patch in R9-6 | Lab/ambulance/caretaker sign-in returns to the dashboard |
 | R-FE-P-R9-5 | fe-a | Open | `a11y.spec.ts` axe can run during the hero fade-in (load-dependent color-contrast) |
+| R-FE-P-R9-6 | fe-int2 | Patch ready | Return-path patch for AdminFrame and the lab/ambulance/caretaker frames (fixes R9-3 on integration and R9-4) |
+| R-FE-P-R9-7 | fe-int2 / fe-e / fe-d | Open | Provider a11y and keyboard sweep: what was and was not verified |
+| R-FE-P-R9-8 | fe-a / fe2-d | Open | te/hi at 390px: notification row title squeezed; patient bottom-nav label truncated |
+| R-FE-P-R9-9 | lead | DELETE-CANDIDATES, not deleted | Dead or export-only code in fe-p files, with grep proof |
 
 ### R-FE-P-R7-1 Family members contract (owner: backend)
 No endpoint in docs/API_CONTRACTS.md. The http adapter (`src/modules/family-members/http.ts`) returns `gated`. Proposed:
@@ -743,6 +747,7 @@ This index tidies the entries above without editing them (the file is append-onl
 - fe2-p now sends `next=/{locale}/admin/reviews/log` from the decision log: `AdminRouteGate` takes a fixed `subPath`, `adminPagePath` accepts plain lowercase segments only, and `loginRedirectPath` still reduces `next` to an internal locale-prefixed path with no query (tests/unit/modules-operations/admin-return-path.test.ts).
 - fe2-p has no login page. The consumer that reads `next` after sign-in is fe-b's `auth-page.tsx` + `normalizeInternalPath` on feat/fe2-integration, which already rejects off-site and `/api` targets. The end-to-end landing (sign in, then arrive on the log) can only be checked after integration.
 
+- R9-P5: ready-to-apply patch in R-FE-P-R9-6.
 - R9-P4 re-check: integration regressed this. On feat/fe2-integration, `AdminFrame` calls `adminPrincipal(adminPath(locale, "dashboard"))`. That call reaches `requireOperationsSession` -> `requireRole`, which redirects signed-out visitors to `/login?next=/{locale}/admin/dashboard` before the layout's "render children, let the page gate redirect" branch runs. So on integration every admin page, including the decision log, again returns to the dashboard.
   - Fix (in `admin-frame.tsx`, merge-resolved by the lead): read the session in the layout without redirecting, for example `(await authorizeOperationsSession("admin")).admin`. Keep `requireOperationsSession` with the page path in `AdminRouteGate` only.
   - `tests/e2e/admin-review-moderation.spec.ts` "redirects to login" asserts `next` equals the page path. It will fail on integration until this is fixed.
@@ -1192,3 +1197,198 @@ Checked against `origin/task/{I01-auth-rls,I02-provider-onboarding,C01-catalog,B
 - **Defects fixed:** (1) dropdown menu items (header Services, language switcher) had no visible keyboard focus ring: `outline-none` also zeroes Tailwind's `--tw-outline-style`, so `focus-visible:outline-3` drew nothing; now `focus-visible:outline-solid` + 3px focus outline inset. (2) Radix menus were modal, which set `aria-hidden` on the page while its links stayed focusable (axe `aria-hidden-focus` with a menu open); the shared `DropdownMenu` is now non-modal by default (APG menu button: Escape/Tab close, focus returns to the trigger). (3) `/find` built an absolute redirect from the Host header; now a relative 303 (`finderRedirectPath`). (4) The finder had no offline or bad-link state: offline submit now keeps the PIN and service and shows an alert instead of a failed navigation; an unusable `/find` link returns to `/{locale}?finder=invalid#finder`, the finder explains it once and drops the flag from the URL. New en/te/hi strings `landing.finder.errors.offline|invalidLink` (te/hi machine-written; REVIEW_NEEDED).
 - **New checks:** `tests/e2e/public-a11y.spec.ts` (390 + 1280, en/te/hi): skip link first and focus lands in main; header tab stops visible, left to right, with a focus ring; desktop menus by keyboard (open, ring, Escape restores focus, choose a language), axe with a menu open; mobile menu dialog named, Tab/Shift+Tab trapped, axe with it open, Escape and Close restore focus; finder by keyboard only; every public page x locale has no element past the viewport and no clipped text (plus finder errors and the 404 page); finder offline / bad link / FAQ zero results; unique titles and descriptions, canonical, hreflang en/te/hi/x-default, noindex outside production, 404 noindex, robots.txt. Unit: `seo-guard.test.ts` (page <-> PUBLIC_PAGES <-> meta keys, unique localized meta, alternates, robots rules, sitemap with /lab-tests, every private page noindex), `finder-route.test.ts`.
 - **Not on this branch:** the /doctors and /lab-tests directory filter drawers and their zero-result states are feat/fe2-c's (fe-q); not tested here. A no-JS visitor sent back by `/find` sees the finder without the explanation (the page is static; browsers already block invalid input natively).
+
+### R-FE-P-R9-6 (to fe-int2) - ready-to-apply return-path patch for the area layouts (fixes R9-3 on integration and R9-4)
+Integration owns `src/components/admin/admin-frame.tsx`, `src/components/admin/ops/server.ts` and `src/components/{lab,ambulance,caretaker}/*-frame.tsx`, so fe-p did not edit them.
+
+- **What it changes:** a new `isSignedOut(area)` in `ops/server.ts` calls `authorizeOperationsSession(area)`, which never redirects, and returns true only when `guard === null` (nobody signed in). Each area layout calls it first. When it is true, the layout renders `<>{children}</>` with no shell, and the page's own `*RouteGate` redirects with that page's path as `next`.
+- **What stays the same for signed-in users:** the existing redirecting read still runs, so a wrong role still goes to the user's own landing page, a user without grants still gets the denied view, and allowed users get the shell.
+- **Base:** `feat/fe2-integration` at `fec9da1`. The `index` lines carry the blob ids, so `git apply --3way` also works after small drift.
+- **Apply:** save the block below as `r9-6.diff`, then run `git apply --check r9-6.diff && git apply r9-6.diff` on the integration branch.
+
+**How fe-p verified it (R9-P5, no integration branch or worktree touched):**
+- `git apply --cached --check` passed on a temporary index read from `feat/fe2-integration`.
+- On a `git archive` export of integration with the patch applied (`node_modules` linked from fe2-p): `next typegen` + `tsc --noEmit` 0 errors, eslint on the 5 files 0 errors, `next build --webpack` passed.
+- Served on port 3384, signed out:
+  - `/en/lab/orders` -> `next=%2Fen%2Flab%2Forders`
+  - `/te/ambulance/trips` -> `next=%2Fte%2Fambulance%2Ftrips`
+  - `/hi/caretaker/shifts` -> `next=%2Fhi%2Fcaretaker%2Fshifts`
+  - `/en/admin/reviews/log` -> `next=%2Fen%2Fadmin%2Freviews%2Flog`
+  - `/en/admin/bookings` -> `next=%2Fen%2Fadmin%2Fbookings`
+  - `/en/doctor/visits` -> unchanged (`next=%2Fen%2Fdoctor%2Fvisits`)
+- Served on port 3384, signed in through the fe-b form:
+  - lab manager on `/en/lab/orders`: page with shell
+  - lab manager on `/en/admin/reviews`: sent to `/en/lab/dashboard` (own landing)
+  - patient on `/en/lab/orders`: sent to `/en/patient/dashboard`
+  - admin lead on `/en/admin/reviews/log`: page with shell
+  - admin without grants on `/en/admin/dashboard`: denied view
+  - care manager and ambulance operator: their pages with shell
+- **Suggested follow-up test:** add a frame check to `tests/unit/modules-operations/provider-route-gates.test.ts`. Each `*Frame` body should call `isSignedOut` before any redirecting session read.
+
+```diff
+diff --git a/src/components/admin/admin-frame.tsx b/src/components/admin/admin-frame.tsx
+index f1c6139..c2910af 100644
+--- a/src/components/admin/admin-frame.tsx
++++ b/src/components/admin/admin-frame.tsx
+@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
+ import { redirect } from "next/navigation";
+ import type { ReactNode } from "react";
+ import { AreaShell, OpsFrame } from "@/components/admin/ops/area-shell";
+-import { adminPrincipal, currentLocale } from "@/components/admin/ops/server";
++import { adminPrincipal, currentLocale, isSignedOut } from "@/components/admin/ops/server";
+ import { AccessDenied } from "@/components/admin/ops/states";
+ import type { ShellIcon } from "@/components/shared/app-shell";
+ import type { AppLocale } from "@/i18n/routing";
+@@ -33,6 +33,8 @@ const PRIMARY = ["dashboard", "bookings", "support", "cms"] as const;
+  */
+ export async function AdminFrame({ children }: { children: ReactNode }) {
+   const locale = await currentLocale();
++  // Signed out: no shell, and the page's AdminRouteGate redirects with its own path as `next`.
++  if (await isSignedOut("admin")) return <>{children}</>;
+   const principal = await adminPrincipal(adminPath(locale, "dashboard"));
+   const access = decideAdminRoute(principal, "dashboard", locale, adminPath(locale, "dashboard"));
+   if (access.kind === "unauthenticated") return <>{children}</>;
+diff --git a/src/components/admin/ops/server.ts b/src/components/admin/ops/server.ts
+index 6bfcceb..46963e3 100644
+--- a/src/components/admin/ops/server.ts
++++ b/src/components/admin/ops/server.ts
+@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
+ import { isAppLocale, type AppLocale } from "@/i18n/routing";
+ import type { AdminPrincipal } from "@/modules/admin/capabilities";
+ import type { AreaAccess, GuardSession } from "@/modules/admin/access";
+-import { requestedWorkspaceKey, requireOperationsSession } from "@/modules/admin/session";
++import { authorizeOperationsSession, requestedWorkspaceKey, requireOperationsSession, type OperationsArea } from "@/modules/admin/session";
+ import type { ProviderArea } from "@/modules/admin/workspace";
+ 
+ /** SERVER-ONLY helpers shared by the lab, ambulance, caretaker and admin route segments. */
+@@ -28,6 +28,15 @@ export async function providerAreaAccess(
+   return decide(guard, key);
+ }
+ 
++/**
++ * True only when nobody is signed in. Never redirects. Area layouts call this first: signed out,
++ * they render their children without a shell so the page's own gate redirects with the page's
++ * path as `next` (a layout cannot read the URL, so a layout redirect always used the dashboard).
++ */
++export async function isSignedOut(area: OperationsArea): Promise<boolean> {
++  return (await authorizeOperationsSession(area)).guard === null;
++}
++
+ export async function adminPrincipal(path?: string): Promise<AdminPrincipal | null> {
+   const locale = await currentLocale();
+   return (await requireOperationsSession("admin", { locale, path })).admin;
+diff --git a/src/components/ambulance/ambulance-frame.tsx b/src/components/ambulance/ambulance-frame.tsx
+index f990315..adc5c02 100644
+--- a/src/components/ambulance/ambulance-frame.tsx
++++ b/src/components/ambulance/ambulance-frame.tsx
+@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
+ import { redirect } from "next/navigation";
+ import type { ReactNode } from "react";
+ import { AreaChooser, AreaShell, AreaWorkspaceSwitcher, OpsFrame } from "@/components/admin/ops/area-shell";
+-import { currentLocale, providerAreaAccess } from "@/components/admin/ops/server";
++import { currentLocale, isSignedOut, providerAreaAccess } from "@/components/admin/ops/server";
+ import { AccessDenied } from "@/components/admin/ops/states";
+ import type { ShellIcon } from "@/components/shared/app-shell";
+ import type { AppLocale } from "@/i18n/routing";
+@@ -40,6 +40,8 @@ async function Call112() {
+ 
+ export async function AmbulanceFrame({ children }: { children: ReactNode }) {
+   const locale = await currentLocale();
++  // Signed out: no shell, and the page's AmbulanceRouteGate redirects with its own path as `next`.
++  if (await isSignedOut("ambulance")) return <>{children}</>;
+   const access = await providerAreaAccess("ambulance", (s, key) => decideAmbulanceRoute(s, "dashboard", locale, ambulancePath(locale, "dashboard"), key), ambulancePath(locale, "dashboard"));
+   if (access.kind === "unauthenticated") redirect(access.loginPath);
+   if (access.kind === "denied") {
+diff --git a/src/components/caretaker/caretaker-frame.tsx b/src/components/caretaker/caretaker-frame.tsx
+index 8df560a..1418d6b 100644
+--- a/src/components/caretaker/caretaker-frame.tsx
++++ b/src/components/caretaker/caretaker-frame.tsx
+@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
+ import { redirect } from "next/navigation";
+ import type { ReactNode } from "react";
+ import { AreaChooser, AreaShell, AreaWorkspaceSwitcher, OpsFrame } from "@/components/admin/ops/area-shell";
+-import { currentLocale, providerAreaAccess } from "@/components/admin/ops/server";
++import { currentLocale, isSignedOut, providerAreaAccess } from "@/components/admin/ops/server";
+ import { AccessDenied } from "@/components/admin/ops/states";
+ import type { ShellIcon } from "@/components/shared/app-shell";
+ import type { AppLocale } from "@/i18n/routing";
+@@ -25,6 +25,8 @@ const PRIMARY = ["dashboard", "requests", "assignments", "shifts"] as const;
+ 
+ export async function CaretakerFrame({ children }: { children: ReactNode }) {
+   const locale = await currentLocale();
++  // Signed out: no shell, and the page's CaretakerRouteGate redirects with its own path as `next`.
++  if (await isSignedOut("caretaker")) return <>{children}</>;
+   const access = await providerAreaAccess("caretaker", (s, key) => decideCaretakerRoute(s, "dashboard", locale, caretakerPath(locale, "dashboard"), key), caretakerPath(locale, "dashboard"));
+   if (access.kind === "unauthenticated") redirect(access.loginPath);
+   if (access.kind === "denied") {
+diff --git a/src/components/lab/lab-frame.tsx b/src/components/lab/lab-frame.tsx
+index c9a82d3..aa4f38f 100644
+--- a/src/components/lab/lab-frame.tsx
++++ b/src/components/lab/lab-frame.tsx
+@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
+ import { redirect } from "next/navigation";
+ import type { ReactNode } from "react";
+ import { AreaChooser, AreaShell, AreaWorkspaceSwitcher, OpsFrame } from "@/components/admin/ops/area-shell";
+-import { currentLocale, providerAreaAccess } from "@/components/admin/ops/server";
++import { currentLocale, isSignedOut, providerAreaAccess } from "@/components/admin/ops/server";
+ import { AccessDenied } from "@/components/admin/ops/states";
+ import type { ShellIcon } from "@/components/shared/app-shell";
+ import type { WorkspaceLoaderContext } from "@/modules/admin/access";
+@@ -25,6 +25,8 @@ const PRIMARY = ["dashboard", "orders", "collections", "reports"] as const;
+ /** Lab layout body: unauthenticated -> login, no lab workspace -> denied, several -> choose, else shell. */
+ export async function LabFrame({ children }: { children: ReactNode }) {
+   const locale = await currentLocale();
++  // Signed out: no shell, and the page's LabRouteGate redirects with its own path as `next`.
++  if (await isSignedOut("lab")) return <>{children}</>;
+   const access = await providerAreaAccess("lab", (s, key) => decideLabRoute(s, "dashboard", locale, labPath(locale, "dashboard"), key), labPath(locale, "dashboard"));
+   if (access.kind === "unauthenticated") redirect(access.loginPath);
+   if (access.kind === "denied") {
+```
+
+### R-FE-P-R9-7 (to fe-int2 / fe-e / fe-d) - provider dashboards and request detail pages: axe and keyboard-only check (R9-P5)
+- **Check:** axe WCAG 2.1 A/AA (moderate and above fail) plus horizontal overflow. A keyboard walk tabs through every stop until focus wraps around and requires each stop to have a visible focus ring (outline of 2px or more, or a box-shadow), to be on screen, and not to be covered by a sticky bar (`elementFromPoint`). Run at 390 and 1280, in en and te, with reduced motion. The probe script is `.context/r9p5-fep-a11y.mjs` in the fe2-p worktree. It is untracked and takes `admin` or `doctor` as its argument.
+- **Verified on fe2-p's own build (real CSS), 0 findings:**
+  - admin dashboard, `/admin/reviews`, `/admin/reviews?status=rejected`, `/admin/reviews/log` (fixture moderator)
+  - doctor dashboard, `/doctor/requests`, `/doctor/requests/<id>` (`FIXTURE_DOCTOR_SESSION=assigned`)
+  - The fe-p moderation pages are now in e2e: `admin-review-moderation.spec.ts` "keyboard only (en, te)".
+- **Not verified:** the lab, ambulance and caretaker dashboards and detail pages.
+  - fe2-p has no session for those areas.
+  - The patched integration export above rendered and passed axe and the keyboard walk for all of them (lab `orders/fx-lab-order-1`, ambulance `trips/fx-trip-1`, caretaker `assignments/fx-care-asg-1`, admin dashboard). However, that `--webpack` build from a temp folder shipped almost no Tailwind utilities (no `lg:hidden`; the sidebar showed at 390). So contrast, overflow and focus-ring results from that run do not count.
+  - Please run the same probe on a real integration build: sign in as `ops.lab.manager`, `ops.ambulance.operator`, `ops.care.manager` and `ops.admin.lead` (all `@example.invalid`).
+- **Observation for fe-d:** on `/te/doctor/requests/<id>` the h1 is the fixture service title "Home doctor visit (synthetic)" in English. That is synthetic data, not a UI string, but real service names will need a localized display name or a `lang` attribute when the backend sends one.
+
+### R-FE-P-R9-8 (to fe-a / fe2-d) - te/hi long strings at 390px on the patient inbox pages (R9-P6)
+- **Probe:** `.context/r9p6-overflow.mjs` (untracked) on fe2-p's "on" server, at 390 and 320 px in te, hi and en, on `/patient/notifications` and `/patient/settings/reminders`. It also covers the reminders error-summary and all-channels-off state.
+  - Result: page overflow 0 everywhere, and no element sticks out of the viewport.
+  - Sanity check: an injected 300-character Hindi word produced 1839px of overflow, so the probe does detect overflow.
+  - The te/hi error state is now in e2e: `patient-reminders.spec.ts` "te and hi: the error summary and all-off warning wrap without horizontal scroll".
+- **Layout issues outside fe-p files (no overflow, but cramped or cut off):**
+  - **`src/components/notifications/notification-list.tsx` (fe-a):** in hi/te at 390 the "Mark as read" button (hi "पढ़ा हुआ चिह्नित करें") shares a row with the title. That squeezes the title column to about 110px, so "बुकिंग का नया अनुरोध भेजा गया" wraps onto 3 lines. Screenshot: `.context/shots/r9p6-hi-notifications-390.png`. Suggested fix: on the action `<div>`, add `basis-full pl-5.5 sm:basis-auto sm:pl-0`, so the buttons drop below the text under the `sm` breakpoint.
+  - **Patient bottom navigation (shell, fe2-d / fe-a):** in te at 390 the "Find doctors" tab label is cut to "డాక్టర్‌ను వెత…" by `truncate`. Suggested fix: a shorter te label for the tab (for example "డాక్టర్లు"), or allow two lines (`line-clamp-2`, no `truncate`).
+
+### R-FE-P-R9-9 (to lead) - DELETE-CANDIDATES in fe-p files (R9-P6 self-review; nothing deleted)
+- **Scope:** every `src/` file changed by a non-merge `(fe-p)` commit since the merge-base with `develop` (`d532f09`), 115 files, plus the new untracked R9-P6 files.
+- **Method:** each `export` was checked with `git grep --untracked -n -w <name> -- src tests`. A candidate has no hit outside its own file.
+- **The earlier "notifications api/actions/inbox leftovers" are not dead.** All three are imported:
+  - `markNotificationReadAction` (`patient/notifications/actions.ts`): imported by `patient/notifications/page.tsx:10`
+  - `patientNotificationsApi` (`patient/notifications/api.ts`): imported by `actions.ts:7` and `page.tsx:11`
+  - `NotificationsInbox` (`components/patient/notifications-inbox.tsx`): imported by `patient/notifications/_components/notifications-body.tsx:10`
+- **Dead code (no use anywhere, including its own file):**
+  - `src/modules/reviews/schemas.ts:40` `export const reviewSchema`. Proof: `git grep --untracked -n -w reviewSchema -- src tests` returns only `src/modules/reviews/schemas.ts:40`. It was meant for validating http responses once R-FE-P-R7-3 has an endpoint. Either delete it or use it in `createReviewsHttpApi` then.
+  - `src/components/patient/reschedule-request.ts:15` `export type RescheduleRequest`. Proof: `git grep --untracked -n -w RescheduleRequest -- src tests` returns only `src/components/patient/reschedule-request.ts:15`. `rescheduleRequestSchema` and `checkReschedule` are used; the inferred type is not.
+- **Export-only:** used inside their own file but imported nowhere. Dropping the `export` keyword is enough; the code is live.
+  - `src/app/[locale]/patient/family/_lib.ts` `FLASH`
+  - `src/components/patient/booking-detail-logic.ts` `CancelState`, `TimelineEntry`
+  - `src/components/patient/bookings-query.ts` `BookingFilter`, `BookingsQuery`
+  - `src/modules/family-members/fixture.ts` `FamilyFixtureOptions`
+  - `src/modules/family-members/schemas.ts` `familyMemberInputSchema`, `FamilyValidation`
+  - `src/modules/reminder-prefs/fixture.ts` `ReminderFixtureOptions`
+  - `src/modules/reminder-prefs/schemas.ts` `reminderPrefsInputSchema`, `ReminderValidation`
+  - `src/modules/reviews/fixture.ts` `MODERATION_QUEUE_OWNER`, `QUEUE_FIXTURE_IDS`, `ReviewsFixtureOptions`, `SEEDED_MODERATOR_ID`
+  - `src/modules/reviews/schemas.ts` `moderationCursorSchema`, `reviewInputSchema`, `ReviewValidation`
+  - `src/modules/reviews/status.ts` `ReviewEligibility`
+  - `src/modules/saved-providers/fixture.ts` `SavedFixtureOptions`
+- **Other owners' files fe-p touched, same check (for their owners):**
+  - `src/modules/admin/capabilities.ts` (`BACKEND_ADMIN_CAPABILITIES`, `PROPOSED_ADMIN_CAPABILITIES`, `CapabilityContext`), `src/modules/admin/routes.ts` (`ADMIN_ROUTES`, `ADMIN_ROUTE_CAPABILITIES`) and `src/modules/admin/session.ts` (`OperationsSession`): export-only (fe-e).
+  - `src/components/notifications/notification-list.tsx:15` `MarkReadResult` (fe-a) and `src/modules/notifications/schemas.ts:8` `NotificationReadChange` (fe-c): export-only types, used only inside their own files.
+- **Message keys:** a scan of `admin.reviews.*`, `patientAccount.*` and `patient.notifications.*` (en) found no key that is not referenced literally or through a dynamic `parent.${...}` lookup. Script: `.context/r9p6-keys.mjs`.

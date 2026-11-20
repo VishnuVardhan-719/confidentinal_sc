@@ -6,8 +6,8 @@ Status at R9-P3 (branch `feat/fe2-p`): fixture adapters only. Both http adapters
 
 | Route | What it does | Files |
 |---|---|---|
-| `/{locale}/patient/notifications` | In-app inbox, newest first. Each item shows only the event kind and time, never health details. It links to the booking page when the server names a booking. Mark-as-read is optimistic and rolls back on failure. | `src/app/[locale]/patient/notifications/{page,actions,api}.ts(x)`, `src/components/patient/notifications-inbox.tsx`, `src/components/notifications/*` |
-| `/{locale}/patient/settings/reminders` | Visit-reminder channels and quiet hours. Saves are version-checked. | `src/app/[locale]/patient/settings/reminders/*`, `src/modules/reminder-prefs/*` |
+| `/{locale}/patient/notifications` | In-app inbox, newest first. Each item shows only the event kind and time, never health details. It links to the booking page when the server names a booking. Mark-as-read is optimistic and rolls back on failure. | `src/app/[locale]/patient/notifications/{page,actions,api}.ts(x)`, `_components/notifications-body.tsx` (all states), `src/components/patient/notifications-inbox.tsx`, `src/components/notifications/*` |
+| `/{locale}/patient/settings/reminders` | Visit-reminder channels and quiet hours. Saves are version-checked. | `src/app/[locale]/patient/settings/reminders/*` (`_components/reminder-body.tsx` renders the states), `src/modules/reminder-prefs/*` |
 
 The data layer for the inbox (`src/modules/notifications/*`, `src/fixtures/marketplace/notifications.ts`) is fe-c's marketplace module. fe-p owns the page, the server action, the page-level adapter choice and the inbox UI.
 
@@ -16,7 +16,7 @@ The data layer for the inbox (`src/modules/notifications/*`, `src/fixtures/marke
 - Kinds with copy: `booking_requested`, `booking_accepted`, `booking_declined`, `booking_cancelled`, `payment_update`, `report_available`, `shift_update`. An unknown kind renders as a generic "You have an update".
 - Links: only `/patient/bookings/{bookingId}`, built on the server from a validated uuid. `isInternalPath` refuses anything that is not a single-slash internal path.
 - Mark read: the server action `markNotificationReadAction(id, expectedVersion)` re-validates the uuid and version and re-checks the patient session. A version mismatch returns `conflict`, and the UI restores the item's earlier state. Nothing is logged.
-- States: `gated` shows "not available yet" with a link to bookings, never an empty inbox that looks real. `forbidden`/`not_found` show a denied notice. Other errors show an inline error with retry. Rows that fail `notificationSchema` are dropped.
+- States: `gated` shows "not available yet" with a link to bookings, never an empty inbox that looks real. `forbidden`/`not_found` show a denied notice. Other errors show an inline error with retry. If any row fails `notificationSchema`, the whole list shows an error with retry (never a partial inbox).
 - Fixture scenarios (server env, fixture mode only): `FIXTURE_NOTIFICATION_SCENARIO=empty` gives the empty inbox; without it the inbox has unread items.
 - Contract: there is no in-app list or mark-read endpoint. The outbox is not an inbox contract (see the R-E entries near the top of `REQUESTS.md`).
 
@@ -70,7 +70,7 @@ Items 1 to 4 block any live SMS or WhatsApp sending. They are not needed for the
 
 ## Tests
 
-- Unit: `tests/unit/modules-patient/reminder-prefs.test.ts` (validation, quiet-hours rule across midnight, version conflicts, adapter gating); `tests/unit/ui-phase2.test.ts` (inbox list, read state, internal links); `tests/unit/modules-marketplace/*` (notification fixtures and optimistic read with rollback).
+- Unit: `tests/unit/modules-patient/inbox-states.test.ts` (both pages: loading, empty, error, gated, denied, malformed and ready, in en/te/hi); `tests/unit/modules-patient/reminder-prefs.test.ts` (validation, quiet-hours rule across midnight, version conflicts, adapter gating); `tests/unit/ui-phase2.test.ts` (inbox list, read state, internal links); `tests/unit/modules-marketplace/*` (notification fixtures and optimistic read with rollback).
 - e2e (fixture servers, `pwsh .context/fep-e2e-all.ps1`):
   - `tests/e2e/patient-reminders.spec.ts`: IST guidance, validation and focus, an overnight window that persists, all-channels-off warning, stale-tab conflict, te/hi, guest redirect with a safe `next`, controls disabled until hydration.
   - `tests/e2e/patient-records.spec.ts`: inbox flows.

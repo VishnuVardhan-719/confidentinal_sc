@@ -125,6 +125,42 @@ test.describe("review moderation (synthetic moderator)", () => {
     await expect(main.getByRole("heading", { level: 2, name: /^Published: \d+ reviews?$/ })).toBeVisible();
     await expect(main.getByRole("navigation", { name: "Review pages" })).toHaveCount(0);
   });
+  test("keyboard only (en, te): every Tab stop is visible, ringed and not covered; axe clean", async ({ page }) => {
+    for (const locale of ["en", "te"]) {
+      for (const path of ["/admin/reviews", "/admin/reviews?status=rejected", "/admin/reviews/log"]) {
+        await page.goto(`/${locale}${path}`);
+        await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toBeVisible();
+        await page.emulateMedia({ reducedMotion: "reduce" });
+        await expectAxeClean(page);
+        await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+        const seen: string[] = [];
+        const problems: string[] = [];
+        for (let n = 0; n < 60; n++) {
+          await page.keyboard.press("Tab");
+          const stop = await page.evaluate(() => {
+            const el = document.activeElement as HTMLElement | null;
+            if (!el || el === document.body) return null;
+            const cs = getComputedStyle(el);
+            const b = el.getBoundingClientRect();
+            const ring = (cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) >= 2) || (cs.boxShadow !== "none" && cs.boxShadow !== "");
+            const onScreen = b.width > 0 && b.height > 0 && b.bottom > 0 && b.right > 0 && b.top < innerHeight && b.left < innerWidth;
+            const hit = document.elementFromPoint(Math.min(Math.max(b.left + b.width / 2, 0), innerWidth - 1), Math.min(Math.max(b.top + b.height / 2, 0), innerHeight - 1));
+            const covered = onScreen && hit !== null && hit !== el && !el.contains(hit) && !hit.contains(el);
+            const name = (el.getAttribute("aria-label") ?? el.textContent ?? el.tagName).trim().replace(/\s+/g, " ").slice(0, 40);
+            return { key: `${el.tagName}|${name}|${Math.round(b.top + scrollY)}|${Math.round(b.left)}`, name, ring, onScreen, covered };
+          });
+          if (!stop) continue;
+          if (seen.includes(stop.key)) break;
+          seen.push(stop.key);
+          if (!stop.ring) problems.push(`no ring: ${stop.name}`);
+          if (!stop.onScreen) problems.push(`off screen: ${stop.name}`);
+          if (stop.covered) problems.push(`covered: ${stop.name}`);
+        }
+        expect(seen.length, `${locale}${path} tab stops`).toBeGreaterThanOrEqual(3);
+        expect(problems, `${locale}${path}`).toEqual([]);
+      }
+    }
+  });
   test("te and hi render the queue without raw keys and pass axe", async ({ page }) => {
     for (const locale of ["te", "hi"]) {
       for (const path of ["/admin/reviews", "/admin/reviews/log"]) {

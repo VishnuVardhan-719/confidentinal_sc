@@ -140,6 +140,28 @@ test.describe("reminder preferences (signed-in)", () => {
     await context.close();
   });
 
+  test("te and hi: the error summary and all-off warning wrap without horizontal scroll", async ({ page }) => {
+    for (const locale of ["te", "hi"]) {
+      await page.goto(`/${locale}/patient/settings/reminders`);
+      const main = page.getByRole("main");
+      const save = main.locator('button[type="submit"]');
+      await expect(save).toBeEnabled();
+      const quiet = main.locator('input[name="quiet-enabled"]');
+      if (!(await quiet.isChecked())) await quiet.check();
+      await main.locator('input[name="quiet-start"]').fill("07:00");
+      await main.locator('input[name="quiet-end"]').fill("07:00");
+      for (const box of await main.locator('input[type="checkbox"][name^="channel-"]').all()) if (await box.isChecked()) await box.uncheck();
+      await save.click();
+      await expect(main.getByRole("alert").first()).toBeFocused();
+      await expectNoHorizontalScroll(page);
+      // Nothing in main may stick out of the viewport (long Telugu/Hindi words must wrap).
+      const outside = await main.evaluate((m) => {
+        const vw = document.documentElement.clientWidth;
+        return [...m.querySelectorAll("*")].filter((el) => { const r = el.getBoundingClientRect(); return r.width > 0 && (r.right > vw + 1 || r.left < -1); }).length;
+      });
+      expect(outside, `${locale}: elements outside the viewport`).toBe(0);
+    }
+  });
   test("te and hi render without raw keys and pass axe", async ({ page }) => {
     for (const locale of ["te", "hi"]) {
       await page.goto(`/${locale}/patient/settings/reminders`);
