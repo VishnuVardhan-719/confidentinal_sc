@@ -1,3 +1,4 @@
+import { assertFixtureEnvironment } from "@/lib/api/mode";
 import { emptyDraftContent, type ClinicalDraftContent } from "@/modules/clinical/schemas";
 import type { SignedConsultation } from "@/modules/clinical/types";
 import type { BookingState, ChallengeStatus, PaymentStateRef, VisitPhase } from "@/modules/doctor/types";
@@ -5,7 +6,7 @@ import type { BookingState, ChallengeStatus, PaymentStateRef, VisitPhase } from 
 /**
  * SYNTHETIC fixture world for the doctor / clinical / records modules.
  * Every person, ID, reference and value here is fictional. Never use real patient data.
- * Fixture adapters are refused when APP_ENV=production (src/lib/api/mode.ts).
+ * Fixture adapters are refused outside APP_ENV development/test/preview (src/lib/api/mode.ts).
  */
 export const SYNTHETIC = true as const;
 
@@ -320,12 +321,12 @@ export type FixtureActor = { role: "doctor"; doctorId: string } | { role: "patie
 export const NO_ACTOR: FixtureActor = { role: "none" };
 
 /**
- * Refuse fixtures in production even when a constructor is imported directly. The real process
- * env is authoritative: an injected env can add the production flag but never remove it.
+ * Refuse fixtures outside APP_ENV development/test/preview (and whenever VERCEL_ENV=production),
+ * even when a constructor is imported directly. The real process env is authoritative: an injected
+ * env can add a refusal but never lift one (src/lib/api/mode.ts fixtureRefusal).
  */
 export function assertFixtureAllowed(env?: Record<string, string | undefined>): void {
-  const realEnv = typeof process !== "undefined" ? process.env.APP_ENV : undefined;
-  if (realEnv === "production" || env?.APP_ENV === "production") throw new Error("Synthetic fixtures are disabled in production");
+  assertFixtureEnvironment(env);
 }
 export const DEFAULT_DOCTOR_ACTOR: FixtureActor = { role: "doctor", doctorId: FIXTURE_IDS.doctorAssigned };
 export const DEFAULT_PATIENT_ACTOR: FixtureActor = { role: "patient", patientId: FIXTURE_IDS.patientA };

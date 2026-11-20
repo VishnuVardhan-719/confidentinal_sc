@@ -1,12 +1,14 @@
+import { assertFixtureEnvironment } from "@/lib/api/mode";
+
 /**
  * Second line of defence behind getAdapterMode(): fixture adapters refuse to construct
- * when APP_ENV=production, even if someone imports them directly. The real process
- * environment stays authoritative: an injected env object cannot override it.
+ * outside the allowlisted environments, even if someone imports them directly. One shared check
+ * (src/lib/api/mode.ts fixtureRefusal, REQUESTS R-FE-D-42): APP_ENV development/test/preview/staging,
+ * or unset under next dev/vitest; VERCEL_ENV=production always refuses. The real process
+ * environment stays authoritative: an injected env object can add a refusal, never lift one.
  */
 export function assertFixtureAllowed(env: Record<string, string | undefined> = process.env): void {
-  if (env.APP_ENV === "production" || process.env.APP_ENV === "production") {
-    throw new Error("Fixture adapter is not allowed when APP_ENV=production");
-  }
+  assertFixtureEnvironment(env);
 }
 
 export type FixtureOptions = {
