@@ -16,6 +16,7 @@ import { COLLECTION_METHODS, collectionInputSchema, type CollectionInput, type C
 import { badgeFor, parseRupeesToPaise } from "./kit";
 import { useClinicalFormat } from "./use-format";
 import { useHydrated } from "./use-hydrated";
+import { HydrationStatus, hydrationBusy } from "./hydration-status";
 
 /**
  * DC10 provider-recorded cash / direct-UPI collection. Separate from the gateway payment state
@@ -96,7 +97,8 @@ export function CollectionForm({
       ) : !canRecord ? (
         <p className="text-muted">{t("notAvailable")}</p>
       ) : (
-        <form onSubmit={submit} noValidate className="grid max-w-form gap-5">
+        <form onSubmit={submit} noValidate className="grid max-w-form gap-5" {...hydrationBusy(hydrated)}>
+      <HydrationStatus hydrated={hydrated} />
           <ErrorSummary errors={errors} focusKey={attempt} />
           <Field id={ids.method} label={t("methodLabel")} required error={fieldError(ids.method)}>
             {(control) => (

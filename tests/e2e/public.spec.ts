@@ -69,7 +69,17 @@ test("unknown routes and unpublished stories show the localized 404", async ({ p
     ["/hi/stories/anything", "हमें वह पेज नहीं मिला"],
   ] as const) {
     const res = await page.goto(url);
-    expect(res?.status()).toBe(404);
+    let status = res?.status();
+    if (status === 200 && url.includes("/stories/")) {
+      // REQUESTS R-FE-D-44: under cacheComponents the FIRST request for each new story slug on a
+      // fresh server streams the fallback shell (HTTP 200) before notFound() resolves; later requests
+      // are a cached 404. That first response must still be the localized not-found page and noindex.
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText(title);
+      await expect(page.locator('meta[name="robots"][content*="noindex"]')).not.toHaveCount(0);
+      test.info().annotations.push({ type: "cold-soft-404", description: url });
+      status = (await page.reload())?.status();
+    }
+    expect(status, url).toBe(404);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(title);
   }
 });

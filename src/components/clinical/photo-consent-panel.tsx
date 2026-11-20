@@ -13,6 +13,7 @@ import { CheckField, LongTextField } from "./editor/fields";
 import { badgeFor } from "./kit";
 import { useClinicalFormat } from "./use-format";
 import { useHydrated } from "./use-hydrated";
+import { HydrationStatus, hydrationBusy } from "./hydration-status";
 
 /**
  * DC13 optional photo consent. Recording consent or a decline never requests the camera; no file
@@ -72,7 +73,8 @@ export function PhotoConsentPanel({
 
   const visible = photos.filter((p) => !p.withdrawn);
   return (
-    <section aria-labelledby={ids.title} className="grid gap-4">
+    <section aria-labelledby={ids.title} className="grid gap-4" {...hydrationBusy(hydrated)}>
+      <HydrationStatus hydrated={hydrated} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id={ids.title} className="text-lg font-semibold text-ink">
           {t("title")}

@@ -34,6 +34,7 @@ import type { AssignedVisitView } from "@/modules/doctor/types";
 import { badgeFor } from "../kit";
 import { useClinicalFormat } from "../use-format";
 import { useHydrated } from "../use-hydrated";
+import { HydrationStatus, hydrationBusy } from "../hydration-status";
 import { CheckField } from "./fields";
 import { ClinicalSummary, MissingList } from "./review-step";
 import { AssessmentForm, CareForm, PrescriptionForm, VitalsForm, type IncompleteReading } from "./step-forms";
@@ -190,7 +191,8 @@ export function ConsultationEditor({
   const conflict = auto.conflict;
 
   return (
-    <div ref={rootRef} className="grid gap-6 [&_:is(input,textarea,select,h2)]:scroll-mt-[calc(var(--cx-top,0px)+0.75rem)] [&_:is(input,textarea,select,h2)]:scroll-mb-[calc(var(--cx-bottom,0px)+4.25rem)]">
+    <div ref={rootRef} {...hydrationBusy(hydrated)} className="grid gap-6 [&_:is(input,textarea,select,h2)]:scroll-mt-[calc(var(--cx-top,0px)+0.75rem)] [&_:is(input,textarea,select,h2)]:scroll-mb-[calc(var(--cx-bottom,0px)+4.25rem)]">
+      <HydrationStatus hydrated={hydrated} />
       {/* Persistent compact context header */}
       <section ref={contextRef} aria-label={t("context.label")} className="sticky top-16 z-20 -mx-4 grid gap-3 border-b border-border bg-paper/95 px-4 py-3 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">

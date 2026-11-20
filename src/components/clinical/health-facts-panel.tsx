@@ -17,6 +17,7 @@ import { CheckField, LongTextField, TextField } from "./editor/fields";
 import { badgeFor } from "./kit";
 import { useClinicalFormat } from "./use-format";
 import { useHydrated } from "./use-hydrated";
+import { HydrationStatus, hydrationBusy } from "./hydration-status";
 
 /**
  * DC11 health fact review. Only facts the clinician selects are confirmed, with stated evidence;
@@ -160,7 +161,8 @@ export function HealthFactsPanel({
           </ul>
           {disabled ? null : (
             // Separate from the fact list: a correction form in the list must never submit Confirm on Enter.
-            <form onSubmit={submit} noValidate aria-label={t("confirm")} className="grid gap-5">
+            <form onSubmit={submit} noValidate aria-label={t("confirm")} className="grid gap-5" {...hydrationBusy(hydrated)}>
+          <HydrationStatus hydrated={hydrated} />
               <LongTextField id={ids.evidence} label={t("evidence")} hint={t("evidenceHint")} required rows={2} maxLength={1000} value={evidence} onValue={setEvidence} error={errors.find((e) => e.fieldId === ids.evidence)?.message} />
               <CheckField id={ids.ack} label={t("ack")} checked={ack} onChecked={setAck} error={errors.find((e) => e.fieldId === ids.ack)?.message} />
               {apiError ? <InlineError code={apiError} /> : null}

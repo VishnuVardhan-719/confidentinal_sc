@@ -36,3 +36,19 @@ export function normalizeProofCode(input: unknown): string | null {
 
 /** "908f 8aae 6e00 ..." for display only. */
 export const formatProofCode = (code: string): string => code.replace(/(.{4})(?=.)/g, "$1 ");
+
+const CHECK_LOCALES = new Set(["en", "te", "hi"]);
+
+/**
+ * Relative Location for the /verify/check redirect (never built from the Host header). Valid code ->
+ * /{locale}/verify/{code}; otherwise /{locale}/verify?error=required|invalid, echoing at most 80
+ * characters of an invalid entry (already in the form's own URL) so the field can be refilled.
+ */
+export function proofCheckLocation(rawLocale: string, typed: string): string {
+  const locale = CHECK_LOCALES.has(rawLocale) ? rawLocale : "en";
+  const code = normalizeProofCode(typed);
+  if (code) return `/${locale}/verify/${code}`;
+  const q = new URLSearchParams({ error: typed.trim() === "" ? "required" : "invalid" });
+  if (typed.trim() !== "") q.set("code", typed.slice(0, 80));
+  return `/${locale}/verify?${q.toString()}`;
+}
