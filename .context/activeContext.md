@@ -159,3 +159,6 @@ Open: sitemap.xml (fe-a) does not list /lab-tests yet; te/hi labDirectory string
 - Findings: 1 HIGH (synthetic cancellation policy "approved" in http mode, patient/book/[id]/page.tsx:20,127,130), 3 MEDIUM (fixture guard only checks APP_ENV; four paise formatters; hi plural `one` hard-codes 1 so 0 shows "1 day/attempt left"), 3 LOW (free-text q in URL, lab-views toFixed fixed on fe2-e c99a4c7 not merged, verify code in path).
 - Clean: storage/logs, URL params, server-action guards, fixture imports, e2e support, i18n key parity, hard-coded strings (0).
 - Next: HIGH fix is mine (fe-q owns /patient/book) - do it when lead assigns; MEDIUM 2 -> fe-a, 4 -> namespace owners.
+## TASK REPORT: R9-C3 (fe-q, feat/fe2-c)
+- Finding 1 fixed (journeyApis cancellationTerms; book/[id] page fails closed in http mode). tests/unit/adversarial-guards.test.ts (13): journey terms, fixture-import gating, paise toFixed and /100, hi plural zero, te/hi plural parity. Red run before fix/exemptions: 6 failed as expected. Exemptions: lab-views.tsx (fe-e, fixed on fe2-e), hi ambulance/lab (fe-e), hi common (fe-a) -> REQUESTS R-FE-Q-R9C3-1/2.
+- Lint was red at HEAD from my .context/*.cjs audit scripts; added eslint-disable headers.

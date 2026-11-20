@@ -17,8 +17,7 @@ import { viewFromResult } from "@/components/shared/view-state";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { formatDateTime, formatPaise, type Locale } from "@/lib/format";
-import { SYNTHETIC_CANCELLATION_POLICY } from "@/fixtures/marketplace/booking-store";
-import { journeyApis } from "@/modules/bookings/journey";
+import { journeyApis, type JourneyCancellationTerms } from "@/modules/bookings/journey";
 import type { Booking } from "@/modules/bookings/schemas";
 import { bookingStatusPresentation } from "@/modules/bookings/status";
 import { getPatientSession, patientLoginRedirect } from "@/modules/patient-dashboard/session";
@@ -34,11 +33,16 @@ export async function generateMetadata() {
 const toLocale = (value: string): Locale => (value === "te" || value === "hi" ? value : "en");
 const LEADS = { REQUESTED: "requested", ACCEPTED: "confirmed", CONFIRMED: "confirmed", DECLINED: "declined", CANCELLED: "cancelled", COMPLETED: "completed" } as const;
 
-/** Changes close at the cancellation window before the visit; a request the doctor has not answered can always change. */
-function canChange(booking: Booking, now: number): "open" | "closed" | "final" {
+/**
+ * Changes close at the cancellation window before the visit; a request the doctor has not answered can always change.
+ * Without server terms (http mode until a policy contract exists) the controls stay visible but the cancel dialog
+ * fails closed, and no window is guessed.
+ */
+function canChange(booking: Booking, now: number, terms: JourneyCancellationTerms | null): "open" | "closed" | "final" {
   if (booking.status === "REQUESTED") return "open";
   if (booking.status !== "ACCEPTED" && booking.status !== "CONFIRMED") return "final";
-  return now <= Date.parse(booking.startAt) - SYNTHETIC_CANCELLATION_POLICY.cancelWindowMinutes * 60_000 ? "open" : "closed";
+  if (!terms) return "open";
+  return now <= Date.parse(booking.startAt) - terms.cancelWindowMinutes * 60_000 ? "open" : "closed";
 }
 
 /** Server request time; read once per render after connection(), so the page is never cached across requests. */
@@ -80,7 +84,8 @@ export default async function BookingRequestPage({ params }: PageProps<"/[locale
   const now = readClock();
   const doctorName = doctor.ok ? doctor.data.displayName : t("yourDoctor");
   const lead = LEADS[b.status as keyof typeof LEADS] ?? "other";
-  const change = canChange(b, now);
+  const terms = apis.cancellationTerms;
+  const change = canChange(b, now, terms);
   const paid = payment.ok && payment.data.status === "PAID";
   const tone = lead === "declined" ? "warning" : lead === "confirmed" || lead === "completed" ? "info" : "neutral";
 
@@ -123,10 +128,10 @@ export default async function BookingRequestPage({ params }: PageProps<"/[locale
               {change === "open" ? (
                 <IntlScope namespaces={["booking", "payment"]}>
                   <RequestActions bookingId={b.id} version={b.version} providerId={b.providerId} serviceId={b.serviceId}
-                    policy={{ state: "approved", version: "synthetic-v1", summary: t("policySummary", { hours: SYNTHETIC_CANCELLATION_POLICY.cancelWindowMinutes / 60 }), feePaise: 0, refundPaise: null }}
+                    policy={terms ? { state: "approved", version: terms.version, summary: t("policySummary", { hours: terms.cancelWindowMinutes / 60 }), feePaise: 0, refundPaise: null } : { state: "unavailable" }}
                     actions={{ cancel: cancelBookingAction, reschedule: rescheduleBookingAction, slots: listSlotsAction }} />
                 </IntlScope>
-              ) : <Notice tone="neutral" title={t("changesClosed", { hours: SYNTHETIC_CANCELLATION_POLICY.cancelWindowMinutes / 60 })} />}
+              ) : terms ? <Notice tone="neutral" title={t("changesClosed", { hours: terms.cancelWindowMinutes / 60 })} /> : null}
             </section>
           ) : null}
 

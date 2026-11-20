@@ -325,3 +325,16 @@ Contracts the patient booking journey uses that B01 / `docs/API_CONTRACTS.md` do
 - `GET /api/labs?test=&city=` -> `{ items: LabListing[], cities: string[] }`. Published, verified, active labs only. `LabListing` = `{ id, name, area: { locality, city, pins[] }, collectionOptions: ("home" | "walk_in")[], collectionFeePaise, tests: [{ id, name, specimen, preparation, pricePaise, reportHours }] }`. Integer paise; no staff, phone or street address.
 - `GET /api/labs/:id` -> `LabListing`, 404 for unknown, unpublished or suspended labs.
 - `test` is a case-insensitive name match (2 to 60 characters); `city` is an exact city match.
+
+## 2026-11-20 - R9-C3 Hindi plural for zero, patch proposal (fe-q, feat/fe2-c)
+**R-FE-Q-R9C3-1.** CLDR puts 0 in the Hindi `one` category (`new Intl.PluralRules("hi").select(0) === "one"`). These Hindi messages hard-code "1" in `one` and have no `=0`, so a count of 0 renders as "1". `tests/unit/adversarial-guards.test.ts` now fails on any new case; these three are exempt (`HI_PLURAL_EXEMPT`) until their owners apply the patch, then the exemption line must be deleted.
+
+| Owner | File | Key | Now | Proposed |
+|---|---|---|---|---|
+| fe-e | `src/messages/hi/ambulance.json` | `dashboard.daysLeft` | `{count, plural, one {1 दिन बाकी} other {# दिन बाकी}}` | `{count, plural, =0 {आज समाप्त} one {# दिन बाकी} other {# दिन बाकी}}` |
+| fe-e | `src/messages/hi/lab.json` | `orders.testCount` | `{count, plural, one {1 जाँच} other {# जाँचें}}` | `{count, plural, one {# जाँच} other {# जाँचें}}` |
+| fe-a | `src/messages/hi/common.json` | `errorSummary.title` | `{count, plural, one {आगे बढ़ने के लिए 1 समस्या ठीक करें} other {...}}` | `one {आगे बढ़ने के लिए # समस्या ठीक करें}` (other unchanged) |
+
+The ambulance case matters most: `src/modules/ambulance/view-models.ts` emits `daysLeft: 0` for a licence that expires today. "आज समाप्त" ("expires today") needs native review (REVIEW_NEEDED). On fe2-int the same defect also exists in `hi/auth.json` `otp.attemptsLeft` (fe-b): proposed `{count, plural, =0 {कोई प्रयास बाकी नहीं} one {# प्रयास बाकी} other {# प्रयास बाकी}}`.
+
+**R-FE-Q-R9C3-2 (integration note).** The same test forbids fixture value imports in `src/app/**` and `src/components/**` (finding 1 came from one). On fe2-int, `src/app/[locale]/patient/dashboard/page.tsx:20` (fe-d) imports `DEFAULT_PATIENT_ACTOR` from `@/fixtures/clinical/world` behind `isFixtureAdapter()`. Proposal: read the actor from `getPatientSession().fixtureActor` (`src/modules/patient-dashboard/session.ts` already imports it behind `assertFixtureAllowed`). Otherwise add the file to `UI_ALLOWED` in the test with that reason when merging.

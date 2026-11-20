@@ -4,6 +4,12 @@ Reviewed read-only: `C:/Users/Yashwanth/fe2-int`, branch `feat/fe2-integration`,
 
 Scope: PHI in URLs, storage and logs; role-guard gaps; non-integer money maths; fixture adapter reachable in production; i18n key parity te/hi vs en; hard-coded strings.
 
+## Status on feat/fe2-c (R9-C3)
+
+- Finding 1 is fixed on eat/fe2-c. journeyApis() returns cancellationTerms (synthetic terms in fixture mode, 
+ull in http mode). The page passes { state: "unavailable" } when there are no terms, hides the closed-window notice and no longer imports @/fixtures. equest-controls.tsx:41 (service requests, http adapters gated) is not changed yet.
+- Findings 1, 3, 4 and 6 now have static guards in 	ests/unit/adversarial-guards.test.ts. Known defects in other owners' files are exempt and listed in docs/frontend/REQUESTS.md R-FE-Q-R9C3-1 and -2. te/hi key parity was already guarded by 	ests/unit/messages.test.ts.
+
 ## Findings (ranked by severity)
 
 | # | Severity | Area | Where | Owner |
