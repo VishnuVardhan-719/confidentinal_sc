@@ -161,3 +161,32 @@ export function Input({ disabled, ...props }: ComponentPropsWithRef<"input">) {
 // Same for Textarea, and add a shared <Select> wrapper (native <select> elements are used directly today).
 ```
 Alternative where a form must work before hydration: make it uncontrolled (`defaultValue` + `FormData` on submit), like the /verify form. Avoid `redirect()` for no-JS GET forms under `loading.tsx`; use a route handler.
+
+## R-FE-D-41 (fe-a, R8-D6) - shared form controls lose input typed before hydration (reproduced in one shared form; others ruled out or probable)
+**Repro:** `tests/e2e/hydration-race.spec.ts` "shared controls" (JS chunks held back, same harness as R-FE-D-40). Home page `ServiceFinder` (`src/components/public/service-finder.tsx`, owner fe2-a): PIN `500001` typed and "Lab tests" chosen before hydration are visibly CLEARED when React hydrates (state `""` wins), then Find shows "Enter your 6-digit PIN code" and "Choose a service". Fails at 390 and 1280. Marked `test.fail()` so the suite stays green; delete that line once fixed (the test then has to pass).
+**Shared controls checked:**
+| Control | Result |
+|---|---|
+| `src/components/ui/input.tsx` `Input`/`Textarea` | Pass-through `<input>`/`<textarea>`. Affected only when used controlled (`value=`) without a hydration gate; uncontrolled use is safe (proof check passes with no JS). |
+| `ServiceFinder` (controlled `value`/`checked`) | **Reproduced** (above). |
+| `FaqSearch` | Ruled out: the search box is hidden until hydrated (`enhanced`). |
+| `PhoneInput`, `OtpInput` (`src/components/shared`) | Controlled by design (`value` + `onValueChange`). Not used by any page on feat/fe2-d, so not run here. On fe2-int `auth-flow.tsx:232` uses `PhoneInput` controlled: **probably affected**, needs the same harness on fe2-int. |
+| Radix `Select`/`Checkbox`/`RadioGroup` (`src/components/ui`) | Ruled out by structure: they render `<button>`s with state in React only, so a click before hydration changes nothing on screen (unresponsive, but no hidden mismatch). On this branch they are used only in fe-d forms, which are already hydration-gated (R-FE-D-40), so not browser-tested here. |
+**Proposed fix for ServiceFinder (not applied; fe2-a owns it):** keep it a progressive GET form, but make the fields uncontrolled so React never overwrites what the person entered:
+```tsx
+// pin: drop value/onChange state; normalise in place.
+<input name="pin" defaultValue="" onInput={(e) => { e.currentTarget.value = normalizePin(e.currentTarget.value); clearPinError(); }} ... />
+// radios: drop checked={...}; keep onChange only to clear the error.
+<input type="radio" name="service" value={s.key} onChange={clearServiceError} ... />
+// submit: read what is on screen.
+function onSubmit(e) { e.preventDefault(); const fd = new FormData(e.currentTarget);
+  const result = validateFinder({ pin: normalizePin(String(fd.get("pin") ?? "")), service: String(fd.get("service") ?? "") as ServiceKey | "" }); ... }
+```
+The same pattern (or R-FE-D-40's `useHydrated` gate) applies to `PhoneInput`/`OtpInput` users.
+
+## R-FE-D-42 (fe-a, R8-D6) - fixture production guard is now an allowlist (ADVERSARIAL_REVIEW finding 2); integration notes
+- `src/lib/api/mode.ts`: `fixtureRefusal()` / `assertFixtureEnvironment()`. Fixtures are allowed only when `APP_ENV` is `development`, `test`, `preview` or `staging`, or when `APP_ENV` is unset under `next dev`/vitest (`NODE_ENV` development/test). `VERCEL_ENV=production` always refuses. The real process env is authoritative; an injected env can add a refusal, never lift one. `getAdapterMode`, `assertFixtureMode` (`src/lib/api/fixture.ts`) and `assertFixtureAllowed` (`src/fixtures/clinical/world.ts`) all use it. Tests: `tests/unit/fixture-production-guard.test.ts`.
+- **Lead decision:** `staging` is on the allowlist because fe2-c/e/p/int e2e specs document `APP_ENV=staging` with fixtures. The review proposed development/test/preview only; remove `staging` if staging must never serve synthetic data, and update those specs.
+- **Breaking for e2e:** `next start` runs with `NODE_ENV=production`, so a fixture server with `APP_ENV` unset is now refused (checked: `/en/doctor/dashboard` logs "Synthetic fixtures are disabled here (APP_ENV is not set)" and renders no fixture data). fe2-d's `wsEnv()` now sets `APP_ENV=test`. Integration (`.context/int2-serve.ps1`, `tests/e2e/integration.config.ts`) and any other fixture server must set `APP_ENV` too.
+- **fe2-int merge:** `src/modules/auth/fixture-guard.ts` (fe-b) still checks only `APP_ENV === "production"`. Patch: `export function assertFixtureAllowed(env = process.env) { assertFixtureEnvironment(env); }` (import from `@/lib/api/mode`).
+- **R-FE-Q-R9C3-2:** on feat/fe2-d the patient dashboard already takes the actor from `getPatientSession().fixtureActor` and imports nothing from `@/fixtures`; `tests/unit/no-fixture-imports-d.test.ts` now fails on any fixture value import in `src/app` or `src/components`. The `DEFAULT_PATIENT_ACTOR` import at fe2-int `page.tsx:20` came from the merge resolution. Patch for fe2-int: replace `requireRole(...)` + `DEFAULT_PATIENT_ACTOR` with `const s = await requirePatientSession(locale, path); if (s.status === "denied") return <AccessDenied reason={s.reason} />; const fixtureActor = s.fixtureActor ?? undefined; const synthetic = s.synthetic;` (`requirePatientSession` is in fe2-int `src/modules/patient-dashboard/session.ts`), and pass `authorizePatient: authorizerFor()`.
