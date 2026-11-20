@@ -5,9 +5,13 @@ begin;
 \ir _p5s_fixture.inc
 \ir _p01_fixture.inc
 do $$ declare b uuid:=pg_temp.p01_book(); c uuid:=pg_temp.p01_report(b); t text; begin
+ -- Fire the report's deferred integrity checks first; TRUNCATE refuses (55006) a table with
+ -- pending trigger events before its own guard runs.
+ set constraints all immediate;
  foreach t in array array['public.payment_events','public.payment_collections','payments_private.collection_intakes','payments_private.settings_events','public.audit_events'] loop
   perform pg_temp.expect_state('truncate '||t||' cascade','55000','owner truncate denied '||t);
  end loop;
+ set constraints all deferred;
  perform pg_temp.expect_state(format('update public.payment_events set reason_code=''other'' where payment_id=%L',pg_temp.p01_payment(b)),'55000','owner event update denied');
  perform pg_temp.expect_state(format('delete from public.payment_collections where id=%L',c),'55000','collection cannot disappear');
  perform pg_temp.expect_state(format('update public.payment_collections set amount_paise=2 where id=%L',c),'55000','claim amount immutable');

@@ -10,7 +10,9 @@ do $$ declare b uuid:=pg_temp.p01_book(); c uuid:=pg_temp.p01_report(b,10000); d
  perform public.reconcile_collection(c,'confirm','other',pg_temp.p01_version(b),gen_random_uuid());
  perform pg_temp.assert_true((select state='partially_paid' and confirmed_paise=10000 from public.payments where booking_id=b),'paid gate allows genuine partial');
  perform pg_temp.as_user('d1000000-0000-4000-8000-000000000003');
- perform pg_temp.expect_state(format('select public.override_payment(%L,''paid'',''other'',%s,gen_random_uuid())',pg_temp.p01_payment(b),pg_temp.p01_version(b)),'23514','override cannot invent full payment');
+ -- partially_paid -> paid is not an admin_override transition (design §5), so bump refuses it
+ -- (55000) before the guard trigger's full-amount check (23514) is reached.
+ perform pg_temp.expect_state(format('select public.override_payment(%L,''paid'',''other'',%s,gen_random_uuid())',pg_temp.p01_payment(b),pg_temp.p01_version(b)),'55000','override cannot invent full payment');
  d:=pg_temp.p01_report(b,40001);
  perform pg_temp.as_user('d1000000-0000-4000-8000-000000000001');
  perform public.reconcile_collection(d,'confirm','other',pg_temp.p01_version(b),gen_random_uuid());

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "verify:db": "python scripts/db_verify.py"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

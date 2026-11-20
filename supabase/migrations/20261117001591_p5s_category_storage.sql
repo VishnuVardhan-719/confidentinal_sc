@@ -27,7 +27,8 @@ create table providers_private.category_object_checks(
 create function providers_private.category_object_check_valid() returns trigger language plpgsql set search_path='' as $$
 begin
  if not exists(select 1 from pg_proc p where p.oid=new.checker and p.prorettype='boolean'::regtype
-  and p.proargtypes::oid[]=array['text'::regtype,'text'::regtype,'boolean'::regtype]::oid[]) then
+  and p.pronargs=3 and p.proargtypes[0]='text'::regtype and p.proargtypes[1]='text'::regtype
+  and p.proargtypes[2]='boolean'::regtype) then
   raise exception using errcode='22023',message='invalid_object_check';
  end if;
  return new;

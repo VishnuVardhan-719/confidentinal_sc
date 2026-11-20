@@ -66,14 +66,14 @@ jobs:
       # Everything else is skipped to save start-up time.
       - name: supabase start
         run: >-
-          supabase start
+          bash scripts/ci-annotate.sh supabase start
           -x studio,imgproxy,mailpit,edge-runtime,logflare,vector,realtime,postgres-meta,supavisor
 
       - name: supabase db reset
-        run: supabase db reset
+        run: bash scripts/ci-annotate.sh supabase db reset
 
       - name: supabase test db
-        run: supabase test db
+        run: bash scripts/ci-annotate.sh supabase test db
 
       - name: Collect Supabase logs
         if: failure()
