@@ -38,6 +38,8 @@ insert into public.patient_addresses(id,patient_id,line1,locality,pin_code,conta
 insert into public.resources(id,kind,person_profile_id) values ('b6000000-0000-4000-8000-000000000001','person','b1000000-0000-4000-8000-000000000002');
 insert into public.availability_rules(provider_id,resource_id,weekday,local_start,local_end,effective_from,effective_to)
  select 'b3000000-0000-4000-8000-000000000001','b6000000-0000-4000-8000-000000000001',d,'00:00','23:59',current_date,current_date+365 from generate_series(0,6) d;
+-- P5 shared engine (20261117001550) seeds every gate off (OD-5); this suite runs with them on.
+update booking_private.feature_gates set state='on';
 -- B01 FIXTURES END
 
 do $$ declare t text; f record; begin
@@ -66,20 +68,25 @@ select pg_temp.expect_state(format('select public.request_reschedule(%L,2,now()+
 select pg_temp.expect_state('select public.create_booking_request(''b2000000-0000-4000-8000-000000000001'',''b4100000-0000-4000-8000-000000000001'',''b5000000-0000-4000-8000-000000000001'',''-infinity'',''b7000000-0000-4000-8000-000000000098'')','22023','finite future time');
 select public.save_patient_address('b2000000-0000-4000-8000-000000000001','Synthetic far address','Synthetic','599992','Synthetic patient','+919999999999',0) as far_address \gset
 select pg_temp.expect_state(format('select public.create_booking_request(%L,%L,%L,now()+interval ''4 days'',%L)','b2000000-0000-4000-8000-000000000001','b4100000-0000-4000-8000-000000000001',:'far_address','b7000000-0000-4000-8000-000000000096'),'42501','uncovered PIN denied');
+select pg_temp.expect_state('select count(*) from public.bookings','42501','patient base-table read denied (P5 8.5)');
+reset role;
 select pg_temp.assert_true((select count(*)=1 from public.bookings),'denied create left no row');
+set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000003"}',true);
-select pg_temp.assert_true((select count(*)=0 from public.bookings),'foreign patient RLS');
+select pg_temp.expect_state('select count(*) from public.bookings','42501','foreign patient base-table read denied');
 select pg_temp.expect_state(format('select public.get_booking(%L)',:'booking'),'P0002','foreign detail hidden');
 select pg_temp.expect_state('select public.create_booking_request(''b2000000-0000-4000-8000-000000000001'',''b4100000-0000-4000-8000-000000000001'',''b5000000-0000-4000-8000-000000000001'',now()+interval ''4 days'',''b7000000-0000-4000-8000-000000000097'')','42501','foreign recipient denied');
 select pg_temp.expect_state(format('select public.accept_booking(%L,2,array[''b6000000-0000-4000-8000-000000000001''::uuid])',:'booking'),'42501','foreign accept denied');
 select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000002"}',true);
 select pg_temp.assert_true(not (public.get_booking(:'booking') ? 'address_snapshot'),'queue hides exact address');
 select pg_temp.assert_true(not (public.get_booking(:'booking') ? 'patient_id'),'queue hides patient identity');
-select pg_temp.assert_true((select count(*)=0 from public.bookings),'provider cannot bypass queue projection');
+select pg_temp.expect_state('select count(*) from public.bookings','42501','provider cannot bypass queue projection');
 select pg_temp.expect_state(format('select public.advance_visit(%L,''arrived'',2)',:'booking'),'42501','unaccepted assignment denied');
 select public.accept_booking(:'booking',2,array['b6000000-0000-4000-8000-000000000001'::uuid]);
 select pg_temp.assert_true(public.get_booking(:'booking')->>'state'='confirmed','atomic confirmation');
+reset role;
 select pg_temp.assert_true(not booking_private.assigned(:'booking','doctor_visit'),'future assignment denied');
+set local role authenticated;
 select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4)',:'booking'),'42501','early visit denied');
 select pg_temp.assert_true(not (public.get_booking(:'booking') ? 'address_snapshot'),'future scheduler contacts hidden');
 reset role;
@@ -88,14 +95,20 @@ alter table public.bookings disable trigger b01_booking_guard;
 update public.bookings set start_at=now()+interval '30 minutes',end_at=now()+interval '60 minutes' where id=:'booking';
 alter table public.bookings enable trigger b01_booking_guard;
 set local role authenticated;
+reset role;
 select pg_temp.assert_true(booking_private.assigned(:'booking','doctor_visit'),'in-window assigned predicate');
-select pg_temp.assert_true(public.get_booking(:'booking') ? 'address_snapshot','in-window contacts visible');
+set local role authenticated;
+select pg_temp.assert_true(not (public.get_booking(:'booking') ? 'address_snapshot'),'scheduler projection never carries contacts (OD-4)');
+select pg_temp.assert_true(public.get_assignment_contact(:'booking')->'address' ? 'line1','in-window assignee contact through the audited RPC');
 select pg_temp.expect_state(format('select public.advance_visit(%L,''service_completed'',4)',:'booking'),'55000','substate skip denied');
 select public.advance_visit(:'booking','en_route',4);
 select public.advance_visit(:'booking','arrived',5);
 select public.advance_visit(:'booking','service_started',6);
 select public.advance_visit(:'booking','service_completed',7);
+reset role;
 select pg_temp.assert_true(not booking_private.assigned(:'booking','doctor_visit'),'completed assignment loses operational scope');
+set local role authenticated;
+select pg_temp.expect_state(format('select public.get_assignment_contact(%L)',:'booking'),'P0002','completed assignee contact closed');
 select pg_temp.assert_true(not (public.get_booking(:'booking') ? 'address_snapshot'),'completed provider detail hides address');
 select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',8)',:'booking'),'42501','completed cannot reopen');
 reset role;
@@ -103,7 +116,8 @@ select pg_temp.expect_state(format('update public.bookings set amount_paise=1 wh
 select pg_temp.expect_state(format('delete from public.booking_events where booking_id=%L',:'booking'),'55000','events immutable even for owner');
 select pg_temp.assert_true((select count(*)=0 from public.resource_reservations where status='active'),'completion releases reservations');
 select pg_temp.assert_true((select count(*)=7 from public.booking_events where booking_id=:'booking'),'complete state/substate trail');
-select pg_temp.assert_true((select count(*)=7 from public.audit_events where target_id=:'booking'),'one audit per transition');
+select pg_temp.assert_true((select count(*)=7 from public.audit_events where target_id=:'booking' and action<>'booking.contact_viewed'),'one audit per transition');
+select pg_temp.assert_true((select count(*)=1 from public.audit_events where target_id=:'booking' and action='booking.contact_viewed'),'one audit per contact read');
 select pg_temp.assert_true((select count(*)=0 from public.notification_outbox where payload::text like '%Synthetic%'),'outbox contains no contact data');
 select 'B01 booking assertions passed; fixtures rolled back' as result;
 \echo 1..1
