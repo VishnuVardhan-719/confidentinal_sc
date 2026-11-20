@@ -308,3 +308,46 @@ The sign-out test in `auth.spec.ts` now signs out from `/en/account/security` in
 ### Fixed in fe2-e (no action needed)
 - Signup: the chosen role was lost when switching between the Email and Mobile tabs. Each tab had its own uncontrolled radio group. It is now one controlled value (`auth-flow.tsx`).
 - Operations workspaces (lab, ambulance, caretaker, admin) had no Sign out control. It is now in the top bar of `AreaShell` and in `OpsFrame` (the denied and choose-organization frames), at every width.
+## 2026-11-20 R9-E3 status index for fe-b / Kiro E / Kiro B entries (fe-b, branch feat/fe2-e)
+
+This index tidies the entries above without editing them (the file is append-only). Each status was checked against fe2-e code on 2026-11-20. Backend branches were not re-inspected, so backend contract items keep their original status. Module docs are in `docs/frontend/modules/`.
+
+| ID | Status | Evidence or next step |
+|---|---|---|
+| R-E01 shared HTTP client | Open | `src/lib/api` has only `mode.ts` and `result.ts`; `admin/http-util.ts` is still private |
+| R-E02 shared status kit | Open | `StatusTone` is defined in 7 `status.ts` files |
+| R-E03 feature flags | Open | `lab`, `scheduledTransport`, `care` and `recurringCare` are not in `FEATURE_FLAGS`; `RECURRING_CARE_GATE` is still hard-coded off; the report-release gate is still `clinical` |
+| R-E04 admin capabilities | Open (backend) | `content:*`, `booking:operate` and the other proposed capabilities have no backend grant |
+| R-E05 verification states | Open (product, backend) | unchanged |
+| R-E06 money | First bullet confirmed, second open | the 10,000,000,000 paise maximum is below `Number.MAX_SAFE_INTEGER`; caretaker week/month units still need C01 |
+| R-E07 gated endpoints | Open | every listed http method still returns `gated`; the admin review pages are also not built (R-E9E2-01) |
+| R-E08 state names | Open | lab collector/reviewer scope names still needed |
+| R-E09 messages | Keys done; review open | all keys exist in en/te/hi; te/hi are unreviewed (`src/messages/REVIEW_NEEDED.md`); no lab string says "report ready" |
+| R-E10 public stories helper | Superseded | since `7d04148` stories return `gated` in http mode (list and detail show "not available yet", HTTP 200), not `empty`/`not_found`; see `modules/content.md` |
+| R-E11 auth guard integration | Partly done | pages use `requireRole` via `getOperationsSession()`; MFA and grants stay open as R-FE07-02 |
+| R-E12 shared ops helpers placement | Open (low) | mechanical move; no owner decision yet |
+| R-E13 booking status map | Open | no `describeBookingState` export on this branch |
+| R-E14 story consent gate | Open (product) | rule implemented in frontend; policy and backend check pending |
+| R-E15 driver trip window | Open (backend) | unchanged |
+| R-E16 outstanding amount | Open (backend) | unchanged |
+| R-E17 session port | Done | `admin/session.ts` maps `requireRole(area)` to `GuardSession` |
+| R-E18 shared component gaps | Bullets 1-3 open; bullet 4 superseded | ops e2e specs have no `fixme` and run (R9-E, R9-E2, R9-E3) |
+| R-FE01-3 content module for stories | Done | `src/modules/content` with `public.ts` helper (R-E10, `modules/content.md`) |
+| R-FE03-01 to R-FE03-16 | Open (backend) | contract mismatches, not re-checked against backend branches |
+| R-FE03-17 onboarding message keys | Done | `onboarding.providerStatus.*` present in en/te/hi |
+| R-FE03-18 server access token | Done | `getAccessToken` in `auth/server.ts` and `auth/http-client.ts` |
+| R-FE04-01 to R-FE04-03, R-FE04-05 | Open or handled as designed | unchanged |
+| R-FE04-04 `server-only` | Open | package still not installed |
+| R-FE04-06 auth/onboarding error keys | Done | keys present in en/te/hi |
+| R-FE05-01 Playwright packages | Done | installed (Playwright 1.65.1) |
+| R-FE05-02 root Playwright config | Done; tidy-up open | root `playwright.config.ts` is used. The old `tests/e2e/playwright.config.ts` is still present, and the CI owner should decide whether to delete it |
+| R-FE05-03 invitation details | Open (backend) | unchanged |
+| R-FE06-01 to R-FE06-05 | Open | unchanged (R-FE06-04 waits for the patient AppShell, R-FE06-05 for fe-a) |
+| R-FE06-06 `/doctors` dead link | Open (fe-a) | still 404 on fe2-e; navigation e2e `fixme` names it |
+| R-FE06-07 `/patient/onboarding` | Done (interim) | route exists and forwards to the health profile until the stepped wizard ships; onboarding e2e stays `fixme` |
+| R-FE06-08 profile gate server-side | Open (backend) | unchanged |
+| R-FE06-09 browser e2e deferred | Superseded | identity specs ran at 390 and 1280 in R9-E2 and R9-E3 |
+| R-FE07-01 `getAccountSession()` | Done | exported from `auth/server.ts` |
+| R-FE07-02 ops session needs | Open (backend) | MFA status and admin grants are not in the I01 session |
+| R-FE07-03 interim guards | fe2-e rows done | `admin/session.ts` uses `requireRole`; the rows for other branches belong to their owners |
+| R-E9E2-01 to R-E9E2-03 | Open | see the R9-E2 section |
