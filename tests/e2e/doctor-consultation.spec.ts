@@ -8,11 +8,25 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page } from "@playwright/test";
 import { FIXTURE_IDS as I } from "../../src/fixtures/clinical/world";
 import { wsTest } from "./workspace-servers";
+import { expectNoDialogs, guardDialogs, ready, warmUp } from "./workspace-ready";
 
-// Signed in through the real fe-b guards (tests/e2e/workspace-servers.ts).
-const test = wsTest;
+// Signed in through the real fe-b guards (tests/e2e/workspace-servers.ts). Any browser dialog fails
+// the test at once (never a 60 s hang); see workspace-ready.ts.
+const test = wsTest.extend({
+  page: async ({ page }, provide) => {
+    const dialogs = guardDialogs(page);
+    await provide(page);
+    expectNoDialogs(dialogs);
+  },
+});
 
 const notes = (id: string) => `/en/doctor/consultations/${id}`;
+
+// Load each route's server chunks once per worker before the timed tests (cold `next start`).
+test.beforeAll(async ({ playwright }, testInfo) => {
+  const paths = [I.bookingPast, I.bookingActive].flatMap((id) => [notes(id), `${notes(id)}/prescription`, `/te/doctor/consultations/${id}`, `/hi/doctor/consultations/${id}/prescription`]);
+  await warmUp(playwright, testInfo.project.name, ["assigned", "other", "gateOff", "anon"], [...paths, `/en/doctor/visits/${I.bookingPast}`]);
+});
 const PHI_MARKERS = ["Fixture Patient A", "Synthetic Nagar", "+910000000000", "Flat 0", "Synthetic note text"];
 
 async function expectNoAxeViolations(page: Page) {
@@ -90,6 +104,7 @@ test.describe("consultation notes: draft -> sign-off (serial)", () => {
 
   test("keyboard only: write the summary and save a draft; nothing is stored in the browser", async ({ page }) => {
     await page.goto(notes(I.bookingPast));
+    await ready(page);
     await expect(badge(page, /^booking$/i)).toHaveText(/completed/i);
     await expect(badge(page, /^payment$/i)).toHaveText(/paid/i);
     await expectNoAxeViolations(page);
@@ -105,6 +120,7 @@ test.describe("consultation notes: draft -> sign-off (serial)", () => {
     await expect(page.getByRole("status").filter({ hasText: /draft saved/i })).toBeVisible();
     await expectCleanStorage(page);
     await page.reload();
+    await ready(page);
     await expect(page.getByRole("textbox", { name: /visit summary/i })).toHaveValue("Synthetic note text: reviewed at home.");
     await expect(badge(page, /^notes$/i)).toHaveText(/draft/i);
     await expectNoHorizontalScroll(page);
@@ -113,6 +129,7 @@ test.describe("consultation notes: draft -> sign-off (serial)", () => {
 
   test("sign-off with missing details shows a focused error summary linking to each field", async ({ page }) => {
     await page.goto(notes(I.bookingPast));
+    await ready(page);
     await page.getByRole("button", { name: /sign off notes/i }).click();
     const summary = page.getByRole("alert").filter({ hasText: /advice given is required/i });
     await expect(summary).toBeFocused();
@@ -186,7 +203,7 @@ test.describe("prescription draft: edit -> save -> discard (serial)", () => {
 
   test("saving an empty row shows a focused error summary that links to each field", async ({ page }) => {
     await page.goto(rx(I.bookingPast));
-    await page.waitForLoadState("networkidle");
+    await ready(page);
     await page.getByRole("button", { name: /save draft/i }).click();
     const summary = page.getByRole("alert").filter({ hasText: /enter the name of medicine 1/i });
     await expect(summary).toBeFocused();
@@ -199,7 +216,7 @@ test.describe("prescription draft: edit -> save -> discard (serial)", () => {
 
   test("keyboard: fill a medicine from templates, save, see the not-issued preview; storage stays clean", async ({ page }) => {
     await page.goto(rx(I.bookingPast));
-    await page.waitForLoadState("networkidle");
+    await ready(page);
     await page.getByRole("textbox", { name: /medicine name/i }).focus();
     await page.keyboard.type("Synthetic note text medicine");
     await page.getByRole("combobox", { name: /^form/i }).selectOption("tablet");
@@ -215,13 +232,14 @@ test.describe("prescription draft: edit -> save -> discard (serial)", () => {
     await expect(preview.getByRole("listitem")).toHaveText("Tablet: Synthetic note text medicine 500 mg, Twice a day for 5 days, after food");
     await expectCleanStorage(page);
     await page.reload();
+    await ready(page);
     await expect(page.getByRole("textbox", { name: /medicine name/i })).toHaveValue("Synthetic note text medicine");
     await expect(badge(page, /^prescription$/i)).toHaveText(/draft - not issued/i);
   });
 
   test("add and remove medicines move focus sensibly", async ({ page }) => {
     await page.goto(rx(I.bookingPast));
-    await page.waitForLoadState("networkidle");
+    await ready(page);
     await page.getByRole("button", { name: /add medicine/i }).click();
     await expect(page.getByRole("group", { name: "Medicine 2" }).getByRole("textbox", { name: /medicine name/i })).toBeFocused();
     await page.getByRole("button", { name: /remove medicine 2/i }).click();
@@ -231,7 +249,7 @@ test.describe("prescription draft: edit -> save -> discard (serial)", () => {
 
   test("discard asks first, then removes the saved draft", async ({ page }) => {
     await page.goto(rx(I.bookingPast));
-    await page.waitForLoadState("networkidle");
+    await ready(page);
     await page.getByRole("button", { name: /discard draft/i }).click();
     const dialog = page.getByRole("alertdialog");
     await expect(dialog).toContainText(/cannot be undone/i);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useId, useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
 import { ErrorSummary, type SummaryError } from "@/components/shared/error-summary";
@@ -10,6 +10,7 @@ import { InlineError } from "@/components/shared/inline-error";
 import { Notice } from "@/components/shared/notice";
 import { useClinicalFormat } from "@/components/clinical/use-format";
 import { useHydrated } from "@/components/clinical/use-hydrated";
+import { useUnsavedChangesGuard } from "@/components/clinical/use-unsaved-guard";
 import { HydrationStatus, hydrationBusy } from "@/components/clinical/hydration-status";
 import { useRouter } from "@/i18n/navigation";
 import type { ApiResult } from "@/lib/api/result";
@@ -59,12 +60,7 @@ export function NoteEditor({ bookingId, initial, actions }: { bookingId: string;
   const locked = busy !== null || conflict || !hydrated;
   const dirty = NOTE_SECTIONS.some((s) => sections[s] !== saved[s]);
 
-  useEffect(() => {
-    if (!dirty) return;
-    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
+  useUnsavedChangesGuard(dirty);
 
   const err = (s: NoteSection) => errors.find((e) => e.fieldId === fieldId(s))?.message;
   const attestError = errors.find((e) => e.fieldId === attestId)?.message;
