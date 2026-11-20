@@ -32,3 +32,7 @@
 ## Friend handover expectation
 
 The owner begins both frontend and backend. When the friend joins, Claude selects independent pending frontend/UI tickets and creates a self-contained handover with branch/base commit, setup instructions, file scope, UI state, API contracts, mock-vs-real data status, tests, known defects and next actions. Do not send the friend work that depends on unfinished backend contracts without clearly identifying mocks/dependencies.
+
+## N01 implementation handoff — 2026-11-20
+
+Codex authored the notification database/app layer on `feat/N01-notifications`, base `integ/all` `51c7439`. SQL/RLS/concurrency are **DB NOT EXECUTED** under the owner policy; all notification gates remain OFF. Static app checks and a Webpack production build passed. Native category integration, reviewed category-rule reseed, database acceptance and frontend UI acceptance remain pending. Read [the N01 handoff](handoffs/N01_codex_2026-11-20.md) for exact migrations, suite cases, API contracts, category code list and teammate commands. No existing ops/contact route was recreated.

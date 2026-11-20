@@ -1,5 +1,15 @@
 # Active SureCure Visit context
 
+## N01 checkpoint (2026-11-20)
+
+- Delivery gate: implementation/docs through `175b3f4b4aa03826f0a3fb0330bfd096b9038da4` are committed locally. Automatic approval review rejected the requested push because origin ownership/trust and exact-destination authorization were not established. Sanitized local config identifies `https://github.com/VishnuVardhan-719/confidentinal_sc`, branch `feat/N01-notifications`; no embedded URL credential. GitHub CLI unavailable, no ownership claim made. No push occurred. Obtain explicit approval for this exact destination before retrying; do not bypass the rejection. Later documentation-only commit records this gate; use current HEAD for final SHA.
+
+- Authority: `C:/tmp/scv_logs/codex_n01.txt`; worktree `codex-n01`, branch `feat/N01-notifications`, base `integ/all` `51c7439`. Feature-branch commit/push explicitly authorized. No Docker/Supabase command, DB operation, install, `.env` access, activation, deployment, model/effort change or shared-branch push.
+- Authored six migrations `002110–002160`, fixture/suites100–109, four-case concurrency runner, user routes/service/strict validation and log-only dispatcher/templates. All SQL: **authored, DB NOT EXECUTED**. Notification gates OFF; category codes guarded; owner-only reseed after category merges. C01 proposal ledger bridge and audit-bound withdrawal normalization reconcile actual built functions with the design.
+- Static evidence: full Vitest278 passed/2 pre-existing skipped; N01 39 tests/5 files; Next typegen, standalone tsc and full ESLint exit0; Webpack production build exit0, all six N01 paths dynamic. Exact teammate commands are recorded in task evidence/handoff. Python syntax/TOC filter/help/no-execute guard checked without loading DB helpers.
+- Read-only SQL/app reviews corrected audience parity, expansion lock order, shared-template test oracles, collapse fixture ordering, duplicate staff fixture, managed-schema runner restore and dispatcher lease batch timing. No migration/test execution or UI acceptance claimed.
+- Handoff: `docs/handoffs/N01_codex_2026-11-20.md`. N01 stays IN_PROGRESS pending DB/RLS/races/category integration/UI. Shared suite023's four-category registry assertions need coordinator scoping after N01 adds its own keys; original suite untouched. Use final branch HEAD/remote ref for commit SHA.
+
 ## P01a SQL checkpoint (2026-11-19)
 
 - Authority: `C:/tmp/scv_logs/codex_p01a_sql.txt`; branch `feat/P01a-sql`, base `integ/all` `5f94c98`. Commit/push authorized only to this branch. No .env access, installation, DB/Docker operation, other-worktree edit, merge or activation.

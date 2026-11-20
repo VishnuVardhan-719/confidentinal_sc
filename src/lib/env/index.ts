@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { notificationEnv } from "@/lib/notifications/config";
 
 const publicSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
@@ -18,5 +19,6 @@ export function parsePublicEnv(source: Record<string, string | undefined>): Publ
 }
 
 export function parseServerEnv(source: Record<string, string | undefined>): ServerEnv {
+  notificationEnv(source);
   return serverSchema.parse(source);
 }
