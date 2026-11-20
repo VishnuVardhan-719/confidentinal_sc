@@ -6,10 +6,9 @@ This is the entry point for anyone picking up the project (updated 2026-11-20 by
 
 | Branch | What it is |
 |---|---|
-| `integ/all` | **The working branch.** All backend work is merged here: identity, onboarding, catalog, booking core, the P5 shared engine, doctor, lab, ambulance and caretaker workflows, pay-after payments (P01a), notifications (N01). No UI yet. Branch new work from here. |
+| `integ/all` | **The working branch.** All backend work is merged here: identity, onboarding, catalog, booking core, the P5 shared engine, doctor, lab, ambulance and caretaker workflows, pay-after payments (P01a), notifications (N01), doctor clinical DC03-DC14. No UI yet. Branch new work from here. |
 | `develop`, `main` | Behind `integ/all` (develop by 120+ commits). Merging `integ/all` into `develop` is an owner decision (`docs/OWNER_DECISIONS_PENDING.md` R-2). Do not push to either without the owner. |
-| `feat/DC-clinical-core`, `feat/DC-extras` | Doctor clinical capabilities DC03-DC14, in progress (Kiro). They merge into `integ/all` when done; see the ledger. |
-| `feat/*` already merged | `feat/P5-shared-engine`, `feat/P5-shared-api`, `feat/S01-doctor-core`, `feat/P5-lab`, `feat/P5-ambulance`, `feat/P5-care`, `feat/P01a-sql`, `feat/N01-notifications`, `test/Q01-gaps`, `chore/R6-seed`. Kept for history; do not build on them. |
+| `feat/*` already merged | `feat/P5-shared-engine`, `feat/P5-shared-api`, `feat/S01-doctor-core`, `feat/P5-lab`, `feat/P5-ambulance`, `feat/P5-care`, `feat/P01a-sql`, `feat/N01-notifications`, `feat/DC-clinical-core`, `feat/DC-extras`, `test/Q01-gaps`, `chore/R6-seed`. Kept for history; do not build on them. |
 | `feat/fe2-*`, `task/U0*`, `fix/U01a-*`, `wip/frontend-pause-2026-11-18` | Earlier unreviewed UI work, based on `develop` with fixture data and the old API proposal. Ask the owner before reusing it. |
 | `wip/B01-fix-round1`, `wip/Q01a-rls-runner`, `docs/backend-*`, `docs/handoff-2026-11-18` | Superseded (B01 fixes landed via `integ/b01-fixes`; the RLS runner is replaced by `npm run verify:db`). History only. |
 
@@ -38,7 +37,7 @@ npm run verify:db        # = python scripts/db_verify.py
 
 CI (`.github/workflows/ci.yml`, `docs/CI.md`) runs the app checks and `supabase start` / `db reset` / `test db` on every push to `integ/**` and `feat/**`. When a database step fails, its last 40 output lines appear as an error annotation on the run page.
 
-**Database status:** SQL marked "DB NOT EXECUTED" in a handoff was written and statically checked but not run by its author. CI is the first real run; check the latest `integ/all` run before trusting any database behaviour.
+**Database status (2026-11-20):** CI on `integ/all` applies every migration and runs every pgTAP suite (001-125); all green from run #58 (commit `77971f2`); check the latest run on the Actions tab before relying on newer commits. Handoffs still say "DB NOT EXECUTED" because their authors had no database; CI is the execution record, and the fixes it forced are in the 0022xx migrations and the `test(db): CI round N` commits. Not run in CI yet: the `tests/rls/run_*_concurrency.py` race runners. Run them with `npm run verify:db` on a Docker machine.
 
 ## 3. Where things are
 
@@ -59,8 +58,8 @@ Numbering: each block owns a migration range and a suite range (shared 001550-00
 
 Read the ledger for the current state; at the time of writing:
 
-1. **Database verification** of everything merged since 2026-11-19 (CI or `npm run verify:db`), then fix what fails.
-2. **Doctor clinical DC03-DC14** (in progress on the two DC branches).
+1. **Concurrency runners** (`npm run verify:db` on a Docker machine): the pgTAP suites pass in CI, the race runners have not run anywhere.
+2. **Doctor clinical owner questions**: DCQ-1..8 in `docs/handoffs/DC_clinical_core_kiro_2026-11-20.md` and five in `DC_extras_kiro_2026-11-20.md` (consent model, allergy matching, vital thresholds, photo retention, Indic PDF fonts). Their gates stay off until answered.
 3. **UI** (U01): patient, provider and admin screens. Nothing exists yet beyond a placeholder page.
 4. **Owner decisions** that gate release: ops escalation owner (OD-2), payment confirmation (D-1, D-13), privacy (D-PRIV), clinical scope (D-CLIN), repo visibility (R-1), merge to `develop` (R-2).
 5. Release work: staging, runbook (R02).
@@ -73,4 +72,6 @@ Known gaps carried by the handoffs: caretaker admission without a task list and 
 - Secrets only in `.env.local` (gitignored) or a secret store. `.env.example` lists names only.
 - Next.js 16 with `cacheComponents`: no `export const dynamic`; gated GET routes call `await connection()`.
 - Migrations are append-only: never edit a merged migration, add a new one in your range.
+- In `language sql` functions a column name wins over a parameter of the same name (`a.scope=scope` compared the column with itself; fixed in 002210). Prefix parameters `p_` or use `$1`.
+- Every suite must end with `\echo 1..1` and `\echo ok 1 - <name>` before `rollback;`, or pg_prove reports "No plan found".
 - Do not claim something works without running its check and reading the output.
