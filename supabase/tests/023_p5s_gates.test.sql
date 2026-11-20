@@ -84,7 +84,7 @@ set local role authenticated;
 select pg_temp.as_user('c1000000-0000-4000-8000-000000000002');
 select pg_temp.assert_true(public.get_booking(:'gated')->>'state'='confirmed','assignee read with the gate off');
 select pg_temp.assert_true(public.get_assignment_contact(:'gated') ? 'contact','contact read with the gate off');
-select public.advance_visit(:'gated','en_route',4);
+select pg_temp.assert_true(public.advance_visit(:'gated','en_route',4,gen_random_uuid())=5,'start step with the gate off');
 reset role;
 update booking_private.feature_gates set state='suspended' where key='doctor';
 set local role authenticated;

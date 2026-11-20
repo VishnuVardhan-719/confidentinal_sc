@@ -115,9 +115,24 @@ declare delta interval; begin
  alter table public.resource_reservations enable trigger p5s_reservation_guard;
  alter table public.bookings enable trigger b01_booking_guard;
 end $$;
--- A state change through transition() as p_actor; the guard decides.
+-- Category blocks add their own guards on public.bookings (named *_booking_guard, e.g.
+-- p5d_doctor_booking_guard). Shared suites drive every category through the shared engine only,
+-- so these helpers switch the category guards off; each category suite tests its own guard.
+create function pg_temp.p5_category_guards(p_on boolean) returns void language plpgsql as $$
+declare t text; begin
+ for t in select tgname from pg_trigger where tgrelid='public.bookings'::regclass and not tgisinternal
+  and tgname like '%\_booking\_guard' and tgname<>'b01_booking_guard' loop
+  execute format('alter table public.bookings %s trigger %I',case when p_on then 'enable' else 'disable' end,t);
+ end loop;
+end $$;
+-- A state change through transition() as p_actor; the shared guard decides.
 create function pg_temp.p5_step(p_booking uuid,p_actor uuid,p_state text,p_reason text) returns integer language plpgsql as $$
-begin perform pg_temp.as_user(p_actor); return booking_private.transition(p_booking,p_state,p_reason); end $$;
+declare v integer; begin
+ perform pg_temp.p5_category_guards(false);
+ perform pg_temp.as_user(p_actor); v:=booking_private.transition(p_booking,p_state,p_reason);
+ perform pg_temp.p5_category_guards(true);
+ return v;
+end $$;
 -- Raw booking in any state with an optional person assignment (no reservation), for guard tests.
 create function pg_temp.p5_raw(p_category text,p_state text,p_start timestamptz,p_assignee uuid default null,p_purpose text default null,p_service uuid default null) returns uuid language plpgsql as $$
 declare b uuid; begin
@@ -128,7 +143,9 @@ declare b uuid; begin
  from public.services s join public.service_price_versions v on v.service_id=s.id where s.id=coalesce(p_service,pg_temp.p5_service(p_category)) returning id into b;
  if p_state<>'draft' then
   alter table public.bookings disable trigger b01_booking_guard;
+  perform pg_temp.p5_category_guards(false);
   update public.bookings set state=p_state,version=version+1 where id=b;
+  perform pg_temp.p5_category_guards(true);
   alter table public.bookings enable trigger b01_booking_guard;
  end if;
  if p_assignee is not null then

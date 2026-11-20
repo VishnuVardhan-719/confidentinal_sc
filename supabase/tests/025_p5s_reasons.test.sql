@@ -8,12 +8,13 @@ begin;
 
 select pg_temp.assert_true((select count(*)=12 from booking_private.reason_codes where code in ('requested','accepted','confirmed','patient_request',
  'provider_unavailable','unable_to_service','other','en_route','arrived','service_started','service_completed','reassigned')),'the 12 built codes exist');
-select pg_temp.assert_true((select count(*)=19 from booking_private.reason_codes),'shared block seeds 19 codes');
+-- Category blocks may append codes and pairs (contract A9.4), so these check the shared baseline.
+select pg_temp.assert_true((select count(*)>=19 from booking_private.reason_codes),'shared block seeds 19 codes');
 select pg_temp.assert_true(not exists(select 1 from booking_private.category_reasons where code='reassigned'),'reassigned has no category pair');
-select pg_temp.assert_true((select array_agg(category||':'||n order by category) from (select category,count(*) n from booking_private.category_reasons group by category) x)
- =array['ambulance:16','caretaker:13','doctor:18','lab:13'],'shared pairs per category (§9.4)');
+select pg_temp.assert_true((select bool_and(coalesce(n,0)>=m) from (values('ambulance',16),('caretaker',13),('doctor',18),('lab',13)) w(category,m)
+ left join (select category,count(*) n from booking_private.category_reasons group by category) x using(category)),'shared pairs per category (§9.4)');
 select pg_temp.assert_true((select array_agg(category||':'||code order by category,code) from booking_private.category_reasons where blocks_cancel)
- =array['ambulance:absence_reported','ambulance:arrived','ambulance:en_route','caretaker:service_started','doctor:absence_reported','doctor:arrived','doctor:en_route','doctor:service_started','lab:absence_reported'],'blocks_cancel rows');
+ @>array['ambulance:absence_reported','ambulance:arrived','ambulance:en_route','caretaker:service_started','doctor:absence_reported','doctor:arrived','doctor:en_route','doctor:service_started','lab:absence_reported'],'blocks_cancel rows');
 select pg_temp.assert_true(not exists(select 1 from pg_constraint where conrelid='public.booking_events'::regclass and contype='c' and pg_get_constraintdef(oid) like '%reason%'),'inline reason CHECK removed');
 select pg_temp.assert_true(exists(select 1 from pg_constraint where conname='booking_events_reason_fk' and confrelid='booking_private.reason_codes'::regclass),'reason foreign key');
 

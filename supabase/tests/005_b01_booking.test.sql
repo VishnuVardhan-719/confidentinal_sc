@@ -81,13 +81,13 @@ select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-00000000
 select pg_temp.assert_true(not (public.get_booking(:'booking') ? 'address_snapshot'),'queue hides exact address');
 select pg_temp.assert_true(not (public.get_booking(:'booking') ? 'patient_id'),'queue hides patient identity');
 select pg_temp.expect_state('select count(*) from public.bookings','42501','provider cannot bypass queue projection');
-select pg_temp.expect_state(format('select public.advance_visit(%L,''arrived'',2)',:'booking'),'42501','unaccepted assignment denied');
+select pg_temp.expect_state(format('select public.advance_visit(%L,''arrived'',2,gen_random_uuid())',:'booking'),'42501','unaccepted assignment denied');
 select public.accept_booking(:'booking',2,array['b6000000-0000-4000-8000-000000000001'::uuid]);
 select pg_temp.assert_true(public.get_booking(:'booking')->>'state'='confirmed','atomic confirmation');
 reset role;
 select pg_temp.assert_true(not booking_private.assigned(:'booking','doctor_visit'),'future assignment denied');
 set local role authenticated;
-select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4)',:'booking'),'42501','early visit denied');
+select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4,gen_random_uuid())',:'booking'),'42501','early visit denied');
 select pg_temp.assert_true(not (public.get_booking(:'booking') ? 'address_snapshot'),'future scheduler contacts hidden');
 reset role;
 -- Fixture clock shift only; production commands below run with every guard enabled.
@@ -100,23 +100,35 @@ select pg_temp.assert_true(booking_private.assigned(:'booking','doctor_visit'),'
 set local role authenticated;
 select pg_temp.assert_true(not (public.get_booking(:'booking') ? 'address_snapshot'),'scheduler projection never carries contacts (OD-4)');
 select pg_temp.assert_true(public.get_assignment_contact(:'booking')->'address' ? 'line1','in-window assignee contact through the audited RPC');
-select pg_temp.expect_state(format('select public.advance_visit(%L,''service_completed'',4)',:'booking'),'55000','substate skip denied');
-select public.advance_visit(:'booking','en_route',4);
-select public.advance_visit(:'booking','arrived',5);
-select public.advance_visit(:'booking','service_started',6);
-select public.advance_visit(:'booking','service_completed',7);
+select pg_temp.expect_state(format('select public.advance_visit(%L,''service_completed'',4,gen_random_uuid())',:'booking'),'55000','substate skip denied');
+-- Doctor block (20261117001630/40): keyed advance_visit, and service_started needs a verified
+-- arrival code that only the patient can issue.
+select pg_temp.assert_true(public.advance_visit(:'booking','en_route',4,gen_random_uuid())=5,'en_route');
+select pg_temp.assert_true(public.advance_visit(:'booking','arrived',5,gen_random_uuid())=6,'arrived');
+select pg_temp.expect_state(format('select public.advance_visit(%L,''service_started'',6,gen_random_uuid())',:'booking'),'55000','start needs a verified arrival');
+select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000001"}',true);
+select public.issue_arrival_code(:'booking',gen_random_uuid())->>'code' as arrival_code \gset
+select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000002"}',true);
+select pg_temp.assert_true((public.verify_arrival_code(:'booking',:'arrival_code',6,gen_random_uuid())->>'version')::integer=7,'arrival verified');
+select pg_temp.assert_true(public.advance_visit(:'booking','service_started',7,gen_random_uuid())=8,'service_started');
+select pg_temp.assert_true(public.advance_visit(:'booking','service_completed',8,gen_random_uuid())=9,'service_completed');
 reset role;
 select pg_temp.assert_true(not booking_private.assigned(:'booking','doctor_visit'),'completed assignment loses operational scope');
 set local role authenticated;
 select pg_temp.expect_state(format('select public.get_assignment_contact(%L)',:'booking'),'P0002','completed assignee contact closed');
 select pg_temp.assert_true(not (public.get_booking(:'booking') ? 'address_snapshot'),'completed provider detail hides address');
-select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',8)',:'booking'),'42501','completed cannot reopen');
+select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',9,gen_random_uuid())',:'booking'),'42501','completed cannot reopen');
 reset role;
 select pg_temp.expect_state(format('update public.bookings set amount_paise=1 where id=%L',:'booking'),'55000','snapshot trigger blocks trusted mutation');
 select pg_temp.expect_state(format('delete from public.booking_events where booking_id=%L',:'booking'),'55000','events immutable even for owner');
-select pg_temp.assert_true((select count(*)=0 from public.resource_reservations where status='active'),'completion releases reservations');
-select pg_temp.assert_true((select count(*)=7 from public.booking_events where booking_id=:'booking'),'complete state/substate trail');
-select pg_temp.assert_true((select count(*)=7 from public.audit_events where target_id=:'booking' and action<>'booking.contact_viewed'),'one audit per transition');
+-- Doctor completion ends the assignment and keeps its reservation through the buffer (P5 A12).
+select pg_temp.assert_true((select count(*)=1 and bool_and(a.status='ended' and a.ended_at is not null) from public.booking_assignments a where a.booking_id=:'booking'),'completion ends the assignment');
+select pg_temp.assert_true((select count(*)=1 and bool_and(r.status='active') from public.resource_reservations r join public.booking_assignments a on a.id=r.assignment_id where a.booking_id=:'booking'),'completion keeps the reservation');
+select pg_temp.assert_true((select substate='service_completed' from public.doctor_visits where booking_id=:'booking'),'visit completed');
+select pg_temp.assert_true((select count(*)=8 from public.booking_events where booking_id=:'booking'),'complete state/substate trail');
+select pg_temp.assert_true((select count(*)=8 from public.audit_events where target_id=:'booking' and action not in ('booking.contact_viewed','booking.arrival_code_issued')),'one audit per transition');
+select pg_temp.assert_true((select count(*)=1 from public.audit_events where target_id=:'booking' and action='booking.arrival_code_issued'),'one audit per arrival code');
+select pg_temp.assert_true((select count(*)=0 from public.notification_outbox where booking_id=:'booking' and (payload-array['booking_id','event','version'])<>'{}'::jsonb),'outbox carries ids, event and version only (no arrival code)');
 select pg_temp.assert_true((select count(*)=1 from public.audit_events where target_id=:'booking' and action='booking.contact_viewed'),'one audit per contact read');
 select pg_temp.assert_true((select count(*)=0 from public.notification_outbox where payload::text like '%Synthetic%'),'outbox contains no contact data');
 select 'B01 booking assertions passed; fixtures rolled back' as result;

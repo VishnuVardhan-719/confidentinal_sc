@@ -8,7 +8,7 @@ do $$ declare b uuid:=pg_temp.p01_book(false); v integer; n integer; begin
  perform pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
  perform pg_temp.expect_state(format('select public.dispute_payment(%L,''other'',%s,gen_random_uuid())',b,pg_temp.p01_version(b)),'55000','no delivery or claim');
  perform pg_temp.as_user('c1000000-0000-4000-8000-000000000002');
- perform public.advance_visit(b,'service_completed',(select version from public.bookings where id=b));
+ perform public.advance_visit(b,'service_completed',(select version from public.bookings where id=b),gen_random_uuid());
  perform pg_temp.p01_finance();
  for n in 1..3 loop
   perform pg_temp.as_user('b1000000-0000-4000-8000-000000000001');

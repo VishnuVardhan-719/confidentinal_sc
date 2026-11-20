@@ -90,15 +90,15 @@ select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-00000000
 reset role;
 select pg_temp.assert_true(not booking_private.assigned(:'b1','doctor_visit'),'T03 D2 has no assigned scope');
 set local role authenticated;
-select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4)',:'b1'),'42501','T03 D2 cannot advance');
+select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4,gen_random_uuid())',:'b1'),'42501','T03 D2 cannot advance');
 select pg_temp.expect_state(format('select public.get_booking(%L)',:'b1'),'P0002','T03 D2 cannot read');
 select pg_temp.expect_state(format('select public.cancel_booking(%L,4,''other'')',:'b1'),'42501','T03 D2 cannot cancel');
 select pg_temp.expect_state('select count(*) from public.bookings','42501','T03 D2 sees no booking rows (no base-table SELECT, P5 8.5)');
 
 -- Q01-T04: the patient cannot mark visit progress.
 select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000001"}',true);
-select pg_temp.expect_state(format('select public.advance_visit(%L,''arrived'',4)',:'b1'),'42501','T04 patient cannot self-mark arrival');
-select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4)',:'b1'),'42501','T04 patient cannot mark en route');
+select pg_temp.expect_state(format('select public.advance_visit(%L,''arrived'',4,gen_random_uuid())',:'b1'),'42501','T04 patient cannot self-mark arrival');
+select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4,gen_random_uuid())',:'b1'),'42501','T04 patient cannot mark en route');
 reset role;
 select pg_temp.assert_true((select b.state='confirmed' and b.version=4 and v.substate='scheduled' from public.bookings b
  join public.doctor_visits v on v.booking_id=b.id where b.id=:'b1'),'T03/T04 B1 unchanged');
@@ -110,7 +110,7 @@ select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-00000000
 reset role;
 select pg_temp.assert_true(not booking_private.assigned(:'b1','doctor_visit'),'T06 suspension removes assigned scope');
 set local role authenticated;
-select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4)',:'b1'),'42501','T06 suspended provider doctor cannot advance');
+select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4,gen_random_uuid())',:'b1'),'42501','T06 suspended provider doctor cannot advance');
 select public.get_booking(:'b1') as t06_suspended \gset
 select pg_temp.assert_true(not (:'t06_suspended'::jsonb ?| array['address_snapshot','contact_snapshot','patient_id']),'T06 suspended provider sees no address or contact');
 reset role;
@@ -124,7 +124,7 @@ set local role authenticated;
 reset role;
 select pg_temp.assert_true(not booking_private.assigned(:'b1','doctor_visit'),'T06 expired evidence removes assigned scope');
 set local role authenticated;
-select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4)',:'b1'),'42501','T06 expired evidence doctor cannot advance');
+select pg_temp.expect_state(format('select public.advance_visit(%L,''en_route'',4,gen_random_uuid())',:'b1'),'42501','T06 expired evidence doctor cannot advance');
 select public.get_booking(:'b1') as t06_expired \gset
 select pg_temp.assert_true(not (:'t06_expired'::jsonb ?| array['address_snapshot','contact_snapshot','patient_id']),'T06 expired evidence hides address and contact');
 reset role;
@@ -134,9 +134,9 @@ update public.provider_documents set expires_at=now()+interval '1 year' where id
 -- Control: after restoring the provider, D1 can advance, which proves the denials above came from
 -- suspension/expiry. The patient still cannot mark arrival once the doctor is en route (T04).
 set local role authenticated;
-select pg_temp.assert_true(public.advance_visit(:'b1','en_route',4)=5,'T06 control restored doctor advances');
+select pg_temp.assert_true(public.advance_visit(:'b1','en_route',4,gen_random_uuid())=5,'T06 control restored doctor advances');
 select set_config('request.jwt.claims','{"sub":"b1000000-0000-4000-8000-000000000001"}',true);
-select pg_temp.expect_state(format('select public.advance_visit(%L,''arrived'',5)',:'b1'),'42501','T04 patient cannot mark arrival after en route');
+select pg_temp.expect_state(format('select public.advance_visit(%L,''arrived'',5,gen_random_uuid())',:'b1'),'42501','T04 patient cannot mark arrival after en route');
 reset role;
 select pg_temp.assert_true((select v.substate='en_route' from public.doctor_visits v where v.booking_id=:'b1'),'T04 substate still en route');
 

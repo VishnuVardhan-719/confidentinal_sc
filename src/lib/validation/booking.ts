@@ -11,6 +11,16 @@ export const decisionSchema = z.strictObject({ expectedVersion: versionSchema, r
 export const acceptSchema = z.strictObject({ expectedVersion: versionSchema, resourceIds: z.array(z.uuid()).min(1).max(2)
   .refine(ids => new Set(ids).size === ids.length) });
 export const advanceSchema = z.strictObject({ expectedVersion: versionSchema });
+// Doctor interruption codes (P5 design §5.3). The database checks which phase allows which code.
+export const interruptReasonSchema = z.enum(["address_not_found", "declined_at_door", "unsafe_conditions", "doctor_unable", "patient_requested_stop", "ended_for_emergency"]);
+export const interruptSchema = z.strictObject({ expectedVersion: versionSchema, reason: interruptReasonSchema });
+export const verifyArrivalSchema = z.strictObject({ expectedVersion: versionSchema, code: z.string().regex(/^[0-9]{6}$/) });
+// Support-assisted arrival fallback, opened by an independent ops holder (001630).
+export const arrivalFallbackSchema = z.strictObject({ expectedVersion: versionSchema, reason: z.enum(["code_lockout", "code_unavailable"]) });
+// GET /api/doctor/visits keyset cursor: both parts or neither.
+export const doctorVisitsQuerySchema = z.strictObject({ limit: z.coerce.number().int().min(1).max(50).default(20),
+  afterStart: z.iso.datetime().optional(), afterId: z.uuid().optional() })
+  .refine(v => (v.afterStart === undefined) === (v.afterId === undefined));
 export const listBookingsSchema = z.strictObject({ providerId: z.uuid().optional(), limit: z.coerce.number().int().min(1).max(50).default(20), cursor: z.uuid().optional() });
 // provider is the public reference from search; the provider UUID never leaves the server.
 export const availabilitySchema = z.strictObject({ provider: providerReferenceSchema, service: z.uuid(), date: z.iso.date() });
