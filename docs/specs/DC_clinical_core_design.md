@@ -79,7 +79,7 @@ Clinical state never changes booking state, and booking completion never require
 
 ## 5. RPCs
 
-All `security definer`, `search_path=''`, `identity_private.require_actor()` first, execute granted to `authenticated` only. Order per contract §13.1: shape checks, request hash, keyed replay, authorization, gate, locks (booking `for update`, `lock_provider`, consultation `for update`), replay again, recheck, version, mutation, `record_request`.
+All `security definer`, `search_path=''`, `identity_private.require_actor()` first, execute granted to `authenticated` only. Order per contract §13.1: shape checks, request hash, keyed replay, authorization, gate, locks (booking `for update`, then consultation `for update`; no provider lock, because no clinical command changes booking, provider or resource rows), replay again, recheck, version, mutation, `record_request`.
 
 | RPC | Returns | Action key |
 |---|---|---|
