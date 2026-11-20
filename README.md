@@ -1,5 +1,7 @@
 # SURECURE VISIT — MASTER EXECUTION README
 
+> **Picking up the project?** Read [`START_HERE.md`](START_HERE.md) first (branches, how to verify, what is left). This README is the original master brief.
+
 **Project:** SureCure Visit  
 **Domain:** `surecurevisit.in`  
 **Master instructions:** v2.3 — pre-start review addendum to v2.2, preserving source recovery and agent workflow  

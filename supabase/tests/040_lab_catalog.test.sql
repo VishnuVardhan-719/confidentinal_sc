@@ -113,7 +113,7 @@ end $$;
 -- Published lab policies are immutable (booking_private.policy_immutable); drafts may change.
 select pg_temp.expect_state('update public.lab_policy_versions set lead_minutes=60 where version=1','55000','published lab policy update refused');
 select pg_temp.expect_state('delete from public.lab_policy_versions where version=1','55000','published lab policy delete refused');
-select pg_temp.expect_state('truncate public.lab_policy_versions','55000','lab policy truncate refused');
+select pg_temp.expect_state('truncate public.lab_policy_versions cascade','55000','lab policy truncate refused');
 insert into public.lab_policy_versions(version,lead_minutes,horizon_days,before_buffer_minutes,after_buffer_minutes) values (2,60,10,15,30);
 update public.lab_policy_versions set lead_minutes=90 where version=2;
 select pg_temp.expect_state('insert into public.lab_policy_versions(version,lead_minutes,horizon_days,before_buffer_minutes,after_buffer_minutes) values (3,60,10,61,30)','23514','before buffer above 60 refused');

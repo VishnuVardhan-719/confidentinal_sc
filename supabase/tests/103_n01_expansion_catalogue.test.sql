@@ -108,7 +108,7 @@ do $$ declare r notify_private.rules; src uuid; e uuid; subj_case uuid; area uui
    when r.match_code='expired' then null else 'c1000000-0000-4000-8000-000000000004'::uuid end;
   if r.source_kind='provider_verification' then
    insert into public.provider_verification_events(provider_id,actor_profile_id,from_state,to_state,reason,public_reason,provider_version)
-   values(pg_temp.p5_provider('lab'),actor,'submitted',r.match_code,'Synthetic secret reason','Synthetic public reason',1) returning id into src;
+   values(pg_temp.p5_provider('lab'),actor,case when r.match_code='expired' then 'approved' else 'submitted' end,r.match_code,'Synthetic secret reason','Synthetic public reason',1) returning id into src;
   elsif r.source_kind='staff_credential' then
    select max(aggregate_version)+1 into n from public.staff_credential_events where case_id=subj_case;
    insert into public.staff_credential_events(case_id,actor_profile_id,to_state,reason,aggregate_version)

@@ -6,8 +6,9 @@ This file is for a frontend developer who has never seen the repository. The own
 
 ## 1. Where things stand
 
-- `integ/all` contains the backend (identity, provider onboarding, catalog, booking for doctor visits) and **no UI**. `src/app/page.tsx` is a one-line placeholder and `src/app/layout.tsx` is the default Next.js layout.
-- `develop` is 24 commits behind `integ/all` and does not contain the backend routes. Branch from `integ/all` unless the owner names a different base.
+- **Update 2026-11-20 (Claude):** `integ/all` now also holds the doctor, lab, ambulance and caretaker workflows, pay-after payments (P01a) and notifications (N01): 116 API routes, listed in section 11 with the document that describes each block's bodies and errors. Sections 2-10 below were written at `e7165fd` and cover the earlier routes in detail. All SQL added since is **DB NOT EXECUTED**. Start at `START_HERE.md` in the repo root.
+- `integ/all` contains the backend and **no UI**. `src/app/page.tsx` is a one-line placeholder and `src/app/layout.tsx` is the default Next.js layout.
+- `develop` is 120 commits behind `integ/all` (2026-11-20) and does not contain the backend routes. Branch from `integ/all` unless the owner names a different base.
 - Unmerged, unreviewed UI work exists on `origin/feat/fe2-*` (newest: `feat/fe2-integration`, 2026-11-19, with `docs/frontend/RESUME_HERE.md`) and older `origin/task/U01-*`, `task/U02-*`, `task/U03-integration`, `fix/U01a-*`, `wip/frontend-pause-2026-11-18`. Its own resume note says its `http` adapter follows `docs/API_CONTRACTS.md`. **That file is the original proposal and does not match the implemented routes** (section 6 lists the differences). Ask the owner whether to continue that work or start fresh before picking a ticket. Do not merge those branches yourself.
 - `docs/API_CONTRACTS.md` still says "Nothing below is implemented". Use section 5 of this file as the contract instead.
 
@@ -393,7 +394,7 @@ Partly blocked tickets (build only the parts the routes allow, and list the gap 
 | UI-12 | Provider services, prices and coverage | Needs a catalog-type list route and PIN directory data |
 | UI-13 | Admin provider review and coverage queue | Needs MFA (`aal2`) and a provider review queue; nothing works locally |
 
-Blocked until backend work lands: lab, ambulance and caretaker journeys (S01); payments and pay-after (P01); clinical screens; arrival OTP; notifications.
+Backend now available for (DB NOT EXECUTED, see section 11): lab, ambulance and caretaker journeys (S01), pay-after payments (P01a), arrival code (DC02), notifications (N01). Still blocked: clinical screens (DC03-DC14, in progress on `feat/DC-clinical-core` and `feat/DC-extras`) and the payment gateway (P01b, deferred).
 
 ## 10. Limitations of this handover
 
@@ -402,3 +403,126 @@ Blocked until backend work lands: lab, ambulance and caretaker journeys (S01); p
 - The browser-side Storage upload path is **UNVERIFIED** outside the opt-in integration test.
 - The unmerged `feat/fe2-*` and `task/U0*` branches were not reviewed; only their file lists and resume note were read.
 - `docs/API_CONTRACTS.md` and `docs/IMPLEMENTATION_TASKS.md` were left unchanged to keep this task's file scope to this document.
+
+## 11. Route index (generated 2026-11-20 from `src/app/api/**/route.ts` on `integ/all`)
+
+Every implemented route, grouped by the block that added it. The last column names where its request body, response and error codes are described; the Zod schema in `src/lib/validation/` is the source of truth for bodies. Category routes stay unavailable until their DB feature gate is turned on (all seeded off).
+
+| Block | Method | Path | Request/response and errors |
+|---|---|---|---|
+| Identity (I01) | GET | `/api/auth/invitations` | sections 5.2-5.3, `src/lib/validation/identity.ts` |
+| Identity (I01) | POST | `/api/auth/login` | sections 5.2-5.3, `src/lib/validation/identity.ts` |
+| Identity (I01) | POST | `/api/auth/logout` | sections 5.2-5.3, `src/lib/validation/identity.ts` |
+| Identity (I01) | GET | `/api/auth/me` | sections 5.2-5.3, `src/lib/validation/identity.ts` |
+| Identity (I01) | POST | `/api/auth/patient` | sections 5.2-5.3, `src/lib/validation/identity.ts` |
+| Identity (I01) | PATCH | `/api/auth/profile` | sections 5.2-5.3, `src/lib/validation/identity.ts` |
+| Identity (I01) | POST | `/api/auth/refresh` | sections 5.2-5.3, `src/lib/validation/identity.ts` |
+| Identity (I01) | POST | `/api/auth/signup` | sections 5.2-5.3, `src/lib/validation/identity.ts` |
+| Identity (I01) | GET, POST | `/api/organizations` | sections 5.2-5.3, `src/lib/validation/identity.ts` |
+| Identity (I01) | PATCH | `/api/organizations/[id]` | sections 5.2-5.3, `src/lib/validation/identity.ts` |
+| Identity (I01) | GET, POST | `/api/organizations/[id]/members` | sections 5.2-5.3, `src/lib/validation/identity.ts` |
+| Identity (I01) | POST | `/api/organizations/[id]/members/accept` | sections 5.2-5.3, `src/lib/validation/identity.ts` |
+| Identity (I01) | GET | `/api/organizations/invitations` | sections 5.2-5.3, `src/lib/validation/identity.ts` |
+| Provider onboarding (I02) | POST | `/api/admin/providers/[id]/review` | section 5.4, `src/lib/validation/providers.ts` |
+| Provider onboarding (I02) | POST | `/api/providers` | section 5.4, `src/lib/validation/providers.ts` |
+| Provider onboarding (I02) | GET, PATCH | `/api/providers/[id]` | section 5.4, `src/lib/validation/providers.ts` |
+| Provider onboarding (I02) | POST | `/api/providers/[id]/documents` | section 5.4, `src/lib/validation/providers.ts` |
+| Provider onboarding (I02) | POST | `/api/providers/[id]/documents/[documentId]/signed-url` | section 5.4, `src/lib/validation/providers.ts` |
+| Provider onboarding (I02) | POST | `/api/providers/[id]/submit` | section 5.4, `src/lib/validation/providers.ts` |
+| Catalog (C01) | GET | `/api/catalog` | section 5.5, `src/lib/validation/catalog.ts` |
+| Catalog (C01) | GET | `/api/catalog/[id]` | section 5.5, `src/lib/validation/catalog.ts` |
+| Catalog (C01) | GET | `/api/catalog/admin/coverage` | section 5.5, `src/lib/validation/catalog.ts` |
+| Catalog (C01) | POST | `/api/catalog/admin/coverage/[id]/review` | section 5.5, `src/lib/validation/catalog.ts` |
+| Catalog (C01) | POST | `/api/provider/coverage` | section 5.5, `src/lib/validation/catalog.ts` |
+| Catalog (C01) | POST | `/api/provider/coverage/[id]/withdraw` | section 5.5, `src/lib/validation/catalog.ts` |
+| Catalog (C01) | GET, POST | `/api/provider/services` | section 5.5, `src/lib/validation/catalog.ts` |
+| Catalog (C01) | PATCH | `/api/provider/services/[id]` | section 5.5, `src/lib/validation/catalog.ts` |
+| Catalog (C01) | POST | `/api/provider/services/[id]/prices` | section 5.5, `src/lib/validation/catalog.ts` |
+| Booking core (B01) | GET | `/api/availability` | sections 5.6-5.7, `src/lib/validation/booking.ts` |
+| Booking core (B01) | POST, GET | `/api/bookings` | sections 5.6-5.7, `src/lib/validation/booking.ts` |
+| Booking core (B01) | GET | `/api/bookings/[id]` | sections 5.6-5.7, `src/lib/validation/booking.ts` |
+| Booking core (B01) | POST | `/api/bookings/[id]/accept` | sections 5.6-5.7, `src/lib/validation/booking.ts` |
+| Booking core (B01) | POST | `/api/bookings/[id]/arrive` | sections 5.6-5.7, `src/lib/validation/booking.ts` |
+| Booking core (B01) | POST | `/api/bookings/[id]/cancel` | sections 5.6-5.7, `src/lib/validation/booking.ts` |
+| Booking core (B01) | POST | `/api/bookings/[id]/complete` | sections 5.6-5.7, `src/lib/validation/booking.ts` |
+| Booking core (B01) | POST | `/api/bookings/[id]/decline` | sections 5.6-5.7, `src/lib/validation/booking.ts` |
+| Booking core (B01) | POST | `/api/bookings/[id]/en-route` | sections 5.6-5.7, `src/lib/validation/booking.ts` |
+| Booking core (B01) | POST | `/api/bookings/[id]/reschedule` | sections 5.6-5.7, `src/lib/validation/booking.ts` |
+| Booking core (B01) | POST | `/api/bookings/[id]/start` | sections 5.6-5.7, `src/lib/validation/booking.ts` |
+| Booking core (B01) | POST | `/api/patient/addresses` | sections 5.6-5.7, `src/lib/validation/booking.ts` |
+| Booking core (B01) | POST | `/api/provider/booking/availability` | sections 5.6-5.7, `src/lib/validation/booking.ts` |
+| Booking core (B01) | POST | `/api/provider/booking/blackouts` | sections 5.6-5.7, `src/lib/validation/booking.ts` |
+| Booking core (B01) | POST | `/api/provider/booking/resources` | sections 5.6-5.7, `src/lib/validation/booking.ts` |
+| Notifications (N01) | GET | `/api/admin/notifications/failures` | `docs/handoffs/N01_codex_2026-11-20.md` |
+| Notifications (N01) | GET, POST | `/api/internal/notifications/dispatch` | `docs/handoffs/N01_codex_2026-11-20.md` |
+| Notifications (N01) | GET | `/api/notifications` | `docs/handoffs/N01_codex_2026-11-20.md` |
+| Notifications (N01) | GET, PUT | `/api/notifications/preferences` | `docs/handoffs/N01_codex_2026-11-20.md` |
+| Notifications (N01) | POST | `/api/notifications/read` | `docs/handoffs/N01_codex_2026-11-20.md` |
+| Notifications (N01) | GET | `/api/notifications/unread-count` | `docs/handoffs/N01_codex_2026-11-20.md` |
+| Pay-after (P01a) | POST | `/api/admin/payments/[id]/override` | `docs/handoffs/P01a_app_codex_2026-11-19.md`, `src/lib/validation/payments.ts` |
+| Pay-after (P01a) | POST | `/api/admin/payments/[id]/resolve` | `docs/handoffs/P01a_app_codex_2026-11-19.md`, `src/lib/validation/payments.ts` |
+| Pay-after (P01a) | POST | `/api/admin/payments/collections/[id]/reconcile` | `docs/handoffs/P01a_app_codex_2026-11-19.md`, `src/lib/validation/payments.ts` |
+| Pay-after (P01a) | POST | `/api/admin/payments/collections/[id]/supersede` | `docs/handoffs/P01a_app_codex_2026-11-19.md`, `src/lib/validation/payments.ts` |
+| Pay-after (P01a) | GET | `/api/admin/payments/exceptions` | `docs/handoffs/P01a_app_codex_2026-11-19.md`, `src/lib/validation/payments.ts` |
+| Pay-after (P01a) | POST | `/api/admin/payments/intakes/[id]/review` | `docs/handoffs/P01a_app_codex_2026-11-19.md`, `src/lib/validation/payments.ts` |
+| Pay-after (P01a) | GET | `/api/admin/payments/queue` | `docs/handoffs/P01a_app_codex_2026-11-19.md`, `src/lib/validation/payments.ts` |
+| Pay-after (P01a) | POST | `/api/bookings/[id]/collection` | `docs/handoffs/P01a_app_codex_2026-11-19.md`, `src/lib/validation/payments.ts` |
+| Pay-after (P01a) | POST | `/api/bookings/[id]/collection-exception` | `docs/handoffs/P01a_app_codex_2026-11-19.md`, `src/lib/validation/payments.ts` |
+| Pay-after (P01a) | POST | `/api/bookings/[id]/collection/[cid]/void` | `docs/handoffs/P01a_app_codex_2026-11-19.md`, `src/lib/validation/payments.ts` |
+| Pay-after (P01a) | GET | `/api/bookings/[id]/payment` | `docs/handoffs/P01a_app_codex_2026-11-19.md`, `src/lib/validation/payments.ts` |
+| Pay-after (P01a) | POST | `/api/bookings/[id]/payment/dispute` | `docs/handoffs/P01a_app_codex_2026-11-19.md`, `src/lib/validation/payments.ts` |
+| Pay-after (P01a) | GET | `/api/payments/intakes/[id]/status` | `docs/handoffs/P01a_app_codex_2026-11-19.md`, `src/lib/validation/payments.ts` |
+| Pay-after (P01a) | GET | `/api/providers/[id]/payments` | `docs/handoffs/P01a_app_codex_2026-11-19.md`, `src/lib/validation/payments.ts` |
+| Shared ops/contact (P5) | POST | `/api/bookings/[id]/contact` | section 5.8, `docs/specs/P5_shared_engine_contract.md`, `src/lib/validation/ops.ts` |
+| Shared ops/contact (P5) | POST | `/api/ops/bookings/[id]/close` | section 5.8, `docs/specs/P5_shared_engine_contract.md`, `src/lib/validation/ops.ts` |
+| Shared ops/contact (P5) | GET | `/api/ops/exceptions` | section 5.8, `docs/specs/P5_shared_engine_contract.md`, `src/lib/validation/ops.ts` |
+| Shared ops/contact (P5) | POST | `/api/ops/exceptions/[id]/resolve` | section 5.8, `docs/specs/P5_shared_engine_contract.md`, `src/lib/validation/ops.ts` |
+| Doctor (P5) | POST | `/api/bookings/[id]/absence` | `docs/handoffs/S01_doctor_kiro_2026-11-20.md` |
+| Doctor (P5) | POST | `/api/bookings/[id]/arrival-code` | `docs/handoffs/S01_doctor_kiro_2026-11-20.md` |
+| Doctor (P5) | POST | `/api/bookings/[id]/arrival-fallback` | `docs/handoffs/S01_doctor_kiro_2026-11-20.md` |
+| Doctor (P5) | POST | `/api/bookings/[id]/arrival-fallback/confirm` | `docs/handoffs/S01_doctor_kiro_2026-11-20.md` |
+| Doctor (P5) | POST | `/api/bookings/[id]/interrupt` | `docs/handoffs/S01_doctor_kiro_2026-11-20.md` |
+| Doctor (P5) | POST | `/api/bookings/[id]/verify-arrival` | `docs/handoffs/S01_doctor_kiro_2026-11-20.md` |
+| Doctor (P5) | GET | `/api/bookings/[id]/visit` | `docs/handoffs/S01_doctor_kiro_2026-11-20.md` |
+| Doctor (P5) | GET | `/api/doctor/visits` | `docs/handoffs/S01_doctor_kiro_2026-11-20.md` |
+| Care (P5) | GET | `/api/care/bookings/[id]` | `docs/handoffs/P5_care_kiro_2026-11-20.md`, `src/lib/validation/care.ts` |
+| Care (P5) | POST | `/api/care/bookings/[id]/attest` | `docs/handoffs/P5_care_kiro_2026-11-20.md`, `src/lib/validation/care.ts` |
+| Care (P5) | POST | `/api/care/bookings/[id]/end` | `docs/handoffs/P5_care_kiro_2026-11-20.md`, `src/lib/validation/care.ts` |
+| Care (P5) | POST | `/api/care/bookings/[id]/interrupt` | `docs/handoffs/P5_care_kiro_2026-11-20.md`, `src/lib/validation/care.ts` |
+| Care (P5) | POST | `/api/care/bookings/[id]/start` | `docs/handoffs/P5_care_kiro_2026-11-20.md`, `src/lib/validation/care.ts` |
+| Care (P5) | GET | `/api/care/services/[id]/tasks` | `docs/handoffs/P5_care_kiro_2026-11-20.md`, `src/lib/validation/care.ts` |
+| Care (P5) | PUT | `/api/provider/services/[id]/care-tasks` | `docs/handoffs/P5_care_kiro_2026-11-20.md`, `src/lib/validation/care.ts` |
+| Lab (P5) | GET | `/api/bookings/[id]/lab` | `docs/handoffs/P5_lab_kiro_2026-11-20.md`, `src/lib/validation/lab.ts` |
+| Lab (P5) | POST | `/api/bookings/[id]/lab/absence` | `docs/handoffs/P5_lab_kiro_2026-11-20.md`, `src/lib/validation/lab.ts` |
+| Lab (P5) | POST | `/api/bookings/[id]/lab/accept` | `docs/handoffs/P5_lab_kiro_2026-11-20.md`, `src/lib/validation/lab.ts` |
+| Lab (P5) | POST | `/api/bookings/[id]/lab/collected` | `docs/handoffs/P5_lab_kiro_2026-11-20.md`, `src/lib/validation/lab.ts` |
+| Lab (P5) | POST | `/api/bookings/[id]/lab/collection-failed` | `docs/handoffs/P5_lab_kiro_2026-11-20.md`, `src/lib/validation/lab.ts` |
+| Lab (P5) | POST | `/api/bookings/[id]/lab/followup` | `docs/handoffs/P5_lab_kiro_2026-11-20.md`, `src/lib/validation/lab.ts` |
+| Lab (P5) | POST | `/api/bookings/[id]/lab/handoff` | `docs/handoffs/P5_lab_kiro_2026-11-20.md`, `src/lib/validation/lab.ts` |
+| Lab (P5) | POST | `/api/bookings/[id]/lab/handoff-failed` | `docs/handoffs/P5_lab_kiro_2026-11-20.md`, `src/lib/validation/lab.ts` |
+| Lab (P5) | POST | `/api/bookings/[id]/lab/start-collection` | `docs/handoffs/P5_lab_kiro_2026-11-20.md`, `src/lib/validation/lab.ts` |
+| Lab (P5) | GET | `/api/lab/availability` | `docs/handoffs/P5_lab_kiro_2026-11-20.md`, `src/lib/validation/lab.ts` |
+| Lab (P5) | POST | `/api/lab/bookings` | `docs/handoffs/P5_lab_kiro_2026-11-20.md`, `src/lib/validation/lab.ts` |
+| Lab (P5) | GET | `/api/lab/tests/[serviceId]` | `docs/handoffs/P5_lab_kiro_2026-11-20.md`, `src/lib/validation/lab.ts` |
+| Lab (P5) | GET | `/api/provider/lab/followups` | `docs/handoffs/P5_lab_kiro_2026-11-20.md`, `src/lib/validation/lab.ts` |
+| Lab (P5) | PUT | `/api/provider/services/[id]/lab-test` | `docs/handoffs/P5_lab_kiro_2026-11-20.md`, `src/lib/validation/lab.ts` |
+| Ambulance (P5) | POST | `/api/admin/ambulance/vehicles/[id]/review` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | POST | `/api/ambulance/vehicle-documents/[id]/read-ticket` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | GET | `/api/bookings/[id]/trip` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | POST | `/api/bookings/[id]/trip/absence` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | POST | `/api/bookings/[id]/trip/accept` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | POST | `/api/bookings/[id]/trip/arrived` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | POST | `/api/bookings/[id]/trip/destination` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | POST | `/api/bookings/[id]/trip/destination-reached` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | POST | `/api/bookings/[id]/trip/en-route` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | POST | `/api/bookings/[id]/trip/interrupt` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | POST | `/api/bookings/[id]/trip/picked-up` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | POST | `/api/bookings/transport` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | GET | `/api/bookings/transport/slots` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | GET | `/api/driver/trips` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | POST | `/api/provider/ambulance/drivers` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | GET | `/api/provider/ambulance/fleet` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | GET | `/api/provider/ambulance/queue` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | POST | `/api/provider/ambulance/vehicles` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | POST | `/api/provider/ambulance/vehicles/[id]/documents` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |
+| Ambulance (P5) | POST | `/api/provider/ambulance/vehicles/[id]/submit` | `docs/handoffs/P5_ambulance_kiro_2026-11-20.md`, `src/lib/validation/ambulance.ts` |

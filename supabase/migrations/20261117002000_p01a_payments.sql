@@ -256,13 +256,13 @@ declare pid uuid; p public.payments; total numeric; reserved numeric; begin
   and i.reported_by_profile_id=c.collector_profile_id and i.reviewed_by_profile_id=c.reported_by_profile_id
   and i.amount_paise=c.amount_paise and i.method=c.method and i.reference is not distinct from c.reference))
  or exists(select 1 from public.payment_collections c where c.payment_id=pid and c.reported_by_profile_id<>c.collector_profile_id and c.source_intake_id is null
-  and not exists(select 1 from public.payment_collections old where old.payment_id=c.payment_id and old.superseded_by=c.id
-   and old.status='superseded' and old.collector_profile_id=c.collector_profile_id and old.reconciled_by=c.reported_by_profile_id))
+  and not exists(select 1 from public.payment_collections prev where prev.payment_id=c.payment_id and prev.superseded_by=c.id
+   and prev.status='superseded' and prev.collector_profile_id=c.collector_profile_id and prev.reconciled_by=c.reported_by_profile_id))
  or exists(select 1 from payments_private.collection_intakes i where i.payment_id=pid and i.status='converted'
   and not exists(select 1 from public.payment_collections c where c.source_intake_id=i.id))
- or exists(select 1 from public.payment_collections old where old.payment_id=pid and old.status='superseded' and not exists(
-  select 1 from public.payment_collections replacement where replacement.id=old.superseded_by and replacement.payment_id=old.payment_id
-  and replacement.collector_profile_id=old.collector_profile_id and replacement.reported_by_profile_id=old.reconciled_by))
+ or exists(select 1 from public.payment_collections prev where prev.payment_id=pid and prev.status='superseded' and not exists(
+  select 1 from public.payment_collections replacement where replacement.id=prev.superseded_by and replacement.payment_id=prev.payment_id
+  and replacement.collector_profile_id=prev.collector_profile_id and replacement.reported_by_profile_id=prev.reconciled_by))
  then raise exception using errcode='23514',message='invalid_provenance'; end if;
  return null;
 end $$;

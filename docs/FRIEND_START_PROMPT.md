@@ -1,3 +1,5 @@
+> **Superseded (2026-11-20):** start at [`START_HERE.md`](../START_HERE.md) on branch `integ/all`. This file is kept for history; where it disagrees with `START_HERE.md`, that page wins.
+
 # Start prompt for the frontend developer
 
 Paste this into Claude Code (or your coding agent) after cloning the repo and checking out `develop`.

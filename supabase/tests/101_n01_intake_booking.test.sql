@@ -9,10 +9,15 @@ select pg_temp.p5_accept(:'b',array['c6000000-0000-4000-8000-000000000001'::uuid
 select pg_temp.assert_true((select count(*)=3 from notify_private.events where source_kind='booking_event' and booking_id=:'b'),'accepted and confirmed each intake');
 select pg_temp.p5_shift(:'b',clock_timestamp()+interval '10 minutes');
 select pg_temp.as_user('c1000000-0000-4000-8000-000000000002');
-select public.advance_visit(:'b','en_route',4);
-select public.advance_visit(:'b','arrived',5);
-select public.advance_visit(:'b','service_started',6);
-select public.advance_visit(:'b','service_completed',7);
+-- Doctor commands (001640) take a request key; service_started needs the arrival code (001630).
+select public.advance_visit(:'b','en_route',4,gen_random_uuid());
+select public.advance_visit(:'b','arrived',5,gen_random_uuid());
+select pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
+select (public.issue_arrival_code(:'b',gen_random_uuid()))->>'code' as arrival_code \gset
+select pg_temp.as_user('c1000000-0000-4000-8000-000000000002');
+select public.verify_arrival_code(:'b',:'arrival_code',6,gen_random_uuid());
+select public.advance_visit(:'b','service_started',7,gen_random_uuid());
+select public.advance_visit(:'b','service_completed',8,gen_random_uuid());
 select pg_temp.p5_create('doctor',pg_temp.p5_at(4)) as declined \gset
 select pg_temp.as_user('c1000000-0000-4000-8000-000000000001');
 select public.decline_booking(:'declined',2,'provider_unavailable');
