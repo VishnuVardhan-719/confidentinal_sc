@@ -21,7 +21,7 @@ create function pg_temp.p01_finance() returns void language sql as $$
 -- Each booking is real request/accept/start within the access window. Suites with
 -- two bookings use distinct people to respect retained P5 closeout buffers.
 create function pg_temp.p01_book(p_finish boolean default true,p_person uuid default 'c1000000-0000-4000-8000-000000000002') returns uuid language plpgsql as $$
-declare b uuid; v integer; start_time timestamptz; resource uuid; begin
+declare b uuid; v integer; start_time timestamptz; resource uuid; code text; begin
  start_time:=clock_timestamp()+interval '1 minute';
  perform pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
  b:=public.create_booking_request('b2000000-0000-4000-8000-000000000001',pg_temp.p5_service('doctor'),
@@ -30,10 +30,15 @@ declare b uuid; v integer; start_time timestamptz; resource uuid; begin
  perform pg_temp.p5_accept(b,array[resource]);
  perform pg_temp.as_user(p_person);
  select version into v from public.bookings where id=b;
- v:=public.advance_visit(b,'en_route',v);
- v:=public.advance_visit(b,'arrived',v);
- v:=public.advance_visit(b,'service_started',v);
- if p_finish then perform public.advance_visit(b,'service_completed',v); end if;
+ v:=public.advance_visit(b,'en_route',v,gen_random_uuid());
+ v:=public.advance_visit(b,'arrived',v,gen_random_uuid());
+ -- Doctor block DC02: the patient issues the arrival code, the doctor verifies it, then starts.
+ perform pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
+ code:=public.issue_arrival_code(b,gen_random_uuid())->>'code';
+ perform pg_temp.as_user(p_person);
+ v:=(public.verify_arrival_code(b,code,v,gen_random_uuid())->>'version')::integer;
+ v:=public.advance_visit(b,'service_started',v,gen_random_uuid());
+ if p_finish then perform public.advance_visit(b,'service_completed',v,gen_random_uuid()); end if;
  return b;
 end $$;
 create function pg_temp.p01_report(b uuid,a bigint default 10000,k uuid default gen_random_uuid()) returns uuid language plpgsql as $$

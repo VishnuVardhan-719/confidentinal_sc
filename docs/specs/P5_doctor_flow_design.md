@@ -319,6 +319,8 @@ Same signature, so the existing routes `en-route`, `arrive`, `start` and `comple
 - Each row: `id`, `public_ref`, `provider_reference`, `start_at`, `end_at`, `pin_code`, `state`, `substate`, `version`, `can_act_now` (the assignee predicate), `credential_ok` (`person_is_verified`).
 - No address line, contact, patient id or name. Lists never return contact data, so refetching writes no audit rows (S01-15).
 
+**Deviation from shared contract §8.3 (approved by Claude, 19 November 2026).** Contract §8.3 says rows a category projection returns to an assignee must be gated by `is_assigned` or `closeout_assignee`. Applied literally, a staff doctor could not see a visit until 60 minutes before it starts, or at all once their Q06 credential lapsed. The built `list_my_doctor_visits` (`20261117001640`) instead gates each row with `doctor_private.visit_member`: an active account, the caller on the visit's own active assignment and person resource, and current individual ownership or an accepted active `provider:read` membership of an active organization. That keeps the protection §8.3 exists for (review P5-13: an offboarded doctor sees nothing), while showing upcoming visits and a lapsed credential. Rows carry no contact data, and `can_act_now` (assignee predicate), `can_close` (assignee or closeout on a started visit) and `credential_ok` (`person_is_verified`) are reported separately, so the list never implies the doctor may act.
+
 ### 7.9 API routes
 
 All routes use the built helpers (`endpoint`, `session`, `input`, `routeId`) and `bookingCommand`, with the new RPC names added to its `Command` union. Bodies are `z.strictObject`, so `substate`, `state`, `category`, `providerId`, `actorId`, `amountPaise`, `lat`, `lng` and `eta` are rejected with 422.
