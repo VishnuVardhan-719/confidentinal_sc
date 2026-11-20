@@ -11,10 +11,32 @@ create function pg_temp.n01_expected(a text) returns uuid[] language sql as $$
  when 'assignees' then array['c1000000-0000-4000-8000-000000000002']::uuid[]
  when 'ops' then array['c1000000-0000-4000-8000-000000000005','c1000000-0000-4000-8000-000000000006']::uuid[]
  else array['c1000000-0000-4000-8000-000000000001','c1000000-0000-4000-8000-000000000009']::uuid[] end; $$;
-do $$ declare r notify_private.rules; e uuid; expected uuid[]; actual uuid[]; actor uuid; before_n integer; begin
+do $$ declare r notify_private.rules; e uuid; expected uuid[]; actual uuid[]; actor uuid; before_n integer; expected_key text; expected_priority text; expected_state text; begin
  -- Each concrete (rule, code, category, audience) row is exercised, including
  -- B14/B15's whole closed interruption set and the guarded category reasons.
  for r in select * from notify_private.rules where source_kind='booking_event' order by id loop
+  -- Literal catalogue oracle: never derive expected copy/priority/state from
+  -- the columns that expansion itself reads.
+  expected_key:=case left(r.id,3)
+   when 'B01' then 'booking.request_received'
+   when 'B03' then case when r.audience='patient' then 'booking.confirmed' else 'booking.assigned' end
+   when 'B04' then 'booking.declined' when 'B05' then 'booking.cancelled_by_patient'
+   when 'B06' then case when r.audience='patient' then 'booking.cancelled_by_provider' else 'booking.cancelled' end
+   when 'B07' then case when r.audience='patient' then 'booking.cancelled_confirmed' else 'booking.cancelled' end
+   when 'B08' then 'booking.expired' when 'B09' then 'visit.en_route' when 'B10' then 'visit.arrived'
+   when 'B11' then 'visit.started' when 'B12' then 'visit.sample_collected' when 'B13' then 'visit.completed'
+   when 'B14' then case when r.audience='patient' then 'visit.ended_early' else 'visit.interrupted_staff' end
+   when 'B15' then case when r.audience='patient' then 'visit.interrupted' else 'visit.interrupted_staff' end
+   when 'B16' then case when r.audience='patient' then 'visit.absence_reported' else 'visit.absence_reported_staff' end
+   when 'B17' then 'visit.no_show' when 'B18' then case when r.audience='patient' then 'trip.problem' else 'trip.blocked_staff' end end;
+  expected_priority:=case when left(r.id,3) in ('B07','B15') and r.audience='patient' then 'safety'
+   when left(r.id,3) in ('B11','B12','B13') or (left(r.id,3)='B08' and r.audience='schedulers') then 'routine' else 'transactional' end;
+  expected_state:=case left(r.id,3) when 'B01' then 'requested' when 'B04' then 'declined'
+   when 'B05' then 'cancelled' when 'B06' then 'cancelled' when 'B07' then 'cancelled' when 'B08' then 'expired'
+   when 'B11' then 'in_progress' when 'B12' then 'in_progress' when 'B13' then 'completed'
+   when 'B14' then 'interrupted' when 'B15' then 'interrupted' when 'B17' then 'no_show' else 'confirmed' end;
+  perform pg_temp.assert_true(r.inapp_key=expected_key and r.priority=expected_priority and r.match_to_state=expected_state,'literal booking catalogue '||r.id);
+  perform pg_temp.assert_true(r.quiet_exempt=(left(r.id,3) in ('B09','B10','B18')),'literal quiet exemption '||r.id);
   actor:=case when r.match_actor='patient' then 'b1000000-0000-4000-8000-000000000001'::uuid else 'c1000000-0000-4000-8000-000000000001'::uuid end;
   e:=pg_temp.n01_event(r.match_categories[1],r.match_code,coalesce(r.match_from_state,'confirmed'),r.match_to_state,actor);
   perform notify_worker.expand(500);
@@ -31,7 +53,7 @@ do $$ declare r notify_private.rules; e uuid; expected uuid[]; actual uuid[]; ac
    select array_agg(x order by x) into expected from unnest(array['c1000000-0000-4000-8000-000000000001','c1000000-0000-4000-8000-000000000005','c1000000-0000-4000-8000-000000000006','c1000000-0000-4000-8000-000000000009']::uuid[]) x where x<>actor;
   end if;
   perform pg_temp.assert_true(actual is not distinct from expected,'golden recipients '||r.id);
-  perform pg_temp.assert_true(not exists(select 1 from public.notifications where event_id=e and rule_id=r.id and priority<>r.priority),'priority '||r.id);
+  perform pg_temp.assert_true(not exists(select 1 from public.notifications where event_id=e and rule_id=r.id and priority<>expected_priority),'priority '||r.id);
   perform pg_temp.assert_true(not exists(select 1 from public.notifications where event_id=e and recipient_profile_id=actor),'actor removed '||r.id);
  end loop;
  e:=pg_temp.n01_event('doctor','accepted','requested','accepted'); perform notify_worker.expand(500);
@@ -71,10 +93,17 @@ select notify_worker.expand(500);
 select pg_temp.assert_true((select status='expanded' from notify_private.events where id=:'reassigned'),'reassigned intentionally silent');
 select pg_temp.assert_true(not exists(select 1 from public.notifications where event_id=:'reassigned'),'reassigned no rows');
 -- Verification catalogue and exception audiences have independent literal oracles.
-do $$ declare r notify_private.rules; src uuid; e uuid; subj_case uuid; area uuid; b uuid; n integer; actual uuid[]; expected uuid[]; actor uuid; kind_code text; begin
+do $$ declare r notify_private.rules; src uuid; e uuid; subj_case uuid; area uuid; b uuid; n integer; actual uuid[]; expected uuid[]; actor uuid; kind_code text; expected_key text; expected_ext text; begin
  select id into subj_case from public.provider_verification_cases where provider_id=pg_temp.p5_provider('lab') and subject_profile_id='c1000000-0000-4000-8000-000000000002';
  select id into area from public.provider_service_areas where provider_id=pg_temp.p5_provider('lab');
  for r in select * from notify_private.rules where source_kind in ('provider_verification','staff_credential','coverage_review') order by id loop
+  expected_key:=case left(r.id,3) when 'V01' then 'verification.provider_submitted' when 'V02' then 'verification.under_review'
+   when 'V03' then 'verification.approved' when 'V04' then 'verification.rejected' when 'V05' then 'verification.suspended'
+   when 'V06' then 'verification.expired' when 'V07' then 'verification.staff_submitted' when 'V08' then 'verification.staff_'||r.match_code
+   when 'V09' then 'verification.coverage_proposed' when 'V10' then 'verification.coverage_'||r.match_code end;
+  expected_ext:=case when r.audience='provider_managers' and r.match_code in ('approved','rejected','suspended','expired') then 'ext.account_update' end;
+  perform pg_temp.assert_true(r.inapp_key=expected_key and r.priority=case when r.id='V02' then 'routine' else 'transactional' end
+   and r.ext_key is not distinct from expected_ext,'literal verification catalogue '||r.id);
   actor:=case when r.match_code in ('submitted','proposed') then 'c1000000-0000-4000-8000-000000000001'::uuid
    when r.match_code='expired' then null else 'c1000000-0000-4000-8000-000000000004'::uuid end;
   if r.source_kind='provider_verification' then

@@ -3,7 +3,7 @@ begin;
 \ir _tap_helpers.inc
 \ir _n01_fixture.inc
 -- Authored, DB NOT EXECUTED. Exact P01a source columns and reason constraints.
-do $$ declare b uuid; pay uuid; col uuid; code text; ev uuid; intake uuid; expected text; who uuid; v integer:=100; begin
+do $$ declare b uuid; pay uuid; col uuid; code text; ev uuid; intake uuid; expected text; who uuid; v integer:=100; expected_recipients uuid[]; actual_recipients uuid[]; begin
  b:=pg_temp.p5_raw('doctor','confirmed',clock_timestamp()+interval '1 hour','c1000000-0000-4000-8000-000000000002');
  select id into pay from public.payments where booking_id=b;
  insert into public.payment_collections(payment_id,collector_profile_id,reported_by_profile_id,amount_paise,method,request_key)
@@ -24,6 +24,16 @@ do $$ declare b uuid; pay uuid; col uuid; code text; ev uuid; intake uuid; expec
    perform pg_temp.assert_true(not exists(select 1 from public.notifications where event_id=intake and template_key<>expected),'only expected key '||code);
   end if;
   perform pg_temp.assert_true(not exists(select 1 from notify_private.deliveries where event_id=intake),'no external payment '||code);
+  expected_recipients:=case
+   when code in ('collection.reported','collection.confirmed','obligation.voided') then array['b1000000-0000-4000-8000-000000000001']::uuid[]
+   when code='collection.disputed' then array['c1000000-0000-4000-8000-000000000002']::uuid[]
+   when code='payment.disputed' then array['c1000000-0000-4000-8000-000000000001','c1000000-0000-4000-8000-000000000006']::uuid[]
+   when code='payment.resolved' then array['b1000000-0000-4000-8000-000000000001','c1000000-0000-4000-8000-000000000002']::uuid[]
+   when code='exception.raised' then array['c1000000-0000-4000-8000-000000000006']::uuid[] end;
+  select array_agg(recipient_profile_id order by recipient_profile_id) into actual_recipients from public.notifications where event_id=intake;
+  perform pg_temp.assert_true(actual_recipients is not distinct from expected_recipients,'literal payment recipients '||code);
+  perform pg_temp.assert_true(not exists(select 1 from public.notifications where event_id=intake and priority<>
+   case when code in ('collection.confirmed','obligation.voided') then 'routine' else 'transactional' end),'literal payment priority '||code);
   perform pg_temp.assert_true(not exists(select 1 from public.notifications where event_id=intake and params ? 'amount_paise' and code not in ('collection.reported','collection.confirmed')),'amount only Y01/Y02');
   if code in ('collection.reported','collection.confirmed') then
    perform pg_temp.assert_true((select params->>'amount_paise'='12345' from public.notifications where event_id=intake),'amount string');

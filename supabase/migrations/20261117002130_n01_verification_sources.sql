@@ -36,11 +36,13 @@ insert into notify_private.rules(id,source_kind,match_code,audience,priority,top
  ('V06','provider_verification','expired','provider_managers','transactional','verification','verification.expired','ext.account_update','h24'),
  ('V07','staff_credential','submitted','verifiers','transactional','verification','verification.staff_submitted',null,'h24'),
  ('V09','coverage_review','proposed','coverage_verifiers','transactional','verification','verification.coverage_proposed',null,'h24');
-insert into notify_private.rules(id,source_kind,match_code,audience,priority,topic,inapp_key,ttl)
-select 'V08-'||s||'-'||a,'staff_credential',s,a,'transactional','verification','verification.staff_'||s,'h24'
+insert into notify_private.rules(id,source_kind,match_code,audience,priority,topic,inapp_key,ext_key,ttl)
+select 'V08-'||s||'-'||a,'staff_credential',s,a,'transactional','verification','verification.staff_'||s,
+ case when a='provider_managers' then 'ext.account_update' end,'h24'
 from unnest(array['approved','rejected','suspended']) s,unnest(array['staff_subject','provider_managers']) a;
-insert into notify_private.rules(id,source_kind,match_code,audience,priority,topic,inapp_key,ttl)
-select 'V10-'||s,'coverage_review',s,'provider_managers','transactional','verification','verification.coverage_'||s,'h24'
+insert into notify_private.rules(id,source_kind,match_code,audience,priority,topic,inapp_key,ext_key,ttl)
+select 'V10-'||s,'coverage_review',s,'provider_managers','transactional','verification','verification.coverage_'||s,
+ case when s in ('approved','rejected') then 'ext.account_update' end,'h24'
 from unnest(array['approved','rejected','revoked']) s;
 revoke all on function notify_private.intake_verification(),notify_private.coverage_proposed() from public,anon,authenticated,service_role;
 commit;

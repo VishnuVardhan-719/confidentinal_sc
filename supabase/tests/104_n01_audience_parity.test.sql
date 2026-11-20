@@ -13,6 +13,12 @@ do $$ declare p public.providers; x public.profiles; e uuid; b uuid; offline boo
    offline:=exists(select 1 from notify_private.managers_of(p.id) r where r=x.id);
    live:=coalesce(providers_private.access(p.id,'manage'),false);
    perform pg_temp.assert_true(offline=live,'manager parity '||p.id||' '||x.id);
+   offline:=exists(select 1 from notify_private.capabilities_of(p.id,'provider:verify') r where r=x.id);
+   live:=coalesce(providers_private.verifier(p.organization_id),false);
+   perform pg_temp.assert_true(offline=live,'provider verifier capability parity '||p.id||' '||x.id);
+   offline:=exists(select 1 from notify_private.capabilities_of(p.id,'coverage:verify') r where r=x.id);
+   live:=coalesce(catalog_private.verifier(p.organization_id),false);
+   perform pg_temp.assert_true(offline=live,'coverage verifier capability parity '||p.id||' '||x.id);
   end loop;
  end loop;
  e:=pg_temp.n01_event('doctor','confirmed','accepted','confirmed');
