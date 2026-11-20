@@ -40,6 +40,9 @@ const NOT_IN_CONTRACTS: Record<string, string> = {
   "/api/catalog/:id": "C01 PR #3 GET (public; API_CONTRACTS proposes /api/providers/:id)",
   "/api/bookings/:id": "B01 PR #4 GET -> { booking }",
   "/api/bookings/:id/start": "B01 PR #4 POST { expectedVersion } -> { version }",
+  "/api/bookings/:id/reschedule": "B01 PR #4 POST { expectedVersion, startAt } + Idempotency-Key -> 201 { id } (bookings/b01-http.ts, not enabled yet)",
+  "/api/availability": "B01 PR #4 GET ?provider&service&date -> { slots, advisory } (bookings/b01-http.ts, not enabled yet)",
+  "/api/patient/addresses": "B01 PR #4 POST address body -> { id } (patient/b01-http.ts, not enabled yet)",
 };
 
 /**

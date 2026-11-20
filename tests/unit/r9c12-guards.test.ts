@@ -28,6 +28,7 @@ const hits = (files: typeof CODE, re: RegExp) =>
 
 // (a) Money: the reviewed formatters and parsers are the only ones (finding 3 / C12-1 consolidate them later).
 const CURRENCY_FORMATTERS = new Set([
+  "lib/money/index.ts", // fe-e 8e3ccf6: the canonical formatter for finding 3; the others should migrate to it
   "lib/format/index.ts",
   "components/payments/money.ts",
   "components/admin/ops/format.ts",
