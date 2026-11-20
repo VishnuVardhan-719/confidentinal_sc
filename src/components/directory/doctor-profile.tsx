@@ -36,6 +36,8 @@ export async function DoctorProfile({ params, api = createDoctorSearchApi() }: {
     return (
       <Container className="grid gap-6 py-12">
         {back}
+        {/* One h1 on every state, including gated and error (a11y; the profile name is unknown here). */}
+        <h1 className="font-display text-3xl font-medium text-ink">{t("search.title")}</h1>
         {result.error.code === "gated"
           ? <Notice tone="neutral" icon="lock" title={t("results.gatedTitle")}>{t("results.gatedBody")}</Notice>
           : <Notice tone="danger" title={t("results.errorTitle")}>{t("results.errorBody")}</Notice>}

@@ -206,3 +206,68 @@ Clean export of `feat/fe2-integration` `ab6bedb` (`git archive ab6bedb src`, mad
   3. `hi:auth.otp.attemptsLeft` (fe-b) hard-codes "1" in the Hindi `one` branch (R-FE-Q-R9C3-1).
 - **Change on `feat/fe2-c`:** the guard now records the dashboard page in `UI_ALLOWED`, still requiring a mode check in that file, and `fixture-actors.ts` in a new `GATED_BY_CALLER` list. A new test requires every importer of a caller-gated mapper to check the adapter mode. `hi:auth.otp.attemptsLeft` is added to `HI_PLURAL_EXEMPT`. Rerun on the same export: **27/27 passed** across the three files, and 14/14 for `adversarial-guards` on `feat/fe2-c`.
 - The integration branch does not carry `site-guards.test.ts` yet; it has the older `adversarial-guards` and `peer-guards`, which are byte-identical to `1a0db4f`. It will pick up this version at the next merge of `feat/fe2-c`.
+## R9-C8 (2026-11-20): final adversarial pass on the integration head
+
+**Head:** `feat/fe2-integration` `ab6bedb`. It contains INT3 `72d42cd` and the merges of c `1a0db4f`, d `7c0065d`, e `87bfb6b` and p `8dc301a`. I made a full `git archive` export in `.context/final-int`, used a junction to fe2-c's `node_modules` (same `package.json` and lock), and deleted the export afterwards.
+
+**Scope:** committed code only. fe2-int has uncommitted edits by fe-int2 to `patient/dashboard/page.tsx`, `hi/auth.json`, `modules/auth/fixture-actors.ts` and two tests, and I did not review them.
+
+### What was run
+
+| Check | Result |
+|---|---|
+| fe-c guards from `feat/fe2-c` `fb7465a` (`site-guards`, `peer-guards`, `adversarial-guards`) on the export | **27/27 passed** |
+| The integration branch's own `vitest run` on the export | **104 files passed, 1 failed; 1457 tests passed, 3 failed.** The 3 failures are in `adversarial-guards.test.ts` as carried on the integration branch (the R9-C3 version from `1a0db4f`). They are the three known items that `fb7465a` records (dashboard fixture import, caller-gated `fixture-actors.ts`, Hindi `auth.otp.attemptsLeft`). **The integration head is red until it merges `feat/fe2-c` `fb7465a` or fe-int2 commits the fixes in progress.** |
+| Role gating on every `/admin`, `/doctor`, `/lab`, `/ambulance`, `/caretaker` page (`.context/gate-audit.cjs`) | **72 of 72 pages gated on the server.** 69 call the gate directly, through a gate component (`AdminRouteGate`, area `RouteGate`, `guardDoctorPage`, `DoctorStaticPage`) or through the doctor layout. The 3 provider onboarding pages (lab, ambulance, caretaker) gate through `ProviderOnboarding` -> `requireRole(category)`. The redirect-only role roots are counted as gated. No route handlers sit under these areas. |
+| Every exported `"use server"` action in `src` | **92 actions; 83 reach a session or role check** (`authorizeRole`, `requireRole`, `authorizeAreaAction`, `authorizeOperationsSession`, `getDoctorSession`, `getPatientSession`) directly or through a local helper. The other **9 are public by design**: doctor search and suggest (3) and the sign-in, sign-up and OTP flow (6). |
+| Production build of the export in **http mode** (`FRONTEND_ADAPTER=http APP_ENV=test`, no backend, clinical flag off), `next start` on port 3366, rendered in headless Chromium at 1280 | `next build` exit 0. Every signed-out private URL (patient, doctor, lab, ambulance, caretaker, admin, account) redirects to `/{locale}/login?next=<safe internal path>`. The admin and ambulance sub-routes fall back to their area dashboard as `next`. Public pages with no contract show honest notices with no data: doctor search and profile ("Doctor search is not connected yet ... No doctor information is made up"), lab directory and detail ("This service is not connected yet ... No providers or prices are assumed"), stories ("Stories are not available yet"). `data-gate` is set on `/emergency` (`emergencyDispatch`), `/memberships` (`subscriptions`) and `/verify`, `/verify/[code]` (`clinical`). te/hi pages are fully localized. Local and session storage stayed at 0 entries, with no console errors. The server was stopped afterwards (PID and command line checked). |
+| PHI in URLs, storage and logs | Guarded repo-wide by `site-guards` (no personal query keys, no storage, cookie or console use): passed. Runtime storage was 0 on every probed page. |
+| Paise | `site-guards` and `adversarial-guards` money rules passed. `lab-views.tsx` now uses `paiseToRupeesString` (finding 6 fixed). |
+| i18n parity en/te/hi | **22 namespaces:** te and hi have exactly the en keys with the same placeholders. Strings identical to English are brand-only (`common.brand`, `meta.titleTemplate`, `locales.en`, `footer.columns.company`, `patient.booking.timeline.actor.system` = "SureCure Visit"). The only defects are the four Hindi zero plurals (finding 4). |
+
+### New in this pass
+
+| # | Severity | Where | Finding | Status |
+|---|---|---|---|---|
+| F8-1 | LOW (a11y) | `src/components/directory/doctor-profile.tsx` (fe-q) | In http mode the doctor profile's gated and error states had no `h1` (seen in the http-mode probe: `h1=""`). | **Fixed on `feat/fe2-c`** in this commit: the "Find a doctor" `h1` now renders on both states. Not yet in integration. Not re-run in a browser: only http mode reaches this state, and tsc/lint/unit pass. |
+| F8-2 | LOW (consistency) | `doctor-profile.tsx`, `doctor-search-page.tsx` (via `results.gated*`), `lab-directory.tsx:89,155` (fe-q) | The public directory "not connected" states use a plain `Notice`, not `GateNotice reason="contract_pending"`, so they carry no `data-gate` attribute and the shared gate copy and e2e selectors don't apply. The lab directory's gated state links "Back to doctors". | Open (fe-q). |
+| F8-3 | MEDIUM (process) | Integration head `ab6bedb` | The integration branch's own unit suite fails 3 tests (see above). | Open (fe-int2/lead): merge `feat/fe2-c` `fb7465a`, or commit the in-progress fixes. |
+
+### Final verdict
+
+| # | Finding | Severity | Owner | Status at `ab6bedb` |
+|---|---|---|---|---|
+| 1 | Synthetic cancellation policy shown as approved on the real-data booking page | HIGH | fe-q | **Fixed** (`1e604fc`, in integration via `1a0db4f`; http mode gives `state: "unavailable"`) |
+| 1b | `service-requests/request-controls.tsx:41` still hard-codes an approved synthetic policy (http adapters gated) | LOW | fe-q | Open |
+| 2 | Fixture adapter production guard checks only `APP_ENV` (`lib/api/mode.ts:9`, `auth/fixture-guard.ts`) | MEDIUM | fe-a | Open |
+| 3 | Four paise formatters disagree ("₹800" vs "₹800.00"; admin and clinical accept negative values) | MEDIUM | fe-a + fe-e, fe-d, payments | Open |
+| 4 | Hindi `one` plural hard-codes "1" for zero (`ambulance.dashboard.daysLeft`, `lab.orders.testCount`, `common.errorSummary.title`, `auth.otp.attemptsLeft`) | MEDIUM | fe-e, fe-a, fe-b | Open (patch in R-FE-Q-R9C3-1; fe-int2 has an uncommitted `hi/auth.json` edit) |
+| 5 | Free-text `q` search in the URL (history and logs) | LOW | fe-q | Open (trade-off: map known symptoms to `symptom=`) |
+| 6 | `toFixed` on paise in the lab catalogue editor | LOW | fe-e | **Fixed** (`0500117`) |
+| 7 | Proof-of-visit code in the URL path | LOW | fe-d, backend | Accepted by design (no-referrer, noindex, no-store; backend keeps codes short-lived and revocable) |
+| E1 | Gated story URLs answer 200 and are indexable | LOW | fe-e | **Fixed** (non-ok story sets `robots: { index: false }`) |
+| E2 | `paiseToRupeesString` has no integer check | LOW | fe-e | Open (all current callers pass validated integers) |
+| P1 | `FIXTURE_ADMIN_SESSION=moderator` made every fixture request a moderator | MEDIUM | fe-p, fe-int2 | **Fixed in integration** (switch dropped; the lead admin fixture holds `review:moderate`; `real-guards.test.ts`) |
+| P2 | Moderation queue and decision log have no pagination | LOW | fe-p, backend | Open (contract) |
+| P3 | `decideReviewAction` does not validate `reviewId`/`expectedVersion` itself | LOW | fe-p | Open |
+| D1 | Doctor reviews schema lacks `withdrawn`; one withdrawn review breaks `/doctor/reviews` | MEDIUM | fe-d | Open (R-FE-Q-R9C5-1; recorded in `peer-guards`) |
+| D2 | Pending and rejected reviews shown to the doctor with exact submission date (re-identification risk) | MEDIUM | fe-d | Open |
+| D3 | `/verify/check` builds an absolute redirect from the Host header | LOW | fe-d | Open |
+| D4 | Controls disabled until hydration with no busy state or status | LOW (a11y) | fe-d | Open |
+| R6-1 | Signup role radio is controlled before hydration, so an early pick is reset | LOW | fe-b, fe-e | Open |
+| R6-2 | No private area layout sets noindex by default (every page sets it today; guarded by `site-guards`) | LOW | area owners | Open (guarded) |
+| C3-2 | Patient dashboard page imports a fixture actor (behind `isFixtureAdapter()`) | LOW | fe-d | Open (recorded in `UI_ALLOWED`; fe-int2 fix uncommitted) |
+| F8-1 | Doctor profile gated/error state without `h1` | LOW (a11y) | fe-q | **Fixed on `feat/fe2-c`**, pending merge |
+| F8-2 | Public directory gated states don't use `GateNotice` | LOW | fe-q | Open |
+| F8-3 | Integration head unit suite red (3 known guard items) | MEDIUM (process) | fe-int2, lead | Open: merge `fb7465a` or commit the in-progress fixes |
+
+**Verdict:**
+- Of the 23 findings, **no CRITICAL or HIGH finding is open**. The HIGH item (1) and three others (6, E1, P1) are fixed in integration, F8-1 is fixed on `feat/fe2-c`, and 7 is accepted by design.
+- 17 are open: 6 MEDIUM (2, 3, 4, D1, D2, F8-3) and 11 LOW (1b, 5, E2, P2, P3, D3, D4, R6-1, R6-2, C3-2, F8-2).
+- **Fixture staging:** the integration head is fit for synthetic staging once F8-3 is cleared.
+- **Before real data or production,** these must close:
+  - Finding 2: the production guard must not depend on one env var.
+  - D2: patient privacy toward providers.
+  - Finding 4: wrong counts in Hindi safety-relevant text (licence expiry, OTP attempts).
+  - D1: the page breaks on a valid status.
+- Everything else may follow, with the backend enforcing the same rules server-side.

@@ -180,3 +180,8 @@ Open: sitemap.xml (fe-a) does not list /lab-tests yet; te/hi labDirectory string
 - Integration head ab6bedb (merges c 1a0db4f, d 7c0065d, e 87bfb6b, p 8dc301a). Clean export in .context/guard-int (deleted). site-guards 9/9, peer-guards 4/4 (none skipped), adversarial-guards 3 known fails -> recorded (dashboard UI_ALLOWED, fixture-actors GATED_BY_CALLER + importer check, hi auth.otp.attemptsLeft exempt) -> 27/27.
 - docs/frontend/QA_CHECKLIST.md: setup, accounts, per-page checks C1-C12, patient 22 steps + flows + keyboard, doctor, lab, ambulance, caretaker, admin, gated routes (flags, contract-pending), e2e fixme list, known defects.
 - tsc 0, lint 0, vitest 68 files 1012 passed + 3 skipped. No servers started.
+
+## TASK REPORT: R9-C8 (fe-q, feat/fe2-c)
+- Final pass on integration ab6bedb (incl. INT3 72d42cd). Full export (deleted; node_modules via junction, removed safely). fe-c guards 27/27. Integration's own vitest: 1457 pass, 3 fail (its old adversarial-guards from 1a0db4f; fixed by fb7465a) -> F8-3.
+- gate-audit: 72/72 area pages gated; 92 actions, 83 gated, 9 public by design. http-mode build on 3366 (stopped, pid+cmd verified): private URLs -> login with safe next; public no-contract pages honest notices; storage 0; te/hi localized. i18n 22 namespaces parity clean except 4 hi zero plurals.
+- Fixed F8-1 (doctor profile gated/error h1, mine). Final verdict table: 23 findings, 0 HIGH open; 6 MEDIUM open (2,3,4,D1,D2,F8-3).
