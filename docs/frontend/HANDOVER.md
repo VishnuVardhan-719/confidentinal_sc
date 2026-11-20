@@ -20,18 +20,20 @@
   - `APP_ENV` is one of `development`, `test`, `preview` or `staging` (`FIXTURE_APP_ENVS`).
   - If `APP_ENV` is unset, `NODE_ENV` must be `development` (`next dev`) or `test` (Vitest). A production server (`next start`) with `APP_ENV` missing or mistyped is refused.
 - When refused, every fixture constructor throws `Synthetic fixtures are disabled here (...)` through `assertFixtureEnvironment()`. An injected env object can add a refusal but never lift one: the real `process.env` wins.
-- `APP_ENV=production` also makes the site indexable (`isIndexable()` in `src/components/public/seo.ts`, used by `robots.ts` and `sitemap.ts`). Every other value gives `noindex` and an empty sitemap.
+- `APP_ENV=production` also makes the site indexable (`isIndexable()` in `src/components/public/seo.ts`, used by `src/app/robots.ts` and `src/app/sitemap.ts`). Every other value gives `noindex` and an empty sitemap.
 
 ### Environment variables the frontend reads
+
+Paths in the tables of this document are relative to `src/` unless they start with `src/`, `docs/` or `tests/`.
 
 This list comes from a scan of `src`. The Supabase keys in `.env.example` are read by the backend, not by `src`.
 
 | Variable | Read in | Meaning |
 |---|---|---|
 | `FRONTEND_ADAPTER` | `src/lib/api/mode.ts` | `fixture` or anything else (= `http`) |
-| `APP_ENV` | `mode.ts`, `components/public/seo.ts`, `fixtures/operations/guard.ts` | Fixture allowlist (above); `production` = indexable |
-| `VERCEL_ENV` | `mode.ts` | `production` always refuses fixtures |
-| `NODE_ENV` | `mode.ts`, `modules/auth/session-cookie.ts` | Fixture rule when `APP_ENV` is unset; cookie `Secure` flag |
+| `APP_ENV` | `lib/api/mode.ts`, `components/public/seo.ts`, `fixtures/operations/guard.ts` | Fixture allowlist (above); `production` = indexable |
+| `VERCEL_ENV` | `lib/api/mode.ts` | `production` always refuses fixtures |
+| `NODE_ENV` | `lib/api/mode.ts`, `modules/auth/session-cookie.ts` | Fixture rule when `APP_ENV` is unset; cookie `Secure` flag |
 | `APP_ORIGIN` | `lib/api/http.ts` (`serverApiOrigin`), `modules/auth/server.ts`, `modules/auth/actions.ts` | Absolute origin for **server-side** calls to `/api/*`. It is never derived from request headers. `http:` or `https:` only |
 | `FEATURE_CLINICAL`, `FEATURE_LIVE_PAYMENTS`, `FEATURE_EMERGENCY_DISPATCH`, `FEATURE_PHARMACY`, `FEATURE_SUBSCRIPTIONS`, `FEATURE_GPS`, `FEATURE_AUTOMATED_PAYOUTS` | `src/lib/feature-flags/index.ts` (`isEnabled`) | A flag is on **only** when the value is exactly `"true"`. Server-side only |
 | `FIXTURE_PROVIDER_RESPONSE_MS` | `fixtures/marketplace/booking-store.ts`, `modules/service-requests/fixture-engine.ts` | How long synthetic providers wait before answering |
@@ -52,7 +54,12 @@ FRONTEND_ADAPTER=fixture APP_ENV=test FEATURE_CLINICAL=true FIXTURE_BOOKING_SCEN
 FRONTEND_ADAPTER=http APP_ENV=development APP_ORIGIN=http://localhost:3000 npx next dev -p 3000
 ```
 
-On Windows PowerShell, set each variable first (`$env:FRONTEND_ADAPTER='fixture'`), then run the command.
+On Windows PowerShell, set each variable first (`$env:FRONTEND_ADAPTER='fixture'`), then run the command. Ports are examples: each worktree has its own range (`docs/frontend/RESUME_HERE.md`), and 3320 belongs to the integration worktree. `npm ci` on npm 11 prints `install-scripts` warnings (dependency install scripts are not run by default); the app builds and tests pass without them.
+
+**On a feature branch that has not merged integration yet** (for example `feat/fe2-c` at the time of writing), three things differ:
+- `src/lib/api/mode.ts` may still be the older rule (fixtures refused only when `APP_ENV=production`), so `next start` with `APP_ENV` unset still serves fixtures there.
+- There is no `/en/login` (404): `src/modules/auth` arrives with integration. Patient pages use the server switch `FIXTURE_PATIENT_SESSION=self` instead.
+- `tests/e2e/integration.config.ts` and `tests/unit/integration/` exist only on `feat/fe2-integration`.
 
 **Fixture sign-in.** Use `/en/login` with a synthetic `@example.invalid` account (list in `docs/frontend/QA_CHECKLIST.md` section 0, source `src/fixtures/identity/`). Any password of 1 to 128 characters works, and the phone OTP is `246810`. The old `FIXTURE_PATIENT_SESSION` and `FIXTURE_DOCTOR_SESSION` switches were removed at integration: sessions come from real sign-in, and `src/modules/auth/fixture-actors.ts` maps a synthetic identity to a fixture actor.
 
@@ -80,8 +87,8 @@ Every module follows the same pattern: `api.ts` (types of the API), `http.ts` (r
 |---|---|---|
 | `clinical` (`FEATURE_CLINICAL`) | 13 files, through `isEnabled("clinical")` and `modules/clinical/gate.ts` (`clinicalGate`, `gateMethods`, `gateAll`): consultation editor, consultation notes, prescription drafts, doctor records, doctor reviews, patient records, proof check `/verify`, lab report release | Gate notice; clinical APIs return `gated` |
 | `livePayments` | `components/admin/admin-views.tsx`, `modules/admin/loaders.ts` | Refund approval and online payment stay disabled; the booking journey is pay-after-visit only |
-| `emergencyDispatch` | `(public)/emergency/page.tsx`, `components/ambulance/ambulance-views.tsx`, `modules/ambulance/emergency.ts` | "Does not dispatch emergency help"; 112 is always shown. `ambulance.spec.ts` checks dispatch stays unavailable even with the flag on |
-| `subscriptions` | `(public)/memberships/page.tsx` | "Nothing to buy here" |
+| `emergencyDispatch` | `app/[locale]/(public)/emergency/page.tsx`, `components/ambulance/ambulance-views.tsx`, `modules/ambulance/emergency.ts` | "Does not dispatch emergency help"; 112 is always shown. `ambulance.spec.ts` checks dispatch stays unavailable even with the flag on |
+| `subscriptions` | `app/[locale]/(public)/memberships/page.tsx` | "Nothing to buy here" |
 | `automatedPayouts` | `components/doctor/static-page.tsx` | Payout notice on doctor static pages |
 | `pharmacy`, `gps` | Defined, **not used anywhere** in `src` | — |
 | Recurring care (hard-coded) | `modules/caretaker/rules.ts` `RECURRING_CARE_GATE = { enabled: false }` | Recurring plans show a gate notice. Not a flag (REQUESTS R-E03 asks for one) |
@@ -129,12 +136,13 @@ All tests use synthetic data only. The last integration gate (`docs/frontend/INT
 |---|---|
 | `npm run lint` | ESLint over the repo |
 | `npm run typecheck` | `next typegen && tsc --noEmit` (typegen is needed for the `PageProps`/`RouteContext` types) |
+| `npx vitest run tests/unit/site-guards.test.ts tests/unit/peer-guards.test.ts tests/unit/adversarial-guards.test.ts` | Only the static guards (fast). `peer-guards` blocks skip while the files they check are not on the branch |
 | `npm test` (`vitest run`, config `vitest.config.mts`) | Unit and static tests in `tests/unit/**`: adapters and schemas per module (`modules-identity`, `modules-marketplace`, `modules-clinical`, `modules-operations`, `modules-patient`, `modules-services`, and one folder each for consultation-notes, prescription-drafts, proof-of-visit, doctor-reviews and notifications), jsdom component tests (`ui-*.test.ts`), message catalogue parity (`messages.test.ts`), feature flags and fixture production guard, sitemap and route links, and the static guards: `site-guards` (no hard-coded English, storage, console or personal query keys, no float money, private pages noindex, robots), `adversarial-guards` (fixture imports gated, paise maths, Hindi zero plurals, cancellation terms), `peer-guards` (review status sets, doctor review projection, `/verify` redirect headers), `integration/real-guards.test.ts` (every private page and action uses the real guard) |
 | `npx playwright test` (root `playwright.config.ts`) | Browser e2e at 390 and 1280 (`mobile-390`, `desktop-1280`; workspace specs run in the `ws-*` projects in order). Without `PLAYWRIGHT_BASE_URL` it builds and starts the app itself on `E2E_PORT` (default 3200). Most specs need a fixture server and skip otherwise |
 | `npx playwright test --config tests/e2e/integration.config.ts` | `integration-smoke.spec.ts` only, against a running build on 3320. It covers every area page (render, no overflow, axe), the real guards (signed-out, wrong role, cross-area) and mutation flows: booking request, accept and cancel; doctor decline and accept; ambulance decide; CMS publish. Start a fresh server for each run because it changes server memory |
 
 **Spec groups.** Spec files are in `tests/e2e/`. The mode each needs is in each file's `test.skip`.
-- **Public:** `public`, `public-nav`, `doctor-search`, `lab-directory`, `emergency-e`.
+- **Public:** `public`, `public-nav`, `doctor-search`, `lab-directory`, `public-directory-smoke` (doctor and lab directory happy path with axe at each step; on `feat/fe2-c` until merged), `emergency-e`.
 - **Identity:** `auth`, `onboarding`, `profile`, `navigation`, `role-isolation`.
 - **Booking:** `booking-journey` (the 22 steps), `service-requests`, `patient-bookings`.
 - **Doctor:** `doctor-workspace`, `doctor-consultation`, `doctor-reviews`, `proof-check`, `hydration-race`.
@@ -165,7 +173,7 @@ All tests use synthetic data only. The last integration gate (`docs/frontend/INT
 - Hindi zero plurals are still wrong in `ambulance.dashboard.daysLeft`, `lab.orders.testCount` and `common.errorSummary.title` (R-FE-Q-R9C3-1). `auth.otp.attemptsLeft` is fixed.
 - Doctor reviews: the schema lacks `withdrawn` (D1), and doctors see the exact submission date on unpublished reviews (D2).
 - Payment pages show "₹800" while other pages show "₹800.00" (finding 3).
-- `service-requests/request-controls.tsx` still hard-codes an approved policy at integration. The fix is on `feat/fe2-c` `6bd8e66`, not merged yet.
+- `src/components/service-requests/request-controls.tsx` still hard-codes an approved policy at integration. The fix is on `feat/fe2-c` `6bd8e66`, not merged yet.
 - Free-text `q` in the doctor search URL is partly mapped to taxonomy keys on `feat/fe2-c` (finding 5).
 - Finding 2 (fixture guard) is **fixed** at integration by the allowlist above.
 - Platform: `server-only` is not installed (R-FE04-04); an expired session can't be refreshed during a Server Component render (R-FE04-02); there is no shared HTTP client or status kit (R-E01, R-E02).
@@ -213,3 +221,30 @@ Do these in order. Tick each only with evidence: a test run, the actual response
    - te/hi review done for safety, legal and money strings.
    - The open MEDIUM items in section (e) fixed.
    - `docs/RELEASE_CHECKLIST.md` gone through with the owner.
+
+
+## Verified
+
+On 2026-11-20 I ran every command and path in this document on `feat/fe2-c` at `f0b5415`, with this document's corrections and `tests/e2e/public-directory-smoke.spec.ts` applied on top. I used the worktree's own ports (3361 to 3365) and stopped each server afterwards after checking its PID and command line. Integration-only statements were checked against `feat/fe2-integration` read-only.
+
+| Item | Command or check | Result |
+|---|---|---|
+| Install | `npm ci --prefer-offline --no-audit --no-fund` in a scratch copy of `package.json` + `package-lock.json` (the worktree's `node_modules` left untouched) | exit 0 in 140 s; `next` and `@playwright/test` installed; npm 11 `install-scripts` warnings (see section a) |
+| Lint | `npm run lint` | exit 0 |
+| Typecheck | `npm run typecheck` | exit 0 (`next typegen` then `tsc --noEmit`) |
+| Unit | `npm test` | 69 files, 1023 passed, 3 skipped (the `peer-guards` blocks whose files are not on this branch) |
+| Guards | `npx vitest run tests/unit/site-guards.test.ts tests/unit/peer-guards.test.ts tests/unit/adversarial-guards.test.ts` | 3 files, 24 passed, 3 skipped |
+| Fixture dev | `FRONTEND_ADAPTER=fixture APP_ENV=development FEATURE_CLINICAL=true next dev -p 3361` | `/en/doctors` and `/en/lab-tests` render synthetic results with "Synthetic data, not live" |
+| Fixture production | `FRONTEND_ADAPTER=fixture APP_ENV=test FEATURE_CLINICAL=true FIXTURE_BOOKING_SCENARIO=accepted FIXTURE_PROVIDER_RESPONSE_MS=1500 next build && next start -p 3362` | build exit 0; server answers; `/en/login` 404 on this branch (see section a) |
+| HTTP mode | `FRONTEND_ADAPTER=http APP_ENV=development APP_ORIGIN=http://localhost:3363 next dev -p 3363` | `/en/doctors` and `/en/lab-tests` show the not-connected notice with `data-gate="contract_pending"` and no data |
+| Playwright self-start | `E2E_PORT=3364 npx playwright test tests/e2e/public-directory-smoke.spec.ts` (fixture env as above, no `PLAYWRIGHT_BASE_URL`) | built and started the app on 3364 itself and stopped it after the run; 4 passed (2 tests x `mobile-390` and `desktop-1280`), axe clean |
+| Fixture refusal rules (section a) | The integration branch's `src/lib/api/mode.ts`, in a throwaway Vitest file | 5/5: unset adapter = http; development/test/preview/staging allowed; `APP_ENV=production` or `prod` refused; unset `APP_ENV` refused under `NODE_ENV=production`, allowed under `development`; `VERCEL_ENV=production` refused |
+| Same rules on this branch | `FRONTEND_ADAPTER=fixture next start -p 3365` with `APP_ENV` unset | Fixtures **served** (older `src/lib/api/mode.ts`), as noted in section a |
+| Paths and links | `node .context/handover-paths.cjs` (extracts every backticked path and link, resolves table paths against `src/`, checks this worktree and `feat/fe2-integration`) | 72 paths, 0 missing in both. 18 exist only on integration (auth, integration tests and config, the integration-era docs), as the branch note in section a says. 2 exist only on this branch so far (`tests/e2e/public-directory-smoke.spec.ts`, `.context/handover-paths.cjs`) |
+
+**Corrections made while verifying:**
+- Full paths for `src/lib/api/mode.ts`, `src/app/robots.ts`, `src/app/sitemap.ts`, the `(public)` emergency and memberships pages and `src/components/service-requests/request-controls.tsx`.
+- A note that table paths are relative to `src/`.
+- The feature-branch differences in section a.
+- The port and `npm ci` notes.
+- The guard command in section d.

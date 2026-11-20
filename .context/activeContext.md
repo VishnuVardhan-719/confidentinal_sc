@@ -193,3 +193,9 @@ Open: sitemap.xml (fe-a) does not list /lab-tests yet; te/hi labDirectory string
 ## TASK REPORT: R9-C10 (fe-q, feat/fe2-c)
 - docs/frontend/HANDOVER.md from feat/fe2-integration 2954551 (export deleted) + read-only backend task branches I01/I02/C01/B01: mode rules, env vars (scan of src), module map/owners, flags + per-module wired/gated table with backend route existence, tests, open decisions, connect checklist. Script .context/adapter-map.cjs.
 - Notable facts: clinical/records adapters call /api/consultations/*, /collection, /proof that no backend branch implements; B01 has reschedule, availability, patient/addresses POST but frontend adapters still gated; pharmacy/gps flags unused.
+
+## TASK REPORT: R9-C11 (fe-q, feat/fe2-c)
+- Executed HANDOVER.md on fe2-c: npm ci (scratch copy), lint, typecheck, test, guards, fixture dev 3361, fixture prod 3362, http dev 3363, Playwright self-start 3364, unset-APP_ENV start 3365; integration mode.ts rules via throwaway vitest (5/5). All servers stopped (pid+cmd verified).
+- Doc fixes: full paths (mode.ts, robots/sitemap, public pages, request-controls), table paths relative to src/, feature-branch differences (old mode.ts, no /en/login, integration-only files), ports/npm ci notes, guard command. Verified table added. Path script .context/handover-paths.cjs: 72 paths, 0 missing both.
+- New tests/e2e/public-directory-smoke.spec.ts: doctors (symptom search -> symptom=fever, profile, request link) + labs (filter, detail, request link), axe/overflow/storage each step; 4 passed at 390/1280.
+- tsc 0, lint 0, vitest 69 files 1023 + 3 skipped.
