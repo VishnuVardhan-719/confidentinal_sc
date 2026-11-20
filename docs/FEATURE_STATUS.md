@@ -19,7 +19,7 @@ Update only from inspected repository evidence, commits and executed tests.
 | Lab workflow | PENDING | No verified implementation evidence |
 | Scheduled ambulance workflow | PENDING | No verified implementation evidence; emergency dispatch disabled |
 | Caretaker workflow | PENDING | No verified implementation evidence |
-| Pay-after/payment | IN_PROGRESS | P01a application: flags/validation/RPC service/14 adapters, 75 payment tests; SQL/RLS and activation pending. P01b excluded under D-14 option A; live payment disabled. [Handoff](handoffs/P01a_app_codex_2026-11-19.md) |
+| Pay-after/payment | IN_PROGRESS | P01a app plus SQL authored: 14 matching RPCs, private worker, suites 070–089 and 9 race cases. Database execution/RLS/concurrency NOT VERIFIED pending shared merge; activation OFF. P01b excluded under D-14 option A. [SQL handoff](handoffs/P01a_sql_codex_2026-11-19.md) |
 | Security/RLS/E2E | PENDING | Must be executed against actual app and role tokens |
 | Staging and release | PENDING | No deployment evidence |
 | Friend frontend handover | PENDING | Prepare from actual pending work when the friend joins |
