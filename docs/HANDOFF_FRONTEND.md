@@ -54,7 +54,7 @@ npx supabase status    # prints the local API URL and keys; copy them into .env.
 
 Local Auth settings that affect UI testing: sign-up is on, email confirmation is **off** (you can log in right after sign-up), TOTP and phone MFA are **off**. Because MFA is off, no local user can reach `aal2`, so every admin endpoint returns 403 locally (section 5.4).
 
-The repository has **no seed data**. `service_catalog_types` and `pin_directory` are empty after `supabase start`, and no provider is approved. Public search therefore returns `{"results": [], "nextCursor": null}` locally. That empty state is the correct, honest result. A synthetic development seed is a backend gap (section 7). Do not add one in a UI ticket.
+`npx supabase db reset` loads `supabase/seed.sql`, a synthetic **local-only** seed (it refuses to run if any user exists). Log in with password `SureCure-local-demo-1` as `patient@seed.example.invalid` (Asha Demo, one address in PIN 599991), `doctor.one@seed.example.invalid` or `doctor.two@seed.example.invalid` (approved individual doctors with a published home visit, coverage of PINs 599991 and 599992, and a 09:00-18:00 IST schedule every day), or `reviewer@seed.example.invalid` (no admin capability). Public search for category `doctor` and PIN `599991` returns both doctors. The seed opens only the `doctor` database gate; lab, ambulance and care stay off, and the route env flags in `.env.local` still apply. No ops (`booking:incident`) or finance user is seeded (OD-2, D-1).
 
 ### Environment variables (names only)
 
@@ -338,8 +338,8 @@ Missing routes that block parts of the UI (backend tickets for the owner/Claude 
 |---|---|
 | No "list my providers" route. A provider id is only returned by `POST /api/providers` | provider dashboard entry after a new login |
 | No `GET` for patient addresses | choosing a saved address when booking |
-| No route listing `service_catalog_types`, and the table has no seed | creating any service (`catalogTypeId` is required) |
-| No PIN directory route or seed | coverage proposals (422) and realistic search |
+| No route listing `service_catalog_types` (the local seed adds one: `doctor_home_visit`, id `d4000000-0000-4000-8000-000000000001`) | creating any service (`catalogTypeId` is required) |
+| No PIN directory route (the local seed adds PINs 599991 and 599992 only) | coverage proposals (422) and realistic search |
 | No `GET` for resources, availability rules or blackouts; resource `version` is not readable | provider schedule screens beyond create forms; blackouts after the first |
 | No admin queue of submitted providers | admin provider review list (the review action exists) |
 | No MFA enrolment or verification route; local TOTP is off | every admin screen (needs `aal2`) |
@@ -347,7 +347,6 @@ Missing routes that block parts of the UI (backend tickets for the owner/Claude 
 | Staff credential RPCs (`add_staff_credential_case`, `add_staff_credential_document`, `submit_staff_credential_case`, `review_staff_credential_case`) and `set_provider_details` have no HTTP route | org doctor staff verification; category-specific profile fields (specialty, languages, fleet types) |
 | No invite-by-email lookup; invitations omit the organization name | organization invite and accept screens |
 | No password reset or email change route | account recovery screen |
-| No synthetic development seed | local demos of search, booking and provider queue |
 | `upload.maxBytes` says 10 MiB but the bucket allows 5 MiB | correct client-side size message |
 
 Do not call Supabase RPCs or tables directly from the browser to work around these gaps. The only direct Supabase call the UI makes is the Storage upload in section 5.4. Ask for a route instead.
