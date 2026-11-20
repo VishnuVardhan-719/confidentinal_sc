@@ -72,6 +72,8 @@ export default async function PatientBookPage({ params, searchParams }: PageProp
         <Notice tone="neutral" title={t("notBookableTitle")} action={back}>{t("notBookableBody")}</Notice>
       ) : !members.ok ? (
         <InlineError code={members.error.code} action={back} />
+      ) : !addresses.ok ? (
+        <InlineError code={addresses.error.code} action={back} />
       ) : (
         <IntlScope namespaces={["booking"]}>
           <BookingWizard
@@ -79,7 +81,7 @@ export default async function PatientBookPage({ params, searchParams }: PageProp
               specialities: doctor.data.specialities.map(key => tb(`search.specialities.${key}`)).join(", "), feePaise: doctor.data.feePaise,
               area: doctor.data.location, synthetic: doctor.data.synthetic }}
             members={members.data.items}
-            addresses={addresses.ok ? addresses.data.items : []}
+            addresses={addresses.data.items}
             actions={{ offer: bookingOfferAction, addAddress: addAddressAction, slots: listSlotsAction, prepare: prepareBookingAction, create: createBookingAction, get: getBookingAction }}
           />
         </IntlScope>

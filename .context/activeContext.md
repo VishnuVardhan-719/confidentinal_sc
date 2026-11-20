@@ -199,3 +199,8 @@ Open: sitemap.xml (fe-a) does not list /lab-tests yet; te/hi labDirectory string
 - Doc fixes: full paths (mode.ts, robots/sitemap, public pages, request-controls), table paths relative to src/, feature-branch differences (old mode.ts, no /en/login, integration-only files), ports/npm ci notes, guard command. Verified table added. Path script .context/handover-paths.cjs: 72 paths, 0 missing both.
 - New tests/e2e/public-directory-smoke.spec.ts: doctors (symptom search -> symptom=fever, profile, request link) + labs (filter, detail, request link), axe/overflow/storage each step; 4 passed at 390/1280.
 - tsc 0, lint 0, vitest 69 files 1023 + 3 skipped.
+
+## TASK REPORT: R9-C12 (fe-q, feat/fe2-c)
+- Second adversarial pass on int fec9da1 (incl. d 0e09eef), e d97e0a5, p 7f9fd28 (exports deleted). New: C12-1 LOW 3 rupee parsers differ; C12-2 = finding 3 (5 formatters); C12-3 LOW consultation photos [] fallback (fe-d); C12-4 LOW my 4 pages addresses [] fallback -> FIXED here; C12-5 INFO hi errorSummary (unreachable 0). Clean: analytics/console/external, gating 72/72 + no admin signup, fixture env gated + no client env reads, dialogs labelled, i18n parity/no English fallback.
+- Status refresh: 2, 4 (except C12-5), E2, R6-1, C3-2, P1 fixed at int; P2/P3 fixed on fe2-p pending; 1b/F8-2/5/C12-4 on fe2-c pending; open 3, D1-D4, R6-2.
+- tests/unit/r9c12-guards.test.ts (8). tsc 0, lint 0, vitest 70 files 1030 + 4 skipped.

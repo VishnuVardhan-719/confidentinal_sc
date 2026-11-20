@@ -62,9 +62,9 @@ export default async function AmbulanceRequestPage({ params, searchParams }: Pag
         provider.error.code === "not_found" ? <Notice tone="neutral" title={t("common.missingTitle")} action={back}>{t("common.missingBody")}</Notice>
           : provider.error.code === "gated" ? <Notice tone="neutral" title={t("common.notConnectedTitle")} action={back}>{t("common.notConnectedBody")}</Notice>
           : <InlineError code={provider.error.code} action={back} />
-      ) : !members.ok ? <InlineError code={members.error.code} action={back} /> : (
+      ) : !members.ok ? <InlineError code={members.error.code} action={back} /> : !addresses.ok ? <InlineError code={addresses.error.code} action={back} /> : (
         <IntlScope namespaces={["services", "booking"]}>
-          <AmbulanceRequestForm provider={provider.data} members={members.data.items} addresses={addresses.ok ? addresses.data.items : []}
+          <AmbulanceRequestForm provider={provider.data} members={members.data.items} addresses={addresses.data.items}
             actions={{ slots: ambulanceSlotsAction, create: createAmbulanceRequestAction }} />
         </IntlScope>
       )}
