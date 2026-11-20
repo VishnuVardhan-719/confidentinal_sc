@@ -69,3 +69,14 @@ Next steps:
 3. Fix any remaining sweep failures in own files; commit step 3 ("feat(r8-d3): a11y sweep ...").
 4. Step 4: `npx tsc --noEmit`, `npm run lint`, `npx vitest run`, `npm run build`, full e2e; then a TASK REPORT listing commits 82d151c, 34cf3aa, the step 3 commit, and the step 4 results.
 5. Stop servers on 3370-3383/3379 when done.
+
+## TASK REPORT - R8-D (fe-a, worktree fe2-d, branch feat/fe2-d; not pushed) - 2026-11-20
+Status: DONE. The PAUSED STATE section above is superseded.
+Commits:
+- 82d151c step 1: midnight-IST fix (fixture "today" visits anchored to the IST day; shared world rolls when the IST day changes). Unit tests world-days.test.ts 7/7.
+- 34cf3aa step 2: hydration-reset repro (tests/e2e/hydration-race.spec.ts holds JS chunks; 3/3 controlled forms lost input) + fix for own forms (use-hydrated.ts) + /verify no-JS route handler. Shared-control patch proposal: docs/frontend/REQUESTS.md R-FE-D-40 (needs fe2-a / lead to apply to src/components/ui).
+- c0369b8 (WIP) + 14f6292 step 3: a11y sweep tests/e2e/a11y-sweep.spec.ts (all doctor routes + /verify, en/te/hi, 390 + 1280, axe + one h1 + no overflow + no raw keys, denied and gate-off). Editor fixes: PageHeader h1, step rail min-w-0; sticky action bar no longer forces 417px width in te at 390 (arrows 44px, save button wraps); focused fields and step heading get scroll margins measured from the sticky context header and action bar (fixes the 360px "sticky actions cover the focused field" failure caused by the new h1).
+- (next commit) step 5: /lab-tests added to sitemap.xml via SITEMAP_PAGES (routes.ts) + src/components/public/sitemap-entries.ts; tests/unit/sitemap.test.ts (3).
+Evidence (final): tsc exit 0; npm run lint exit 0; vitest 28 files / 447 tests passed; npm run build exit 0 (163 static pages); Playwright ws-desktop-1280 + ws-mobile-390, all workspace specs, two consecutive full runs on reset servers: 346 passed / 0 failed each.
+Shared edits: src/components/public/routes.ts (new SITEMAP_PAGES export; PUBLIC_PAGES unchanged), src/app/sitemap.ts.
+Limitations: /lab-tests page lives on feat/fe2-c, so on this branch alone the sitemap URL 404s until integration. /doctors and other directory pages are still not in the sitemap (not asked). The shared-control hydration fix (R-FE-D-40) is a proposal only. te/hi strings still machine-written. docs/frontend/RESUME_HERE.md is not on this branch (only on feat/fe2-integration); read from there. Servers on 3370-3383 stopped.
