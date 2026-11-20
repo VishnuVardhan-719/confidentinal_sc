@@ -260,7 +260,8 @@ def main():
             created = True
             b01.sql(schema, user="supabase_admin")
             # Only cloned scratch application schemas; preserve managed auth/storage.
-            reset = """
+            reset = r"""
+do $$ declare s text;begin for s in select nspname from pg_namespace where nspname like '%\_private' or nspname like '%\_worker' loop execute format('drop schema %I cascade',s);end loop;end $$;
 drop schema public cascade;
 drop schema if exists payments_private cascade;
 drop schema if exists payments_worker cascade;
