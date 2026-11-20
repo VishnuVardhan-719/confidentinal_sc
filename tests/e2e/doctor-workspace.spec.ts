@@ -128,11 +128,8 @@ test.describe("doctor guard and shell", () => {
     await expectSynthetic(page);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.getByRole("region", { name: /pending requests/i }).getByRole("listitem")).toHaveCount(1);
-    // Fixture times are relative to server start (today visit = +30 min), so near IST midnight one of
-    // the two can fall on tomorrow; the grouping itself is unit-tested (splitTodayUpcoming).
-    const todayCount = await page.getByRole("region", { name: /today/i }).getByRole("listitem").count();
-    expect(todayCount).toBeGreaterThanOrEqual(1);
-    expect(todayCount).toBeLessThanOrEqual(2);
+    // Fixture "today" visits are anchored to the current IST day (world rolls daily; tests/unit/modules-clinical/world-days.test.ts).
+    await expect(page.getByRole("region", { name: /today/i }).getByRole("listitem")).toHaveCount(2);
     await expect(page.getByRole("link", { name: /continue consultation/i })).toHaveAttribute("href", path.consultation(I.bookingActive));
     await expectNoPhiInUrlOrStorage(page);
     await expectNoAxeViolations(page);
@@ -243,6 +240,8 @@ test.describe("DC02 arrival code form (booking: today)", () => {
     const input = page.getByLabel(LABEL.codeInput);
     // Wrong codes until the server locks the challenge; each attempt waits for the previous response.
     const verify = page.getByRole("button", { name: LABEL.verify });
+    // Controlled inputs stay disabled until hydration (R-FE-D-40).
+    await expect(input).toBeEnabled();
     for (let i = 0; i < 6 && (await input.isEnabled()); i++) {
       await input.fill("999999");
       await verify.click();
@@ -393,8 +392,13 @@ test.describe("DC04-DC08 consultation editor (booking: active)", () => {
     const field = page.getByLabel(LABEL.chiefComplaint);
     await field.focus();
     const bar = page.getByRole("toolbar", { name: /consultation actions/i });
-    const [f, b] = await Promise.all([field.boundingBox(), bar.boundingBox()]);
-    expect(f && b && f.y + f.height <= b.y).toBeTruthy();
+    // Poll: the step change scrolls the heading into view (smooth scroll), so measure once settled.
+    await expect
+      .poll(async () => {
+        const [f, b] = await Promise.all([field.boundingBox(), bar.boundingBox()]);
+        return !!(f && b && f.y + f.height <= b.y);
+      })
+      .toBe(true);
   });
 });
 

@@ -11,6 +11,7 @@ import { Field, FormSection } from "@/components/shared/field";
 import { InlineError } from "@/components/shared/inline-error";
 import { Notice } from "@/components/shared/notice";
 import { useClinicalFormat } from "@/components/clinical/use-format";
+import { useHydrated } from "@/components/clinical/use-hydrated";
 import { useRouter } from "@/i18n/navigation";
 import type { ApiResult } from "@/lib/api/result";
 import {
@@ -144,7 +145,8 @@ export function PrescriptionDraftEditor({ bookingId, initial, actions }: { booki
     return { ok: true as const };
   }
 
-  const disabled = busy || conflict;
+  const hydrated = useHydrated();
+  const disabled = busy || conflict || !hydrated;
 
   return (
     <div className="grid gap-8">

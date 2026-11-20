@@ -7,14 +7,14 @@ import { Field } from "@/components/shared/field";
 import { formatProofCode, PROOF_CODE_LENGTH, type ProofCheckResult } from "@/modules/proof-of-visit";
 
 /**
- * Code entry. A plain GET form to /verify (works without JavaScript); the server normalizes the
- * code and redirects to /verify/<code>. Nothing typed here is stored in the browser.
+ * Code entry. A plain GET form to /verify/check (works without JavaScript); a route handler
+ * normalizes the code and answers with an HTTP redirect to /verify/<code>. Nothing typed here is stored in the browser.
  */
 export async function ProofCodeForm({ locale, defaultValue, error }: { locale: string; defaultValue?: string; error?: string }) {
   const t = await getTranslations("verify.form");
   const id = "proof-code";
   return (
-    <form action={`/${locale}/verify`} method="get" noValidate className="grid max-w-form gap-4" aria-labelledby={`${id}-title`}>
+    <form action={`/${locale}/verify/check`} method="get" noValidate className="grid max-w-form gap-4" aria-labelledby={`${id}-title`}>
       <h2 id={`${id}-title`} className="text-lg font-semibold text-ink">
         {t("title")}
       </h2>

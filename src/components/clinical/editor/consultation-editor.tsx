@@ -33,6 +33,7 @@ import { describeBookingState } from "@/modules/doctor/status";
 import type { AssignedVisitView } from "@/modules/doctor/types";
 import { badgeFor } from "../kit";
 import { useClinicalFormat } from "../use-format";
+import { useHydrated } from "../use-hydrated";
 import { CheckField } from "./fields";
 import { ClinicalSummary, MissingList } from "./review-step";
 import { AssessmentForm, CareForm, PrescriptionForm, VitalsForm, type IncompleteReading } from "./step-forms";
@@ -92,7 +93,8 @@ export function ConsultationEditor({
   const rail = buildStepRail(content, warnings, step);
   const errorMap: Record<string, string> = showErrors ? Object.fromEntries(missing.map((m) => [m.field, tk(m.labelKey)])) : {};
   // Locked while signing is pending, so neither edits nor saves can race the finalize request.
-  const disabled = editorLocked({ writable, finalized: auto.draft.finalized, signing });
+  const hydrated = useHydrated();
+  const disabled = editorLocked({ writable, finalized: auto.draft.finalized, signing }) || !hydrated;
   const edit = (next: typeof content) => {
     if (!disabled) auto.edit(next);
   };
@@ -236,8 +238,9 @@ export function ConsultationEditor({
 
       <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)]">
         {/* Step rail (desktop) / compact stepper (mobile) */}
-        <nav aria-label={t("editor.steps")} className="lg:sticky lg:top-44 lg:self-start">
-          <ol className="flex gap-2 overflow-x-auto pb-1 lg:grid lg:gap-1 lg:overflow-visible">
+        <nav aria-label={t("editor.steps")} className="min-w-0 lg:sticky lg:top-44 lg:self-start">
+          {/* relative: keeps the sr-only step status spans inside the scroller (they are absolutely positioned). */}
+          <ol className="relative flex gap-2 overflow-x-auto pb-1 lg:grid lg:gap-1 lg:overflow-visible">
             {rail.map((r, i) => (
               <li key={r.id} className="shrink-0">
                 <button

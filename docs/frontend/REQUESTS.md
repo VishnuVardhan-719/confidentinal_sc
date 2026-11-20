@@ -517,3 +517,29 @@ No endpoint exists. The http adapter (`src/modules/reminder-prefs/http.ts`) retu
 - `GET /api/labs?test=&city=` -> `{ items: LabListing[], cities: string[] }`. Published, verified, active labs only. `LabListing` = `{ id, name, area: { locality, city, pins[] }, collectionOptions: ("home" | "walk_in")[], collectionFeePaise, tests: [{ id, name, specimen, preparation, pricePaise, reportHours }] }`. Integer paise; no staff, phone or street address.
 - `GET /api/labs/:id` -> `LabListing`, 404 for unknown, unpublished or suspended labs.
 - `test` is a case-insensitive name match (2 to 60 characters); `city` is an exact city match.
+
+## R-FE-D-39 (fe-a, R7-D task 4) - doctor reviews view
+`/[locale]/doctor/reviews` + `src/modules/doctor-reviews` (own fixture; statuses and limits aligned with feat/fe2-p `src/modules/reviews`: pending_moderation | published | rejected, rating 1-5, text <= 1000). Read-only; filter links (`?status=`); summary over published reviews only. Privacy: no patient name, booking reference or exact date (visit month only), and rating/text are returned ONLY for moderation-published reviews (projection in the adapter; schema rejects text on unpublished). Behind FEATURE_CLINICAL per PHASE-R7-D (reviews are not clinical; lead may move this to its own flag), http `gated`. Suggested contract: `GET /api/providers/me/reviews` returning the projected shape. Doctor nav gains "Reviews". New namespace `doctorReviews` (te/hi need review).
+
+## R-FE-D-40 (fe-a, R8-D step 2) - input before hydration is silently lost (reproduced)
+**Repro:** `tests/e2e/hydration-race.spec.ts` serves the HTML but holds every `/_next/static/chunks/*.js` until released (a very slow phone, deterministically), types/chooses, then lets React hydrate.
+**Findings (before the fix, 3 of 3 controlled forms failed):**
+- React 19 keeps the DOM value the person typed or chose, but component state keeps its initial value (`""`). The screen shows "Cash" / "800" / the typed note while state is empty.
+- Collection form: "Record collection" then reported "Choose a method" and "Enter an amount" next to fields that visibly held them; the next render reset the select to the placeholder. Consultation notes: the typed text showed, but the status said "Not saved yet" and Save would have saved an empty note. Prescription draft: "Enter the name of medicine 1" with the name visible.
+- Uncontrolled forms (`defaultValue`, plain HTML submit) are not affected.
+- Separate finding: `redirect()` from a page inside a Suspense boundary (any route with `loading.tsx`) is streamed as `<meta http-equiv="refresh" content="1;url=...">` plus a script. Chrome only acts on it after the load event, so with JS still loading the GET form for `/verify` never moved on. Fixed for /verify with a route handler (`/[locale]/verify/check`, HTTP 303), which works with no JavaScript.
+**Fix applied in fe-d's own files:** `src/components/clinical/use-hydrated.ts` (`useSyncExternalStore`, false in server HTML and during hydration) disables controlled inputs until hydration in the collection form, arrival-code form, consultation editor, health-facts and photo-consent panels, consultation notes and prescription drafts. After the fix the spec passes at 390px and 1280px.
+**Proposed patch for shared controls (not applied; owner fe2-a `src/components/ui/input.tsx`, plus controlled forms in fe2-b auth/onboarding, fe2-c booking wizard, fe2-e ops):**
+```tsx
+// src/lib/use-hydrated.ts  (move fe-d's hook here)
+export const useHydrated = () => useSyncExternalStore(() => () => {}, () => true, () => false);
+
+// src/components/ui/input.tsx ("use client"): protect controlled inputs only; uncontrolled/no-JS forms unchanged.
+export function Input({ disabled, ...props }: ComponentPropsWithRef<"input">) {
+  const hydrated = useHydrated();
+  const lock = props.value !== undefined && !hydrated;
+  return <input {...props} disabled={disabled || lock} aria-disabled={lock || undefined} /* existing classes */ />;
+}
+// Same for Textarea, and add a shared <Select> wrapper (native <select> elements are used directly today).
+```
+Alternative where a form must work before hydration: make it uncontrolled (`defaultValue` + `FormData` on submit), like the /verify form. Avoid `redirect()` for no-JS GET forms under `loading.tsx`; use a route handler.

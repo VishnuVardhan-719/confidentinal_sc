@@ -9,6 +9,7 @@ import { Field } from "@/components/shared/field";
 import { InlineError } from "@/components/shared/inline-error";
 import { Notice } from "@/components/shared/notice";
 import { useClinicalFormat } from "@/components/clinical/use-format";
+import { useHydrated } from "@/components/clinical/use-hydrated";
 import { useRouter } from "@/i18n/navigation";
 import type { ApiResult } from "@/lib/api/result";
 import {
@@ -53,6 +54,8 @@ export function NoteEditor({ bookingId, initial, actions }: { bookingId: string;
   const [apiError, setApiError] = useState<string | null>(null);
   const [conflict, setConflict] = useState(false);
   const [busy, setBusy] = useState<"save" | "sign" | null>(null);
+  const hydrated = useHydrated();
+  const locked = busy !== null || conflict || !hydrated;
   const dirty = NOTE_SECTIONS.some((s) => sections[s] !== saved[s]);
 
   useEffect(() => {
@@ -157,7 +160,7 @@ export function NoteEditor({ bookingId, initial, actions }: { bookingId: string;
               rows={s === "summary" || s === "findings" ? 5 : 3}
               maxLength={NOTE_SECTION_MAX}
               autoComplete="off"
-              disabled={busy !== null || conflict}
+              disabled={locked}
               value={sections[s]}
               onChange={(e) => setSections((prev) => ({ ...prev, [s]: e.target.value }))}
             />
@@ -169,7 +172,7 @@ export function NoteEditor({ bookingId, initial, actions }: { bookingId: string;
       </p>
       {apiError ? <InlineError code={apiError} /> : null}
       <div className="flex flex-wrap gap-3">
-        <Button type="button" variant="secondary" onClick={onSave} disabled={busy !== null || conflict || (!dirty && version > 0)} aria-busy={busy === "save"}>
+        <Button type="button" variant="secondary" onClick={onSave} disabled={locked || (!dirty && version > 0)} aria-busy={busy === "save"}>
           {busy === "save" ? tc("working") : t("editor.save")}
         </Button>
       </div>
@@ -189,7 +192,7 @@ export function NoteEditor({ bookingId, initial, actions }: { bookingId: string;
               type="checkbox"
               className="mt-1 size-5 shrink-0 accent-forest"
               checked={attest}
-              disabled={busy !== null || conflict}
+              disabled={locked}
               aria-invalid={attestError ? true : undefined}
               aria-describedby={attestError ? `${attestId}-error` : undefined}
               onChange={(e) => setAttest(e.target.checked)}
@@ -198,7 +201,7 @@ export function NoteEditor({ bookingId, initial, actions }: { bookingId: string;
           </label>
         </div>
         <div>
-          <Button type="submit" disabled={busy !== null || conflict} aria-busy={busy === "sign"}>
+          <Button type="submit" disabled={locked} aria-busy={busy === "sign"}>
             {busy === "sign" ? tc("working") : t("signOff.action")}
           </Button>
         </div>

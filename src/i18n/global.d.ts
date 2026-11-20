@@ -18,6 +18,7 @@ import type errors from "../messages/en/errors.json";
 import type accessibility from "../messages/en/accessibility.json";
 import type services from "../messages/en/services.json";
 import type verify from "../messages/en/verify.json";
+import type doctorReviews from "../messages/en/doctorReviews.json";
 import type prescriptionDrafts from "../messages/en/prescriptionDrafts.json";
 import type consultationNotes from "../messages/en/consultationNotes.json";
 
@@ -44,6 +45,7 @@ declare module "next-intl" {
       accessibility: typeof accessibility;
       services: typeof services;
       verify: typeof verify;
+      doctorReviews: typeof doctorReviews;
       prescriptionDrafts: typeof prescriptionDrafts;
       consultationNotes: typeof consultationNotes;
     };

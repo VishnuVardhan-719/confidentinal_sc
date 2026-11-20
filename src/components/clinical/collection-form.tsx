@@ -15,6 +15,7 @@ import { COLLECTION_METHOD_MAP, describeCollectionStatus } from "@/modules/recor
 import { COLLECTION_METHODS, collectionInputSchema, type CollectionInput, type CollectionMethod, type CollectionView } from "@/modules/records/types";
 import { badgeFor, parseRupeesToPaise } from "./kit";
 import { useClinicalFormat } from "./use-format";
+import { useHydrated } from "./use-hydrated";
 
 /**
  * DC10 provider-recorded cash / direct-UPI collection. Separate from the gateway payment state
@@ -44,6 +45,7 @@ export function CollectionForm({
   const [attempt, setAttempt] = useState(0);
   const [apiError, setApiError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const hydrated = useHydrated();
   // One idempotency key per intent; kept across retries, reset after success.
   const key = useRef<string | null>(null);
 
@@ -98,7 +100,7 @@ export function CollectionForm({
           <ErrorSummary errors={errors} focusKey={attempt} />
           <Field id={ids.method} label={t("methodLabel")} required error={fieldError(ids.method)}>
             {(control) => (
-              <select {...control} className={fieldControlClass} value={method} onChange={(e) => setMethod(e.target.value as CollectionMethod | "")}>
+              <select {...control} className={fieldControlClass} disabled={!hydrated} value={method} onChange={(e) => setMethod(e.target.value as CollectionMethod | "")}>
                 <option value="">{t("methodPlaceholder")}</option>
                 {COLLECTION_METHODS.map((m) => (
                   <option key={m} value={m}>
@@ -109,16 +111,16 @@ export function CollectionForm({
             )}
           </Field>
           <Field id={ids.amount} label={t("amount")} hint={t("amountHint", { amount: money(view.amountDuePaise) })} required error={fieldError(ids.amount)}>
-            {(control) => <Input {...control} inputMode="decimal" autoComplete="off" value={amount} onChange={(e) => setAmount(e.target.value)} className="max-w-48 tabular" />}
+            {(control) => <Input {...control} inputMode="decimal" autoComplete="off" value={amount} onChange={(e) => setAmount(e.target.value)} className="max-w-48 tabular" disabled={!hydrated} />}
           </Field>
           {method === "upi_direct" ? (
             <Field id={ids.reference} label={t("reference")} hint={t("referenceHint")} required error={fieldError(ids.reference)}>
-              {(control) => <Input {...control} autoComplete="off" maxLength={64} value={reference} onChange={(e) => setReference(e.target.value)} />}
+              {(control) => <Input {...control} autoComplete="off" maxLength={64} disabled={!hydrated} value={reference} onChange={(e) => setReference(e.target.value)} />}
             </Field>
           ) : null}
           {apiError ? <InlineError code={apiError} /> : null}
           <div>
-            <Button type="submit" variant="secondary" disabled={busy} aria-busy={busy}>
+            <Button type="submit" variant="secondary" disabled={busy || !hydrated} aria-busy={busy}>
               {busy ? tc("working") : t("submit")}
             </Button>
           </div>
