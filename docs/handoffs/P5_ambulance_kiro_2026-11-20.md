@@ -103,3 +103,10 @@ Imports `run_b01_concurrency.py`; clones the schema into a scratch DB (also drop
 ## Next action
 
 Teammate runs the three commands above and reports failures against this file; a shared author adds the storage-guard clause; coordinator reviews conflicts 1, 4 and the §13 keying question.
+
+## Update after merging `origin/integ/all` at `3a88e5a` (doctor block, shared API, seed)
+
+- Merge was clean. After it: vitest 21 files, 371 passed, 2 skipped; `next typegen`, tsc and eslint clean; `next build --webpack` succeeded and lists every ambulance route as dynamic next to the shared `/api/bookings/[id]/contact` and `/api/ops/*`.
+- The ambulance block adds **no trigger on `public.bookings`**. Its only category guard is `amb_trip_guard` on `public.transport_trips`, so the shared `p5_category_guards` naming rule (`*_booking_guard`) has nothing to skip, and shared suites never write `transport_trips`.
+- Ambulance suites use `pg_temp.p5_step` twice (053 scheduler `no_show` refusal; 056 lab start). With the new helper the doctor guard is switched off for those calls, which does not change their outcome (neither is a doctor `in_progress` step). Suite 056 uses `p5_accept` for one doctor booking with W1, who is neither the patient nor the requester, so `p5d_doctor_accept_guard` allows it.
+- Risk for the teammate, not caused by this block: `supabase/config.toml` has `[db.seed] enabled = true` and `seed.sql` inserts `pin_directory` 599991 and 599992, while `_b01_fixture.inc` inserts 599991 without `on conflict`. If `npx supabase db reset` applies the seed, every suite that includes `_b01_fixture.inc` (all ambulance suites included) would stop on a duplicate key before any ambulance case runs. `_p5a_fixture.inc` itself only adds 599993 and 599994, which the seed does not use. No seed id collides with the `a1`-`a7` fixture ids.
