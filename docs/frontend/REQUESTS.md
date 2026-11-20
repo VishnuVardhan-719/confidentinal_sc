@@ -331,6 +331,8 @@ R-FE01-12 is resolved: with the ban lifted, all fe2-a browser specs ran against 
 | R-FE-P-R9-5 | fe-a | Open | `a11y.spec.ts` axe can run during the hero fade-in (load-dependent color-contrast) |
 | R-FE-P-R9-6 | fe-int2 | Patch ready | Return-path patch for AdminFrame and the lab/ambulance/caretaker frames (fixes R9-3 on integration and R9-4) |
 | R-FE-P-R9-7 | fe-int2 / fe-e / fe-d | Open | Provider a11y and keyboard sweep: what was and was not verified |
+| R-FE-P-R9-8 | fe-a / fe2-d | Open | te/hi at 390px: notification row title squeezed; patient bottom-nav label truncated |
+| R-FE-P-R9-9 | lead | DELETE-CANDIDATES, not deleted | Dead or export-only code in fe-p files, with grep proof |
 
 ### R-FE-P-R7-1 Family members contract (owner: backend)
 No endpoint in docs/API_CONTRACTS.md. The http adapter (`src/modules/family-members/http.ts`) returns `gated`. Proposed:
@@ -595,3 +597,39 @@ index c9a82d3..aa4f38f 100644
   - The patched integration export above rendered and passed axe and the keyboard walk for all of them (lab `orders/fx-lab-order-1`, ambulance `trips/fx-trip-1`, caretaker `assignments/fx-care-asg-1`, admin dashboard). However, that `--webpack` build from a temp folder shipped almost no Tailwind utilities (no `lg:hidden`; the sidebar showed at 390). So contrast, overflow and focus-ring results from that run do not count.
   - Please run the same probe on a real integration build: sign in as `ops.lab.manager`, `ops.ambulance.operator`, `ops.care.manager` and `ops.admin.lead` (all `@example.invalid`).
 - **Observation for fe-d:** on `/te/doctor/requests/<id>` the h1 is the fixture service title "Home doctor visit (synthetic)" in English. That is synthetic data, not a UI string, but real service names will need a localized display name or a `lang` attribute when the backend sends one.
+
+### R-FE-P-R9-8 (to fe-a / fe2-d) - te/hi long strings at 390px on the patient inbox pages (R9-P6)
+- **Probe:** `.context/r9p6-overflow.mjs` (untracked) on fe2-p's "on" server, at 390 and 320 px in te, hi and en, on `/patient/notifications` and `/patient/settings/reminders`. It also covers the reminders error-summary and all-channels-off state.
+  - Result: page overflow 0 everywhere, and no element sticks out of the viewport.
+  - Sanity check: an injected 300-character Hindi word produced 1839px of overflow, so the probe does detect overflow.
+  - The te/hi error state is now in e2e: `patient-reminders.spec.ts` "te and hi: the error summary and all-off warning wrap without horizontal scroll".
+- **Layout issues outside fe-p files (no overflow, but cramped or cut off):**
+  - **`src/components/notifications/notification-list.tsx` (fe-a):** in hi/te at 390 the "Mark as read" button (hi "पढ़ा हुआ चिह्नित करें") shares a row with the title. That squeezes the title column to about 110px, so "बुकिंग का नया अनुरोध भेजा गया" wraps onto 3 lines. Screenshot: `.context/shots/r9p6-hi-notifications-390.png`. Suggested fix: on the action `<div>`, add `basis-full pl-5.5 sm:basis-auto sm:pl-0`, so the buttons drop below the text under the `sm` breakpoint.
+  - **Patient bottom navigation (shell, fe2-d / fe-a):** in te at 390 the "Find doctors" tab label is cut to "డాక్టర్‌ను వెత…" by `truncate`. Suggested fix: a shorter te label for the tab (for example "డాక్టర్లు"), or allow two lines (`line-clamp-2`, no `truncate`).
+
+### R-FE-P-R9-9 (to lead) - DELETE-CANDIDATES in fe-p files (R9-P6 self-review; nothing deleted)
+- **Scope:** every `src/` file changed by a non-merge `(fe-p)` commit since the merge-base with `develop` (`d532f09`), 115 files, plus the new untracked R9-P6 files.
+- **Method:** each `export` was checked with `git grep --untracked -n -w <name> -- src tests`. A candidate has no hit outside its own file.
+- **The earlier "notifications api/actions/inbox leftovers" are not dead.** All three are imported:
+  - `markNotificationReadAction` (`patient/notifications/actions.ts`): imported by `patient/notifications/page.tsx:10`
+  - `patientNotificationsApi` (`patient/notifications/api.ts`): imported by `actions.ts:7` and `page.tsx:11`
+  - `NotificationsInbox` (`components/patient/notifications-inbox.tsx`): imported by `patient/notifications/_components/notifications-body.tsx:10`
+- **Dead code (no use anywhere, including its own file):**
+  - `src/modules/reviews/schemas.ts:40` `export const reviewSchema`. Proof: `git grep --untracked -n -w reviewSchema -- src tests` returns only `src/modules/reviews/schemas.ts:40`. It was meant for validating http responses once R-FE-P-R7-3 has an endpoint. Either delete it or use it in `createReviewsHttpApi` then.
+  - `src/components/patient/reschedule-request.ts:15` `export type RescheduleRequest`. Proof: `git grep --untracked -n -w RescheduleRequest -- src tests` returns only `src/components/patient/reschedule-request.ts:15`. `rescheduleRequestSchema` and `checkReschedule` are used; the inferred type is not.
+- **Export-only:** used inside their own file but imported nowhere. Dropping the `export` keyword is enough; the code is live.
+  - `src/app/[locale]/patient/family/_lib.ts` `FLASH`
+  - `src/components/patient/booking-detail-logic.ts` `CancelState`, `TimelineEntry`
+  - `src/components/patient/bookings-query.ts` `BookingFilter`, `BookingsQuery`
+  - `src/modules/family-members/fixture.ts` `FamilyFixtureOptions`
+  - `src/modules/family-members/schemas.ts` `familyMemberInputSchema`, `FamilyValidation`
+  - `src/modules/reminder-prefs/fixture.ts` `ReminderFixtureOptions`
+  - `src/modules/reminder-prefs/schemas.ts` `reminderPrefsInputSchema`, `ReminderValidation`
+  - `src/modules/reviews/fixture.ts` `MODERATION_QUEUE_OWNER`, `QUEUE_FIXTURE_IDS`, `ReviewsFixtureOptions`, `SEEDED_MODERATOR_ID`
+  - `src/modules/reviews/schemas.ts` `moderationCursorSchema`, `reviewInputSchema`, `ReviewValidation`
+  - `src/modules/reviews/status.ts` `ReviewEligibility`
+  - `src/modules/saved-providers/fixture.ts` `SavedFixtureOptions`
+- **Other owners' files fe-p touched, same check (for their owners):**
+  - `src/modules/admin/capabilities.ts` (`BACKEND_ADMIN_CAPABILITIES`, `PROPOSED_ADMIN_CAPABILITIES`, `CapabilityContext`), `src/modules/admin/routes.ts` (`ADMIN_ROUTES`, `ADMIN_ROUTE_CAPABILITIES`) and `src/modules/admin/session.ts` (`OperationsSession`): export-only (fe-e).
+  - `src/components/notifications/notification-list.tsx:15` `MarkReadResult` (fe-a) and `src/modules/notifications/schemas.ts:8` `NotificationReadChange` (fe-c): export-only types, used only inside their own files.
+- **Message keys:** a scan of `admin.reviews.*`, `patientAccount.*` and `patient.notifications.*` (en) found no key that is not referenced literally or through a dynamic `parent.${...}` lookup. Script: `.context/r9p6-keys.mjs`.
