@@ -1,3 +1,4 @@
+/* eslint-disable -- local Node audit script (CommonJS), not app code */
 const { execSync } = require("child_process");
 const g = "C:/Users/Yashwanth/fe2-int";
 const sh = c => execSync(c, { cwd: g, encoding: "utf8", maxBuffer: 64 << 20 });

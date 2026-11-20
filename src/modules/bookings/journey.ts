@@ -12,7 +12,13 @@ import { createBookingsFixtureApi } from "./fixture";
 import { createBookingsHttpApi } from "./http";
 import { createSlotsFixtureApi, createSlotsHttpApi, type SlotsApi } from "./slots";
 
-export type JourneyApis = { bookings: BookingsApi; payments: PaymentsApi; patient: PatientApi; slots: SlotsApi; doctors: Pick<DoctorSearchApi, "get"> };
+/** Cancellation terms the page may show. Null when no server contract supplies them (http mode today): fail closed. */
+export type JourneyCancellationTerms = { version: string; cancelWindowMinutes: number };
+
+export type JourneyApis = {
+  bookings: BookingsApi; payments: PaymentsApi; patient: PatientApi; slots: SlotsApi; doctors: Pick<DoctorSearchApi, "get">;
+  cancellationTerms: JourneyCancellationTerms | null;
+};
 
 /**
  * Server-only APIs for the patient booking journey (/patient/book). In fixture mode every adapter reads the
@@ -23,7 +29,7 @@ export type JourneyApis = { bookings: BookingsApi; payments: PaymentsApi; patien
 export function journeyApis(env: Record<string, string | undefined> = process.env): JourneyApis {
   const doctors = createDoctorSearchApi(env);
   if (getAdapterMode(env) !== "fixture") {
-    return { bookings: createBookingsHttpApi(), payments: createPaymentsHttpApi(), patient: createPatientHttpApi(), slots: createSlotsHttpApi(), doctors };
+    return { bookings: createBookingsHttpApi(), payments: createPaymentsHttpApi(), patient: createPatientHttpApi(), slots: createSlotsHttpApi(), doctors, cancellationTerms: null };
   }
   const store = sharedSyntheticMarketplace(env);
   return {
@@ -32,5 +38,6 @@ export function journeyApis(env: Record<string, string | undefined> = process.en
     patient: createPatientFixtureApi({ env, store }),
     slots: createSlotsFixtureApi({ env, store }),
     doctors,
+    cancellationTerms: { version: "synthetic-v1", cancelWindowMinutes: SYNTHETIC_CANCELLATION_POLICY.cancelWindowMinutes },
   };
 }

@@ -565,3 +565,21 @@ Alternative where a form must work before hydration: make it uncontrolled (`defa
 ### R-FE01-14 (to lead) — browser e2e un-deferred and passing on feat/fe2-a
 R-FE01-12 is resolved: with the ban lifted, all fe2-a browser specs ran against `next start` (port 3330, --workers=1):
 `public.spec.ts` + `public-nav.spec.ts` 115 passed / 1 skipped (mobile-only test on desktop); `a11y.spec.ts` 16 passed / 16 skipped (runs once on the desktop project; covers 360/768/1024/1440 x en/te/hi, 200%/400% zoom, keyboard focus, headers); `perf.spec.ts` (E2E_PERF=1, mobile-390) 4 passed. Fix made during the run: Telugu/Hindi header overflowed by 12px at 1280 -> emergency link and language trigger are compact between xl and 2xl, account buttons stay on one line.
+## 2026-11-20 - R9-C3 Hindi plural for zero, patch proposal (fe-q, feat/fe2-c)
+**R-FE-Q-R9C3-1.** CLDR puts 0 in the Hindi `one` category (`new Intl.PluralRules("hi").select(0) === "one"`). These Hindi messages hard-code "1" in `one` and have no `=0`, so a count of 0 renders as "1". `tests/unit/adversarial-guards.test.ts` now fails on any new case; these three are exempt (`HI_PLURAL_EXEMPT`) until their owners apply the patch, then the exemption line must be deleted.
+
+| Owner | File | Key | Now | Proposed |
+|---|---|---|---|---|
+| fe-e | `src/messages/hi/ambulance.json` | `dashboard.daysLeft` | `{count, plural, one {1 दिन बाकी} other {# दिन बाकी}}` | `{count, plural, =0 {आज समाप्त} one {# दिन बाकी} other {# दिन बाकी}}` |
+| fe-e | `src/messages/hi/lab.json` | `orders.testCount` | `{count, plural, one {1 जाँच} other {# जाँचें}}` | `{count, plural, one {# जाँच} other {# जाँचें}}` |
+| fe-a | `src/messages/hi/common.json` | `errorSummary.title` | `{count, plural, one {आगे बढ़ने के लिए 1 समस्या ठीक करें} other {...}}` | `one {आगे बढ़ने के लिए # समस्या ठीक करें}` (other unchanged) |
+
+The ambulance case matters most: `src/modules/ambulance/view-models.ts` emits `daysLeft: 0` for a licence that expires today. "आज समाप्त" ("expires today") needs native review (REVIEW_NEEDED). On fe2-int the same defect also exists in `hi/auth.json` `otp.attemptsLeft` (fe-b): proposed `{count, plural, =0 {कोई प्रयास बाकी नहीं} one {# प्रयास बाकी} other {# प्रयास बाकी}}`.
+
+**R-FE-Q-R9C3-2 (integration note).** The same test forbids fixture value imports in `src/app/**` and `src/components/**` (finding 1 came from one). On fe2-int, `src/app/[locale]/patient/dashboard/page.tsx:20` (fe-d) imports `DEFAULT_PATIENT_ACTOR` from `@/fixtures/clinical/world` behind `isFixtureAdapter()`. Proposal: read the actor from `getPatientSession().fixtureActor` (`src/modules/patient-dashboard/session.ts` already imports it behind `assertFixtureAllowed`). Otherwise add the file to `UI_ALLOWED` in the test with that reason when merging.
+## 2026-11-20 - R9-C5 doctor reviews vs patient review statuses (fe-q review of feat/fe2-d)
+**R-FE-Q-R9C5-1 (fe-d, fe-p, backend).** `src/modules/reviews/types.ts` (fe-p) has `withdrawn`; `src/modules/doctor-reviews/types.ts:10` (fe-d) does not, and its strict list schema fails on any unknown status, so one withdrawn review makes `/doctor/reviews` "unavailable".
+- Proposed contract: the doctor feed (`GET` provider reviews, not yet in API_CONTRACTS) never returns `withdrawn` rows; withdrawn is final and hidden from everyone but the patient.
+- Proposed client patch (fe-d): in the fixture projection and before `doctorReviewListSchema`, drop rows whose status is `withdrawn`; keep the strict schema for the rest.
+- Proposed UI change (fe-d, privacy): for `pending_moderation` and `rejected`, show counts only, not per-review cards with the exact submission date (`src/app/[locale]/doctor/reviews/page.tsx:100-133`), so a doctor cannot tie an unmoderated or rejected review to a recent home visit.
+- Guard: `tests/unit/peer-guards.test.ts` lists `withdrawn` in `DOCTOR_OMITS`; remove it there only if the doctor view starts showing withdrawn reviews deliberately.
