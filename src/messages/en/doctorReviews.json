@@ -3,29 +3,29 @@
   "description": "What patients said about your visits. Read-only: you cannot reply, hide or change reviews here.",
   "synthetic": "Synthetic data for testing only. These reviews are made up for testing.",
   "gated": "Reviews are switched off in this workspace until the feature is approved and enabled.",
-  "empty": { "title": "No reviews yet", "body": "When patients review a completed visit, it appears here after moderation." },
+  "empty": {
+    "title": "No reviews yet",
+    "body": "When patients review a completed visit, it appears here after moderation."
+  },
   "summary": {
     "title": "Overall",
     "noPublished": "No published reviews yet.",
     "average": "{count, plural, one {out of 5, from # published review} other {out of 5, from # published reviews}}",
     "note": "Only reviews published by moderation count. Patients are never named here."
   },
-  "filters": {
-    "label": "Filter reviews",
-    "all": "All ({count})",
-    "published": "Published ({count})",
-    "pending_moderation": "Awaiting moderation ({count})",
-    "rejected": "Not published ({count})"
+  "unpublished": {
+    "title": "Not shown yet",
+    "pending": "{count, plural, =0 {No reviews waiting for moderation} one {# review waiting for moderation} other {# reviews waiting for moderation}}",
+    "rejected": "{count, plural, =0 {No reviews left unpublished} one {# review not published by moderation} other {# reviews not published by moderation}}",
+    "note": "These are counted only. Their date, visit and content are not shown, so no patient can be identified. A review appears here once moderation publishes it."
   },
-  "status": { "published": "Published", "pending_moderation": "Awaiting moderation", "rejected": "Not published" },
-  "list": { "label": "Reviews", "noneForFilter": "No reviews match this filter." },
+  "list": {
+    "label": "Reviews",
+    "nonePublished": "No published reviews to show yet."
+  },
   "card": {
     "visit": "Visit in {month}",
     "rating": "{rating} out of 5",
-    "submitted": "Submitted {date}",
-    "hidden": {
-      "pending_moderation": "The rating and text appear here once moderation publishes this review.",
-      "rejected": "Moderation did not publish this review, so its rating and text are not shown."
-    }
+    "submitted": "Submitted {date}"
   }
 }

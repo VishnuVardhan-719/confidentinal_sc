@@ -10,6 +10,7 @@ import { InlineError } from "@/components/shared/inline-error";
 import { Notice } from "@/components/shared/notice";
 import { useClinicalFormat } from "@/components/clinical/use-format";
 import { useHydrated } from "@/components/clinical/use-hydrated";
+import { HydrationStatus, hydrationBusy } from "@/components/clinical/hydration-status";
 import { useRouter } from "@/i18n/navigation";
 import type { ApiResult } from "@/lib/api/result";
 import {
@@ -132,7 +133,8 @@ export function NoteEditor({ bookingId, initial, actions }: { bookingId: string;
   const savedTime = savedAt ? fmt.time(savedAt) : null;
 
   return (
-    <form onSubmit={onSignOff} noValidate className="grid max-w-form gap-6" aria-labelledby={`${base}-title`}>
+    <form onSubmit={onSignOff} noValidate className="grid max-w-form gap-6" aria-labelledby={`${base}-title`} {...hydrationBusy(hydrated)}>
+      <HydrationStatus hydrated={hydrated} />
       <h2 id={`${base}-title`} className="text-lg font-semibold text-ink">
         {t("editor.title")}
       </h2>

@@ -14,6 +14,7 @@ import type { ApiResult } from "@/lib/api/result";
 import { interpretCommand } from "@/modules/doctor/loaders";
 import { deriveChallengeView, OTP_ERROR_LABEL_KEYS } from "@/modules/doctor/otp";
 import { useHydrated } from "@/components/clinical/use-hydrated";
+import { HydrationStatus, hydrationBusy } from "@/components/clinical/hydration-status";
 import { otpCodeSchema, type ArrivalChallenge, type OtpErrorCode, type VerifyArrivalOutcome, type VersionResponse } from "@/modules/doctor/types";
 import type { VisitAction } from "@/modules/doctor/visit";
 import { outcomeMessageKey } from "./command-message";
@@ -200,7 +201,8 @@ function ArrivalCodeForm({ bookingId, challenge: initial, actions }: { bookingId
   const errorText = error?.otp && !duplicatesPhase ? tk(OTP_ERROR_LABEL_KEYS[error.otp]) : undefined;
 
   return (
-    <form onSubmit={submit} noValidate className="grid gap-5" aria-labelledby={`${fieldId}-title`}>
+    <form onSubmit={submit} noValidate className="grid gap-5" aria-labelledby={`${fieldId}-title`} {...hydrationBusy(hydrated)}>
+        <HydrationStatus hydrated={hydrated} />
       <div className="grid gap-2">
         <h3 id={`${fieldId}-title`} className="text-lg font-semibold text-ink">
           {t("title")}
