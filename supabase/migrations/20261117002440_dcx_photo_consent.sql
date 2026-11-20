@@ -221,18 +221,20 @@ declare actor uuid:=identity_private.require_actor(); begin
     'created_at',p.created_at,'withdrawn_at',p.withdrawn_at) order by p.created_at,p.id) from public.visit_photos p where p.booking_id=p_booking_id),'[]'::jsonb));
 end $$;
 
--- Storage predicate (registered below). Writing, and the M1 upload read-back: the uploader of
--- an active photo under a granted consent, while still the started visit's verified doctor.
--- Reading: a live ticket of the caller, active photo, granted consent, caller still patient
--- or visit doctor at read time.
+-- Storage predicate (registered below). Writing, and the M1 upload read-back: gate `on`, the
+-- uploader of an active photo under a granted consent, while still the started visit's
+-- verified doctor. Reading: gate `on` or `suspended`, a live ticket of the caller, active
+-- photo, granted consent, caller still patient or visit doctor at read time.
 create function dcx_private.photo_object_access(p_bucket text,p_object_path text,p_writing boolean) returns boolean
 language sql stable security definer set search_path='' as $$
  select coalesce(p_bucket='visit-evidence' and exists(select 1 from public.visit_photos ph
   join public.visit_photo_consents c on c.id=ph.consent_id
   where ph.object_name=p_object_path and ph.status='active' and c.status='granted' and (
    ((p_writing or coalesce(storage.operation(),'')='storage.object.upload')
+     and booking_private.gate_state('doctor_photos')='on'
      and ph.uploaded_by_profile_id=auth.uid() and dcx_private.in_visit_doctor(ph.booking_id))
-   or (not p_writing and exists(select 1 from dcx_private.photo_read_tickets t where t.photo_id=ph.id
+   or (not p_writing and booking_private.gate_state('doctor_photos') in ('on','suspended')
+     and exists(select 1 from dcx_private.photo_read_tickets t where t.photo_id=ph.id
      and t.grantee_profile_id=auth.uid() and t.expires_at>now())
      and (dcx_private.visit_patient(ph.booking_id,'booking:read') or dcx_private.visit_doctor(ph.booking_id))))),false);
 $$;

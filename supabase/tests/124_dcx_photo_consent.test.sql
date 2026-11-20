@@ -73,6 +73,12 @@ end $$;
 select pg_temp.as_user('b1000000-0000-4000-8000-000000000001');
 select pg_temp.assert_true(not (public.list_visit_photos(current_setting('dcx.v1')::uuid)::text like '%visit/%'),'list carries no object names');
 select pg_temp.assert_true(exists(select 1 from public.audit_events where action='visit_photo.read_authorized' and target_id=current_setting('dcx.photo')::uuid),'ticket audited');
+-- The gate also binds Storage: off stops reads with a live ticket, suspended keeps reads.
+select pg_temp.set_gate('off','doctor_photos');
+select pg_temp.assert_true(not dcx_private.photo_object_access('visit-evidence',current_setting('dcx.obj'),false),'gate off: live ticket reads nothing');
+select pg_temp.set_gate('suspended','doctor_photos');
+select pg_temp.assert_true(dcx_private.photo_object_access('visit-evidence',current_setting('dcx.obj'),false),'gate suspended: reads stay open');
+select pg_temp.set_gate('on','doctor_photos');
 
 -- (b) Withdrawal: ungated, stale version refused, reads stop at once, deletion scheduled.
 select pg_temp.set_gate('off','doctor_photos');
