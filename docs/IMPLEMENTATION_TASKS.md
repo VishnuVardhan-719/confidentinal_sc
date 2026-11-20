@@ -34,7 +34,7 @@
 | U01 | Patient/provider/admin dashboards and responsive UI | Owner initially | Claude/Kiro/Codex by ticket | P1 | PENDING | Real APIs; loading/error/empty states; mobile/keyboard tests |
 | Q01 | Security, RLS, E2E, accessibility, performance and backup/restore | Owner | Codex/Kiro independent reviews | P0 | IN_PROGRESS | Evidence recorded; no critical/high release blockers. Matrix `docs/specs/Q01_coverage_matrix.md`; gap tests `test/Q01-gaps`; CI `.github/workflows/ci.yml` (`docs/CI.md`) |
 | H01 | Friend frontend handover package | Owner/Claude | Claude prepares; friend executes later | P2 | IN_PROGRESS (draft: docs/HANDOFF_FRONTEND.md) | Branch, setup, contracts, pending UI tickets, tests and next actions |
-| N01 | Notifications: in-app inbox, outbox, gated channels | Owner | Kiro design; implementation after P5 categories | P1 | PENDING | Design `docs/specs/N01_notifications_design.md` (migrations 002110-002199, suites 100-109) |
+| N01 | Notifications: in-app inbox, outbox, gated channels | Owner | Kiro design; Codex implementation | P1 | IN_PROGRESS — authored, DB NOT EXECUTED | Six migrations 002110-002160, suites 100-109, app adapters/dispatcher; static checks and category integration notes: `docs/handoffs/N01_codex_2026-11-20.md` |
 | R02 | Staging, client acceptance, runbook and release decision | Owner | Claude coordinates | P0 | PENDING | Explicit client approval and all relevant release gates |
 
 ## Doctor consultation subtask ledger — all 14 requested capabilities

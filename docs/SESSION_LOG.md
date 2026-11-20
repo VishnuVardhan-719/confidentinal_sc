@@ -42,3 +42,10 @@
 - Claude MCP: Claude Docs, Drive, Gmail, Calendar, context7, playwright, scrapling.
 - Delegation blocker: git worktrees need a base commit and the repo has none. Owner rule: no commits unless asked.
 - Next: R01 source audit and S00 schema crosswalk (design docs only, no migrations).
+
+## 2026-11-20 — N01 delegated implementation
+
+- Codex, `feat/N01-notifications`, base `integ/all` `51c7439`; authority `C:/tmp/scv_logs/codex_n01.txt`. Model/effort inherited from the active harness; no selector or effort override was changed or claimed verified.
+- Six SQL migrations, suites100–109, four-case race runner and notification app layer authored. SQL **DB NOT EXECUTED** under the owner's static-only rule. Gates OFF; no Docker/Supabase command, dependency install, `.env` access or activation.
+- Static evidence: Vitest278 passed/2 pre-existing skipped (N01 39 tests); Next typegen, standalone tsc, full ESLint and Webpack production build exit0. All six new route paths dynamic. Read-only SQL/app reviews completed and concrete findings corrected.
+- [N01 handoff](handoffs/N01_codex_2026-11-20.md) records commands, category reseed/native-command integration, source-ledger hardening prerequisite, shared suite023 compatibility and frontend/activation work. Database acceptance remains pending. Feature-branch commit/push authorized; use final branch HEAD for the resulting SHA.

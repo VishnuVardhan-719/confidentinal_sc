@@ -21,6 +21,7 @@ Update only from inspected repository evidence, commits and executed tests.
 | Caretaker workflow | PENDING | No verified implementation evidence |
 | Pay-after/payment | IN_PROGRESS | P01a app plus SQL authored: 14 matching RPCs, private worker, suites 070–089 and 9 race cases. Database execution/RLS/concurrency NOT VERIFIED pending shared merge; activation OFF. P01b excluded under D-14 option A. [SQL handoff](handoffs/P01a_sql_codex_2026-11-19.md) |
 | Security/RLS/E2E | PENDING | Must be executed against actual app and role tokens |
+| Notifications (N01) | IN_PROGRESS — authored, DB NOT EXECUTED | Six migrations, suites100–109, four race cases and validated app routes/dispatcher authored. Notification gates OFF; category merge/reseed and DB/UI acceptance pending. [Handoff](handoffs/N01_codex_2026-11-20.md) |
 | Staging and release | PENDING | No deployment evidence |
 | Friend frontend handover | PENDING | Prepare from actual pending work when the friend joins |
 
