@@ -1,20 +1,87 @@
-# Adversarial review of fe2-int (R9-C2) - WIP, paused for shutdown
+# Adversarial review of fe2-int (R9-C2)
 
-Reviewed read-only: `C:/Users/Yashwanth/fe2-int`, branch `feat/fe2-integration`, committed HEAD `02dc8bf` (the worktree had 15 uncommitted changes by another agent; not reviewed). Line numbers are from HEAD.
+Reviewed read-only: `C:/Users/Yashwanth/fe2-int`, branch `feat/fe2-integration`, committed HEAD `b8e6215` (2026-11-20). No fe2-int file was edited. The review started at `02dc8bf`; the two commits after it (`47b6574`, `b8e6215`) change only `tests/e2e/**`, `playwright.config.ts`, `.context/**` and docs, with no change under `src/` (`git diff --stat 02dc8bf b8e6215 -- src` is empty), so every `src` line number below is valid at `b8e6215`.
 
-## Findings so far (ranked)
+Scope: PHI in URLs, storage and logs; role-guard gaps; non-integer money maths; fixture adapter reachable in production; i18n key parity te/hi vs en; hard-coded strings.
 
-1. **HIGH - synthetic cancellation policy presented as approved on a real-data page.** `src/app/[locale]/patient/book/[id]/page.tsx:20,42,127,130` imports `SYNTHETIC_CANCELLATION_POLICY` from `@/fixtures/marketplace/booking-store` and passes `{ state: "approved", version: "synthetic-v1" }` to `CancellationDialog` in every adapter mode. In http mode (B01 `GET /api/bookings/:id` works) patients would see a fake "approved" policy and a hard-coded 2-hour window. Fix: read the policy from the server (booking/offer policy) and pass `state: "unavailable"` when none is returned; keep the synthetic constant behind `getAdapterMode() === "fixture"`. Same pattern, lower risk (http adapter gated): `src/components/service-requests/request-controls.tsx:41`.
-2. **MEDIUM - inconsistent money formatters.** Four implementations: `src/lib/format/index.ts:8-12` (always 2 decimals, throws on invalid), `src/components/payments/money.ts:13-22` (0 decimals for whole rupees, returns null), `src/components/admin/ops/format.ts:11-13` (accepts negative paise), `src/components/clinical/kit.ts:32` + `server-format.ts:11` (`paise / 100` through next-intl number). Same amount renders as "₹800" and "₹800.00" on different pages; admin shows negative amounts. Fix: one shared `formatPaise` (integer check, nonnegative, Latin digits, fixed 2 decimals) and re-export it.
-3. **LOW - float in an editor default.** `src/components/lab/lab-views.tsx:173` uses `(r.pricePaise / 100).toFixed(2)`; exact for integer paise but bypasses the integer helpers. Fix: `paiseToRupeesInput` from `src/modules/onboarding/form-models.ts:21`.
-4. **LOW - proof code in URL path by design.** `src/app/[locale]/verify/page.tsx:20` redirects to `/verify/{code}`; mitigated by `referrer: "no-referrer"` and noindex (`src/components/proof-of-visit/verify-page.tsx:29-30`). Keep codes short-lived and revocable (backend).
+## Findings (ranked by severity)
+
+| # | Severity | Area | Where | Owner |
+|---|---|---|---|---|
+| 1 | HIGH | Fixture data on a real-data page | `src/app/[locale]/patient/book/[id]/page.tsx:20,127,130` | fe-q (C) |
+| 2 | MEDIUM | Fixture in production | `src/lib/api/mode.ts:9`, `src/modules/auth/fixture-guard.ts:7` | fe-a (foundation) |
+| 3 | MEDIUM | Money formatting | four `formatPaise` implementations | fe-a + owners |
+| 4 | MEDIUM | i18n (Hindi plural for zero) | `src/messages/hi/{ambulance,auth,common,lab}.json` | each namespace owner |
+| 5 | LOW | PHI-adjacent data in URLs | `src/modules/providers/doctor-search.ts:23-26`, `src/app/[locale]/patient/{lab-tests,caretakers,ambulance}/page.tsx` | fe-q (C) |
+| 6 | LOW | Float in a money editor default | `src/components/lab/lab-views.tsx:173` | fe-b (E), fixed on branch |
+| 7 | LOW | Proof code in URL path | `src/app/[locale]/verify/page.tsx:20` | fe-d / backend |
+
+### 1. HIGH: synthetic cancellation policy shown as "approved" in every adapter mode
+
+`src/app/[locale]/patient/book/[id]/page.tsx:20` imports `SYNTHETIC_CANCELLATION_POLICY` from `@/fixtures/marketplace/booking-store`. Line 127 passes `policy={{ state: "approved", version: "synthetic-v1", summary: t("policySummary", { hours: SYNTHETIC_CANCELLATION_POLICY.cancelWindowMinutes / 60 }), feePaise: 0, refundPaise: null }}` to `RequestActions`. Line 130 uses the same constant for the "changes closed" notice. Neither line checks the adapter mode. B01 `GET /api/bookings/:id` exists, so in http mode a real patient would see an invented 2-hour window, labelled as an approved policy with no fee, for a real booking. That is a fake business term, which AGENTS.md forbids.
+
+Same pattern, lower risk: `src/components/service-requests/request-controls.tsx:41` hard-codes `{ state: "approved", version: "synthetic-v1", ... }`. The lab, care and ambulance http adapters are gated today, so no real booking reaches it yet.
+
+Fix: build the policy from the server (booking or offer policy snapshot). When none is returned, pass `{ state: "unavailable" }` so `CancellationDialog` shows its unavailable state, and hide the "changes closed" hours. Use `SYNTHETIC_CANCELLATION_POLICY` only when `isFixtureAdapter()` is true, ideally inside `journeyApis()` (`src/modules/bookings/journey.ts:30` already does this for the fixture bookings API), so the page never imports from `@/fixtures`. Add a unit test that the page model gives `state: "unavailable"` in http mode.
+
+### 2. MEDIUM: the fixture production guard only reads `APP_ENV`
+
+`getAdapterMode()` (`src/lib/api/mode.ts:9`) and `assertFixtureAllowed()` (`src/modules/auth/fixture-guard.ts:7`) refuse fixture mode only when `APP_ENV === "production"`. A production deploy with `FRONTEND_ADAPTER=fixture` and `APP_ENV` unset or mistyped (copied from a preview environment, for example) would serve the fixture auth adapter. That adapter accepts any 1-128 character password and the fixed OTP `246810` (`tests/e2e/support/fixture-session.ts:8-9`, `src/modules/auth/fixture.ts`), and the fixture identities include admin and operations principals (`src/modules/admin/session.ts:3-5,40-56`). The default is http, so this needs a configuration mistake. The failure would be serious, though, and nothing at runtime catches it.
+
+Fix (one function, both call sites): use an allowlist. Allow fixture only when `APP_ENV` is `development`, `test` or `preview`, and also refuse when `VERCEL_ENV === "production"`. The e2e servers run `next start` with `APP_ENV=test`, so they keep working. Add unit cases for an unset `APP_ENV`, `APP_ENV=prod` and `VERCEL_ENV=production`.
+
+### 3. MEDIUM: four different paise formatters
+
+- `src/lib/format/index.ts:8-12`: always 2 decimals; throws on a negative or non-integer value.
+- `src/components/payments/money.ts:13-22`: 0 decimals for whole rupees, otherwise 2; returns null when invalid; forces Latin digits.
+- `src/components/admin/ops/format.ts:11-13`: 2 decimals; accepts negative paise (`Number.isSafeInteger` only), so admin pages can show "-₹…".
+- `src/components/clinical/kit.ts:32` with `server-format.ts:11`: `paise / 100` passed through next-intl `number()` with currency style (2 decimals, verified "₹800.00"). It has no integer or nonnegative check and does not force Latin digits.
+
+None of these adds or subtracts rupee floats (no totals are computed from `paise / 100`; the repo-wide grep found only display conversions). The problem is that one amount renders as "₹800" on payment pages (`money.ts`) and "₹800.00" everywhere else, and only two of the four formatters reject negative values.
+
+Fix: keep one shared `formatPaise` in `src/lib/format` (safe-integer check, nonnegative, `numberingSystem: "latn"`, fixed 2 decimals, en-IN grouping). Make the other three re-export or call it, and give admin an explicit signed variant if refunds need a sign.
+
+### 4. MEDIUM: Hindi plurals show "1" for zero
+
+CLDR puts 0 in the Hindi `one` category (`new Intl.PluralRules("hi-IN").select(0) === "one"`; Telugu gives `other`). These Hindi messages hard-code `1` in the `one` branch and have no `=0` case, so a count of 0 renders as "1":
+
+- `src/messages/hi/ambulance.json` `dashboard.daysLeft`: `one {1 दिन बाकी}`. `src/modules/ambulance/view-models.ts:92,96` emits `daysLeft: 0` for a vehicle or driver licence that expires today, which shows as "1 day left".
+- `src/messages/hi/auth.json` `otp.attemptsLeft`: `one {1 प्रयास बाकी}` (`src/components/auth/otp-step.tsx:82`). With no attempts left it reads "1 attempt left".
+- `src/messages/hi/common.json` `errorSummary.title`, `src/messages/hi/lab.json` `orders.testCount`: same defect, lower impact.
+
+Fix: use `#` in the Hindi `one` branch (`one {# दिन बाकी}`), or add an explicit `=0 {...}` case as the en file does for other counts. Add a check to the i18n parity test: for `hi`, a `one` branch must contain `#` or the message must have `=0`.
+
+### 5. LOW: free-text search and patient PIN in URLs
+
+- `src/modules/providers/doctor-search.ts:23-26` puts `q` in the URL (up to 80 letters, digits and punctuation). The comment on line 24 says "never ... free symptom text", but `q` accepts any typed text, so "chest pain" typed into the search box ends up in browser history and server access logs. Symptoms chosen from suggestions use the `symptom` enum, which is fine. `next.config.ts:49` sets `Referrer-Policy: strict-origin-when-cross-origin`, so the text does not leak to other sites.
+- `src/app/[locale]/patient/lab-tests/page.tsx:29`, `caretakers/page.tsx:29` and `ambulance/page.tsx:30` read `?pin=` on signed-in patient routes. A PIN is coarse location data, not PHI on its own.
+
+Fix: when submitted text matches a known symptom or speciality, map it to `symptom=` or `speciality=` and drop `q`. Otherwise keep `q` and state the trade-off in the privacy notice. No change is needed for PIN.
+
+### 6. LOW: float conversion in the lab catalogue editor (already fixed on fe2-e)
+
+`src/components/lab/lab-views.tsx:173` sets the default with `(r.pricePaise / 100).toFixed(2)`. The result is exact for integer paise, but it skips the shared helpers. `feat/fe2-e` (`c99a4c7`) already uses `paiseToRupeesString(r.pricePaise)` on that line, but that commit has not been merged into `b8e6215` yet. Fix: merge fe2-e.
+
+### 7. LOW: proof-of-visit code in the URL path (by design)
+
+`src/app/[locale]/verify/page.tsx:20` redirects to `/verify/{code}`. Mitigations: `referrer: "no-referrer"` and noindex (`src/components/proof-of-visit/verify-page.tsx:29-30`), and `rel="noreferrer"` on the link in `src/components/clinical/proof-card.tsx:102`. The backend should keep codes short-lived and revocable.
 
 ## Checked, no finding
-- Browser storage: no `localStorage`/`sessionStorage`/`indexedDB`/`document.cookie` use in `src`. No `console.*` calls in `src`. No raw `error.message` rendered (visit-actions and error-summary pass localized text only; ticket timeline shows user-entered ticket text by design).
-- Role guards: every page under `/doctor /lab /ambulance /caretaker /admin /patient` checks on the server (RouteGate, guardDoctorPage via DoctorStaticPage, requireRole/requirePatient, family `_lib` requirePatientSession, onboarding `requireRole(category)`). Every server action file authorizes through a helper (`authorizeRole`, `authorizeAreaAction`, `authorizeOperationsSession`, `getDoctorSession`, `getPatientSession`). Public search actions are intentionally unauthenticated.
-- Fixture in production: `getAdapterMode` throws when `FRONTEND_ADAPTER=fixture` and `APP_ENV=production`; every module fixture constructor calls a guard (lab/care/ambulance requests delegate to the guarded engine). Exception: finding 1 (a fixture constant used outside fixture mode).
-- i18n: te/hi have exactly the en keys in every namespace; no copied English (except placeholder-only strings); no hard-coded JSX text or literal aria-label/title/placeholder/alt in 388 .tsx files.
 
-## Not finished
-- Line-by-line check of fixture constants imported by non-fixture modules (only `@/fixtures` imports in app/components were checked).
-- Review of the 15 uncommitted fe2-int changes once committed.
+- **Browser storage and logs:** `src` has no `localStorage`, `sessionStorage`, `indexedDB` or `document.cookie` use and no `console.*` calls. No raw `error.message` is rendered. Signed URLs open with `rel="noreferrer"` (`signed-record.tsx:121`, `payments/document-link.tsx:32`).
+- **URLs:** private-route query strings carry only enums, cursors, opaque UUIDs and PIN (admin audit `category`/`outcome`/`cursor`, lab/ambulance `queue`, request `providerId` validated with `z.uuid()`, family/saved/reviews `status`). The admin booking lookup goes through a server action, so the reference never enters the URL (`src/modules/admin/admin-actions.ts:35-38`). Login `next` and `reason=session_expired` carry no personal data. No coordinates, phone numbers, names or reasons appear in any URL builder.
+- **Role guards:** every page under `/doctor /lab /ambulance /caretaker /admin /patient` checks on the server. Every server action authorizes per call, either inline or through a file-local helper: doctor `getDoctorSession` (`doctor/actions.ts` `apis`, `consultations/actions.ts` `notesApi`/`draftsApi`), patient `getPatientSession` (`patient/actions.ts`, `family`, `saved`), admin `authorizeOperationsSession("admin")`, lab/care/ambulance `authorizeAreaAction`, verification `authorizeRole("admin")`. Doctor search and suggest actions, and the auth actions, are public by design.
+- **Fixture imports outside `src/fixtures`:** every value import is gated. `journey.ts:25` checks `getAdapterMode`, the slots and doctor-search fixture factories call `fixtureGuard()`, admin `operationsViewFor` gets `isFixtureAdapter()`, `auth/server.ts:48-61` passes a fixture actor that the http adapter ignores, and the dashboard `DEFAULT_PATIENT_ACTOR` sits behind `isFixtureAdapter()`. The other imports are types or the `NO_ACTOR` sentinel. The only exception is finding 1.
+- **New e2e support at `b8e6215`:** `tests/e2e/support/fixture-session.ts` uses synthetic `@example.invalid` accounts and writes Playwright storage state to the OS temp directory. It contains no secrets or real data.
+- **i18n parity:** in every namespace, te and hi have exactly the en key set. Values copied unchanged from English are placeholder-only strings (`meta.titleTemplate`, `locales.en`, `adminReview.decision.dialogTitle` = `{action}: {name}`). The other placeholder-mismatch hits come from te/hi ICU plurals and word order using the same variables, so they are not defects (finding 4 is the exception). Every namespace listed in `messages.ts` exists on disk.
+- **Hard-coded strings:** the scan of all `.tsx` files under `src` found no JSX text and no literal `aria-label`, `title`, `placeholder` or `alt` (0 hits).
+
+## Method
+
+Read-only commands against fe2-int's committed tree (`git show`, `git grep`, `git ls-tree` at `b8e6215`). Scripts are kept in this worktree under `.context/`: `i18n-audit.cjs` (key parity, copied English, placeholders), `str-audit.cjs` (hard-coded JSX strings), `act-audit.cjs` and `helpers.cjs` (server-action authorization), `hi-plural-audit.cjs` (Hindi `one` branches that hard-code 1). The Hindi plural rule was confirmed with `Intl.PluralRules`. No app server or browser was run, and no fe2-int file was edited.
+
+## Limitations
+
+- This is static review only. No finding was reproduced in a running app, and finding 2 was not exercised with a production build.
+- The uncommitted working-tree changes in fe2-int were not reviewed; only committed history was.
+- Branch heads not yet merged into fe2-int (for example fe2-e `c99a4c7`) were not reviewed, apart from the single line noted in finding 6.
