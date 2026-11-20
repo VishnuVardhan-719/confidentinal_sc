@@ -103,7 +103,9 @@ select pg_temp.amb_step(:'r','absence');
 select pg_temp.as_user('c1000000-0000-4000-8000-000000000002');
 select pg_temp.expect_state(format('select public.get_trip_destination(%L)',:'r'),'P0002','driver after reporting absence');
 select pg_temp.as_user('c1000000-0000-4000-8000-000000000005');
-select pg_temp.assert_true((public.get_trip_destination(:'r'))->>'requirement'='seated'
+-- Read first, then check: the audit row is not visible to a later subquery of the same statement.
+select (public.get_trip_destination(:'r'))->>'requirement' as ops_req \gset
+select pg_temp.assert_true(:'ops_req'='seated'
  and (select count(*)=1 from public.audit_events where action='booking.contact_viewed_ops' and target_id=:'r'::uuid),'ops reads with an open exception, audited as ops');
 select pg_temp.amb_retire(:'r',9);
 

@@ -85,7 +85,8 @@ select pg_temp.expect_state(format('select public.review_service_area(%L,''appro
 select set_config('request.jwt.claims','{"sub":"13000000-0000-4000-8000-000000000003","aal":"aal2"}',true);
 select pg_temp.expect_state(format('select public.review_service_area(%L,''approved'',''Synthetic excessive horizon'',1,now()+interval ''12 months 1 second'')',:'area'),'22023','approval horizon beyond twelve months denied');
 select public.review_service_area(:'area','approved','Synthetic coverage checked',1,now()+interval '12 months');
-select pg_temp.assert_true((select count(*)=1 from public.coverage_review_events),'coverage admin can read review queue ledger');
+-- N01 (002130) records the proposal too, so the reviewer sees the proposed and approved rows.
+select pg_temp.assert_true((select count(*)=2 from public.coverage_review_events),'coverage admin can read review queue ledger');
 select pg_temp.assert_true((select count(*)=1 from public.provider_service_areas),'coverage-only admin can read area safe columns');
 select pg_temp.assert_true((select count(*)=1 from public.list_service_area_reviews()),'coverage-only admin sees narrow queue');
 set local role anon;

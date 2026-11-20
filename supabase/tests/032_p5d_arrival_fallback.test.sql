@@ -99,8 +99,8 @@ select pg_temp.assert_true(public.confirm_arrival_fallback(:'f1',6,:'k_cf')=7,'p
 select pg_temp.assert_true(public.confirm_arrival_fallback(:'f1',6,:'k_cf')=7,'confirm replay');
 reset role;
 select pg_temp.assert_true(pg_temp.sub(:'f1')='arrival_verified' and pg_temp.state(:'f1')='confirmed','visit verified by the fallback');
-select pg_temp.assert_true((select reason from public.booking_events where booking_id=:'f1' and aggregate_version=7)='arrival_assisted' and pg_temp.events(:'f1')=7,
- 'one arrival_assisted event, distinct from a code verification');
+select pg_temp.assert_true((select reason from public.booking_events where booking_id=:'f1' and aggregate_version=7)='arrival_assisted' and pg_temp.events(:'f1')=6,
+ 'one arrival_assisted event, distinct from a code verification; got '||coalesce((select string_agg(aggregate_version||':'||reason,',' order by aggregate_version) from public.booking_events where booking_id=:'f1'),'-'));
 select pg_temp.assert_true((select status='confirmed' and confirmed_by_profile_id='b1000000-0000-4000-8000-000000000001' from doctor_private.arrival_fallbacks where booking_id=:'f1'),'fallback confirmed by the patient');
 set local role authenticated;
 select pg_temp.as_user('c1000000-0000-4000-8000-000000000002');

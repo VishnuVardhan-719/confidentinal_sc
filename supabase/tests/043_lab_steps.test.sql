@@ -68,7 +68,7 @@ end $$;
 -- D/E. Authority, timing, absence (W2).
 select pg_temp.lab_live('c6000000-0000-4000-8000-000000000002') as absent \gset
 do $$ declare b uuid; x uuid; w2 uuid:='c1000000-0000-4000-8000-000000000003'; begin
- select booking_id into b from public.lab_orders o join public.booking_assignments a on a.id=o.assignment_id
+ select o.booking_id into b from public.lab_orders o join public.booking_assignments a on a.id=o.assignment_id
   where a.resource_id='c6000000-0000-4000-8000-000000000002' and o.substate='scheduled' and a.status='active' order by o.created_at desc limit 1;
  -- Not the assignee: other technician, scheduler, patient, outsider, ops.
  foreach x in array array['c1000000-0000-4000-8000-000000000002','c1000000-0000-4000-8000-000000000001','b1000000-0000-4000-8000-000000000001',
