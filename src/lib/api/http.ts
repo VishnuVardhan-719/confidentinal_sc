@@ -64,8 +64,14 @@ export function createHttpClient(
         const headers = new Headers({ Accept: "application/json" });
         if (options.body !== undefined) headers.set("Content-Type", "application/json");
         if (options.idempotencyKey) headers.set("Idempotency-Key", options.idempotencyKey);
-        const token = config.getAccessToken ? await config.getAccessToken() : null;
-        if (token && BEARER_TOKEN.test(token)) headers.set("Authorization", `Bearer ${token}`);
+        const aborted = new Promise<never>((_, reject) => controller.signal.addEventListener("abort", () => reject(new Error("aborted")), { once: true }));
+        aborted.catch(() => {});
+        const token = config.getAccessToken ? await Promise.race([Promise.resolve(config.getAccessToken()), aborted]) : null;
+        if (token && BEARER_TOKEN.test(token)) {
+          // Never send a credential over cleartext (loopback is allowed for local development).
+          if (/^http:\/\//i.test(origin) && !/^http:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|$)/i.test(origin)) return fail("unavailable");
+          headers.set("Authorization", `Bearer ${token}`);
+        }
         const response = await fetcher(origin + path, {
           method: options.method ?? "GET", headers,
           credentials: "same-origin", redirect: "error", cache: "no-store",

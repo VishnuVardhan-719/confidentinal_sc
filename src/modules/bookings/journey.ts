@@ -30,7 +30,7 @@ export type JourneyApis = {
 export function journeyApis(env: Record<string, string | undefined> = process.env): JourneyApis {
   const doctors = createDoctorSearchApi(env);
   if (getAdapterMode(env) !== "fixture") {
-    return { bookings: createBookingsHttpApi(createSessionHttpClient()), payments: createPaymentsHttpApi(), patient: createPatientHttpApi(), slots: createSlotsHttpApi(), doctors, cancellationTerms: null };
+    return { bookings: createBookingsHttpApi(createSessionHttpClient(env)), payments: createPaymentsHttpApi(), patient: createPatientHttpApi(), slots: createSlotsHttpApi(), doctors, cancellationTerms: null };
   }
   const store = sharedSyntheticMarketplace(env);
   return {

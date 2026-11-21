@@ -38,7 +38,13 @@ export function createHttpClient(options: HttpOptions = {}) {
   const fetchImpl = options.fetchImpl ?? fetch;
 
   return async function request<T>(req: HttpRequest<T>): Promise<ApiResult<T>> {
-    const headers: Record<string, string> = { Accept: "application/json", ...((await options.headers?.()) ?? {}) };
+    let extra: Record<string, string> = {};
+    try {
+      extra = (await options.headers?.()) ?? {};
+    } catch {
+      return fail("unavailable");
+    }
+    const headers: Record<string, string> = { Accept: "application/json", ...extra };
     if (req.body !== undefined) headers["Content-Type"] = "application/json";
     if (req.idempotencyKey !== undefined) headers["Idempotency-Key"] = req.idempotencyKey;
 

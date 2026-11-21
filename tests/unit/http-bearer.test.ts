@@ -23,3 +23,20 @@ describe("http client bearer", () => {
     expect((await sent(() => "bad token\r\nX: y")).get("Authorization")).toBeNull();
   });
 });
+
+describe("http client bearer safety", () => {
+  it("refuses to send a token over non-loopback http", async () => {
+    const f = vi.fn(async () => ok());
+    const http = createHttpClient({ fetch: f as unknown as typeof fetch, baseUrl: "http://api.example.com", getAccessToken: () => "abc.def-ghi_123" });
+    const r = await http.request("/api/x", z.object({}).passthrough());
+    expect(r.ok).toBe(false);
+    expect(f).not.toHaveBeenCalled();
+  });
+  it("a hung token provider does not outlive the timeout", async () => {
+    const f = vi.fn(async () => ok());
+    const http = createHttpClient({ fetch: f as unknown as typeof fetch, baseUrl: "https://api.test", timeoutMs: 20, getAccessToken: () => new Promise<string>(() => {}) });
+    const r = await http.request("/api/x", z.object({}).passthrough());
+    expect(r.ok).toBe(false);
+    expect(f).not.toHaveBeenCalled();
+  });
+});
