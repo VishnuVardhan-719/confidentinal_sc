@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { isAppLocale, type AppLocale } from "@/i18n/routing";
 import type { AdminPrincipal } from "@/modules/admin/capabilities";
 import type { AreaAccess, GuardSession } from "@/modules/admin/access";
-import { requestedWorkspaceKey, requireOperationsSession } from "@/modules/admin/session";
+import { authorizeOperationsSession, requestedWorkspaceKey, requireOperationsSession, type OperationsArea } from "@/modules/admin/session";
 import type { ProviderArea } from "@/modules/admin/workspace";
 
 /** SERVER-ONLY helpers shared by the lab, ambulance, caretaker and admin route segments. */
@@ -26,6 +26,15 @@ export async function providerAreaAccess(
   const locale = await currentLocale();
   const [{ guard }, key] = await Promise.all([requireOperationsSession(area, { locale, path }), requestedWorkspaceKey(area)]);
   return decide(guard, key);
+}
+
+/**
+ * True only when nobody is signed in. Never redirects. Area layouts call this first: signed out,
+ * they render their children without a shell so the page's own gate redirects with the page's
+ * path as `next` (a layout cannot read the URL, so a layout redirect always used the dashboard).
+ */
+export async function isSignedOut(area: OperationsArea): Promise<boolean> {
+  return (await authorizeOperationsSession(area)).guard === null;
 }
 
 export async function adminPrincipal(path?: string): Promise<AdminPrincipal | null> {

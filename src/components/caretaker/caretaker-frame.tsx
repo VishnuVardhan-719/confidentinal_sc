@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AreaChooser, AreaShell, AreaWorkspaceSwitcher, OpsFrame } from "@/components/admin/ops/area-shell";
-import { currentLocale, providerAreaAccess } from "@/components/admin/ops/server";
+import { currentLocale, isSignedOut, providerAreaAccess } from "@/components/admin/ops/server";
 import { AccessDenied } from "@/components/admin/ops/states";
 import type { ShellIcon } from "@/components/shared/app-shell";
 import type { AppLocale } from "@/i18n/routing";
@@ -25,6 +25,8 @@ const PRIMARY = ["dashboard", "requests", "assignments", "shifts"] as const;
 
 export async function CaretakerFrame({ children }: { children: ReactNode }) {
   const locale = await currentLocale();
+  // Signed out: no shell, and the page's CaretakerRouteGate redirects with its own path as `next`.
+  if (await isSignedOut("caretaker")) return <>{children}</>;
   const access = await providerAreaAccess("caretaker", (s, key) => decideCaretakerRoute(s, "dashboard", locale, caretakerPath(locale, "dashboard"), key), caretakerPath(locale, "dashboard"));
   if (access.kind === "unauthenticated") redirect(access.loginPath);
   if (access.kind === "denied") {

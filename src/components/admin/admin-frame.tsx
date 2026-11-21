@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AreaShell, OpsFrame } from "@/components/admin/ops/area-shell";
-import { adminPrincipal, currentLocale } from "@/components/admin/ops/server";
+import { adminPrincipal, currentLocale, isSignedOut } from "@/components/admin/ops/server";
 import { AccessDenied } from "@/components/admin/ops/states";
 import type { ShellIcon } from "@/components/shared/app-shell";
 import type { AppLocale } from "@/i18n/routing";
@@ -33,6 +33,8 @@ const PRIMARY = ["dashboard", "bookings", "support", "cms"] as const;
  */
 export async function AdminFrame({ children }: { children: ReactNode }) {
   const locale = await currentLocale();
+  // Signed out: no shell, and the page's AdminRouteGate redirects with its own path as `next`.
+  if (await isSignedOut("admin")) return <>{children}</>;
   const principal = await adminPrincipal(adminPath(locale, "dashboard"));
   const access = decideAdminRoute(principal, "dashboard", locale, adminPath(locale, "dashboard"));
   if (access.kind === "unauthenticated") return <>{children}</>;

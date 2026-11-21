@@ -86,13 +86,9 @@ export function createHttpOnboardingApi(options: HttpAdapterOptions = {}): Onboa
     async submitPatientQuestionnaire(input) {
       const valid = validateInput(patientQuestionnaireSchema, input);
       if (!valid.ok) return valid.result;
-      const result = await client.request({
-        method: "POST",
-        path: "/api/onboarding/patient",
-        body: valid.data,
-        schema: z.unknown(),
-      });
-      return result.ok ? ok({ status: "submitted" }) : toApiResult(result);
+      // No backend implements POST /api/onboarding/patient yet (R-FE03-10, BACKEND_CONNECT_PLAN).
+      // Fail closed instead of sending a request that would 404. Restore the call once the route exists.
+      return fail("gated");
     },
 
     async createProvider(input) {

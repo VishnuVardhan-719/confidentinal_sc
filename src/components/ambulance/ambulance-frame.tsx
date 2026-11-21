@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AreaChooser, AreaShell, AreaWorkspaceSwitcher, OpsFrame } from "@/components/admin/ops/area-shell";
-import { currentLocale, providerAreaAccess } from "@/components/admin/ops/server";
+import { currentLocale, isSignedOut, providerAreaAccess } from "@/components/admin/ops/server";
 import { AccessDenied } from "@/components/admin/ops/states";
 import type { ShellIcon } from "@/components/shared/app-shell";
 import type { AppLocale } from "@/i18n/routing";
@@ -40,6 +40,8 @@ async function Call112() {
 
 export async function AmbulanceFrame({ children }: { children: ReactNode }) {
   const locale = await currentLocale();
+  // Signed out: no shell, and the page's AmbulanceRouteGate redirects with its own path as `next`.
+  if (await isSignedOut("ambulance")) return <>{children}</>;
   const access = await providerAreaAccess("ambulance", (s, key) => decideAmbulanceRoute(s, "dashboard", locale, ambulancePath(locale, "dashboard"), key), ambulancePath(locale, "dashboard"));
   if (access.kind === "unauthenticated") redirect(access.loginPath);
   if (access.kind === "denied") {

@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AreaChooser, AreaShell, AreaWorkspaceSwitcher, OpsFrame } from "@/components/admin/ops/area-shell";
-import { currentLocale, providerAreaAccess } from "@/components/admin/ops/server";
+import { currentLocale, isSignedOut, providerAreaAccess } from "@/components/admin/ops/server";
 import { AccessDenied } from "@/components/admin/ops/states";
 import type { ShellIcon } from "@/components/shared/app-shell";
 import type { WorkspaceLoaderContext } from "@/modules/admin/access";
@@ -25,6 +25,8 @@ const PRIMARY = ["dashboard", "orders", "collections", "reports"] as const;
 /** Lab layout body: unauthenticated -> login, no lab workspace -> denied, several -> choose, else shell. */
 export async function LabFrame({ children }: { children: ReactNode }) {
   const locale = await currentLocale();
+  // Signed out: no shell, and the page's LabRouteGate redirects with its own path as `next`.
+  if (await isSignedOut("lab")) return <>{children}</>;
   const access = await providerAreaAccess("lab", (s, key) => decideLabRoute(s, "dashboard", locale, labPath(locale, "dashboard"), key), labPath(locale, "dashboard"));
   if (access.kind === "unauthenticated") redirect(access.loginPath);
   if (access.kind === "denied") {
