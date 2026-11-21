@@ -89,11 +89,12 @@ test("hero doctor search routes to the results page with query and coarse locati
 
 test.describe("hero doctor search without JavaScript", () => {
   test.use({ javaScriptEnabled: false });
-  test("submits through /find to the results page", async ({ page }) => {
+  test("submits as a plain GET form to the doctors results page", async ({ page }) => {
     await page.goto("/hi");
-    await page.getByRole("textbox", { name: "शहर या पिन कोड" }).fill("500001");
-    await page.getByRole("searchbox", { name: "डॉक्टर, विशेषज्ञता या लक्षण" }).fill("बुखार");
-    await page.getByRole("button", { name: "डॉक्टर खोजें" }).click();
-    await expect(page).toHaveURL(/\/hi\/doctors\?q=%E0.*&pin=500001$/);
+    const form = page.locator('form[role="search"][action="/hi/doctors"]');
+    await form.locator('input[name="city"]').fill("Hyderabad");
+    await form.locator('input[name="q"]').fill("fever");
+    await form.locator('button[type="submit"]').click();
+    await expect(page).toHaveURL(/\/hi\/doctors\?q=fever&city=Hyderabad$/);
   });
 });
