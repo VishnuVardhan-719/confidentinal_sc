@@ -1,3 +1,10 @@
+## CURRENT STATE (2026-11-21, supersedes Kiro notes below)
+- Builders: Claude only (agy dropped, Kiro gone). Codex is rate-limited until 2026-11-23 17:23. CodeRabbit CLI reviews diffs (run in background, takes a few minutes).
+- Work happens directly in `fe2-int` on `feat/fe2-integration`; push after each verified step.
+- Done this session: Bearer-token injection for bookings + admin http adapters (CodeRabbit findings fixed); money formatters unified on `src/lib/money` (R-E9E6-01..03); static a11y test for lab/ambulance/caretaker; integration smoke 102/102 passing; unit suite green.
+- Remaining: R9-D10 public/legal/404/500/offline polish checks; R9-E7 remainder (keyboard + axe on list pages); `patient-reminders.spec.ts` verification; R-FE-Q-C14 patches + address/slots/reschedule mapping from BACKEND_CONNECT_PLAN.md; final adversarial pass; full lint/tsc/unit/build/Playwright on the head; te/hi human translation review.
+- After frontend complete: ASK the user before merging backend PRs #1-#5, then connect with FRONTEND_ADAPTER=http.
+
 # SureCure Visit frontend: RESUME HERE
 
 Checkpoint written 2026-11-20 ~02:20 IST, when the user shut the laptop down. Everything below is pushed to GitHub (repo `VishnuVardhan-719/confidentinal_sc`, feature branches only).
