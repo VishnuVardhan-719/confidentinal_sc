@@ -28,8 +28,6 @@ export function badgeFor(descriptor: ModuleDescriptor, tk: Tk): BadgeDescriptor 
   }
 }
 
-/** Display-only conversion of server integer paise to an INR amount (never used for totals). */
-export const rupees = (paise: number): number => paise / 100;
 
 /**
  * Parse a rupee amount typed by the doctor ("800", "800.5", "800.50") into integer paise without

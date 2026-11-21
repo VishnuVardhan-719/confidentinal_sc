@@ -33,18 +33,6 @@ const RULES: Record<Rule, (line: string) => boolean> = {
  * migrates; the "stale" test below fails if an entry no longer matches a file that exists.
  */
 const ALLOWED: { file: string; rule: Rule; line: string; owner: string }[] = [
-  // fe-q (fe-c data layer): R-E9E6-01. Shared formatter that throws; to delegate to src/lib/money.
-  { file: "lib/format/index.ts", rule: "currencyStyle", owner: "fe-q", line: 'const formatter = new Intl.NumberFormat(localeTags[locale], { style: "currency", currency: "INR", minimumFractionDigits: 2, maximumFractionDigits: 2 });' },
-  { file: "lib/format/index.ts", rule: "div100", owner: "fe-q", line: 'const fraction = new Intl.NumberFormat(localeTags[locale], { useGrouping: false, minimumIntegerDigits: 2 }).format(paise % 100);' },
-  { file: "lib/format/index.ts", rule: "div100", owner: "fe-q", line: 'return formatter.formatToParts(Math.floor(paise / 100)).map(part => part.type === "fraction" ? fraction : part.value).join("");' },
-  // fe-a payments: R-E9E6-02. Drops ".00" for whole rupees, so "₹800" here and "₹800.00" elsewhere.
-  { file: "components/payments/money.ts", rule: "currencyStyle", owner: "fe-a", line: 'style: "currency",' },
-  { file: "components/payments/money.ts", rule: "div100", owner: "fe-a", line: "minimumFractionDigits: paise % 100 === 0 ? 0 : 2," },
-  { file: "components/payments/money.ts", rule: "div100", owner: "fe-a", line: "}).format(paise / 100);" },
-  // fe-d clinical: R-E9E6-03. Float rupees through next-intl number(); no integer or sign check.
-  { file: "components/clinical/kit.ts", rule: "div100", owner: "fe-d", line: "export const rupees = (paise: number): number => paise / 100;" },
-  { file: "components/clinical/server-format.ts", rule: "currencyStyle", owner: "fe-d", line: 'money: (paise) => f.number(rupees(paise), { style: "currency", currency: "INR", maximumFractionDigits: 2 }),' },
-  { file: "components/clinical/use-format.ts", rule: "currencyStyle", owner: "fe-d", line: 'money: (paise: number) => f.number(rupees(paise), { style: "currency", currency: "INR", maximumFractionDigits: 2 }),' },
 ];
 
 function sourceFiles(dir: string): string[] {

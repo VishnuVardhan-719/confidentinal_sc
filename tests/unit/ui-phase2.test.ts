@@ -135,7 +135,7 @@ describe("money and documents", () => {
     expect(formatPaise(123450, "en")).toBe("₹1,234.50");
     expect(formatPaise(50000, "hi")).toMatch(/500/);
     expect(formatPaise(50000, "te")).toMatch(/500/);
-    expect(formatPaise(1234567800, "en")).toBe("₹1,23,45,678");
+    expect(formatPaise(1234567800, "en")).toBe("₹1,23,45,678.00");
   });
 
   it("refuses non-integer, negative or non-number amounts", () => {
@@ -168,7 +168,7 @@ describe("PaymentSummary", () => {
   it("explains pay-after and never shows an amount due as received", () => {
     render(withIntl(h(PaymentSummary, { view: { kind: "ready", data: { ...base, method: "pay_after" } } })));
     expect(screen.getByText("Payment due")).toBeTruthy();
-    expect(screen.getByText("Recorded as collected by the provider").nextElementSibling?.textContent).toBe("₹0");
+    expect(screen.getByText("Recorded as collected by the provider").nextElementSibling?.textContent).toBe("₹0.00");
     expect(screen.getByText(/This is not an online payment/)).toBeTruthy();
     expect(screen.getByText("Synthetic data, not live")).toBeTruthy();
   });

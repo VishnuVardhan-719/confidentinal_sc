@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { formatPaise as formatCanonicalPaise } from "@/lib/money";
 
 export const LOCALES = ["en", "te", "hi"] as const;
 export type Locale = (typeof LOCALES)[number];
@@ -6,10 +7,10 @@ const localeTags: Record<Locale, string> = { en: "en-IN", te: "te-IN", hi: "hi-I
 export const TIME_ZONE = "Asia/Kolkata";
 
 export function formatPaise(paise: number, locale: Locale = "en"): string {
-  if (!Number.isSafeInteger(paise) || paise < 0) throw new RangeError("Expected nonnegative integer paise");
-  const formatter = new Intl.NumberFormat(localeTags[locale], { style: "currency", currency: "INR", minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const fraction = new Intl.NumberFormat(localeTags[locale], { useGrouping: false, minimumIntegerDigits: 2 }).format(paise % 100);
-  return formatter.formatToParts(Math.floor(paise / 100)).map(part => part.type === "fraction" ? fraction : part.value).join("");
+  // Canonical formatter (en-IN grouping, Latin digits, 2 decimals; identical in en/te/hi).
+  const text = formatCanonicalPaise(paise);
+  if (text === null) throw new RangeError(`Expected nonnegative integer paise (${locale})`);
+  return text;
 }
 export function formatDateTime(utc: string, locale: Locale = "en"): string {
   if (!z.iso.datetime().safeParse(utc).success) throw new RangeError("Expected UTC ISO timestamp");
