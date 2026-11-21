@@ -100,7 +100,8 @@ test("landing shows all content blocks and no fabricated social proof", async ({
   ]) {
     await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
   }
-  await expect(page.getByText("No stories published yet")).toBeVisible();
+  // Stories block: published stories (fixture) or the honest empty state, never invented proof.
+  await expect(page.getByText("No stories published yet").or(page.locator("#stories-title ~ * a, section:has(#stories-title) ul a").first())).toBeVisible();
   await expect(page.locator("body")).not.toContainText(/★|\d+\s*\+?\s*(patients|doctors|reviews|ratings)|#1/i);
   await expect(page.getByRole("contentinfo")).toBeVisible();
 });
@@ -167,8 +168,8 @@ test.describe("without JavaScript", () => {
   test("FAQ answers are readable and no inert search box is shown", async ({ page }) => {
     await page.goto("/en/faq");
     await expect(page.getByRole("searchbox")).toBeHidden();
-    await page.getByText("Who sets the price?").click();
-    await expect(page.getByText("Each provider sets their own price.")).toBeVisible();
+    await page.locator("summary:visible", { hasText: "Who sets the price?" }).first().click(); // no-JS streaming keeps the Suspense fallback visible and the real list hidden
+    await expect(page.getByText("Each provider sets their own price.").locator("visible=true").first()).toBeVisible();
   });
 });
 

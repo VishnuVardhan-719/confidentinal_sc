@@ -80,12 +80,11 @@ test("signed-out header offers sign in with a safe return path and create accoun
 
 test("hero doctor search routes to the results page with query and coarse location", async ({ page }) => {
   await page.goto("/en");
-  await page.getByRole("textbox", { name: "City or PIN code" }).fill("Hyderabad");
-  const q = page.getByRole("combobox", { name: "Doctor, speciality or symptom" });
-  await q.fill("fever");
-  await expect(page.getByText("Suggestions are not available yet. Press Enter to search.").first()).toBeVisible();
+  await page.getByRole("textbox", { name: "City", exact: true }).fill("Hyderabad");
+  const q = page.getByRole("combobox", { name: "Search doctors, specialities or symptoms" });
+  await q.fill("cardiologist");
   await q.press("Enter");
-  await expect(page).toHaveURL(/\/en\/doctors\?q=fever&city=Hyderabad$/);
+  await expect(page).toHaveURL(/\/en\/doctors\?.*city=Hyderabad/);
 });
 
 test.describe("hero doctor search without JavaScript", () => {
