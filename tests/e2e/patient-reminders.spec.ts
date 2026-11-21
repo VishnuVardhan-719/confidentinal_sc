@@ -5,6 +5,7 @@
  */
 import AxeBuilder from "@axe-core/playwright";
 import { expect as baseExpect, test, type Page } from "@playwright/test";
+import { patientTest } from "./support/fixture-session";
 
 const expect = baseExpect.configure({ timeout: 15_000 });
 const MODE = process.env.E2E_FEP_MODE;
@@ -33,10 +34,10 @@ async function saveWith(page: Page, edit: (main: ReturnType<Page["getByRole"]>) 
   throw new Error("save kept conflicting");
 }
 
-test.describe("reminder preferences (signed-in)", () => {
-  test.skip(MODE !== "session", "needs a session fixture server");
+patientTest.describe("reminder preferences (signed-in)", () => {
+  patientTest.skip(MODE !== "session", "needs a session fixture server");
 
-  test("shows channels and quiet hours with IST guidance; axe clean", async ({ page }) => {
+  patientTest("shows channels and quiet hours with IST guidance; axe clean", async ({ page }) => {
     await page.goto(PATH);
     const main = page.getByRole("main");
     await expect(main.getByRole("heading", { level: 1, name: "Reminder preferences" })).toBeVisible();
@@ -47,7 +48,7 @@ test.describe("reminder preferences (signed-in)", () => {
     await expectAxeClean(page);
   });
 
-  test("validation: same start and end, then an overnight window saves and persists", async ({ page, isMobile }) => {
+  patientTest("validation: same start and end, then an overnight window saves and persists", async ({ page, isMobile }) => {
     await page.goto(PATH);
     const main = page.getByRole("main");
     const quiet = main.getByRole("checkbox", { name: "Do not send reminders during quiet hours" });
@@ -74,7 +75,7 @@ test.describe("reminder preferences (signed-in)", () => {
     await expect(main.getByLabel("Quiet from")).toHaveValue(/^(22:15|23:00)$/);
   });
 
-  test("controls stay disabled until hydration, so early input is never lost or put in the URL", async ({ page }) => {
+  patientTest("controls stay disabled until hydration, so early input is never lost or put in the URL", async ({ page }) => {
     // Hold the JS chunks: the streamed form is on screen but not hydrated (a slow phone or a loaded CI box).
     let release: () => void = () => {};
     const gate = new Promise<void>((resolve) => (release = resolve));
@@ -105,7 +106,7 @@ test.describe("reminder preferences (signed-in)", () => {
     }
   });
 
-  test("turning every channel off warns before saving; keyboard toggles a channel", async ({ page }) => {
+  patientTest("turning every channel off warns before saving; keyboard toggles a channel", async ({ page }) => {
     await page.goto(PATH);
     const main = page.getByRole("main");
     for (const name of ["SMS text message", "WhatsApp", "Email"]) {
@@ -120,8 +121,8 @@ test.describe("reminder preferences (signed-in)", () => {
     await expect(main.getByText("All channels are off.", { exact: false })).toHaveCount(0);
   });
 
-  test("a stale tab gets a conflict notice and reloads fresh values", async ({ browser }) => {
-    const context = await browser.newContext({ baseURL: process.env.PLAYWRIGHT_BASE_URL });
+  patientTest("a stale tab gets a conflict notice and reloads fresh values", async ({ browser, baseURL, patientStorage }) => {
+    const context = await browser.newContext({ baseURL, storageState: patientStorage });
     const stale = await context.newPage();
     const fresh = await context.newPage();
     await stale.goto(PATH);
@@ -140,7 +141,7 @@ test.describe("reminder preferences (signed-in)", () => {
     await context.close();
   });
 
-  test("te and hi: the error summary and all-off warning wrap without horizontal scroll", async ({ page }) => {
+  patientTest("te and hi: the error summary and all-off warning wrap without horizontal scroll", async ({ page }) => {
     for (const locale of ["te", "hi"]) {
       await page.goto(`/${locale}/patient/settings/reminders`);
       const main = page.getByRole("main");
@@ -162,7 +163,7 @@ test.describe("reminder preferences (signed-in)", () => {
       expect(outside, `${locale}: elements outside the viewport`).toBe(0);
     }
   });
-  test("te and hi render without raw keys and pass axe", async ({ page }) => {
+  patientTest("te and hi render without raw keys and pass axe", async ({ page }) => {
     for (const locale of ["te", "hi"]) {
       await page.goto(`/${locale}/patient/settings/reminders`);
       await expect(page.locator("html")).toHaveAttribute("lang", locale);
