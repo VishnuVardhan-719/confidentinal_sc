@@ -126,11 +126,11 @@ test.describe("lab onboarding", () => {
   });
 
   // Integration (fe-int2 INT5): un-fixme'd; /lab/dashboard and /lab/orders exist here.
-  test("pending review: setup dashboard and operational pages redirect (lab pages are fe-e)", async ({ page }) => {
+  test("pending review: the dashboard and operational pages send the applicant to the onboarding status", async ({ page }) => {
     await signIn(page, ACCOUNTS.labOwner);
-    await expect(page).toHaveURL("/en/lab/dashboard");
+    await expect(page).toHaveURL("/en/lab/onboarding");
     await goto(page, "/en/lab/orders");
-    await expect(page).toHaveURL("/en/lab/dashboard");
+    await expect(page).toHaveURL("/en/lab/onboarding");
   });
 });
 

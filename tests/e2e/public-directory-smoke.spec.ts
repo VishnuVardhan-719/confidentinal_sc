@@ -59,7 +59,7 @@ test.describe("public directory smoke", () => {
     await expect(cards).toHaveCount(1);
     await checkPage(page, "lab-tests filtered");
 
-    await cards.first().getByRole("link", { name: /^View Synthetic lab \d+$/ }).click();
+    await cards.first().getByRole("link", { name: /^View lab: Synthetic lab \d+$/ }).click();
     await expect(page.getByRole("heading", { level: 1, name: /^Synthetic lab \d+$/ })).toBeVisible({ timeout: 20_000 });
     await checkPage(page, "lab detail");
     await expect(page.getByRole("link", { name: /^Request tests from Synthetic lab \d+$/ }))

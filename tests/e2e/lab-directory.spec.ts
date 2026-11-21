@@ -22,7 +22,7 @@ test.describe("public lab directory", () => {
     await expect(cards).not.toContainText("Lipid profile");
     await page.getByRole("link", { name: "Clear filters" }).click();
     await expect(page).toHaveURL(/\/en\/lab-tests$/);
-    await page.getByRole("link", { name: "View Synthetic lab 1" }).click();
+    await page.getByRole("link", { name: "View lab: Synthetic lab 1" }).click();
     await expect(page.getByRole("heading", { level: 1, name: "Synthetic lab 1" })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByTestId("lab-test")).toHaveCount(4);
     await expect(page.getByTestId("lab-test").filter({ hasText: "Fasting blood sugar" })).toContainText("Do not eat for 10 hours before. Water is fine.");

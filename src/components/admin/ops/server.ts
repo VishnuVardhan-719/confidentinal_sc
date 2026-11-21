@@ -5,6 +5,8 @@ import type { AdminPrincipal } from "@/modules/admin/capabilities";
 import type { AreaAccess, GuardSession } from "@/modules/admin/access";
 import { authorizeOperationsSession, requestedWorkspaceKey, requireOperationsSession, type OperationsArea } from "@/modules/admin/session";
 import type { ProviderArea } from "@/modules/admin/workspace";
+import { getServerSession } from "@/modules/auth/server";
+import { onboardingPath, workspaceStateFor } from "@/modules/auth/routes";
 
 /** SERVER-ONLY helpers shared by the lab, ambulance, caretaker and admin route segments. */
 
@@ -40,4 +42,22 @@ export async function isSignedOut(area: OperationsArea): Promise<boolean> {
 export async function adminPrincipal(path?: string): Promise<AdminPrincipal | null> {
   const locale = await currentLocale();
   return (await requireOperationsSession("admin", { locale, path })).admin;
+}
+
+/**
+ * What an area frame does for a signed-in user with no active workspace in the area. The frame cannot see
+ * the request path, so it renders the page and lets the page decide instead of showing a dead-end
+ * "no access" for everyone:
+ *   - an applicant (onboarding incomplete, or submitted and under review) -> `setupPath`, their status page;
+ *   - no workspace yet, or a restricted one -> the onboarding page starts an application or redirects to the
+ *     dashboard, and every other route gate renders its own denial.
+ * `defer` is false when signed out, or when the workspace is active (a denial there is a real role denial).
+ */
+export async function providerFrameDeferral(area: ProviderArea, locale: AppLocale): Promise<{ defer: boolean; setupPath: string | null }> {
+  const { session } = await getServerSession();
+  if (!session.ok || session.data.kind !== "authenticated") return { defer: false, setupPath: null };
+  const state = workspaceStateFor(session.data.identity, area);
+  if (state === "active") return { defer: false, setupPath: null };
+  const applicant = state === "pending_review" || state === "onboarding_incomplete" || state === "unknown";
+  return { defer: true, setupPath: applicant ? onboardingPath(area, locale) : null };
 }

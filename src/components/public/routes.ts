@@ -36,11 +36,11 @@ export const PUBLIC_PAGES = [
 export type PublicPage = (typeof PUBLIC_PAGES)[number];
 
 /**
- * Every locale-less path listed in sitemap.xml: this workstream's pages plus the public
- * lab-test directory (`/lab-tests`, built on feat/fe2-c; it may 404 on this branch until merged).
- * Listing detail pages (`/lab-tests/[id]`) are not included.
+ * Every locale-less path listed in sitemap.xml: this workstream's pages plus the public directories
+ * (`/lab-tests`, `/ambulances`, `/caretakers`). Provider detail pages (`/lab-tests/[id]` and the like) are
+ * not included: they are not indexed until real, verified providers exist.
  */
-export const SITEMAP_PAGES = [...PUBLIC_PAGES, "/lab-tests"] as const;
+export const SITEMAP_PAGES = [...PUBLIC_PAGES, "/lab-tests", "/ambulances", "/caretakers"] as const;
 
 export const AUTH_ROUTES = { login: "/login", signup: "/signup" } as const;
 

@@ -247,3 +247,28 @@ Uncommitted work: fe2-d (R9-D10 consultation flake + public content pass, in pro
 Needs user: Kiro credit top-up/next-month reset, or Claude (lead) finishes the remaining tasks directly.
 
 SHUTDOWN 2026-11-20 ~23:30 IST: see docs/frontend/RESUME_HERE.md "STATE AT SHUTDOWN". Smoke triage is first on resume.
+
+## fe2-integration verify — 2026-11-22
+- Branch feat/fe2-integration (worktree C:\Users\Yashwanth\fe2-int), pushed head 77ff974; 2 local test-fix commits (abd0897, 665f723) unpushed.
+- Uncommitted: applicant/restricted-provider access fix in lab/ambulance/caretaker frames+gates (+ setupWorkspacePath/isRestrictedWorkspace in components/admin/ops/server.ts), onboarding landmark fix (aside->div), cms/doctor-reviews/onboarding spec fixes, .context ps1 params.
+- verify5: unit 1958/1958, build 0, onboarding 14/1 fail (suspended caregiver at /caretaker/onboarding stayed on AccessDenied because the frame denied before the page could redirect), lab 9, caretaker 8.
+- Fix: frame renders children for restricted providers; gate wraps denial in OpsFrame. verify6 (build6.out, verify6.out in %TEMP%) re-runs onboarding/lab/caretaker/ambulance. Next: commit+push if green, then R9-D10, a11y-sweep batches, docs, final report.
+- 2026-11-22 lesson: `taskkill //PID` takes WINDOWS pids; `ps -ef` shows MSYS pids, so a taskkill of an MSYS pid silently fails and the detached script keeps running. Kill scripts with `kill -9 <msys pid>`. Two chained scripts (verify7/8/9) ran at once, fought over port 3320 and produced ERR_CONNECTION_REFUSED + bogus a11y failures. Run ONE pipeline at a time (verify11.sh -> %TEMP%/verify11.out).
+- Real defect found+fixed in verify: lab/ambulance/caretaker frames ran the area guard first, which redirected a signed-in user with no workspace (e.g. a patient starting a caregiver application at /caretaker/onboarding) to their own landing. Frames now call providerFrameDeferral() before providerAreaAccess() and let the page decide.
+
+## fe2-integration verify — 2026-11-22 (later)
+- verify11 desktop-1280 clean: onboarding 16, lab 9, caretaker 8, ambulance 9, keyboard-lists 4, public-a11y 74, a11y 19, sweep-e 14, sweep 78. Build 0.
+- a11y-sweep-c was stale (no patient sign-in) -> now `patientTest` from support/fixture-session. NEEDS RERUN (desktop + mobile) when pipeline idle.
+- GAP FOUND: fe-p specs (patient-family/saved/reviews/reminders/review-changes, a11y-sweep-p) are gated on E2E_FEP_MODE=session (+ E2E_FEP_CLINICAL=on|off). int3-run.ps1 -Env passes env to server AND playwright (same process), so run: -Env @{E2E_FEP_MODE="session";E2E_FEP_CLINICAL="on"}. patient-family clinical-off block also needs FIXTURE_FAMILY_SCENARIO=empty.
+- After mobile run finishes: run those, then tsc/eslint/unit, commit, push, CodeRabbit, docs.
+
+## 2026-11-22 — public /ambulances + /caretakers directories (in progress)
+- Gap found by route audit: landing/header/footer/finder linked to /ambulances, /ambulances/[id], /caretakers, /caretakers/[id] that did not exist.
+- Built (uncommitted): src/modules/{service-requests/public-directory,ambulance-requests/directory,care-requests/directory}.ts (fixture list/get, HTTP gated),
+  src/components/directory/service-directories.tsx, ProviderDirectory `detail` mode, ServiceRouteError areas `ambulances`/`caretakers`,
+  routes under src/app/[locale]/(public)/{ambulances,caretakers}, messages services.{ambulanceDirectory,careDirectory}+errorPage.back (en/te/hi),
+  SITEMAP_PAGES, seo-guard + route-links updates, unit test tests/unit/modules-services/public-service-directories.test.ts,
+  e2e tests/e2e/public-service-directories.spec.ts (not yet run).
+- CodeRabbit on 77ff974..working tree: 0 findings.
+- verify11 desktop-1280 all green. mobile-390 so far green except admin-verification (Start review click, test line 70; fixed bottom nav then decisions section intercept the click) -> needs browser repro.
+- TODO: tsc (tsc14.out), vitest, rebuild, run public-service-directories + a11y-sweep-c both projects, fe-p session specs, commit+push, docs (PROGRESS_REPORT, INTEGRATION_REPORT 6.9, RESUME_HERE).

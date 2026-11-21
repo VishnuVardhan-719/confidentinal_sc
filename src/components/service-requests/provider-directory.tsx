@@ -15,10 +15,15 @@ import type { BaseProvider } from "@/modules/service-requests/core";
  * Provider list with a PIN filter. The filter is a plain GET form, so it works without JavaScript and the
  * PIN (a public area code, not patient data) is the only thing in the URL. Only providers that list the PIN
  * in their own service area are shown for it.
+ *
+ * Signed-in use (the default): each card goes straight to the request form under `segment`. Public use
+ * (`detail` given): `segment` is the public list, each card links to its public page and no patient
+ * dashboard link is offered, so the page works for a visitor who has no account.
  */
-export async function ProviderDirectory<P extends BaseProvider>({ segment, result, pin, pinInvalid, requestLabel, fromPaise, meta }: {
+export async function ProviderDirectory<P extends BaseProvider>({ segment, result, pin, pinInvalid, requestLabel, fromPaise, meta, detail }: {
   segment: string; result: ApiResult<{ items: P[] }>; pin: string | null; pinInvalid: boolean; requestLabel: string;
   fromPaise: (provider: P) => number; meta: (provider: P) => ReactNode;
+  detail?: { viewLabel: string };
 }) {
   const t = await getTranslations("services.common");
   const locale = (await getLocale()) as Locale;
@@ -39,8 +44,8 @@ export async function ProviderDirectory<P extends BaseProvider>({ segment, resul
 
       {!result.ok ? (
         result.error.code === "gated"
-          ? <GateNotice reason="contract_pending" title={t("notConnectedTitle")} action={<LinkAction href="/patient/dashboard">{t("toDashboard")}</LinkAction>}>{t("notConnectedBody")}</GateNotice>
-          : <InlineError code={result.error.code} action={<><LinkAction href={pin ? `${segment}?pin=${pin}` : segment}>{t("form.retry")}</LinkAction><LinkAction href="/patient/dashboard" variant="quiet">{t("toDashboard")}</LinkAction></>} />
+          ? <GateNotice reason="contract_pending" title={t("notConnectedTitle")} action={detail ? undefined : <LinkAction href="/patient/dashboard">{t("toDashboard")}</LinkAction>}>{t("notConnectedBody")}</GateNotice>
+          : <InlineError code={result.error.code} action={<><LinkAction href={pin ? `${segment}?pin=${pin}` : segment}>{t("form.retry")}</LinkAction>{detail ? null : <LinkAction href="/patient/dashboard" variant="quiet">{t("toDashboard")}</LinkAction>}</>} />
       ) : (
         <section aria-labelledby="provider-results" className="grid gap-4">
           <h2 id="provider-results" className="text-lg font-semibold text-ink" aria-live="polite">
@@ -60,7 +65,11 @@ export async function ProviderDirectory<P extends BaseProvider>({ segment, resul
                     <p className="text-base font-semibold text-ink tabular">{t("from", { price: formatPaise(fromPaise(provider), locale) })}</p>
                   </div>
                   <div>
-                    <Button asChild><Link href={`${segment}/request?providerId=${provider.id}`} aria-label={`${requestLabel}: ${provider.name}`}>{requestLabel}</Link></Button>
+                    {detail ? (
+                      <Button asChild variant="secondary"><Link href={`${segment}/${provider.id}`}>{detail.viewLabel}<span className="sr-only">: {provider.name}</span></Link></Button>
+                    ) : (
+                      <Button asChild><Link href={`${segment}/request?providerId=${provider.id}`} aria-label={`${requestLabel}: ${provider.name}`}>{requestLabel}</Link></Button>
+                    )}
                   </div>
                 </li>
               ))}

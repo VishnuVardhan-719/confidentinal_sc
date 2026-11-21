@@ -285,7 +285,9 @@
       "lab": "Back to lab tests",
       "care": "Back to caretakers",
       "ambulance": "Back to ambulance transfers",
-      "labs": "Back to labs"
+      "labs": "Back to labs",
+      "ambulances": "Back to operators",
+      "caretakers": "Back to caretakers"
     },
     "emergency": "Emergency? Call 112 now. Do not wait for this page."
   },
@@ -326,5 +328,30 @@
     "price": "Price",
     "notFoundTitle": "This lab is not listed",
     "notFoundBody": "It may no longer be listed. Search the list of labs instead."
+  },
+  "ambulanceDirectory": {
+    "metaTitle": "Scheduled ambulance transfers",
+    "metaDescription": "Find ambulance operators for planned, non-emergency transfers by PIN code. Each operator sets its own fares. For an emergency, call 112.",
+    "title": "Ambulance operators for planned transfers",
+    "description": "Find operators that serve your PIN code. These are scheduled, non-emergency transfers only. Each operator sets its own fares and accepts or declines each request.",
+    "view": "View operator",
+    "back": "Back to operators",
+    "notFoundTitle": "This operator is not listed",
+    "notFoundBody": "It may no longer be listed. Search the list of operators instead.",
+    "requestNote": "You sign in to send a request. Nothing is charged now.",
+    "vehiclesTitle": "Vehicles and fares"
+  },
+  "careDirectory": {
+    "metaTitle": "Caretakers for help at home",
+    "metaDescription": "Find caretakers and care agencies that serve your PIN code. Non-clinical help at home. Each sets their own hourly rate.",
+    "title": "Find a caretaker for home care",
+    "description": "Find caretakers and agencies that serve your PIN code. They give non-clinical help at home. Each sets their own rate and accepts or declines each request.",
+    "view": "View caretaker",
+    "back": "Back to caretakers",
+    "notFoundTitle": "This caretaker is not listed",
+    "notFoundBody": "They may no longer be listed. Search the list of caretakers instead.",
+    "requestNote": "You sign in to send a request. Nothing is charged now.",
+    "tasksTitle": "Help offered",
+    "detailsTitle": "Rate and hours"
   }
 }

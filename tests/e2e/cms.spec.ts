@@ -65,6 +65,8 @@ test.describe("CMS editor", () => {
     await expect(page.getByRole("list", { name: /revision history/i }).getByRole("listitem").first()).toContainText(/published/i);
     await open(page, `/${LOCALE}/faq`);
     await expect(page.getByText("Synthetic e2e question")).toBeVisible();
+    // FAQ answers are native disclosures: open the question to read the rich-text answer.
+    await page.locator("summary", { hasText: "Synthetic e2e question" }).click();
     await expect(page.locator("strong", { hasText: "bold" })).toBeVisible();
   });
 

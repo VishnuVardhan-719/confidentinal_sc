@@ -53,9 +53,9 @@ async function PatientOnboarding({ searchParams }: { searchParams: Promise<Recor
     <div className="grid gap-8">
       {isFixtureAdapter() ? <FixtureNotice /> : null}
       <div className="grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
-        <aside className="order-2 lg:order-1">
+        <div className="order-2 lg:order-1">
           <WizardSteps wizard={wizard} />
-        </aside>
+        </div>
         <div className="order-1 grid max-w-form content-start gap-8 lg:order-2">
           <header className="grid gap-2">
             <p className="text-sm font-semibold text-muted">

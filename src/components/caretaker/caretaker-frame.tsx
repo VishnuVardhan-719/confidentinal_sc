@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AreaChooser, AreaShell, AreaWorkspaceSwitcher, OpsFrame } from "@/components/admin/ops/area-shell";
-import { currentLocale, isSignedOut, providerAreaAccess } from "@/components/admin/ops/server";
+import { currentLocale, isSignedOut, providerFrameDeferral, providerAreaAccess } from "@/components/admin/ops/server";
 import { AccessDenied } from "@/components/admin/ops/states";
 import type { ShellIcon } from "@/components/shared/app-shell";
 import type { AppLocale } from "@/i18n/routing";
@@ -27,6 +27,10 @@ export async function CaretakerFrame({ children }: { children: ReactNode }) {
   const locale = await currentLocale();
   // Signed out: no shell, and the page's CaretakerRouteGate redirects with its own path as `next`.
   if (await isSignedOut("caretaker")) return <>{children}</>;
+  // No active workspace (applicant, no workspace yet, or restricted): the page decides (see providerFrameDeferral).
+  // This runs before the area guard, which would send a user without a workspace here to their own landing page,
+  // and the onboarding page is exactly where a signed-in user starts a provider application.
+  if ((await providerFrameDeferral("caretaker", locale)).defer) return <>{children}</>;
   const access = await providerAreaAccess("caretaker", (s, key) => decideCaretakerRoute(s, "dashboard", locale, caretakerPath(locale, "dashboard"), key), caretakerPath(locale, "dashboard"));
   if (access.kind === "unauthenticated") redirect(access.loginPath);
   if (access.kind === "denied") {
@@ -62,6 +66,14 @@ export async function CaretakerRouteGate({
   const locale = await currentLocale();
   const access = await providerAreaAccess("caretaker", (s, key) => decideCaretakerRoute(s, route, locale, caretakerPath(locale, route), key), caretakerPath(locale, route));
   if (access.kind === "unauthenticated") redirect(access.loginPath);
-  if (access.kind !== "allowed") return <AccessDenied />;
+  if (access.kind !== "allowed") {
+    if (access.kind === "denied") {
+      const { defer, setupPath } = await providerFrameDeferral("caretaker", locale);
+      if (setupPath) redirect(setupPath);
+      // The frame rendered no shell for this user, so the denial brings its own.
+      if (defer) return <OpsFrame><AccessDenied /></OpsFrame>;
+    }
+    return <AccessDenied />;
+  }
   return <>{await children({ workspace: access.workspace }, locale)}</>;
 }

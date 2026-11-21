@@ -15,9 +15,6 @@ const APP = path.join(SRC, "app", "[locale]");
 /** Routes owned by other workstreams that are not on this branch yet. Key = route pattern prefix. */
 const PENDING: Record<string, string> = {
   "/doctors": "fe2-c directory + doctor profile (feat/fe2-c, ex-fe-c2)",
-  "/lab-tests": "fe2-c directory (feat/fe2-c)",
-  "/ambulances": "fe2-c directory (feat/fe2-c)",
-  "/caretakers": "fe2-c directory (feat/fe2-c)",
   "/login": "fe2-b auth (feat/fe2-b)",
   "/signup": "fe2-b auth (feat/fe2-b)",
   "/patient": "patient workspace (fe2-b onboarding / fe2-c bookings)",

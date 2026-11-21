@@ -4,21 +4,8 @@
  * withdrawn row the client drops; R9-D8 D1/D2); "other" = a doctor with no reviews (empty state); "gateOff" = flag off.
  */
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test as base, type Page } from "@playwright/test";
-import { wsOrigin, type WorkspaceServer } from "./workspace-servers";
-
-const test = base.extend<{ as: (who: WorkspaceServer) => Promise<Page> }>({
-  baseURL: async ({}, provide, testInfo) => provide(wsOrigin(testInfo.project.name, "assigned")),
-  as: async ({ browser, viewport }, provide, testInfo) => {
-    const contexts: Awaited<ReturnType<typeof browser.newContext>>[] = [];
-    await provide(async (who) => {
-      const ctx = await browser.newContext({ baseURL: wsOrigin(testInfo.project.name, who), viewport });
-      contexts.push(ctx);
-      return ctx.newPage();
-    });
-    for (const c of contexts) await c.close();
-  },
-});
+import { expect, type Page } from "@playwright/test";
+import { wsTest as test } from "./workspace-servers";
 
 const URL_ = "/en/doctor/reviews";
 
@@ -72,18 +59,22 @@ test.describe("doctor reviews", () => {
     await expect(link.first()).toHaveAttribute("href", URL_);
   });
 
-  test("a doctor without reviews sees the empty state; flag off shows the gate; anonymous goes to login", async ({ as }) => {
+  test("a doctor without reviews sees the empty state; anonymous goes to login", async ({ as }) => {
     const other = await as("other");
     await other.goto(URL_);
     await expect(other.getByRole("heading", { level: 2, name: /no reviews yet/i })).toBeVisible();
     await expectNoAxeViolations(other);
+    const anon = await as("anon");
+    await anon.goto(URL_);
+    await expect(anon).toHaveURL(new RegExp(`/en/login\\?next=${encodeURIComponent(URL_)}$`));
+  });
+
+  // Runs only in the second pass against a server started without the clinical flag (E2E_CLINICAL=off).
+  test("flag off shows the gate and no review list", async ({ as }) => {
     const off = await as("gateOff");
     await off.goto(URL_);
     await expect(off.getByRole("main").getByText(/reviews are switched off/i)).toBeVisible();
     await expect(off.getByRole("list", { name: /^reviews$/i })).toHaveCount(0);
-    const anon = await as("anon");
-    await anon.goto(URL_);
-    await expect(anon).toHaveURL(new RegExp(`/en/login\\?next=${encodeURIComponent(URL_)}$`));
   });
 
   for (const locale of ["te", "hi"] as const) {

@@ -7,8 +7,12 @@ import { Notice } from "@/components/shared/notice";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 
-export type ServiceArea = "book" | "lab" | "care" | "ambulance" | "labs";
-const HOME: Record<ServiceArea, string> = { book: "/doctors", lab: "/patient/lab-tests", care: "/patient/caretakers", ambulance: "/patient/ambulance", labs: "/lab-tests" };
+/** The singular names are the signed-in request routes; the plural names are the public directories. */
+export type ServiceArea = "book" | "lab" | "care" | "ambulance" | "labs" | "ambulances" | "caretakers";
+const HOME: Record<ServiceArea, string> = {
+  book: "/doctors", lab: "/patient/lab-tests", care: "/patient/caretakers", ambulance: "/patient/ambulance",
+  labs: "/lab-tests", ambulances: "/ambulances", caretakers: "/caretakers",
+};
 
 /**
  * Error boundary body for the patient booking and service-request routes. Never shows the raw error (only the
@@ -21,7 +25,7 @@ export function ServiceRouteError({ area, error, retry }: { area: ServiceArea; e
   useEffect(() => { heading.current?.focus(); }, []);
   return (
     <div className="mx-auto grid w-full max-w-form gap-4 py-8" data-testid="route-error">
-      {area === "ambulance" ? (
+      {area === "ambulance" || area === "ambulances" ? (
         <Notice tone="danger" title={t("emergency")} action={<Button asChild variant="danger"><a href="tel:112"><Phone aria-hidden />112</a></Button>} />
       ) : null}
       <h1 ref={heading} tabIndex={-1} className="font-display text-3xl font-medium text-ink focus:outline-none">{t("title")}</h1>

@@ -1,6 +1,6 @@
 # fe-int2 INT3: run one e2e spec against a FRESH :3320 server per project (synthetic fixture adapter).
 # Usage: .context/int3-run.ps1 -Spec booking-journey -Projects mobile-390,desktop-1280 [-Env @{K="V"}] [-Grep "..."] [-ClinicalOff]
-param([string]$Spec, [string[]]$Projects, [hashtable]$Env = @{}, [string]$Grep = "", [switch]$ClinicalOff)
+param([string]$Spec, [string[]]$Projects, [hashtable]$Env = @{}, [string]$Grep = "", [switch]$ClinicalOff, [string]$Config = "")
 $base = @{ FRONTEND_ADAPTER = "fixture"; APP_ENV = "test"; NEXT_TELEMETRY_DISABLED = "1"; FEATURE_CLINICAL = "true"; FIXTURE_BOOKING_SCENARIO = "accepted" }
 foreach ($k in $Env.Keys) { $base[$k] = $Env[$k] }
 if ($ClinicalOff) { $base.Remove("FEATURE_CLINICAL") }
@@ -18,6 +18,7 @@ foreach ($project in $Projects) {
   $env:PLAYWRIGHT_BASE_URL = "http://localhost:3320"
   if ($ClinicalOff) { $env:E2E_CLINICAL = "off" } else { Remove-Item Env:E2E_CLINICAL -ErrorAction SilentlyContinue }
   $args2 = @("playwright", "test", "tests/e2e/$Spec.spec.ts", "--project", $project, "--workers", "1", "--reporter", "line")
+  if ($Config) { $args2 += @("--config", $Config) }
   if ($Grep) { $args2 += @("--grep", $Grep) }
   $out = npx @args2 2>&1
   $summary = $out | Select-String "^\s+\d+ (passed|failed|skipped|flaky|did not run)" | ForEach-Object { $_.Line.Trim() }

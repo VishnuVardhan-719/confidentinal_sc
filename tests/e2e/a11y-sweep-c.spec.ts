@@ -1,12 +1,14 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
+import { patientTest as test } from "./support/fixture-session";
 
 /**
  * R8-C/R9-C accessibility sweep over every route fe-c owns: the public doctor directory and profiles (/doctors/**),
  * the doctor booking journey (/patient/book/**) and the
  * lab, caretaker and ambulance request trees, in their normal, empty, error-free gated and missing-input states.
  * Each visit, at 390px and 1280px (Playwright projects): axe has no serious or critical violation, the page does
- * not scroll sideways, and the first Tab stop shows a visible focus indicator. Fixture adapter only.
+ * not scroll sideways, and the first Tab stop shows a visible focus indicator. Fixture adapter only. Every visit is
+ * signed in as the synthetic patient (fe-b fixture sign-in); the public pages look the same to a signed-in patient.
  */
 const FIXTURE = process.env.FRONTEND_ADAPTER === "fixture";
 test.skip(!FIXTURE, "needs the synthetic fixture adapter");

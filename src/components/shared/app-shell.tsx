@@ -174,6 +174,7 @@ export function AppShell({
         {primary.length > 0 ? (
           <nav
             aria-label={ta("mobileNavigation")}
+            data-app-bottom-nav
             className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
           >
             <ul className="grid" style={{ gridTemplateColumns: `repeat(${primary.length}, minmax(0, 1fr))` }}>

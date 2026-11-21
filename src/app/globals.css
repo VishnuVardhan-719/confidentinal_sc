@@ -66,6 +66,13 @@
     scroll-padding-top: 5rem;
   }
 
+  /* Scrolling to or focusing an element must not leave it under the fixed mobile bottom bar (WCAG 2.4.11). */
+  @media (max-width: 63.999rem) {
+    html:has([data-app-bottom-nav]) {
+      scroll-padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+    }
+  }
+
   @media (prefers-reduced-motion: no-preference) {
     html {
       scroll-behavior: smooth;

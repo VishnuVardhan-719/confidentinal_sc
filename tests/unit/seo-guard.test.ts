@@ -32,8 +32,8 @@ function pagesUnder(dir: string): string[] {
 const routeOf = (file: string) => "/" + relative(PUBLIC_DIR, file).replace(/\\/g, "/").replace(/\/?page\.tsx$/, "");
 
 describe("public page metadata", () => {
-  // /doctors and /lab-tests are directory pages (not in PUBLIC_PAGES): it builds its own metadata with pageMetadata().
-  const pages = pagesUnder(PUBLIC_DIR).filter((f) => !/\[/.test(relative(PUBLIC_DIR, f)) && !/^(doctors|lab-tests)[\\/]/.test(relative(PUBLIC_DIR, f)));
+  // The directory pages (/doctors, /lab-tests, /ambulances, /caretakers) are not in PUBLIC_PAGES: each builds its own metadata with pageMetadata().
+  const pages = pagesUnder(PUBLIC_DIR).filter((f) => !/\[/.test(relative(PUBLIC_DIR, f)) && !/^(doctors|lab-tests|ambulances|caretakers)[\\/]/.test(relative(PUBLIC_DIR, f)));
   const calls = pages.map((f) => {
     const m = /publicPageMetadata\("([A-Za-z]+)",\s*"([^"]+)"\)/.exec(readFileSync(f, "utf8"));
     return { file: relative(process.cwd(), f), route: routeOf(f).replace(/^\/$/, "/"), key: m?.[1], path: m?.[2] };
@@ -97,10 +97,13 @@ describe("canonical, hreflang and robots meta", () => {
     expect(r.sitemap).toBe(`${SITE_URL}/sitemap.xml`);
   });
 
-  it("the sitemap lists every public page and /lab-tests, and nothing private", () => {
+  it("the sitemap lists every public page and the public directories, and nothing private", () => {
     const urls = sitemapEntries({ APP_ENV: "production" }).map((e) => e.url);
-    expect(SITEMAP_PAGES).toContain("/lab-tests");
-    for (const locale of LOCALES) expect(urls).toContain(`${SITE_URL}/${locale}/lab-tests`);
+    for (const directory of ["/lab-tests", "/ambulances", "/caretakers"]) {
+      expect(SITEMAP_PAGES).toContain(directory);
+      for (const locale of LOCALES) expect(urls).toContain(`${SITE_URL}/${locale}${directory}`);
+    }
+    expect(urls.some((u) => u.includes("/lab-tests/") || u.includes("/ambulances/") || u.includes("/caretakers/"))).toBe(false);
     expect(urls.some((u) => /\/(patient|doctor|admin|verify)(\/|$)/.test(u))).toBe(false);
   });
 });
