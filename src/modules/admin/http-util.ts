@@ -15,7 +15,7 @@ export type HttpOptions = {
   baseUrl?: string;
   fetchImpl?: typeof fetch;
   /** Extra headers (for example, forwarded auth on the server). Never log these. */
-  headers?: () => Record<string, string>;
+  headers?: () => Record<string, string> | Promise<Record<string, string>>;
 };
 
 export type HttpRequest<T> = {
@@ -38,7 +38,7 @@ export function createHttpClient(options: HttpOptions = {}) {
   const fetchImpl = options.fetchImpl ?? fetch;
 
   return async function request<T>(req: HttpRequest<T>): Promise<ApiResult<T>> {
-    const headers: Record<string, string> = { Accept: "application/json", ...(options.headers?.() ?? {}) };
+    const headers: Record<string, string> = { Accept: "application/json", ...((await options.headers?.()) ?? {}) };
     if (req.body !== undefined) headers["Content-Type"] = "application/json";
     if (req.idempotencyKey !== undefined) headers["Idempotency-Key"] = req.idempotencyKey;
 

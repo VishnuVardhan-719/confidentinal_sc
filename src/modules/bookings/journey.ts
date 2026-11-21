@@ -9,6 +9,7 @@ import { createPaymentsHttpApi } from "@/modules/payments/http";
 import { createDoctorSearchApi, type DoctorSearchApi } from "@/modules/providers/doctor-api";
 import type { BookingsApi } from "./api";
 import { createBookingsFixtureApi } from "./fixture";
+import { createSessionHttpClient } from "@/modules/auth/session-token";
 import { createBookingsHttpApi } from "./http";
 import { createSlotsFixtureApi, createSlotsHttpApi, type SlotsApi } from "./slots";
 
@@ -29,7 +30,7 @@ export type JourneyApis = {
 export function journeyApis(env: Record<string, string | undefined> = process.env): JourneyApis {
   const doctors = createDoctorSearchApi(env);
   if (getAdapterMode(env) !== "fixture") {
-    return { bookings: createBookingsHttpApi(), payments: createPaymentsHttpApi(), patient: createPatientHttpApi(), slots: createSlotsHttpApi(), doctors, cancellationTerms: null };
+    return { bookings: createBookingsHttpApi(createSessionHttpClient()), payments: createPaymentsHttpApi(), patient: createPatientHttpApi(), slots: createSlotsHttpApi(), doctors, cancellationTerms: null };
   }
   const store = sharedSyntheticMarketplace(env);
   return {

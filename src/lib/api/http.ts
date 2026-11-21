@@ -35,7 +35,18 @@ export function serverApiOrigin(env: Record<string, string | undefined> = proces
   }
 }
 
-export function createHttpClient(config: { fetch?: typeof fetch; timeoutMs?: number; baseUrl?: string } = {}): HttpClient {
+/** A bearer token is a compact header-safe string; anything else is treated as "no session" (never sent). */
+const BEARER_TOKEN = /^[A-Za-z0-9._~+/=-]{8,4096}$/;
+
+export function createHttpClient(
+  config: {
+    fetch?: typeof fetch;
+    timeoutMs?: number;
+    baseUrl?: string;
+    /** Server-side only: the signed-in user's access token. The backend ignores cookies and wants `Authorization: Bearer`. */
+    getAccessToken?: () => Promise<string | null> | string | null;
+  } = {},
+): HttpClient {
   const fetcher = config.fetch ?? globalThis.fetch;
   const timeout = config.timeoutMs ?? 15_000;
   if (!Number.isFinite(timeout) || timeout <= 0) throw new Error("Invalid request timeout");
@@ -53,6 +64,8 @@ export function createHttpClient(config: { fetch?: typeof fetch; timeoutMs?: num
         const headers = new Headers({ Accept: "application/json" });
         if (options.body !== undefined) headers.set("Content-Type", "application/json");
         if (options.idempotencyKey) headers.set("Idempotency-Key", options.idempotencyKey);
+        const token = config.getAccessToken ? await config.getAccessToken() : null;
+        if (token && BEARER_TOKEN.test(token)) headers.set("Authorization", `Bearer ${token}`);
         const response = await fetcher(origin + path, {
           method: options.method ?? "GET", headers,
           credentials: "same-origin", redirect: "error", cache: "no-store",

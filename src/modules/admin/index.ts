@@ -1,4 +1,5 @@
 import { getAdapterMode } from "@/lib/api/mode";
+import { sessionBearerHeaders } from "@/modules/auth/session-token";
 import type { AdminApi } from "./api";
 import { createAdminFixtureApi, createAdminFixtureStore, type AdminFixtureOptions, type AdminFixtureStore } from "./fixture";
 import { createAdminHttpApi, type AdminHttpOptions } from "./http";
@@ -16,6 +17,6 @@ let sharedStore: AdminFixtureStore | undefined;
 
 export function getAdminApi(options: GetAdminApiOptions = {}): AdminApi {
   const env = options.env ?? process.env;
-  if (getAdapterMode(env) !== "fixture") return createAdminHttpApi({ ...options.http, env });
+  if (getAdapterMode(env) !== "fixture") return createAdminHttpApi({ headers: sessionBearerHeaders, ...options.http, env });
   return createAdminFixtureApi({ ...options, env, store: options.store ?? (sharedStore ??= createAdminFixtureStore()) });
 }
