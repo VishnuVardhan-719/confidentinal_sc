@@ -1,4 +1,55 @@
-## CURRENT STATE (2026-11-21, supersedes Kiro notes below)
+## >>> START HERE: CHECKPOINT 2026-11-22 (user shut the laptop down; everything pushed) <<<
+
+**Say "LETS RESUME" and Claude restarts on its own. Claude is the only builder now: Kiro is gone, agy is dropped, there are no agent windows to reopen.** CodeRabbit CLI reviews diffs. Codex is rate-limited until 2026-11-23 17:23 and may be used after that.
+
+### Where things stand (frontend, all on the synthetic fixture adapter)
+- Branch `feat/fe2-integration` in worktree `C:/Users/Yashwanth/fe2-int`, head pushed (see `git log -1`). The other worktrees are pushed too; none touches `develop`/`main`.
+- Everything is coded: foundation and public site, auth and onboarding, directories (doctors, labs, ambulances, caretakers), patient workspace and booking, doctor workspace and clinical, lab/ambulance/caretaker workspaces, admin and CMS. The latest production build exits 0 with 551 pages (TypeScript inside the build passed).
+- Latest e2e (build before the new routes): desktop-1280 all green except `a11y-sweep-c` (spec fixture fixed since, not rerun). mobile-390 all green except three that are now fixed in code or specs but NOT yet rerun: `admin-verification` (fixed with `scroll-padding-bottom` behind the mobile bottom bar), `lab-directory` and `public-directory-smoke` (stale link name, now "View lab: Synthetic lab N").
+- Done this session: public `/ambulances`, `/ambulances/[id]`, `/caretakers`, `/caretakers/[id]` (en/te/hi, fixture only, gated over http), keyboard + time-zone guards, provider-frame deferral.
+- NOT yet verified: the new `public-service-directories` e2e spec; a full unit rerun after the a11y-static fix (last full run: 1976 of 1980 passed, the 4 failures were fixed and that file passes 32/32); CodeRabbit on the final diff (last run, before the new routes: 0 findings).
+
+### Do this, in order, without asking
+1. `cd C:/Users/Yashwanth/fe2-int && git status && git log -1 --oneline`; read `.context/activeContext.md` (last section).
+2. Unit gate: `npx vitest run --maxWorkers=2` (background if slow), then `npx next typegen && npx tsc --noEmit -p .` (background, over 90 s) and `npx eslint src tests`.
+3. Build is already current (551 pages). If any source changes: `FRONTEND_ADAPTER=fixture APP_ENV=test FEATURE_CLINICAL=true NEXT_TELEMETRY_DISABLED=1 npx next build`.
+4. One e2e pipeline at a time (port 3320), fresh server per spec: `E2E_PORT=3320 powershell.exe -NoProfile -File .context/int3-run.ps1 -Spec <name> -Projects desktop-1280,mobile-390 -Config tests/e2e/fixture-all.config.ts`. Log: `$TEMP/int3-<spec>-<project>.log`. Run, in this order: `public-service-directories`, `lab-directory`, `public-directory-smoke`, `admin-verification`, `a11y-sweep-c`. Triage failures. Spec assumptions in `public-service-directories` (link names like "View operator: ...") are untested and may need fixes.
+5. fe-p session specs (skip without session mode): `-Env @{E2E_FEP_MODE="session";E2E_FEP_CLINICAL="on"}` for `a11y-sweep-p`, `patient-family`, `patient-reminders`, `patient-reviews`, `patient-review-changes`, `patient-saved`; then the `-ClinicalOff` and `FIXTURE_FAMILY_SCENARIO=empty` variants.
+6. CodeRabbit on the final diff: `/c/Users/Yashwanth/AppData/Local/Programs/coderabbit/coderabbit review --agent --base-commit 77ff974` (background; last JSON line has `findings`). Fix valid findings.
+7. Commit with trailer `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`, push with: `GIT_TERMINAL_PROMPT=0 timeout 80 git -c credential.helper= -c "credential.helper=!gh auth git-credential" push -q origin feat/fe2-integration`, verify `git rev-parse --short HEAD` equals `git ls-remote origin feat/fe2-integration | cut -c1-7`.
+8. Update `docs/PROGRESS_REPORT.md`, `docs/frontend/INTEGRATION_REPORT.md` (add 6.9 with the results of steps 2 to 6) and this file. Then ASK the user: merge backend PRs #1 to #5, then connect with `FRONTEND_ADAPTER=http`.
+9. After approval only: backend connection (phase 9). Read `docs/frontend/BACKEND_CONNECT_PLAN.md`; `feat/fe2-c` holds ready-to-enable B01 wiring (`src/modules/bookings/b01-http.ts`, `src/modules/patient/b01-http.ts`, unverified WIP).
+
+### Tooling notes (hard-won)
+- Bash tool calls die near 95 s: background anything slow (`nohup bash -c '...' & disown`) and watch with Monitor. Do not run tsc/vitest while an e2e pipeline runs (false timeouts).
+- `PageProps<"/[locale]/x">` needs `npx next typegen` after new routes, else TS2344.
+- `tests/e2e/fixture-all.config.ts` is the multi-spec config (mobile = Pixel 5 with `isMobile`; the layout viewport is 873 px tall but the visible one is 844, which exposed the bottom-bar overlap).
+- Windows: Git Bash, POSIX syntax. Python needs `PYTHONUTF8=1`. `taskkill //PID` needs the Windows pid.
+- Scratch probes and screenshots live untracked in `.context/` of the other worktrees (fe2-a/b/c/d/e/p); they are on disk, not on GitHub, and safe to ignore.
+
+### Worktrees at checkpoint (all pushed; `docs/backend-handoff` is deliberately NOT pushed)
+`fe2-int feat/fe2-integration` (this branch) | `fe2-a 3c72d13` | `fe2-b 5ee66b5` | `fe2-c 58f881f` | `fe2-d 6b91412` | `fe2-e d356e97` | `fe2-p 334d54b` | `fe2-x feat/fe2-connect 347419a` | `fe2-y feat/fe2-money 23e1f09` | `fe2-z feat/fe2-a11y 23e1f09` | older `task/U0*` and `wip/frontend-pause-2026-11-18` branches already on GitHub.
+
+### Waiting on the user or backend (do not guess)
+Backend routes; product decisions (reviews flag, family limit, reminder defaults, fe2-d/fe2-p overlap R-INT6-01); te/hi human translation review; proof-of-visit QR (needs a dependency approval); legal copy (draft); approval to merge backend PRs #1 to #5.
+
+### Progress at checkpoint (my estimates; build = coded, test = passing)
+```
+1 Foundation + public site        build ██████████ 100%  test █████████░ 95%
+2 Auth, onboarding, verification  build ██████████ 100%  test █████████░ 90%
+3 Directories (4 kinds)           build ██████████ 100%  test ███████░░░ 70%
+4 Patient workspace + booking     build ██████████ 100%  test ████████░░ 80%
+5 Doctor workspace + clinical     build ██████████ 100%  test █████████░ 90%
+6 Lab/ambulance/caretaker spaces  build ██████████ 100%  test █████████░ 95%
+7 Admin + CMS                     build ██████████ 100%  test ████████░░ 85%
+8 Final QA, review, docs, push    ████░░░░░░ 40%
+9 Backend connection              ░░░░░░░░░░  0%  (blocked on merge approval)
+Frontend (1 to 8): ~97% built, ~85% tested. About 2 to 2.5 h of work left, then phase 9 about half a day.
+```
+
+---
+
+## (older) CURRENT STATE (2026-11-21, supersedes Kiro notes below)
 - Builders: Claude only (agy dropped, Kiro gone). Codex is rate-limited until 2026-11-23 17:23. CodeRabbit CLI reviews diffs (run in background, takes a few minutes).
 - Work happens directly in `fe2-int` on `feat/fe2-integration`; push after each verified step.
 - Done this session: Bearer-token injection for bookings + admin http adapters (CodeRabbit findings fixed); money formatters unified on `src/lib/money` (R-E9E6-01..03); static a11y test for lab/ambulance/caretaker; integration smoke 102/102 passing; unit suite green.

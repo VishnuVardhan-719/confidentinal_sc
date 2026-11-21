@@ -269,3 +269,15 @@ Guard tests reconciled with integrated pages (no weakening of what they protect)
 - Real fix: the signup role group in `auth-flow.tsx` now renders `HydrationStatus` + `hydrationBusy` (it had `aria-busy` with no status text).
 
 Results at 009d4b7: tsc 0 errors, eslint 0, vitest 125 files / 1815 tests passed, `next build` exit 0 (`FRONTEND_ADAPTER=fixture APP_ENV=test`). Smoke: see 6.9.
+
+### 6.9 Final smoke, 2026-11-22 (lead, Claude only)
+
+Build `verify11` (529 pages), fresh server per spec on :3320, fixture adapter.
+
+- desktop-1280: onboarding 16, lab 9 (+1 skipped), caretaker 8, ambulance 9, keyboard-lists 4, public-a11y 74 (+3 skipped), a11y 19, a11y-sweep-e 14, a11y-sweep 78 passed. `a11y-sweep-c`: 22 failed, 20 passed (the spec signed in with the wrong fixture session; spec fixed to use `patientTest`, not rerun). `a11y-sweep-p` skipped (needs `E2E_FEP_MODE=session`).
+- mobile-390 (Pixel 5 emulation): passed onboarding 16, lab 9, caretaker 8, ambulance 9, admin-ops 9, auth 28, cms 6, doctor-consultation 17, doctor-search 5, doctor-workspace 32, emergency-e 3, hydration-race 5 and -e 3, navigation 4, patient-workspace 18, profile 6, proof-check 9, public 52, public-nav 6, role-isolation 9, service-requests 13, booking-journey 5, patient-bookings 10, patient-records 6 (+clinical-off 2). Skipped for lack of session mode: patient-family, patient-reminders, patient-review-changes, patient-reviews, patient-saved.
+- mobile failures found and fixed (reruns pending):
+  1. `admin-verification` "Start review": the fixed mobile bottom bar covered the button near the screen edge and Playwright's scroll-if-needed did not move it. Root cause confirmed with an `elementFromPoint` probe (layout viewport 873 px, visible 844 px, button centre under the bar). Fix: `scroll-padding-bottom` while `[data-app-bottom-nav]` is present (WCAG 2.4.11 Focus Not Obscured).
+  2. `lab-directory` and `public-directory-smoke`: stale spec link name; the accessible name is "View lab: Synthetic lab N" since 72d42cd (WCAG 2.5.3). Specs updated.
+- New this session: `/ambulances`, `/ambulances/[id]`, `/caretakers`, `/caretakers/[id]` (en/te/hi), build after them: exit 0, 551 pages. Their unit test passes (30/30 with seo-guard, route-links, time-guard); their e2e spec `public-service-directories` has NOT been run.
+- Still to run on the next session: items 2 to 8 of the list in `RESUME_HERE.md`.

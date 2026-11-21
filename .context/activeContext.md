@@ -272,3 +272,9 @@ SHUTDOWN 2026-11-20 ~23:30 IST: see docs/frontend/RESUME_HERE.md "STATE AT SHUTD
 - CodeRabbit on 77ff974..working tree: 0 findings.
 - verify11 desktop-1280 all green. mobile-390 so far green except admin-verification (Start review click, test line 70; fixed bottom nav then decisions section intercept the click) -> needs browser repro.
 - TODO: tsc (tsc14.out), vitest, rebuild, run public-service-directories + a11y-sweep-c both projects, fe-p session specs, commit+push, docs (PROGRESS_REPORT, INTEGRATION_REPORT 6.9, RESUME_HERE).
+
+## 2026-11-22 SHUTDOWN CHECKPOINT (user shut the laptop down)
+- All worktrees pushed (docs/backend-handoff deliberately not). fe2-int head pushed after the final docs commit.
+- Resume = "LETS RESUME": follow the numbered list at the top of `docs/frontend/RESUME_HERE.md`. Claude is the only builder (Kiro gone, agy dropped).
+- Build current (551 pages, exit 0). Unverified: full vitest on the final head, new `public-service-directories` e2e, mobile reruns of admin-verification / lab-directory / public-directory-smoke, a11y-sweep-c rerun, fe-p session specs, CodeRabbit on the final diff.
+- Admin "Start review" mobile failure root cause: fixed bottom bar covers elements near the screen edge; fixed with `scroll-padding-bottom` + `data-app-bottom-nav` (globals.css, app-shell.tsx).

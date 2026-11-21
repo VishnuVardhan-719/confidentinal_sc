@@ -1,49 +1,51 @@
-# Progress report (integration branch)
+# Progress report (frontend, integration branch)
 
-Branch `feat/fe2-integration`, written 2026-11-18 by fe-int. States: `NOT_STARTED`, `IN_PROGRESS`, `IMPLEMENTED_UNVERIFIED`, `DONE_VERIFIED`. No percentages.
+Branch `feat/fe2-integration`, rewritten 2026-11-22 at the shutdown checkpoint. All figures are measured against the synthetic fixture adapter; nothing here proves real backend behaviour. Percentages are the lead's estimates, evidence listed per phase. Resume instructions: `docs/frontend/RESUME_HERE.md`.
 
-`DONE_VERIFIED` requires commit(s), test command and result, and review on this branch. Work that passes on its own feature branch but has not been re-verified here is `IMPLEMENTED_UNVERIFIED`.
-
-**Phase mapping note.** No repository document defines R0-R9. The phases below map to the build order in `docs/END_TO_END.md`, the ledger in `docs/IMPLEMENTATION_TASKS.md` and the FE workstreams in `docs/FRONTEND_MASTER.md`. Lead to confirm or correct the mapping.
-
-## Integrated so far
-
-| Branch | Tip | In this branch |
-|---|---|---|
-| feat/fe2-a | 8decfb4 | yes (merged directly; earlier 857b005 via fe2-c/fe2-d) |
-| feat/fe2-c | 0331c6b | yes (base) |
-| feat/fe2-d | 9b341f5 | yes (0f4b8da, then 9b341f5 in 00de692) |
-| feat/fe2-b | f9129e6 | no (pending) |
-| feat/fe2-e | 5a6bcf8 | yes (merged in 2276679) |
-
-## Verification on this branch
+## Verification at checkpoint
 
 | Check | Result |
 |---|---|
-| `npm run typecheck` (at 2276679, after fe2-d 9b341f5 + fe2-e 5a6bcf8) | exit 0 |
-| `npm run lint` (at 2276679) | exit 0, zero warnings/errors |
-| `vitest run --maxWorkers=2` (at 2276679) | exit 0, 58 files / 929 tests passed |
-| `npm run build` (at 2276679) | exit 0, compiled; 326/326 static pages generated |
-| Browser e2e (Playwright) | DEFERRED by user rule; not run (REQUESTS R-INT-1) |
+| `next build` (fixture, clinical on) | exit 0, 551 static pages, TypeScript pass inside the build |
+| Targeted unit tests (public-service-directories, seo-guard, route-links, time-guard) | 4 files, 30 tests passed |
+| Full `vitest run` | 131 files, 1980 tests: 1976 passed, 4 failed (static h1 test for the new directory pages); fixed in tests/unit/a11y-static.test.ts and that file now passes 32/32. Full suite not rerun after the fix |
+| ESLint on every file changed this session | clean (earlier run) |
+| e2e desktop-1280 (previous build) | green except `a11y-sweep-c` (spec fixture fixed, rerun pending) |
+| e2e mobile-390 (previous build) | green except `admin-verification` (code fix landed), `lab-directory` and `public-directory-smoke` (stale spec link name, fixed); not rerun |
+| e2e for new ambulance/caretaker directories | written, NOT run |
+| CodeRabbit | 0 findings on the diff before the new routes; final diff not reviewed yet |
 
-## Phases
+## Phases (build = coded, test = passing e2e/unit)
 
-| Phase | Scope | State | Evidence |
+```
+1 Foundation + public site        build ██████████ 100%  test █████████░ 95%
+2 Auth, onboarding, verification  build ██████████ 100%  test █████████░ 90%
+3 Directories (doctors, labs, ambulances, caretakers)
+                                  build ██████████ 100%  test ███████░░░ 70%
+4 Patient workspace + booking     build ██████████ 100%  test ████████░░ 80%
+5 Doctor workspace + clinical     build ██████████ 100%  test █████████░ 90%
+6 Lab, ambulance, caretaker       build ██████████ 100%  test █████████░ 95%
+7 Admin + CMS                     build ██████████ 100%  test ████████░░ 85%
+8 Final QA, review, docs, push    ████░░░░░░ 40%
+9 Backend connection (http)       ░░░░░░░░░░  0%   blocked on approval to merge backend PRs #1 to #5
+```
+
+| Phase | Left | Est. time | Est. Claude tokens |
 |---|---|---|---|
-| R0 | Reconnaissance, setup, source audit, schema defaults (R00, R01, S00, FE00) | DONE_VERIFIED | Ledger R00 `DONE_VERIFIED`, S00 `APPROVED_DEFAULTS`; `docs/SOURCE_AUDIT_R01.md` present. |
-| R1 | Frontend foundation and public site (FE01/FE02, fe2-a): i18n en/te/hi, tokens, UI/shared components, public pages | IMPLEMENTED_UNVERIFIED | 17 public `page.tsx` under `src/app/[locale]/(public)`. Typecheck, lint, unit and build pass here (2276679); browser e2e deferred and no integration review yet. |
-| R2 | Identity, auth, onboarding, organizations, verification (fe2-b; backend I01/I02) | IN_PROGRESS | fe2-b not merged; `src/modules/auth` absent here, so patient/doctor guards are interim or fail-closed. Ledger I01/I02 `PENDING`. |
-| R3 | Marketplace data layer, directory and doctor search, LocationPicker (fe2-c) | IMPLEMENTED_UNVERIFIED | Modules providers/catalog/bookings/payments/support/notifications/patient; `/doctors` and `/doctors/[id]`. Branch-level evidence in `.context/activeContext.md` (fe2-c: 396 unit tests, 9 e2e pass). Not re-run here. Lab/ambulance/caretaker directories not built. |
-| R4 | Booking wizard and patient workspace | IN_PROGRESS | `/patient/dashboard` built (fe2-d 9b341f5, interim fixture session; R-FE-D-31). Wizard reducer, submit controller and loaders exist (non-UI); booking wizard and other patient pages not built. `PatientGate` not mounted; real guard waits on fe2-b auth. Backend offer/policy/consent contract missing (REQUESTS.md). |
-| R5 | Doctor workspace and clinical draft/finalize/records (fe2-d) | IMPLEMENTED_UNVERIFIED | 14 `page.tsx` under `src/app/[locale]/doctor`; clinical/doctor/records modules; en/te/hi clinical and doctor strings. Branch evidence: 343 tests (fe2-d). E2E `doctor-workspace.spec.cts` is `test.fixme`, never run. Not re-run here. |
-| R6 | Lab, ambulance, caretaker and admin workspaces (fe2-e) | IMPLEMENTED_UNVERIFIED | fe2-e 5a6bcf8 merged: ambulance, caretaker, lab and admin workspaces, te/hi strings, driver-action authorization fix. Unit/lint/build pass here; browser e2e deferred; auth session port pending fe2-b (R-E17). |
-| R7 | Payments (pay-after), support, notifications UI (P01) | IN_PROGRESS | Data adapters and schemas exist; HTTP adapters return `gated` (no verified contracts). No UI. Ledger P01 `PENDING`. |
-| R8 | Backend integration: migrations, API routes, RLS, replace gated HTTP adapters (I01, I02, C01, B01) | NOT_STARTED | 0 migrations and 0 `src/app/api` routes on this branch. Backend PRs #1-#5 unmerged. Frontend runs on fixture adapters only. |
-| R9 | Security/E2E (Q01), staging, client acceptance and release (R02) | NOT_STARTED | Ledger Q01/R02 `PENDING`. E2E specs under `tests/e2e` are mostly `test.fixme` pending routes and auth fixtures. |
+| 1 | final rerun | 5 min | ~10k |
+| 2 | confirm the admin "Start review" mobile fix | 25 min | ~60k |
+| 3 | run the new directory e2e, triage, rerun lab specs | 35 min | ~120k |
+| 4 | fe-p session specs (family, reminders, reviews, saved) and clinical-off variants | 45 min | ~150k |
+| 5 | clinical-off variant | 10 min | ~20k |
+| 6 | nothing known | 0 | 0 |
+| 7 | same admin item as phase 2 | 20 min (overlaps) | ~50k |
+| 8 | full unit/tsc/lint, CodeRabbit, docs, push | 50 min | ~200k |
+| 9 | merge PRs, switch adapters, contract fixes | about half a day | ~400k+ |
+
+Frontend (1 to 8): about 97% built, about 85% tested; about 2 to 2.5 h of work left. Token figures are rough guesses (plus or minus 50%). Kiro is no longer used, so its token use from here is zero.
 
 ## Known limitations
 
-- Fixture-only coverage. Nothing here proves real integration, RLS or concurrency behaviour.
-- Emergency dispatch, clinical activation, live payments, GPS/maps and photo hosting remain gated per `AGENTS.md` and REQUESTS R-C2-5.
-- Merge conflicts in `.context/activeContext.md` and `docs/frontend/REQUESTS.md` were resolved by keeping both sides. No message JSON keys conflicted or were dropped.
-- Landing hero now uses fe-c's `DoctorSearchBar` inside `BookingIntl` (R-C2-4). fe-a's `src/components/public/doctor-search.tsx` and `public.landing.search` strings are kept but no longer used on the landing page; fe-a/lead to decide whether to remove them.
+- Fixture-only coverage. Emergency dispatch, clinical activation, live payments, GPS/maps and photo hosting remain gated per `AGENTS.md`.
+- Public ambulance and caretaker directories show synthetic data only and fail closed over http until a public read contract exists.
+- Blocked on the user or backend: backend routes, product decisions (reviews flag, family limit, reminder defaults, R-INT6-01), te/hi human translation review, proof-of-visit QR dependency approval, final legal copy, approval to merge backend PRs #1 to #5.
