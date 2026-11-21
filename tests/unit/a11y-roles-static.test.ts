@@ -48,9 +48,13 @@ describe("lab, ambulance and caretaker workspaces: static a11y", () => {
       for (const name of ["input", "select", "textarea"]) {
         for (const t of tags(src, name)) {
           if (/type=["'](hidden|submit|button)["']/.test(t)) continue;
-          if (/\b(aria-label|aria-labelledby|id)=/.test(t) || /\{\.\.\.[A-Za-z.]+\}/.test(t)) continue;
-          // Wrapped by a <label> in the same file counts.
-          if (/<label\b/.test(src)) continue;
+          if (/\b(aria-label|aria-labelledby)=/.test(t) || /\{\.\.\.[A-Za-z.]+\}/.test(t)) continue;
+          // An id counts only when a label in the file points at it (htmlFor), or the control sits inside a <label>.
+          const id = /\bid=(?:"([^"]+)"|\{([^}]+)\})/.exec(t);
+          const target = id ? (id[1] ?? id[2] ?? "").trim() : "";
+          if (target && (src.includes(`htmlFor="${target}"`) || src.includes(`htmlFor={${target}}`))) continue;
+          const before = src.slice(0, src.indexOf(t));
+          if (before.lastIndexOf("<label") > before.lastIndexOf("</label>")) continue;
           bad.push(`${rel(f)}: ${t.slice(0, 60)}`);
         }
       }
