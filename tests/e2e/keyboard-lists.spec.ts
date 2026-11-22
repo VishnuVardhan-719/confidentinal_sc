@@ -42,7 +42,11 @@ async function currentStop(page: Page): Promise<Stop | null> {
     if (!el || el === document.body) return null;
     const style = getComputedStyle(el);
     const outline = style.outlineStyle !== "none" && parseFloat(style.outlineWidth) > 0;
-    const ring = style.boxShadow !== "none" && style.boxShadow !== "";
+    // A ring needs a visible shadow: not "none", not fully transparent and not all-zero lengths.
+    const shadowLengths = style.boxShadow.replace(/rgba?\([^)]*\)/g, "").match(/-?\d*\.?\d+px/g) ?? [];
+    const shadowColour = style.boxShadow.match(/rgba?\(([^)]*)\)/)?.[1].split(",").map((n) => parseFloat(n)) ?? [];
+    const transparent = shadowColour.length === 4 && shadowColour[3] === 0;
+    const ring = style.boxShadow !== "none" && style.boxShadow !== "" && !transparent && shadowLengths.some((n) => parseFloat(n) !== 0);
     const path: string[] = [];
     for (let node: HTMLElement | null = el; node && node !== document.body; node = node.parentElement) {
       path.push(`${node.tagName}${node.id ? `#${node.id}` : ""}:${[...(node.parentElement?.children ?? [])].indexOf(node)}`);

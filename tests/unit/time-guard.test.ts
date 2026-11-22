@@ -31,6 +31,18 @@ const MACHINE_ZONE = /\.toLocale(Date|Time)?String\(|\.(getHours|getMinutes|getD
 const UTC_DAY_SLICE = /\.toISOString\(\)\s*\.(slice|split|substring)\(/;
 const IST_SHIFT = /330\s*\*\s*60_?000|IST_OFFSET/;
 
+/** Text of the call's own argument list, from `new Intl.DateTimeFormat(` to its matching `)`. */
+function formatterArgs(source: string): string {
+  const open = "new Intl.DateTimeFormat(";
+  const start = source.indexOf(open) + open.length;
+  let depth = 1;
+  for (let i = start; i < source.length; i++) {
+    if (source[i] === "(") depth++;
+    else if (source[i] === ")" && --depth === 0) return source.slice(start, i);
+  }
+  return source.slice(start);
+}
+
 function offenders(test: (line: string, lines: string[], index: number) => boolean): string[] {
   return files.flatMap(({ file, lines }) =>
     lines.flatMap((line, index) => (!line.trim().startsWith("//") && !line.trim().startsWith("*") && test(line, lines, index) ? [`${file}:${index + 1}: ${line.trim().slice(0, 100)}`] : [])),
@@ -50,8 +62,7 @@ describe("date and time guard", () => {
     expect(
       offenders((line, lines, index) => {
         if (!/new Intl\.DateTimeFormat\(/.test(line)) return false;
-        // The options object can wrap onto the next few lines.
-        return !/timeZone/.test(lines.slice(index, index + 4).join("\n"));
+        return !/timeZone/.test(formatterArgs(lines.slice(index).join("\n")));
       }),
     ).toEqual([]);
   });
@@ -72,5 +83,7 @@ describe("date and time guard", () => {
     expect(UTC_DAY_SLICE.test("new Date().toISOString().slice(0, 10)")).toBe(true);
     expect(IST_SHIFT.test("new Date(Date.parse(utc) + 330 * 60_000).toISOString().slice(0, 10)")).toBe(true);
     expect(MACHINE_ZONE.test("new Intl.DateTimeFormat(tag, { timeZone: TIME_ZONE })")).toBe(false);
+    expect(/timeZone/.test(formatterArgs("new Intl.DateTimeFormat(tag, {\n timeZone: TIME_ZONE,\n})"))).toBe(true);
+    expect(/timeZone/.test(formatterArgs('const f = new Intl.DateTimeFormat("en-IN");\nconst other = { timeZone: "Asia/Kolkata" };'))).toBe(false);
   });
 });

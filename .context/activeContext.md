@@ -284,3 +284,4 @@ SHUTDOWN 2026-11-20 ~23:30 IST: see docs/frontend/RESUME_HERE.md "STATE AT SHUTD
 - Pipeline: .context/verify17.sh (lab-directory + admin-verification reruns, then patient specs clinical-on, then clinical-off). One project per int3-run call; kill servers by PID.
 - admin-verification mobile: landing can bounce dashboard->onboarding; spec now waits for the landing path to settle.
 - After verify17: unit + tsc + eslint, CodeRabbit (--base-commit 77ff974), commit+push, docs, notify user. Then WAIT for user approval (no backend work yet).
+- FRONTEND COMPLETE 2026-11-22: verify17 (patient specs signed in, clinical on+off), verify18 (guest), verify19 (keyboard-lists) all green; unit 1980, tsc 0, eslint clean, CodeRabbit 5 minor fixed. Waiting for owner approval/changes. No backend work until "start backend".

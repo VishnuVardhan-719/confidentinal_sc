@@ -14,16 +14,18 @@ foreach ($project in $Projects) {
   $p.Id | Set-Content .context/server-3320.pid
   $ok = $false
   for ($i = 0; $i -lt 60 -and -not $ok; $i++) { Start-Sleep 2; try { $ok = (Invoke-WebRequest http://localhost:3320/en -UseBasicParsing -TimeoutSec 20).StatusCode -eq 200 } catch { } }
-  if (-not $ok) { "SERVER FAILED"; break }
+  if (-not $ok) { "SERVER FAILED"; $script:exitCode = 1; break }
   $env:PLAYWRIGHT_BASE_URL = "http://localhost:3320"
   if ($ClinicalOff) { $env:E2E_CLINICAL = "off" } else { Remove-Item Env:E2E_CLINICAL -ErrorAction SilentlyContinue }
   $args2 = @("playwright", "test", "tests/e2e/$Spec.spec.ts", "--project", $project, "--workers", "1", "--reporter", "line")
   if ($Config) { $args2 += @("--config", $Config) }
   if ($Grep) { $args2 += @("--grep", $Grep) }
   $out = npx @args2 2>&1
+  if ($LASTEXITCODE -ne 0) { $script:exitCode = 1 }
   $summary = $out | Select-String "^\s+\d+ (passed|failed|skipped|flaky|did not run)" | ForEach-Object { $_.Line.Trim() }
   "== $Spec [$project]$(if ($ClinicalOff) {' clinical-off'}) : $($summary -join ', ')"
   $out | Select-String "^\s+\d+\) \[" | ForEach-Object { "   FAIL " + $_.Line.Trim().Substring(0, [Math]::Min(200, $_.Line.Trim().Length)) }
   $out | Set-Content (Join-Path $env:TEMP "int3-$Spec-$project$(if ($ClinicalOff) {'-off'}).log")
   Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
 }
+exit $script:exitCode

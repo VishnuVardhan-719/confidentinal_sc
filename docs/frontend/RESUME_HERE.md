@@ -1,3 +1,13 @@
+## >>> FRONTEND COMPLETE 2026-11-22: WAIT FOR THE OWNER <<<
+
+Frontend (phases 1 to 8) is built, verified and pushed on `feat/fe2-integration`. Results: `docs/frontend/INTEGRATION_REPORT.md` 6.10 (unit 131 files / 1980 tests, tsc 0, eslint clean, all e2e specs green on desktop-1280 and mobile-390, CodeRabbit 5 minor findings fixed).
+
+Do now: nothing except answer the owner. Steps 1 to 8 of the checklist below are DONE (the session env in step 5 is obsolete: patient specs sign in through `tests/e2e/support/fixture-session.ts`).
+1. The owner reviews the frontend and sends change requests: implement them on feature branches, rerun the affected specs (one project per `int3-run.ps1` call), CodeRabbit, push.
+2. Only when the owner says "start backend": build the backend (do NOT connect it), see `docs/frontend/BACKEND_VERIFICATION_DECISIONS.md`.
+3. Only after the backend is complete: merge backend PRs and frontend, switch to `FRONTEND_ADAPTER=http` (`docs/frontend/BACKEND_CONNECT_PLAN.md`).
+Open product call: the signed-out patient guard drops the `providerId` query on login redirect.
+
 ## >>> START HERE: CHECKPOINT 2026-11-22 (user shut the laptop down; everything pushed) <<<
 
 **Say "LETS RESUME" and Claude restarts on its own. Claude is the only builder now: Kiro is gone, agy is dropped, there are no agent windows to reopen.** CodeRabbit CLI reviews diffs. Codex is rate-limited until 2026-11-23 17:23 and may be used after that.

@@ -3,8 +3,9 @@ import { defineConfig, devices } from "@playwright/test";
 /**
  * Integration smoke (fe-int2) against an already running production build of
  * feat/fe2-integration. SYNTHETIC fixture adapter only. Start the server first:
- *   FRONTEND_ADAPTER=fixture APP_ENV=test FEATURE_CLINICAL=true FIXTURE_BOOKING_SCENARIO=accepted \
- *     npx next build && npx next start --port 3320
+ *   export FRONTEND_ADAPTER=fixture APP_ENV=test FEATURE_CLINICAL=true FIXTURE_BOOKING_SCENARIO=accepted
+ *   npx next build && npx next start --port 3320
+ * (exported, so both `next build` and `next start` see them; .context/int3-run.ps1 does this for the pipeline)
  * then: npx playwright test --config tests/e2e/integration.config.ts
  */
 const PORT = Number(process.env.E2E_PORT ?? 3320);

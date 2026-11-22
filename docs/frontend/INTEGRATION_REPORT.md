@@ -281,3 +281,16 @@ Build `verify11` (529 pages), fresh server per spec on :3320, fixture adapter.
   2. `lab-directory` and `public-directory-smoke`: stale spec link name; the accessible name is "View lab: Synthetic lab N" since 72d42cd (WCAG 2.5.3). Specs updated.
 - New this session: `/ambulances`, `/ambulances/[id]`, `/caretakers`, `/caretakers/[id]` (en/te/hi), build after them: exit 0, 551 pages. Their unit test passes (30/30 with seo-guard, route-links, time-guard); their e2e spec `public-service-directories` has NOT been run.
 - Still to run on the next session: items 2 to 8 of the list in `RESUME_HERE.md`.
+
+### 6.10 Frontend verification complete, 2026-11-22 (lead, Claude only)
+
+Build `verify11` plus the `aria-label` fixes on the public provider and lab cards (rebuilt, exit 0). Fresh fixture server per spec and per project on :3320.
+
+- **Finding:** `FIXTURE_PATIENT_SESSION` was removed at integration (real fe-b sign-in). `a11y-sweep-p`, `patient-family`, `patient-saved`, `patient-reviews` and `patient-review-changes` still relied on it and had been running signed out (a login page also passes axe, so the old "passes" proved nothing). All five now use `patientTest` from `tests/e2e/support/fixture-session.ts`; `patient-reminders` already did.
+- **Real a11y fix:** public provider and lab card links now carry `aria-label="<visible text>: <name>"`, so the accessible name starts with the visible text (WCAG 2.5.3). An `sr-only` span in an inline-flex link made Chrome insert a space before the colon.
+- **Spec fixes:** `public-service-directories` (visible-only locators), `lab-directory` (a signed-out visitor is redirected to `/en/login?next=%2Fen%2Fpatient%2Flab-tests`; the guard keeps the area, not the query), `admin-verification` (landing can bounce dashboard to onboarding; the spec waits for the path to settle).
+- **Results, both projects (desktop-1280 and mobile-390):** public-service-directories 14/14, lab-directory 3/3, admin-verification 10/10, public-directory-smoke 2/2, a11y-sweep-c 42/42, a11y-sweep-p 23/23 (clinical on and off), patient-family 6 (+1 off, guest 1), patient-reminders 7, patient-reviews 4 (+1 off, guest 1), patient-review-changes 4, patient-saved 4 (+1 off, guest 1). No failures.
+- **Unit and static:** vitest 131 files, 1980 tests passed; `tsc --noEmit` exit 0 after `next typegen`; eslint clean on changed paths.
+- **UX note (not fixed, product call):** the signed-out patient guard redirects to `/login?next=<area path>` and drops the query string, so a visitor who clicks "Request a visit" with a `providerId` loses the selection after signing in.
+- **Pipeline lessons:** one project per `int3-run.ps1` call; session specs no longer need server env switches; kill servers by PID; `grep --line-buffered` when logging.
+- **CodeRabbit:** 5 minor findings on the full diff (scripts exit status, config env doc, focus-ring check, copy-isolation unit test, time-guard formatter args), all fixed and rechecked.

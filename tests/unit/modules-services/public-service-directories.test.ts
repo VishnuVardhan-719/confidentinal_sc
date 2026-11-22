@@ -46,10 +46,11 @@ describe.each([
   });
 
   it("returns copies, so a caller cannot change the catalogue", async () => {
+    const original = providers[0].name;
     const first = await api.get(providers[0].id);
     if (first.ok) first.data.provider.name = "Changed";
     const again = await api.get(providers[0].id);
-    expect(again.ok && again.data.provider.name).toBe(providers[0].name);
+    expect(again.ok && again.data.provider.name).toBe(original);
   });
 
   it("is refused in production, and fails closed over HTTP (no public provider read in API_CONTRACTS yet)", async () => {

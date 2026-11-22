@@ -1,8 +1,9 @@
 #!/bin/bash
 # Reruns + fe-p session specs. Session server env mirrors fe2-p/.context/fep-serve.ps1. One pipeline at a time.
 cd /c/Users/Yashwanth/fe2-int
+FAILED=0
 CFG=tests/e2e/fixture-all.config.ts
-run() { E2E_PORT=3320 powershell.exe -NoProfile -Command "$1" 2>&1 | grep --line-buffered -E "^== |^   FAIL|SERVER FAILED"; }
+run() { E2E_PORT=3320 powershell.exe -NoProfile -Command "$1" 2>&1 | grep --line-buffered -E "^== |^   FAIL|SERVER FAILED"; [ "${PIPESTATUS[0]}" -eq 0 ] || FAILED=1; }
 ON="@{E2E_FEP_MODE='session';E2E_FEP_CLINICAL='on';FIXTURE_PATIENT_SESSION='self';FIXTURE_BOOKING_SCENARIO='requested';FIXTURE_ADMIN_SESSION='moderator'}"
 OFF="@{E2E_FEP_MODE='session';E2E_FEP_CLINICAL='off';FIXTURE_PATIENT_SESSION='self';FIXTURE_BOOKING_SCENARIO='requested';FIXTURE_NOTIFICATION_SCENARIO='empty';FIXTURE_FAMILY_SCENARIO='empty';FIXTURE_SAVED_SCENARIO='empty';FIXTURE_REVIEWS_SCENARIO='empty'}"
 for p in desktop-1280 mobile-390; do
@@ -20,4 +21,5 @@ for s in patient-family patient-reminders patient-reviews patient-saved patient-
     run ".\.context\int3-run.ps1 -Spec $s -Projects $p -Config $CFG -ClinicalOff -Env $OFF"
   done
 done
-echo "exit=0"
+echo "exit=$FAILED"
+exit $FAILED
