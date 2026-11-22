@@ -34,7 +34,8 @@ test.describe("public lab directory", () => {
     const request = page.getByRole("link", { name: "Request tests from Synthetic lab 1" });
     await expect(request).toHaveAttribute("href", "/en/patient/lab-tests/request?providerId=00000000-0000-4000-8200-000000000001");
     await request.click();
-    await expect(page.getByRole("heading", { level: 1, name: "Request tests from Synthetic lab 1" })).toBeVisible({ timeout: 20_000 });
+    // Signed out: the patient area sends the visitor to sign in first (the guard keeps the area, not the query).
+    await expect(page).toHaveURL(/\/en\/login\?next=%2Fen%2Fpatient%2Flab-tests/, { timeout: 20_000 });
   });
 
   test("canonical and hreflang metadata; lab pages are not indexed", async ({ page }) => {

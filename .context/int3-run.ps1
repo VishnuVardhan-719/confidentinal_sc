@@ -25,4 +25,5 @@ foreach ($project in $Projects) {
   "== $Spec [$project]$(if ($ClinicalOff) {' clinical-off'}) : $($summary -join ', ')"
   $out | Select-String "^\s+\d+\) \[" | ForEach-Object { "   FAIL " + $_.Line.Trim().Substring(0, [Math]::Min(200, $_.Line.Trim().Length)) }
   $out | Set-Content (Join-Path $env:TEMP "int3-$Spec-$project$(if ($ClinicalOff) {'-off'}).log")
+  Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
 }

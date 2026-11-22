@@ -11,6 +11,7 @@
  */
 import AxeBuilder from "@axe-core/playwright";
 import { expect as baseExpect, test } from "@playwright/test";
+import { patientTest } from "./support/fixture-session";
 
 const expect = baseExpect.configure({ timeout: 15_000 });
 const MODE = process.env.E2E_FEP_MODE;
@@ -48,11 +49,11 @@ const LOCALIZED: [string, string][] = [
 ];
 const failing = (route: string) => (STRICT_ROUTES.has(route) || route === "/patient/notifications" ? ["moderate", "serious", "critical"] : ["serious", "critical"]);
 
-test.describe("fe-p patient routes a11y sweep", () => {
-  test.skip(MODE !== "session", "needs a session-mode fixture server");
+patientTest.describe("fe-p patient routes a11y sweep", () => {
+  patientTest.skip(MODE !== "session", "needs a session-mode fixture server");
 
   for (const [locale, route] of [...ROUTES.map((r): [string, string] => ["en", r]), ...LOCALIZED]) {
-    test(`a11y ${locale}${route}`, async ({ page }) => {
+    patientTest(`a11y ${locale}${route}`, async ({ page }) => {
       await page.goto(`/${locale}${route}`);
       await expect(page.locator("html")).toHaveAttribute("lang", locale);
       await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toBeVisible();
@@ -80,7 +81,7 @@ test.describe("fe-p patient routes a11y sweep", () => {
       expect(focus.ok, focus.why).toBe(true);
     });
   }
-  test("dashboard and shell nav reach every R7 patient page", async ({ page }) => {
+  patientTest("dashboard and shell nav reach every R7 patient page", async ({ page }) => {
     for (const start of ["/en/patient/dashboard", "/en/patient/bookings"]) {
       await page.goto(start);
       if ((page.viewportSize()?.width ?? 1280) < 1024) {
@@ -103,12 +104,12 @@ test.describe("fe-p patient routes a11y sweep", () => {
  * overflows, Escape closes it and focus returns to the trigger. Triggers are found by aria-haspopup,
  * so the test does not depend on translated labels.
  */
-test.describe("fe-p notifications and reminders a11y with overlays open", () => {
-  test.skip(MODE !== "session", "needs a session-mode fixture server");
+patientTest.describe("fe-p notifications and reminders a11y with overlays open", () => {
+  patientTest.skip(MODE !== "session", "needs a session-mode fixture server");
 
   for (const locale of ["en", "te", "hi"]) {
     for (const route of ["/patient/notifications", "/patient/settings/reminders"]) {
-      test(`overlay a11y ${locale}${route}`, async ({ page }) => {
+      patientTest(`overlay a11y ${locale}${route}`, async ({ page }) => {
         await page.goto(`/${locale}${route}`);
         await expect(page.locator("html")).toHaveAttribute("lang", locale);
         await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toBeVisible();

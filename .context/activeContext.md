@@ -278,3 +278,9 @@ SHUTDOWN 2026-11-20 ~23:30 IST: see docs/frontend/RESUME_HERE.md "STATE AT SHUTD
 - Resume = "LETS RESUME": follow the numbered list at the top of `docs/frontend/RESUME_HERE.md`. Claude is the only builder (Kiro gone, agy dropped).
 - Build current (551 pages, exit 0). Unverified: full vitest on the final head, new `public-service-directories` e2e, mobile reruns of admin-verification / lab-directory / public-directory-smoke, a11y-sweep-c rerun, fe-p session specs, CodeRabbit on the final diff.
 - Admin "Start review" mobile failure root cause: fixed bottom bar covers elements near the screen edge; fixed with `scroll-padding-bottom` + `data-app-bottom-nav` (globals.css, app-shell.tsx).
+
+## 2026-11-22 e2e finding (fe2-int)
+- FIXTURE_PATIENT_SESSION / FIXTURE_DOCTOR_SESSION no longer exist in fe2-int (removed at integration). Signed-in specs MUST use `patientTest` from tests/e2e/support/fixture-session.ts (real fe-b login, synthetic accounts). Earlier "session" runs of a11y-sweep-p, patient-family/saved/reviews/review-changes were silently signed out (login page passes axe). Ported all five to patientTest.
+- Pipeline: .context/verify17.sh (lab-directory + admin-verification reruns, then patient specs clinical-on, then clinical-off). One project per int3-run call; kill servers by PID.
+- admin-verification mobile: landing can bounce dashboard->onboarding; spec now waits for the landing path to settle.
+- After verify17: unit + tsc + eslint, CodeRabbit (--base-commit 77ff974), commit+push, docs, notify user. Then WAIT for user approval (no backend work yet).

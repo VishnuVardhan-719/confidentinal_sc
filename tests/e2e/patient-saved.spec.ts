@@ -6,6 +6,7 @@
  */
 import AxeBuilder from "@axe-core/playwright";
 import { expect as baseExpect, test, type Page } from "@playwright/test";
+import { patientTest } from "./support/fixture-session";
 
 // Redirects, client navigations and server actions on a shared, often loaded machine; 5 s was flaky.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -23,10 +24,10 @@ async function expectNoHorizontalScroll(page: Page) {
 const savedList = (page: Page) => page.getByRole("main").getByRole("region", { name: /saved doctor/ });
 const suggestList = (page: Page) => page.getByRole("main").getByRole("region", { name: "Doctors you can save" });
 
-test.describe("saved doctors (signed-in, seeded)", () => {
-  test.skip(MODE !== "session" || CLINICAL !== "on", "needs the session fixture server (seeded saved list)");
+patientTest.describe("saved doctors (signed-in, seeded)", () => {
+  patientTest.skip(MODE !== "session" || CLINICAL !== "on", "needs the session fixture server (seeded saved list)");
 
-  test("saved list shows directory details, a profile link and a remove button", async ({ page }) => {
+  patientTest("saved list shows directory details, a profile link and a remove button", async ({ page }) => {
     await page.goto("/en/patient/saved");
     const main = page.getByRole("main");
     await expect(main.getByRole("heading", { level: 1, name: "Saved doctors" })).toBeVisible();
@@ -41,7 +42,7 @@ test.describe("saved doctors (signed-in, seeded)", () => {
     await expectAxeClean(page);
   });
 
-  test("save a suggested doctor, then remove it; results are announced", async ({ page, isMobile }) => {
+  patientTest("save a suggested doctor, then remove it; results are announced", async ({ page, isMobile }) => {
     // Each project uses its own doctor so the two parallel runs do not race on one row.
     const name = isMobile || (page.viewportSize()?.width ?? 1280) < 1024 ? "Synthetic doctor 2" : "Synthetic doctor 4"; // doctor 3 has no open slots, so search leaves it out
     await page.goto("/en/patient/saved");
@@ -58,7 +59,7 @@ test.describe("saved doctors (signed-in, seeded)", () => {
     await expect(suggestList(page).getByRole("button", { name: `Save ${name}` })).toBeVisible();
   });
 
-  test("keyboard: Tab reaches the save button and Enter saves", async ({ page, isMobile }) => {
+  patientTest("keyboard: Tab reaches the save button and Enter saves", async ({ page, isMobile }) => {
     const name = isMobile || (page.viewportSize()?.width ?? 1280) < 1024 ? "Synthetic doctor 5" : "Synthetic doctor 6";
     await page.goto("/en/patient/saved");
     const save = suggestList(page).getByRole("button", { name: `Save ${name}` });
@@ -73,7 +74,7 @@ test.describe("saved doctors (signed-in, seeded)", () => {
     await expect(savedList(page).getByText(name)).toHaveCount(0);
   });
 
-  test("te and hi render without raw keys and pass axe", async ({ page }) => {
+  patientTest("te and hi render without raw keys and pass axe", async ({ page }) => {
     for (const locale of ["te", "hi"]) {
       await page.goto(`/${locale}/patient/saved`);
       await expect(page.locator("html")).toHaveAttribute("lang", locale);
@@ -85,10 +86,10 @@ test.describe("saved doctors (signed-in, seeded)", () => {
   });
 });
 
-test.describe("saved doctors (signed-in, empty)", () => {
-  test.skip(MODE !== "session" || CLINICAL !== "off", "needs FIXTURE_SAVED_SCENARIO=empty");
+patientTest.describe("saved doctors (signed-in, empty)", () => {
+  patientTest.skip(MODE !== "session" || CLINICAL !== "off", "needs FIXTURE_SAVED_SCENARIO=empty");
 
-  test("empty state links to the directory and suggestions are still offered", async ({ page }) => {
+  patientTest("empty state links to the directory and suggestions are still offered", async ({ page }) => {
     await page.goto("/en/patient/saved");
     const main = page.getByRole("main");
     await expect(main.getByRole("heading", { name: "No saved doctors yet" })).toBeVisible();

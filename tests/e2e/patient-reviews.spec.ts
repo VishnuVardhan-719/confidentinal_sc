@@ -6,6 +6,7 @@
  */
 import AxeBuilder from "@axe-core/playwright";
 import { expect as baseExpect, test, type Page } from "@playwright/test";
+import { patientTest } from "./support/fixture-session";
 
 // Redirects, client navigations and server actions on a shared, often loaded machine; 5 s was flaky.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -23,10 +24,10 @@ async function expectNoHorizontalScroll(page: Page) {
 }
 const isNarrow = (page: Page) => (page.viewportSize()?.width ?? 1280) < 1024;
 
-test.describe("reviews (signed-in, seeded)", () => {
-  test.skip(MODE !== "session" || CLINICAL !== "on", "needs the session fixture server (seeded visits)");
+patientTest.describe("reviews (signed-in, seeded)", () => {
+  patientTest.skip(MODE !== "session" || CLINICAL !== "on", "needs the session fixture server (seeded visits)");
 
-  test("list separates visits to review from submitted reviews with moderation badges", async ({ page }) => {
+  patientTest("list separates visits to review from submitted reviews with moderation badges", async ({ page }) => {
     await page.goto("/en/patient/reviews");
     const main = page.getByRole("main");
     await expect(main.getByRole("heading", { level: 1, name: "Your reviews" })).toBeVisible();
@@ -43,7 +44,7 @@ test.describe("reviews (signed-in, seeded)", () => {
     await expectAxeClean(page);
   });
 
-  test("validation errors, then a successful review that waits for moderation", async ({ page }) => {
+  patientTest("validation errors, then a successful review that waits for moderation", async ({ page }) => {
     const [id, ref] = isNarrow(page) ? [IDS.doctorDue, "SYN-BKG-0201"] : [IDS.labDue, "SYN-BKG-0202"];
     await page.goto(`/en/patient/reviews/${id}`);
     const main = page.getByRole("main");
@@ -80,7 +81,7 @@ test.describe("reviews (signed-in, seeded)", () => {
     await expect(main.getByRole("button", { name: "Send review" })).toHaveCount(0);
   });
 
-  test("not-completed, reviewed and unknown bookings show a notice instead of the form", async ({ page }) => {
+  patientTest("not-completed, reviewed and unknown bookings show a notice instead of the form", async ({ page }) => {
     for (const [id, text] of [
       [IDS.upcoming, "Only completed visits can be reviewed."],
       [IDS.published, "You have already reviewed this visit."],
@@ -93,7 +94,7 @@ test.describe("reviews (signed-in, seeded)", () => {
     }
   });
 
-  test("te and hi render the list and the form without raw keys", async ({ page }) => {
+  patientTest("te and hi render the list and the form without raw keys", async ({ page }) => {
     for (const locale of ["te", "hi"]) {
       for (const path of ["patient/reviews", `patient/reviews/${IDS.upcoming}`]) {
         await page.goto(`/${locale}/${path}`);
@@ -108,10 +109,10 @@ test.describe("reviews (signed-in, seeded)", () => {
   });
 });
 
-test.describe("reviews (signed-in, empty)", () => {
-  test.skip(MODE !== "session" || CLINICAL !== "off", "needs FIXTURE_REVIEWS_SCENARIO=empty");
+patientTest.describe("reviews (signed-in, empty)", () => {
+  patientTest.skip(MODE !== "session" || CLINICAL !== "off", "needs FIXTURE_REVIEWS_SCENARIO=empty");
 
-  test("empty state points to bookings", async ({ page }) => {
+  patientTest("empty state points to bookings", async ({ page }) => {
     await page.goto("/en/patient/reviews");
     const main = page.getByRole("main");
     await expect(main.getByRole("heading", { name: "No visits to review" })).toBeVisible();

@@ -26,7 +26,7 @@ async function checkPage(page: Page, label: string) {
 
 /** The 112 notice sits above the page heading, so it is the first thing read and the first thing seen. */
 async function expectEmergencyFirst(page: Page) {
-  const banner = page.getByTestId("emergency-banner");
+  const banner = page.getByTestId("emergency-banner").filter({ visible: true });
   await expect(banner).toBeVisible();
   await expect(banner.getByRole("link", { name: "Call 112" })).toHaveAttribute("href", "tel:112");
   const [bannerBox, headingBox] = await Promise.all([banner.boundingBox(), page.getByRole("heading", { level: 1 }).boundingBox()]);
@@ -86,7 +86,7 @@ test.describe("public ambulance directory", () => {
     await expectEmergencyFirst(page);
     await checkPage(page, "ambulances empty");
     await page.goto("/en/ambulances?pin=12ab");
-    await expect(page.locator("#provider-pin-error")).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator("#provider-pin-error").filter({ visible: true })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByTestId("service-provider-card").filter({ visible: true })).toHaveCount(3);
     await checkPage(page, "ambulances invalid pin");
   });
@@ -140,7 +140,7 @@ test.describe("public caretaker directory", () => {
 
     await page.getByRole("link", { name: "View caretaker: Synthetic care agency 2" }).click();
     await expect(page.getByRole("heading", { level: 1, name: "Synthetic care agency 2" })).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText("Care agency", { exact: true })).toBeVisible();
+    await expect(page.getByText("Care agency", { exact: true }).first()).toBeVisible();
     const tasks = page.getByTestId("care-task");
     await expect(tasks).toHaveCount(3);
     await expect(tasks.filter({ hasText: "Help with bathing and dressing" })).toHaveCount(1);

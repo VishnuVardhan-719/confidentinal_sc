@@ -4,7 +4,8 @@
  * withdraws 0208, desktop edits 0207 and withdraws 0209. Run once per server (the script restarts it).
  */
 import AxeBuilder from "@axe-core/playwright";
-import { expect as baseExpect, test, type Page } from "@playwright/test";
+import { expect as baseExpect, type Page } from "@playwright/test";
+import { patientTest } from "./support/fixture-session";
 
 const expect = baseExpect.configure({ timeout: 15_000 });
 const MODE = process.env.E2E_FEP_MODE;
@@ -21,10 +22,10 @@ async function expectAxeClean(page: Page) {
   expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
 }
 
-test.describe("review edit and withdraw (signed-in, seeded)", () => {
-  test.skip(MODE !== "session" || CLINICAL !== "on", "needs the seeded session fixture server");
+patientTest.describe("review edit and withdraw (signed-in, seeded)", () => {
+  patientTest.skip(MODE !== "session" || CLINICAL !== "on", "needs the seeded session fixture server");
 
-  test("a rejected review shows the reason; editing sends it back to moderation", async ({ page }) => {
+  patientTest("a rejected review shows the reason; editing sends it back to moderation", async ({ page }) => {
     const [id, ref, provider] = rows(page).edit;
     await page.goto("/en/patient/reviews");
     const card = submitted(page).getByRole("listitem").filter({ hasText: ref });
@@ -54,7 +55,7 @@ test.describe("review edit and withdraw (signed-in, seeded)", () => {
     await expect(after).toContainText("Edited: the synthetic visit");
   });
 
-  test("withdraw needs confirmation, is final and removes the actions", async ({ page }) => {
+  patientTest("withdraw needs confirmation, is final and removes the actions", async ({ page }) => {
     const [ref, provider] = rows(page).withdraw;
     await page.goto("/en/patient/reviews");
     const card = submitted(page).getByRole("listitem").filter({ hasText: ref });
@@ -76,7 +77,7 @@ test.describe("review edit and withdraw (signed-in, seeded)", () => {
     await expect(after.getByRole("link", { name: /^Edit/ })).toHaveCount(0);
   });
 
-  test("te and hi render the edit page without raw keys", async ({ page }) => {
+  patientTest("te and hi render the edit page without raw keys", async ({ page }) => {
     const [id] = rows(page).edit;
     for (const locale of ["te", "hi"]) {
       await page.goto(`/${locale}/patient/reviews/${id}/edit`);
@@ -86,7 +87,7 @@ test.describe("review edit and withdraw (signed-in, seeded)", () => {
     }
   });
 
-  test("editing an unknown or unreviewed booking shows a notice, not a form", async ({ page }) => {
+  patientTest("editing an unknown or unreviewed booking shows a notice, not a form", async ({ page }) => {
     for (const id of ["00000000-0000-4000-8000-0000000002ff", "00000000-0000-4000-8000-0000000002a5", "nope"]) {
       await page.goto(`/en/patient/reviews/${id}/edit`);
       await expect(page.getByRole("main").getByText("This visit is not available.", { exact: false })).toBeVisible();

@@ -129,10 +129,21 @@ test.describe("admin access control", () => {
     for (const account of [ACCOUNTS.patientComplete, ACCOUNTS.doctorActive, ACCOUNTS.labOwner]) {
       await signIn(page, account);
       // Wrong role: requireRole redirects to the account's own landing page.
-      const landing = new URL(page.url()).pathname;
+      // A new account can bounce dashboard -> onboarding, so wait until the landing path stops changing.
+      let landing = new URL(page.url()).pathname;
+      await expect(async () => {
+        await page.waitForTimeout(600);
+        const now = new URL(page.url()).pathname;
+        const settled = now === landing;
+        landing = now;
+        expect(settled).toBe(true);
+      }).toPass({ timeout: 15_000 });
       expect(landing).not.toMatch(/^\/en\/admin/);
       for (const path of ["/en/admin/providers", `/en/admin/providers/${LAB}`, "/en/admin/coverage"]) {
-        await page.goto(path, { waitUntil: "domcontentloaded" });
+        // A server redirect to the landing page can abort the first request on a loaded mobile run; the URL check below is the assertion.
+        await page.goto(path, { waitUntil: "domcontentloaded" }).catch((error: unknown) => {
+          if (!String(error).includes("ERR_ABORTED")) throw error;
+        });
         await expect(page).toHaveURL(landing);
         await expect(page.getByText(/synthetic diagnostics/i)).toHaveCount(0);
       }

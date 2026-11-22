@@ -66,7 +66,7 @@ export async function ProviderDirectory<P extends BaseProvider>({ segment, resul
                   </div>
                   <div>
                     {detail ? (
-                      <Button asChild variant="secondary"><Link href={`${segment}/${provider.id}`}>{detail.viewLabel}<span className="sr-only">: {provider.name}</span></Link></Button>
+                      <Button asChild variant="secondary"><Link href={`${segment}/${provider.id}`} aria-label={`${detail.viewLabel}: ${provider.name}`}>{detail.viewLabel}</Link></Button>
                     ) : (
                       <Button asChild><Link href={`${segment}/request?providerId=${provider.id}`} aria-label={`${requestLabel}: ${provider.name}`}>{requestLabel}</Link></Button>
                     )}

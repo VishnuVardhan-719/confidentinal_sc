@@ -118,7 +118,7 @@ export async function LabDirectoryResults({ searchParams }: { searchParams: Prom
                         </ul>
                       </div>
                     </div>
-                    <div><Button asChild variant="secondary"><Link href={`/lab-tests/${lab.id}`}>{t("viewLab")}<span className="sr-only">: {lab.name}</span></Link></Button></div>
+                    <div><Button asChild variant="secondary"><Link href={`/lab-tests/${lab.id}`} aria-label={`${t("viewLab")}: ${lab.name}`}>{t("viewLab")}</Link></Button></div>
                   </li>
                 );
               })}

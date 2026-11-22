@@ -7,6 +7,7 @@
  */
 import AxeBuilder from "@axe-core/playwright";
 import { expect as baseExpect, test, type Page } from "@playwright/test";
+import { patientTest } from "./support/fixture-session";
 
 // Redirects, client navigations and server actions on a shared, often loaded machine; 5 s was flaky.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -35,10 +36,10 @@ async function addMember(page: Page, name: string, relation = "Child", dob = "20
   await expect(main.getByText("Family member added.")).toBeVisible();
 }
 
-test.describe("family members (signed-in, seeded)", () => {
-  test.skip(MODE !== "session" || CLINICAL !== "on", "needs the session fixture server (seeded family store)");
+patientTest.describe("family members (signed-in, seeded)", () => {
+  patientTest.skip(MODE !== "session" || CLINICAL !== "on", "needs the session fixture server (seeded family store)");
 
-  test("list shows the seeded synthetic member with relation and age", async ({ page }) => {
+  patientTest("list shows the seeded synthetic member with relation and age", async ({ page }) => {
     await page.goto("/en/patient/family");
     const main = page.getByRole("main");
     await expect(main.getByRole("heading", { level: 1, name: "Family members" })).toBeVisible();
@@ -51,7 +52,7 @@ test.describe("family members (signed-in, seeded)", () => {
     await expectAxeClean(page);
   });
 
-  test("empty submit shows a focused error summary linked to each field", async ({ page }) => {
+  patientTest("empty submit shows a focused error summary linked to each field", async ({ page }) => {
     await page.goto("/en/patient/family/new");
     const main = page.getByRole("main");
     await main.getByRole("button", { name: "Save family member" }).click();
@@ -71,7 +72,7 @@ test.describe("family members (signed-in, seeded)", () => {
     await expect(page).toHaveURL(/\/en\/patient\/family\/new$/);
   });
 
-  test("add, edit and remove a member; URLs carry only an opaque id", async ({ page }) => {
+  patientTest("add, edit and remove a member; URLs carry only an opaque id", async ({ page }) => {
     const name = uniqueName("Child");
     await addMember(page, name);
     const main = page.getByRole("main");
@@ -97,8 +98,8 @@ test.describe("family members (signed-in, seeded)", () => {
     expect(stored).not.toContain("Synthetic");
   });
 
-  test("keyboard-only add (en-IN date order: day, month, year)", async ({ browser }) => {
-    const context = await browser.newContext({ locale: "en-IN", baseURL: process.env.PLAYWRIGHT_BASE_URL });
+  patientTest("keyboard-only add (en-IN date order: day, month, year)", async ({ browser, baseURL, patientStorage }) => {
+    const context = await browser.newContext({ locale: "en-IN", baseURL, storageState: patientStorage });
     const page = await context.newPage();
     const name = uniqueName("Keyboard");
     await page.goto("/en/patient/family");
@@ -125,7 +126,7 @@ test.describe("family members (signed-in, seeded)", () => {
     await context.close();
   });
 
-  test("unknown and malformed ids show the same not-available state", async ({ page }) => {
+  patientTest("unknown and malformed ids show the same not-available state", async ({ page }) => {
     for (const id of ["00000000-0000-4000-8000-0000000000f9", "not-a-member"]) {
       await page.goto(`/en/patient/family/${id}`);
       await expect(page.getByRole("main").getByText("This family member is not available.", { exact: false })).toBeVisible();
@@ -133,7 +134,7 @@ test.describe("family members (signed-in, seeded)", () => {
     }
   });
 
-  test("te and hi render the list and the form without raw keys; axe clean", async ({ page }) => {
+  patientTest("te and hi render the list and the form without raw keys; axe clean", async ({ page }) => {
     for (const locale of ["te", "hi"]) {
       for (const path of ["patient/family", "patient/family/new"]) {
         await page.goto(`/${locale}/${path}`);
@@ -147,10 +148,10 @@ test.describe("family members (signed-in, seeded)", () => {
   });
 });
 
-test.describe("family members (signed-in, empty store)", () => {
-  test.skip(MODE !== "session" || CLINICAL !== "off", "needs the session fixture server with FIXTURE_FAMILY_SCENARIO=empty");
+patientTest.describe("family members (signed-in, empty store)", () => {
+  patientTest.skip(MODE !== "session" || CLINICAL !== "off", "needs the session fixture server with FIXTURE_FAMILY_SCENARIO=empty");
 
-  test("empty state offers the add action", async ({ page }) => {
+  patientTest("empty state offers the add action", async ({ page }) => {
     await page.goto("/en/patient/family");
     const main = page.getByRole("main");
     // No test adds members in this mode, so the store stays empty.
