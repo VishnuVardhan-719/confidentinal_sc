@@ -17,8 +17,8 @@
 5. fe-p session specs (skip without session mode): `-Env @{E2E_FEP_MODE="session";E2E_FEP_CLINICAL="on"}` for `a11y-sweep-p`, `patient-family`, `patient-reminders`, `patient-reviews`, `patient-review-changes`, `patient-saved`; then the `-ClinicalOff` and `FIXTURE_FAMILY_SCENARIO=empty` variants.
 6. CodeRabbit on the final diff: `/c/Users/Yashwanth/AppData/Local/Programs/coderabbit/coderabbit review --agent --base-commit 77ff974` (background; last JSON line has `findings`). Fix valid findings.
 7. Commit with trailer `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`, push with: `GIT_TERMINAL_PROMPT=0 timeout 80 git -c credential.helper= -c "credential.helper=!gh auth git-credential" push -q origin feat/fe2-integration`, verify `git rev-parse --short HEAD` equals `git ls-remote origin feat/fe2-integration | cut -c1-7`.
-8. Update `docs/PROGRESS_REPORT.md`, `docs/frontend/INTEGRATION_REPORT.md` (add 6.9 with the results of steps 2 to 6) and this file. Then ASK the user: merge backend PRs #1 to #5, then connect with `FRONTEND_ADAPTER=http`.
-9. After approval only: backend connection (phase 9). Read `docs/frontend/BACKEND_CONNECT_PLAN.md`; `feat/fe2-c` holds ready-to-enable B01 wiring (`src/modules/bookings/b01-http.ts`, `src/modules/patient/b01-http.ts`, unverified WIP).
+8. Update `docs/PROGRESS_REPORT.md`, `docs/frontend/INTEGRATION_REPORT.md` (add 6.9 with the results of steps 2 to 6) and this file. Then notify the user and WAIT for their approval and change requests (owner flow of 2026-11-23: frontend done, user changes, then the BACKEND is completed, and only then merge and connect). Do not merge backend PRs or switch to `FRONTEND_ADAPTER=http` before the backend is complete. Provider decisions (OTP, email, invoices, Supabase plan): `docs/frontend/BACKEND_VERIFICATION_DECISIONS.md`.
+9. After the user says "start backend" and the backend is complete: merge and connect (phase 9). Read `docs/frontend/BACKEND_CONNECT_PLAN.md`; `feat/fe2-c` holds ready-to-enable B01 wiring (`src/modules/bookings/b01-http.ts`, `src/modules/patient/b01-http.ts`, unverified WIP).
 
 ### Tooling notes (hard-won)
 - Bash tool calls die near 95 s: background anything slow (`nohup bash -c '...' & disown`) and watch with Monitor. Do not run tsc/vitest while an e2e pipeline runs (false timeouts).
@@ -55,7 +55,7 @@ Frontend (1 to 8): ~97% built, ~85% tested. About 2 to 2.5 h of work left, then 
 - Done this session: Bearer-token injection for bookings + admin http adapters (CodeRabbit findings fixed); money formatters unified on `src/lib/money` (R-E9E6-01..03); static a11y test for lab/ambulance/caretaker; integration smoke 102/102 passing; unit suite green.
 - Also done: `patient-reminders.spec.ts` verified 14/14 (session) + guest, now signing in via fixture-session helper; R-FE-P-R9-6 return-path patch and C14-2 onboarding fail-closed applied; smoke 102/102 on 4c264db.
 - Remaining: R9-D10 public/legal/404/500/offline polish checks; R9-E7 remainder (keyboard + axe on list pages); `patient-reminders.spec.ts` verification; R-FE-Q-C14 patches + address/slots/reschedule mapping from BACKEND_CONNECT_PLAN.md; final adversarial pass; full lint/tsc/unit/build/Playwright on the head; te/hi human translation review.
-- After frontend complete: ASK the user before merging backend PRs #1-#5, then connect with FRONTEND_ADAPTER=http.
+- After frontend complete: wait for the user's changes, then complete the backend on their word, then merge and connect (FRONTEND_ADAPTER=http).
 
 # SureCure Visit frontend: RESUME HERE
 
