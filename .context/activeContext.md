@@ -285,3 +285,8 @@ SHUTDOWN 2026-11-20 ~23:30 IST: see docs/frontend/RESUME_HERE.md "STATE AT SHUTD
 - admin-verification mobile: landing can bounce dashboard->onboarding; spec now waits for the landing path to settle.
 - After verify17: unit + tsc + eslint, CodeRabbit (--base-commit 77ff974), commit+push, docs, notify user. Then WAIT for user approval (no backend work yet).
 - FRONTEND COMPLETE 2026-11-22: verify17 (patient specs signed in, clinical on+off), verify18 (guest), verify19 (keyboard-lists) all green; unit 1980, tsc 0, eslint clean, CodeRabbit 5 minor fixed. Waiting for owner approval/changes. No backend work until "start backend".
+
+## 2026-11-23 Emergency number change (owner chose option 1)
+- 112 stays primary; 108 (free ambulance, Telangana + Andhra Pradesh) added as secondary tel:108 link on /emergency, EmergencyBanner, ambulance EmergencyView. en/te/hi keys: public.emergency.callAmbulance, services.ambulance.emergencyCallAmbulance, ambulance.emergency.callAmbulanceButton.
+- Verified: unit 1980/1980, tsc 0, eslint clean, build ok, e2e emergency-e(4)/ambulance(9)/public-nav(6)/public-service-directories(14)/auth(28) pass on both projects, CodeRabbit 0 findings. Pushed 7104d2e. Preview: http://localhost:3400/en
+- Still waiting on owner: change requests, providerId-after-login redirect decision, "start backend".
