@@ -1,3 +1,4 @@
+> 2026-11-23 update: provider approval gate pushed as e1749d1; waiting for owner approval, backend only on "START BACKEND". See .context/activeContext.md.
 ## >>> FRONTEND COMPLETE 2026-11-22: WAIT FOR THE OWNER <<<
 
 Frontend (phases 1 to 8) is built, verified and pushed on `feat/fe2-integration`. Results: `docs/frontend/INTEGRATION_REPORT.md` 6.10 (unit 131 files / 1980 tests, tsc 0, eslint clean, all e2e specs green on desktop-1280 and mobile-390, CodeRabbit 5 minor findings fixed).

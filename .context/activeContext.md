@@ -309,3 +309,4 @@ TODO: tsc/eslint ($TEMP/tsc22.log, eslint22.log), unit full, build, e2e (provide
 - Test fixes: lab/settings is not a real route (use billing/staff/reports); patient dashboard has no sign-out (use /en/account/security).
 - Helper: .context/e2e-seq.sh "spec:project ..." runs specs one at a time -> $TEMP/e2e-seq.log (SEQ_DONE).
 - Remaining: CodeRabbit result, commit+push, preview :3400, report, WAIT for "START BACKEND".
+- COMMITTED+PUSHED e1749d1 (approval gate + founder text). CodeRabbit: 1 minor (e2e-seq.sh usage comment) fixed. Preview http://localhost:3400/en restarted. WAITING for owner approval; backend only on "START BACKEND".
