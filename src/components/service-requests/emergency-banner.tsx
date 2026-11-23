@@ -11,7 +11,12 @@ export async function EmergencyBanner() {
   const t = await getTranslations("services.ambulance");
   return (
     <Notice tone="danger" title={t("emergencyTitle")} data-testid="emergency-banner"
-      action={<Button asChild variant="danger" size="lg"><a href="tel:112"><Phone aria-hidden />{t("emergencyCall")}</a></Button>}>
+      action={
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="danger" size="lg"><a href="tel:112"><Phone aria-hidden />{t("emergencyCall")}</a></Button>
+          <Button asChild variant="secondary" size="lg"><a href="tel:108"><Phone aria-hidden />{t("emergencyCallAmbulance")}</a></Button>
+        </div>
+      }>
       {t("emergencyBody")}
     </Notice>
   );

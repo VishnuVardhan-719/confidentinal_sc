@@ -31,6 +31,13 @@ export default function EmergencyPage() {
             <Phone aria-hidden className="size-7" />
             {t("call")}
           </a>
+          <a
+            href="tel:108"
+            className="inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-lg border-2 border-danger bg-surface px-8 text-xl font-bold text-danger-strong hover:bg-danger-surface focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus sm:w-fit"
+          >
+            <Phone aria-hidden className="size-6" />
+            {t("callAmbulance")}
+          </a>
           <p className="text-base text-muted">{t("callHint")}</p>
         </div>
       </div>

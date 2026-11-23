@@ -27,3 +27,11 @@ test("the tel:112 button works with JavaScript disabled", async ({ browser }) =>
   await expect(page.locator("main").getByRole("link", { name: /call 112/i }).first()).toHaveAttribute("href", "tel:112");
   await context.close();
 });
+
+test("the emergency page also offers the free 108 ambulance line, in every language", async ({ page }) => {
+  for (const [locale, label] of [["en", /ambulance: call 108/i], ["te", /108/], ["hi", /108/]] as const) {
+    await page.goto(`/${locale}/emergency`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("main").locator('a[href="tel:112"]').first()).toBeVisible();
+    await expect(page.locator("main").getByRole("link", { name: label }).first()).toHaveAttribute("href", "tel:108");
+  }
+});

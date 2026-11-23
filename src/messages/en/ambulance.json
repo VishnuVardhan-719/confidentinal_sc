@@ -69,7 +69,8 @@
     "title": "Emergency",
     "dispatchUnavailable": "Emergency dispatch is not available on SureCure Visit.",
     "body": "This service only handles planned, non-emergency transport. Nobody on the platform watches for emergencies or sends ambulances. If someone may be in danger, call 112 immediately.",
-    "callButton": "Call 112"
+    "callButton": "Call 112",
+    "callAmbulanceButton": "Ambulance: call 108"
   },
   "dashboard": {
     "title": "Transport overview",

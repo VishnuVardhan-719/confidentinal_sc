@@ -273,7 +273,8 @@
       "mobility": "Choose how the patient moves.",
       "destination": "Enter the drop-off area, city and a 6-digit PIN in this operator's area.",
       "notEmergency": "Confirm this is not an emergency. For emergencies call 112."
-    }
+    },
+    "emergencyCallAmbulance": "Ambulance: call 108"
   },
   "errorPage": {
     "title": "We could not load this page",

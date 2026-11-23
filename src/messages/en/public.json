@@ -591,7 +591,7 @@
   },
   "emergency": {
     "title": "In a medical emergency, call 112",
-    "lead": "112 is India’s single emergency number for police, fire and ambulance. Calls are free.",
+    "lead": "112 is India’s single emergency number for police, fire and ambulance. Calls are free. In Telangana and Andhra Pradesh, 108 is the free ambulance line.",
     "call": "Call 112",
     "callHint": "On a phone, this starts the call. You can also dial 1 1 2 yourself.",
     "dispatchTitle": "SureCure Visit does not dispatch emergency help",
@@ -604,7 +604,8 @@
       "follow": "Follow the instructions the emergency call handler gives you.",
       "door": "If you can, have someone meet the ambulance at the gate or road."
     },
-    "disclaimer": "This page is general guidance, not medical advice."
+    "disclaimer": "This page is general guidance, not medical advice.",
+    "callAmbulance": "Ambulance: call 108"
   },
   "storyPage": {
     "back": "All stories",

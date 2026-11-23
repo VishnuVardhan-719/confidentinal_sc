@@ -494,6 +494,13 @@ export function EmergencyView({ guidance }: { guidance: EmergencyGuidance }) {
           <Phone aria-hidden className="size-5" />
           {t("callButton")}
         </a>
+        <a
+          href="tel:108"
+          className="inline-flex min-h-12 w-fit items-center gap-2 rounded-md border-2 border-danger bg-surface px-6 text-lg font-semibold text-danger-strong hover:bg-danger-surface focus-visible:outline-2 focus-visible:outline-focus"
+        >
+          <Phone aria-hidden className="size-5" />
+          {t("callAmbulanceButton")}
+        </a>
       </section>
       <GateNotice feature="emergencyDispatch" title={t("dispatchUnavailable")}>
         {t("body")}
