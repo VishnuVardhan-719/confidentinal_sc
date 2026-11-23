@@ -38,6 +38,16 @@ export function loginPath(locale: Locale = DEFAULT_LOCALE, next?: string, reason
 
 export const workspaceSelectPath = (locale: Locale = DEFAULT_LOCALE): string => `/${locale}/workspace/select`;
 
+/**
+ * Provider approval gate: a doctor, lab, ambulance or caretaker whose application is awaiting the admin
+ * sees only "your request has been sent to the admin" until it is approved. Patients and admins never
+ * use it. `role` only tailors the wording; it grants nothing.
+ */
+const APPROVAL_GATED_ROLES: readonly Role[] = ["doctor", "lab", "ambulance", "caretaker"];
+export const isApprovalGatedRole = (role: Role): boolean => APPROVAL_GATED_ROLES.includes(role);
+export const pendingApprovalPath = (locale: Locale = DEFAULT_LOCALE, role?: Role): string =>
+  role && isApprovalGatedRole(role) ? `/${locale}/workspace/pending?role=${role}` : `/${locale}/workspace/pending`;
+
 /** Private routes outside role roots that need any authenticated, unrestricted session. */
 const SHARED_PRIVATE_ROOTS = new Set(["workspace", "account"]);
 
@@ -129,6 +139,11 @@ export function canAccessRoute(session: Session, path: string): AccessDecision {
   if (state === "active") return { allowed: true };
   if (role === "admin") return { allowed: false, reason: "forbidden", redirectTo: null };
 
+  // Awaiting admin approval: no dashboard and no other workspace page, only the "request sent" message.
+  if (state === "pending_review" && isApprovalGatedRole(role)) {
+    return { allowed: false, reason: "workspace_restricted", redirectTo: pendingApprovalPath(locale, role) };
+  }
+
   const sub = segments[1] ?? "dashboard";
   if (state === "restricted") {
     return RESTRICTED_SEGMENTS.has(sub)
@@ -150,6 +165,7 @@ export function landingPathFor(identity: Identity, locale: Locale = DEFAULT_LOCA
   const state = workspaceStateFor(identity, role);
   // A non-active admin has no admin route the guard allows; send them to their own account page.
   if (role === "admin" && state !== "active") return `/${locale}/account/security`;
+  if (state === "pending_review" && isApprovalGatedRole(role)) return pendingApprovalPath(locale, role);
   if (state === "onboarding_incomplete" || state === "unknown") return onboardingPath(role, locale);
   return homePath(role, locale);
 }

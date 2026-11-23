@@ -1,9 +1,7 @@
 /**
  * Leadership letters, supplied by the owner on 2026-11-23 (docs/frontend/incoming/LEADERSHIP_COPY.md).
- * They are the leaders' own words and are shown in English on every language page (lang="en") until
- * the leaders approve translations. Only wording about features that are not live yet was shortened:
- * the founder's list of services names doctor home visits, doorstep lab collection, caretakers and
- * scheduled ambulances, not live tracking, digital prescriptions, health records or emergency support.
+ * They are the leaders' own words, published exactly as given, and shown in English on every language
+ * page (lang="en") until the leaders approve translations.
  */
 export type Leader = {
   id: "founder" | "cofounder" | "director";
@@ -36,7 +34,7 @@ export const LEADERS: Leader[] = [
       "Healthcare should never feel like a journey filled with difficulty, uncertainty, or unnecessary stress. For an elderly parent who struggles to walk, a child experiencing a sudden illness, or a patient recovering after surgery, even reaching a hospital can become a challenge.",
       "At SureCureVisit, we believe that quality healthcare should begin where comfort matters most: at home.",
       "Our vision is simple yet powerful: Care should travel to the patient, not the patient to care.",
-      "Through our digital healthcare platform, Curevist.in, we are building a connected home healthcare ecosystem that brings essential medical services closer to individuals and families, from doctor home visits and doorstep lab sample collection to professional caretaker services and scheduled ambulance support.",
+      "Through our digital healthcare platform, Curevist.in, we are building a connected home healthcare ecosystem that brings essential medical services closer to individuals and families. We connect patients with doctors, convenient doctor home visits, live doctor tracking, doorstep lab sample collection, digital prescriptions, secure health records, professional caretaker services, and emergency support.",
       "But we are building more than a healthcare platform. We are building trust, simplifying access to medical services, and creating a healthcare experience where technology meets humanity.",
     ],
     listTitle: "We envision a future where",

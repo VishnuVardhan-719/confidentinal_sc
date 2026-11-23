@@ -118,19 +118,20 @@ test.describe("doctor onboarding", () => {
 });
 
 test.describe("lab onboarding", () => {
-  test("pending review: onboarding shows status and no editor", async ({ page }) => {
+  test("pending review: onboarding shows only the request-sent message, no editor", async ({ page }) => {
     await signIn(page, ACCOUNTS.labOwner, "/en/lab/onboarding");
-    await expect(page).toHaveURL("/en/lab/onboarding");
-    await expect(visible(page.getByText(/under review/i))).toBeVisible();
+    await expect(page).toHaveURL(/\/en\/workspace\/pending\?role=lab$/);
+    await expect(h1(page)).toHaveText(/request has been sent to the admin/i);
     await expect(page.getByRole("button", { name: COPY.saveContinue })).toHaveCount(0);
   });
 
-  // Integration (fe-int2 INT5): un-fixme'd; /lab/dashboard and /lab/orders exist here.
-  test("pending review: the dashboard and operational pages send the applicant to the onboarding status", async ({ page }) => {
+  test("pending review: the dashboard and every workspace page lead to the request-sent message", async ({ page }) => {
     await signIn(page, ACCOUNTS.labOwner);
-    await expect(page).toHaveURL("/en/lab/onboarding");
-    await goto(page, "/en/lab/orders");
-    await expect(page).toHaveURL("/en/lab/onboarding");
+    await expect(page).toHaveURL(/\/en\/workspace\/pending\?role=lab$/);
+    for (const path of ["/en/lab/dashboard", "/en/lab/orders", "/en/lab/onboarding"]) {
+      await goto(page, path);
+      await expect(page, path).toHaveURL(/\/en\/workspace\/pending\?role=lab$/);
+    }
   });
 });
 

@@ -114,10 +114,25 @@ describe("canAccessRoute", () => {
     expect(canAccessRoute(auth([{ role: "patient", state: "unknown" }]), "/en/patient/bookings").allowed).toBe(false);
   });
 
+  it("patients are not affected by the provider approval gate", () => {
+    const pendingPatient = auth([{ role: "patient", state: "pending_review" }]);
+    expect(canAccessRoute(pendingPatient, "/en/patient/dashboard").allowed).toBe(true);
+    const newPatient = FIXTURE_SESSIONS.patient_new;
+    expect(canAccessRoute(newPatient, "/en/patient/onboarding").allowed).toBe(true);
+    expect(canAccessRoute(FIXTURE_SESSIONS.patient_complete, "/en/patient/dashboard").allowed).toBe(true);
+    expect(canAccessRoute(FIXTURE_SESSIONS.admin, "/en/admin/dashboard").allowed).toBe(true);
+    expect(canAccessRoute(FIXTURE_SESSIONS.doctor_active, "/en/doctor/dashboard").allowed).toBe(true);
+  });
+
   it("pending review and suspended providers are limited", () => {
     const lab = FIXTURE_SESSIONS.lab_pending_review;
-    expect(canAccessRoute(lab, "/en/lab/onboarding").allowed).toBe(true);
-    expect(canAccessRoute(lab, "/en/lab/orders")).toMatchObject({ allowed: false, reason: "workspace_restricted", redirectTo: "/en/lab/dashboard" });
+    // Awaiting the admin: every lab page, dashboard and onboarding included, leads only to the "request sent" page.
+    for (const path of ["/en/lab/dashboard", "/en/lab/onboarding", "/en/lab/orders", "/en/lab/settings", "/en/lab/support"]) {
+      expect(canAccessRoute(lab, path), path).toMatchObject({ allowed: false, reason: "workspace_restricted", redirectTo: "/en/workspace/pending?role=lab" });
+    }
+    expect(landingPathFor((lab as { identity: Identity }).identity, "te")).toBe("/te/workspace/pending?role=lab");
+    // The pending page itself is a shared private page: any signed-in user may open it.
+    expect(canAccessRoute(lab, "/en/workspace/pending").allowed).toBe(true);
     const care = FIXTURE_SESSIONS.caretaker_suspended;
     expect(canAccessRoute(care, "/en/caretaker/support").allowed).toBe(true);
     expect(canAccessRoute(care, "/en/caretaker/onboarding").allowed).toBe(false);

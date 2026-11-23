@@ -297,3 +297,15 @@ SHUTDOWN 2026-11-20 ~23:30 IST: see docs/frontend/RESUME_HERE.md "STATE AT SHUTD
 - e2e for 108+signup: auth 28, hydration-race-e 3, emergency-e 4, ambulance 9, public-nav 6, public-service-directories 14, service-requests 13 green both projects; public.spec had 3 goto timeouts under memory pressure (machine low on RAM) -> rerun in verify21.
 - About + logo (owner assets in docs/frontend/incoming/, copy in LEADERSHIP_COPY.md): public/team/*.webp, public/brand/{wordmark,wordmark-tagline,logo-full,mark-house}, src/app/icon.png (house mark, old icon.svg removed), BrandLogo = wordmark image (+ BrandLockup), footer wordmark sits on a paper chip, leadership letters in src/components/public/leadership.ts (English, lang="en", gated claims trimmed), LeaderLetter component, /our-story full letters + shared promise, /about leader cards. Version B (role-only statements) NOT used: it promises live tracking, QR auth, EHR, fixed pricing, alliances.
 - Gate script: .context/verify21.sh -> $TEMP/verify21.log (tsc, unit, build, e2e leadership/public-nav/public/a11y/public-a11y/a11y-sweep-e). Next: CodeRabbit (--base-commit e7949dd), commit + push, restart preview :3400, tell owner.
+
+## 2026-11-23 (approval gate, IN PROGRESS, uncommitted on top of eb14d59)
+Owner ask: doctor/lab/ambulance/caretaker see only "request sent to the admin" until admin approves; patients untouched; restore founder text exactly; rerun a11y-sweep-e desktop; then WAIT for "START BACKEND".
+Done in code: routes.ts (isApprovalGatedRole, pendingApprovalPath, canAccessRoute+landingPathFor gate pending_review), workspaces.ts href, new page src/app/[locale]/workspace/pending/page.tsx, onboarding submit -> pending page (flows.ts, provider-onboarding.tsx redirect when submitted/under_review), fixtureSessionFor overlay in auth/fixture.ts (+ fixtureReviewStatus in verification/fixture.ts) so admin approve opens dashboard, auth.pending messages en/te/hi, founder text restored in leadership.ts, tests: unit approval-gate.test.ts + updated redirect-routes/guard-session, e2e provider-approval.spec.ts + onboarding.spec lab tests + leadership.spec.
+TODO: tsc/eslint ($TEMP/tsc22.log, eslint22.log), unit full, build, e2e (provider-approval, onboarding, leadership, admin-verification, auth, a11y-sweep-e desktop alone), CodeRabbit --base-commit eb14d59, commit+push, restart preview :3400, update RESUME_HERE + memory, report, wait.
+
+## 2026-11-23 approval gate: VERIFIED (uncommitted until commit below)
+- tsc 0, eslint clean, unit 132 files / 1986 tests, build ok (/workspace/pending en/te/hi generated).
+- e2e green both projects: provider-approval 7, onboarding 16, leadership 4; desktop: admin-verification 10, auth 28, public 51 (1 skipped), a11y-sweep-e 14 (5.3m, alone) -> the a11y desktop sweep is now CONFIRMED.
+- Test fixes: lab/settings is not a real route (use billing/staff/reports); patient dashboard has no sign-out (use /en/account/security).
+- Helper: .context/e2e-seq.sh "spec:project ..." runs specs one at a time -> $TEMP/e2e-seq.log (SEQ_DONE).
+- Remaining: CodeRabbit result, commit+push, preview :3400, report, WAIT for "START BACKEND".

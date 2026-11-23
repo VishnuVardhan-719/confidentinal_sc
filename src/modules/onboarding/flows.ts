@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { fail, type ApiResult } from "@/lib/api/result";
 import { errorKey, fieldMessageKeys } from "@/modules/auth/errors";
-import { homePath } from "@/modules/auth/routes";
+import { homePath, pendingApprovalPath } from "@/modules/auth/routes";
 import { providerCategorySchema, type Locale, type ProviderCategory } from "@/modules/auth/roles";
 import type { Workspace } from "@/modules/auth/types";
 import { expectedVersionSchema } from "@/modules/verification/schemas";
@@ -210,5 +210,6 @@ export async function runSubmitProvider(api: OnboardingApi, payload: unknown, lo
     }
     return submitFailure(result);
   }
-  return { status: "redirect", to: `${providerOnboardingBase(locale, category as ProviderCategory)}?provider=${providerId}` };
+  // Submitted: the provider waits for the admin. Show "request sent to the admin", never a dashboard.
+  return { status: "redirect", to: pendingApprovalPath(locale, category as ProviderCategory) };
 }

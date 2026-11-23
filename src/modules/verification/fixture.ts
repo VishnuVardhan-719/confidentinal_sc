@@ -13,7 +13,7 @@ import {
   type ProviderReviewDetail,
   type ReviewDecision,
 } from "./schemas";
-import type { ProviderStatus } from "./status";
+import type { ProviderStatus, ProviderStatusDisplay } from "./status";
 import {
   allowedCoverageDecisions,
   coverageDecisionSchema,
@@ -62,6 +62,13 @@ export const createFixtureVerificationStore = (): FixtureVerificationStore => ({
 
 /** Dev-server process memory so review decisions persist across requests in fixture mode. */
 let sharedStore: FixtureVerificationStore | null = null;
+
+/**
+ * Review status the synthetic admin has set for a provider, or null when no decision store exists yet
+ * (nothing reviewed in this process). The fixture auth adapter reads it so an admin approval opens the
+ * provider's dashboard on their next sign-in, exactly as the real backend derives workspace state.
+ */
+export const fixtureReviewStatus = (providerId: string): ProviderStatusDisplay | null => sharedStore?.providers.get(providerId)?.status ?? null;
 
 export function createFixtureVerificationApi(options: FixtureOptions & { store?: FixtureVerificationStore } = {}): VerificationApi {
   assertFixtureAllowed(options.env);

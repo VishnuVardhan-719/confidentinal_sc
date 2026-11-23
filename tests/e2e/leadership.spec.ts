@@ -19,11 +19,12 @@ test("our story shows the three leaders with loaded portraits, roles and letters
   }
   await expect(page.getByText("Care should travel to the patient, not the patient to care.")).toBeVisible();
   await expect(page.getByRole("heading", { name: /Three Leaders\. Three Perspectives/ })).toBeVisible();
-  // Nothing in the letters promises features that are not live yet.
-  const text = (await page.locator("main").innerText()).toLowerCase();
-  for (const claim of ["live doctor tracking", "qr authentication", "digital prescriptions", "fixed, upfront pricing"]) {
-    expect(text, claim).not.toContain(claim);
-  }
+  // The founder's letter is published exactly as the owner wrote it.
+  await expect(
+    page.getByText(
+      "We connect patients with doctors, convenient doctor home visits, live doctor tracking, doorstep lab sample collection, digital prescriptions, secure health records, professional caretaker services, and emergency support.",
+    ),
+  ).toBeVisible();
 });
 
 test("about lists the leaders and links to the letters", async ({ page }) => {

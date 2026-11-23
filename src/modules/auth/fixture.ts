@@ -14,6 +14,7 @@ import type { AuthApi } from "./api";
 import { assertFixtureAllowed, type FixtureOptions } from "./fixture-guard";
 import { validateInput } from "./http-client";
 import { loginSchema, otpVerifySchema, signupSchema, type OtpChallenge } from "./schemas";
+import { fixtureReviewStatus } from "@/modules/verification/fixture";
 import type { Session, SessionTokens } from "./types";
 
 /**
@@ -53,6 +54,26 @@ export function fixtureScenarioFromToken(token: string | null | undefined, prefi
   return isScenario(scenario) ? scenario : null;
 }
 
+/**
+ * The synthetic session for a scenario, with provider workspaces awaiting approval brought in line with the
+ * synthetic admin's decision (approve -> active, changes -> setup, reject/suspend -> restricted). Everything
+ * else, and every patient or admin session, is returned untouched.
+ */
+export function fixtureSessionFor(scenario: FixtureScenario): Session {
+  const base = FIXTURE_SESSIONS[scenario];
+  if (base.kind !== "authenticated") return base;
+  if (!base.identity.workspaces.some((w) => w.state === "pending_review" && w.providerId)) return base;
+  const workspaces = base.identity.workspaces.map((w) => {
+    if (w.state !== "pending_review" || !w.providerId) return w;
+    const status = fixtureReviewStatus(w.providerId);
+    if (status === "active" || status === "approved") return { ...w, state: "active" as const, providerStatus: "active" as const };
+    if (status === "changes_required") return { ...w, state: "onboarding_incomplete" as const, providerStatus: status };
+    if (status === "rejected" || status === "suspended") return { ...w, state: "restricted" as const, providerStatus: status };
+    return w;
+  });
+  return { kind: "authenticated", identity: { ...base.identity, workspaces } };
+}
+
 const mask = (phone: string): string => `+91 ******${phone.slice(-4)}`;
 
 export const createFixtureChallengeStore = (): FixtureChallengeStore => ({ challenges: new Map(), phones: new Map(), emails: new Map() });
@@ -74,7 +95,7 @@ export function createFixtureAuthApi(options: FixtureAuthOptions = {}): AuthApi 
   assertFixtureAllowed(options.env);
   const now = options.now ?? (() => new Date());
   const fromToken = options.accessToken !== undefined ? fixtureScenarioFromToken(options.accessToken) : null;
-  let current: Session = FIXTURE_SESSIONS[fromToken ?? options.scenario ?? "anonymous"];
+  let current: Session = fixtureSessionFor(fromToken ?? options.scenario ?? "anonymous");
   let currentScenario: FixtureScenario = fromToken ?? options.scenario ?? "anonymous";
   const store = options.challengeStore ?? sharedStore;
   const challenges = store.challenges;
@@ -153,7 +174,7 @@ export function createFixtureAuthApi(options: FixtureAuthOptions = {}): AuthApi 
         return fail("validation", { fields: { code: "otp_invalid" } });
       }
       challenge.status = "verified";
-      current = FIXTURE_SESSIONS[challenge.scenario];
+      current = fixtureSessionFor(challenge.scenario);
       currentScenario = challenge.scenario;
       return ok({ kind: "verified", session: fixtureTokensFor(challenge.scenario) });
     },
@@ -184,7 +205,7 @@ export function createFixtureAuthApi(options: FixtureAuthOptions = {}): AuthApi 
       const scenario = FIXTURE_ACCOUNTS[valid.data.email.toLowerCase()] ?? store.emails.get(valid.data.email.toLowerCase());
       // Unknown account and wrong password look identical (no enumeration).
       if (!scenario) return fail("unauthenticated");
-      const session = FIXTURE_SESSIONS[scenario];
+      const session = fixtureSessionFor(scenario);
       current = session;
       currentScenario = scenario;
       if (session.kind === "restricted") return fail("forbidden");
@@ -194,7 +215,7 @@ export function createFixtureAuthApi(options: FixtureAuthOptions = {}): AuthApi 
     async refresh(refreshToken) {
       const scenario = fixtureScenarioFromToken(refreshToken, REFRESH_PREFIX);
       if (!scenario || FIXTURE_SESSIONS[scenario].kind !== "authenticated") return fail("unauthenticated");
-      current = FIXTURE_SESSIONS[scenario];
+      current = fixtureSessionFor(scenario);
       currentScenario = scenario;
       return ok(fixtureTokensFor(scenario));
     },

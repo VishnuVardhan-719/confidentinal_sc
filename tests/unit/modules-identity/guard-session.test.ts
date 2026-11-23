@@ -129,7 +129,7 @@ describe("workspace choices", () => {
     const s = FIXTURE_SESSIONS.lab_pending_review;
     if (s.kind !== "authenticated") throw new Error("fixture");
     const [lab] = workspaceChoices(s.identity, "hi");
-    expect(lab).toMatchObject({ role: "lab", href: "/hi/lab/dashboard", organizationName: "Synthetic Diagnostics Org" });
+    expect(lab).toMatchObject({ role: "lab", href: "/hi/workspace/pending?role=lab", organizationName: "Synthetic Diagnostics Org" });
     expect(lab.providerStatus?.labelKey).toBe("onboarding.providerStatus.under_review");
     const d = FIXTURE_SESSIONS.doctor_draft;
     if (d.kind !== "authenticated") throw new Error("fixture");

@@ -1,4 +1,5 @@
 import { getFormatter, getLocale, getTranslations } from "next-intl/server";
+import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { AccessDenied } from "@/components/auth/access-denied";
 import { withoutLocale } from "@/components/auth/paths";
@@ -8,6 +9,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import type { ProviderCategory } from "@/modules/auth/roles";
+import { pendingApprovalPath } from "@/modules/auth/routes";
 import { getRequestApis, isFixtureAdapter, requireRole } from "@/modules/auth/server";
 import { loadProviderOnboarding, providerIdFor, providerOnboardingBase } from "@/modules/onboarding/loaders";
 import { REQUIRED_EVIDENCE } from "@/modules/onboarding/readiness";
@@ -61,6 +63,8 @@ export async function ProviderOnboarding({ category, searchParams }: { category:
   if (view.kind !== "ready") return <PatientLoadState state={view} />;
 
   const { wizard, draft, summary } = view;
+  // Waiting for the admin: only the "request sent" message, not this editor and never a dashboard.
+  if (summary.status === "submitted" || summary.status === "under_review") redirect(pendingApprovalPath(locale, category));
   const providerId = draft.providerId ?? requestedProvider ?? "";
   // Step links carry ?provider= only while the session does not list this provider yet.
   const linkProvider = providerIdFor(access.workspaces, category) ? null : providerId || null;

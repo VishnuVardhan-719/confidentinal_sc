@@ -1,6 +1,6 @@
 import { presentProviderStatus, type StatusPresentation } from "@/modules/verification/status";
 import type { Locale, Role } from "./roles";
-import { homePath, onboardingPath } from "./routes";
+import { homePath, isApprovalGatedRole, onboardingPath, pendingApprovalPath } from "./routes";
 import type { Identity, WorkspaceState } from "./types";
 
 /**
@@ -23,7 +23,9 @@ export function workspaceChoices(identity: Identity, locale: Locale): WorkspaceC
     const href =
       w.role === "admin" && w.state !== "active"
         ? `/${locale}/account/security`
-        : w.state === "onboarding_incomplete" || w.state === "unknown"
+        : w.state === "pending_review" && isApprovalGatedRole(w.role)
+          ? pendingApprovalPath(locale, w.role)
+          : w.state === "onboarding_incomplete" || w.state === "unknown"
           ? onboardingPath(w.role, locale)
           : homePath(w.role, locale);
     return {
