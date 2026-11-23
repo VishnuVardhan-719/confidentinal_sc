@@ -20,7 +20,7 @@ export async function generateMetadata() {
 const toLocale = (value: string) => (value === "te" || value === "hi" ? value : "en");
 const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 
-/** Operators for scheduled, non-emergency transfers, filtered by the patient's PIN. The 112 notice comes first. */
+/** Operators for scheduled, non-emergency transfers, filtered by the patient's PIN. The 108 notice comes first. */
 export default async function PatientAmbulancePage({ params, searchParams }: PageProps<"/[locale]/patient/ambulance">) {
   const { locale: raw } = await params;
   await connection();

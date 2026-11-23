@@ -477,14 +477,14 @@ export function DriverView({ result }: { result: LoaderResult<DriverQueueVM> }) 
   );
 }
 
-/** Emergency placeholder. Always unavailable; Call 112 is a plain tel: link that needs no JS or account. */
+/** Emergency placeholder. Always unavailable; Call 108 is a plain tel: link that needs no JS or account. */
 export function EmergencyView({ guidance }: { guidance: EmergencyGuidance }) {
   const t = useTranslations("ambulance.emergency");
   return (
     <div className="grid gap-8">
       <PageHeader title={t("title")} />
-      <section aria-labelledby="emergency-112" className="grid gap-4 rounded-lg border border-danger/30 bg-danger-surface p-6">
-        <h2 id="emergency-112" className="text-xl font-semibold text-ink">
+      <section aria-labelledby="emergency-108" className="grid gap-4 rounded-lg border border-danger/30 bg-danger-surface p-6">
+        <h2 id="emergency-108" className="text-xl font-semibold text-ink">
           {t("call112")}
         </h2>
         <a
@@ -493,13 +493,6 @@ export function EmergencyView({ guidance }: { guidance: EmergencyGuidance }) {
         >
           <Phone aria-hidden className="size-5" />
           {t("callButton")}
-        </a>
-        <a
-          href="tel:108"
-          className="inline-flex min-h-12 w-fit items-center gap-2 rounded-md border-2 border-danger bg-surface px-6 text-lg font-semibold text-danger-strong hover:bg-danger-surface focus-visible:outline-2 focus-visible:outline-focus"
-        >
-          <Phone aria-hidden className="size-5" />
-          {t("callAmbulanceButton")}
         </a>
       </section>
       <GateNotice feature="emergencyDispatch" title={t("dispatchUnavailable")}>

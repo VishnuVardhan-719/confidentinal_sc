@@ -98,7 +98,7 @@ describe("ambulance loaders", () => {
 
   it("emergency placeholder is unavailable regardless of adapter", () => {
     expect(loadEmergencyPlaceholder({ env: { FEATURE_EMERGENCY_DISPATCH: "true" } }).dispatchAvailable).toBe(false);
-    expect(loadEmergencyPlaceholder().callNumber).toBe("112");
+    expect(loadEmergencyPlaceholder().callNumber).toBe("108");
   });
 });
 

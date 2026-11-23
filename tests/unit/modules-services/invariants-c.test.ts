@@ -152,7 +152,7 @@ describe("server-side session checks on every fe-c patient route and action", ()
 });
 
 describe("ambulance is scheduled transfer only", () => {
-  it("ambulance pages render the 112 banner and no dispatch, ETA or tracking UI exists in fe-c code", () => {
+  it("ambulance pages render the 108 banner and no dispatch, ETA or tracking UI exists in fe-c code", () => {
     const pages = ALL.filter(f => /^app\/\[locale\]\/patient\/ambulance\/.*page\.tsx$/.test(f.file));
     expect(pages.length).toBe(3);
     expect(pages.filter(f => !/EmergencyBanner/.test(f.text)).map(f => f.file)).toEqual([]);

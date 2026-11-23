@@ -136,7 +136,7 @@ export async function loadDriverQueue(ctx: WorkspaceLoaderContext): Promise<Load
   );
 }
 
-/** Emergency placeholder: always unavailable, always shows 112. No adapter or API call involved. */
+/** Emergency placeholder: always unavailable, always shows 108. No adapter or API call involved. */
 export function loadEmergencyPlaceholder(ctx: Pick<WorkspaceLoaderContext, "env"> = {}): EmergencyGuidance {
   return getEmergencyGuidance(ctx.env ?? process.env);
 }

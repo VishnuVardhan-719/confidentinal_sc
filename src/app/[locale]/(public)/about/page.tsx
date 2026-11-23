@@ -1,6 +1,8 @@
 import { Check, X } from "lucide-react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { ArrowLink, Container, PublicPageIntro } from "@/components/public/layout";
+import { LEADERS } from "@/components/public/leadership";
 import { publicPageMetadata } from "@/components/public/metadata";
 
 export function generateMetadata() {
@@ -12,6 +14,7 @@ const NOT = ["emergency", "employer", "ai"] as const;
 
 export default function AboutPage() {
   const t = useTranslations("public.about");
+  const tOur = useTranslations("public.ourStory");
   return (
     <>
       <PublicPageIntro title={t("title")} lead={t("lead")} />
@@ -59,6 +62,24 @@ export default function AboutPage() {
           </h2>
           <div className="grid gap-6 lg:col-span-7 lg:col-start-6">
             <p className="measure text-lg text-muted">{t("teamBody")}</p>
+            <ul className="grid gap-5 sm:grid-cols-3">
+              {LEADERS.map((leader) => (
+                <li key={leader.id} className="grid grid-cols-[5.5rem_1fr] items-center gap-4 sm:grid-cols-1 sm:content-start sm:items-start sm:gap-3">
+                  <Image
+                    src={leader.photo}
+                    alt={tOur("portraitAlt", { name: leader.name })}
+                    width={leader.photoWidth}
+                    height={leader.photoHeight}
+                    unoptimized
+                    className="aspect-[4/5] w-full rounded-lg border border-border bg-mist object-cover object-top"
+                  />
+                  <div lang="en">
+                    <p className="font-display text-lg leading-tight font-medium text-ink">{leader.name}</p>
+                    <p className="mt-1 text-base text-muted">{leader.role}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
             <ArrowLink href="/our-story">{t("storyCta")}</ArrowLink>
           </div>
         </section>

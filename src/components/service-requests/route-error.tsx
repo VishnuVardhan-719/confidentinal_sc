@@ -17,7 +17,7 @@ const HOME: Record<ServiceArea, string> = {
 /**
  * Error boundary body for the patient booking and service-request routes. Never shows the raw error (only the
  * opaque digest for support), offers Try again and a way back to the list, and on ambulance pages keeps the
- * 112 call link first. Needs the `services` messages (the route layout provides them).
+ * 108 call link first. Needs the `services` messages (the route layout provides them).
  */
 export function ServiceRouteError({ area, error, retry }: { area: ServiceArea; error: Error & { digest?: string }; retry: () => void }) {
   const t = useTranslations("services.errorPage");
@@ -26,7 +26,7 @@ export function ServiceRouteError({ area, error, retry }: { area: ServiceArea; e
   return (
     <div className="mx-auto grid w-full max-w-form gap-4 py-8" data-testid="route-error">
       {area === "ambulance" || area === "ambulances" ? (
-        <Notice tone="danger" title={t("emergency")} action={<Button asChild variant="danger"><a href="tel:112"><Phone aria-hidden />112</a></Button>} />
+        <Notice tone="danger" title={t("emergency")} action={<Button asChild variant="danger"><a href="tel:108"><Phone aria-hidden />108</a></Button>} />
       ) : null}
       <h1 ref={heading} tabIndex={-1} className="font-display text-3xl font-medium text-ink focus:outline-none">{t("title")}</h1>
       <p className="text-lg text-muted">{t("body")}</p>

@@ -118,15 +118,24 @@ test.describe("sign up", () => {
     await expect(page.getByLabel(COPY.acceptTerms)).toBeFocused();
   });
 
-  test("email signup always shows the same confirmation (no account enumeration)", async ({ page }) => {
-    for (const email of [ACCOUNTS.patientComplete, "brand.new@example.invalid"]) {
+  test("email signup signs straight in and opens the chosen role's onboarding (no check-your-email step)", async ({ page }) => {
+    const roles = [
+      [/^patient/i, "patient"],
+      [/^doctor/i, "doctor"],
+      [/^laboratory/i, "lab"],
+      [/^ambulance/i, "ambulance"],
+      [/^caretaker/i, "caretaker"],
+    ] as const;
+    for (const [name, role] of roles) {
+      await page.context().clearCookies();
       await page.goto("/en/signup", { waitUntil: "domcontentloaded" });
-      await page.getByRole("radio", { name: /^patient/i }).check();
-      await emailInput(page).fill(email);
+      await page.getByRole("radio", { name }).check();
+      await emailInput(page).fill(`brand.new.${role}@example.invalid`);
       await passwordInput(page).fill("a-long-enough-password");
       await page.getByLabel(COPY.acceptTerms).check();
       await page.getByRole("button", { name: COPY.createAccount }).click();
-      await expect(page.getByText(COPY.checkEmail)).toBeVisible();
+      await expect(page).toHaveURL(new RegExp(`/en/${role}/onboarding`));
+      await expect(page.getByText(COPY.checkEmail)).toHaveCount(0);
     }
   });
 
@@ -195,9 +204,9 @@ test.describe("direct URL access", () => {
 
   test("emergency guidance works signed out and for incomplete patients", async ({ page }) => {
     await page.goto("/en/emergency", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("link", { name: "Call 112", exact: true })).toHaveAttribute("href", "tel:112");
+    await expect(page.getByRole("link", { name: "Call 108", exact: true })).toHaveAttribute("href", "tel:108");
     await signIn(page, ACCOUNTS.patientNew);
     await page.goto("/en/emergency", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("link", { name: "Call 112", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Call 108", exact: true })).toBeVisible();
   });
 });

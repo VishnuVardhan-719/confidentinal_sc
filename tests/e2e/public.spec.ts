@@ -115,7 +115,7 @@ test("every link on public pages points to a real route", async ({ page, request
   }
   for (const href of hrefs) {
     if (href.startsWith("tel:")) {
-      expect(href).toBe("tel:112");
+      expect(href).toBe("tel:108");
       continue;
     }
     if (href.startsWith("#")) continue;
@@ -149,11 +149,11 @@ test("finder validates the PIN and routes to the chosen directory", async ({ pag
 test.describe("without JavaScript", () => {
   test.use({ javaScriptEnabled: false });
 
-  test("emergency page works and offers a tel:112 call", async ({ page }) => {
+  test("emergency page works and offers a tel:108 call", async ({ page }) => {
     const res = await page.goto("/hi/emergency");
     expect(res?.status()).toBe(200);
-    const call = page.getByRole("link", { name: "112 पर कॉल करें", exact: true });
-    await expect(call).toHaveAttribute("href", "tel:112");
+    const call = page.getByRole("link", { name: "108 पर कॉल करें", exact: true });
+    await expect(call).toHaveAttribute("href", "tel:108");
     await expect(call).toBeVisible();
   });
 

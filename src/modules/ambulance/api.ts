@@ -34,6 +34,6 @@ export interface AmbulanceApi {
   /** Only the current trip is readable; any other trip is not_found. */
   getDriverTrip(tripId: string): Promise<ApiResult<DriverTripView>>;
   performTripAction(input: TripActionInput): Promise<ApiResult<DriverTripView>>;
-  /** Always unavailable; carries the call-112 guidance. Never an ETA. */
+  /** Always unavailable; carries the call-108 guidance. Never an ETA. */
   getEmergencyGuidance(): EmergencyGuidance;
 }

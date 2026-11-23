@@ -43,7 +43,7 @@ for (const locale of LOCALES) {
     for (const href of hrefs) {
       expect(href, "empty or placeholder link").not.toMatch(/^(#|javascript:)?$/);
       if (href.startsWith("tel:")) {
-        expect(href).toBe("tel:112");
+        expect(href).toBe("tel:108");
         continue;
       }
       if (href.startsWith("#")) continue;

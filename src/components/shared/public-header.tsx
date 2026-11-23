@@ -81,7 +81,7 @@ export function PublicHeader({ account }: { account?: PublicAccount | null }) {
             <Phone aria-hidden className="size-4.5" />
             <span className="hidden sm:inline xl:hidden">{t("nav.emergency")}</span>
             <span className="sm:hidden xl:inline" aria-hidden>
-              112
+              108
             </span>
             <span className="sr-only sm:hidden xl:inline">{t("nav.emergencyLong")}</span>
           </Link>

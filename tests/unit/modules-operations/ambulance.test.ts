@@ -77,7 +77,7 @@ describe("driver sees only assigned trip", () => {
 describe("emergency dispatch", () => {
   it("is gated by default and never returns an ETA or tracking", async () => {
     const off = getEmergencyGuidance({});
-    expect(off).toEqual({ dispatchAvailable: false, reason: "gate_off", callNumber: "112", messageKey: "ambulance.emergency.call112" });
+    expect(off).toEqual({ dispatchAvailable: false, reason: "gate_off", callNumber: "108", messageKey: "ambulance.emergency.call112" });
     expect(allKeys(off).filter((k) => FORBIDDEN_KEYS.test(k))).toEqual([]);
     expect(await requestEmergencyDispatch()).toEqual({ ok: false, error: { code: "gated" } });
   });

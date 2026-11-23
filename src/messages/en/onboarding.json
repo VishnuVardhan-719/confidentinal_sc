@@ -452,7 +452,7 @@
       "baseCity": "Base city",
       "basePinCode": "Base PIN code",
       "serviceMode": "Service type",
-      "serviceModeHint": "Scheduled patient transport only. Emergency dispatch is not offered through SureCure Visit; in an emergency call 112.",
+      "serviceModeHint": "Scheduled patient transport only. Emergency dispatch is not offered through SureCure Visit; in an emergency call 108.",
       "vehicles": "Vehicles",
       "vehicleRegistration": "Registration number",
       "vehicleRegistrationHint": "For example TS 09 AB 1234.",

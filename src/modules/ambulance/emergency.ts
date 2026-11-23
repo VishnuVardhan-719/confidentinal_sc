@@ -10,13 +10,13 @@ import { isEnabled } from "@/lib/feature-flags";
  *   behaviour with the flag ON is identical to OFF).
  * - The types below have no ETA, countdown, location or tracking fields, and
  *   `dispatchAvailable` is the literal `false`, so no code path can produce them.
- * - Calling 112 never depends on this module, an account, a booking or payment.
+ * - Calling 108 never depends on this module, an account, a booking or payment.
  */
 export type EmergencyGuidance = {
   readonly dispatchAvailable: false;
   readonly reason: "gate_off" | "not_operational";
-  readonly callNumber: "112";
-  /** Message key (namespace `ambulance`) telling the user to call 112 now. */
+  readonly callNumber: "108";
+  /** Message key (namespace `ambulance`) telling the user to call 108 now. */
   readonly messageKey: "ambulance.emergency.call112";
 };
 
@@ -24,7 +24,7 @@ export function getEmergencyGuidance(env: Record<string, string | undefined> = p
   return {
     dispatchAvailable: false,
     reason: isEnabled("emergencyDispatch", env) ? "not_operational" : "gate_off",
-    callNumber: "112",
+    callNumber: "108",
     messageKey: "ambulance.emergency.call112",
   };
 }

@@ -22,7 +22,7 @@ const code = <T>(r: ApiResult<T>) => (r.ok ? "ok" : r.error.code);
 const NOW = new Date("2026-11-20T03:00:00Z");
 const ETA = /eta|tracking|latitude|longitude|countdown|minutes/i;
 
-describe("emergency dispatch hard gate and 112", () => {
+describe("emergency dispatch hard gate and 108", () => {
   const combos: Record<string, string | undefined>[] = [
     {},
     { FEATURE_EMERGENCY_DISPATCH: "true" },
@@ -33,10 +33,10 @@ describe("emergency dispatch hard gate and 112", () => {
     { APP_ENV: "production", FRONTEND_ADAPTER: "fixture" },
   ];
 
-  it.each(combos)("never offers dispatch and always carries Call 112 (%o)", (env) => {
+  it.each(combos)("never offers dispatch and always carries Call 108 (%o)", (env) => {
     const g = getEmergencyGuidance(env);
     expect(g.dispatchAvailable).toBe(false);
-    expect(g.callNumber).toBe("112");
+    expect(g.callNumber).toBe("108");
     expect(g.messageKey).toBe("ambulance.emergency.call112");
     expect(Object.keys(g).sort()).toEqual(["callNumber", "dispatchAvailable", "messageKey", "reason"]);
     expect(JSON.stringify(g)).not.toMatch(ETA);
@@ -49,7 +49,7 @@ describe("emergency dispatch hard gate and 112", () => {
 
   it("is type-level unavailable: dispatchAvailable is the literal false", () => {
     expectTypeOf<EmergencyGuidance["dispatchAvailable"]>().toEqualTypeOf<false>();
-    expectTypeOf<EmergencyGuidance["callNumber"]>().toEqualTypeOf<"112">();
+    expectTypeOf<EmergencyGuidance["callNumber"]>().toEqualTypeOf<"108">();
   });
 
   it("the dispatch request is always gated, even with every flag on", async () => {
@@ -58,7 +58,7 @@ describe("emergency dispatch hard gate and 112", () => {
 
   it("the placeholder works without any adapter, even where fixture mode would be refused", () => {
     expect(() => loadEmergencyPlaceholder({ env: { APP_ENV: "production", FRONTEND_ADAPTER: "fixture" } })).not.toThrow();
-    expect(loadEmergencyPlaceholder({ env: { APP_ENV: "production", FRONTEND_ADAPTER: "fixture" } }).callNumber).toBe("112");
+    expect(loadEmergencyPlaceholder({ env: { APP_ENV: "production", FRONTEND_ADAPTER: "fixture" } }).callNumber).toBe("108");
   });
 
   it("no module API exposes a dispatch, ETA or tracking method", () => {

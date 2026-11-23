@@ -2,36 +2,36 @@ import { expect, test } from "@playwright/test";
 
 /**
  * Header/footer emergency links keep their /emergency target; that page leads with a large
- * tel:112 button that is on screen without scrolling, with or without JavaScript.
+ * tel:108 button that is on screen without scrolling, with or without JavaScript.
  */
 for (const width of [390, 1280]) {
-  test(`header and footer emergency links open /emergency with a prominent tel:112 button at ${width}px`, async ({ page }) => {
+  test(`header and footer emergency links open /emergency with a prominent tel:108 button at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 800 });
     await page.goto("/en", { waitUntil: "domcontentloaded" });
     const links = page.locator('header a[href="/en/emergency"], footer a[href="/en/emergency"]');
     expect(await links.count()).toBeGreaterThan(0);
     await page.goto("/en/emergency", { waitUntil: "domcontentloaded" });
-    const call = page.locator("main").getByRole("link", { name: /call 112/i }).first();
-    await expect(call).toHaveAttribute("href", "tel:112");
+    const call = page.locator("main").getByRole("link", { name: /call 108/i }).first();
+    await expect(call).toHaveAttribute("href", "tel:108");
     const box = await call.boundingBox();
-    expect(box, "Call 112 button is rendered").not.toBeNull();
+    expect(box, "Call 108 button is rendered").not.toBeNull();
     expect(box!.height).toBeGreaterThanOrEqual(56);
     expect(box!.y + box!.height).toBeLessThanOrEqual(width === 390 ? 844 : 800);
   });
 }
 
-test("the tel:112 button works with JavaScript disabled", async ({ browser }) => {
+test("the tel:108 button works with JavaScript disabled", async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto("/en/emergency");
-  await expect(page.locator("main").getByRole("link", { name: /call 112/i }).first()).toHaveAttribute("href", "tel:112");
+  await expect(page.locator("main").getByRole("link", { name: /call 108/i }).first()).toHaveAttribute("href", "tel:108");
   await context.close();
 });
 
-test("the emergency page also offers the free 108 ambulance line, in every language", async ({ page }) => {
-  for (const [locale, label] of [["en", /ambulance: call 108/i], ["te", /108/], ["hi", /108/]] as const) {
+test("the emergency page leads with a tel:108 button in every language", async ({ page }) => {
+  for (const locale of ["en", "te", "hi"]) {
     await page.goto(`/${locale}/emergency`, { waitUntil: "domcontentloaded" });
-    await expect(page.locator("main").locator('a[href="tel:112"]').first()).toBeVisible();
-    await expect(page.locator("main").getByRole("link", { name: label }).first()).toHaveAttribute("href", "tel:108");
+    await expect(page.locator("main").locator('a[href="tel:108"]').first()).toBeVisible();
+    await expect(page.locator('a[href="tel:112"]')).toHaveCount(0);
   }
 });

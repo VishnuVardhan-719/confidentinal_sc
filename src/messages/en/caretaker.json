@@ -58,7 +58,7 @@
     "caregiver_unavailable": "Caregiver unable to continue",
     "unsafe_conditions": "Unsafe conditions",
     "scope_mismatch": "Help asked for is outside the agreed tasks",
-    "medical_concern_escalated": "Medical concern: 112 or a doctor contacted"
+    "medical_concern_escalated": "Medical concern: 108 or a doctor contacted"
   },
   "absence": {
     "caregiver_unwell": "Caregiver unwell",
@@ -171,7 +171,7 @@
     },
     "confirmTitle": "{action} for {reference}?",
     "confirmBody": "The time is recorded by the server, not your device.",
-    "interruptBody": "The visit ends and the agency is told. If anyone is in danger, call 112 first.",
+    "interruptBody": "The visit ends and the agency is told. If anyone is in danger, call 108 first.",
     "done": "Saved. The list has been updated.",
     "emptyTitle": "No assignments",
     "emptyBody": "Accepted care visits appear here.",
@@ -216,6 +216,6 @@
   },
   "support": {
     "title": "Support",
-    "body": "Support tickets for your care visits are not connected yet. In an emergency, call 112."
+    "body": "Support tickets for your care visits are not connected yet. In an emergency, call 108."
   }
 }

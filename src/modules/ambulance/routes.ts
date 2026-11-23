@@ -2,7 +2,7 @@ import { decideWorkspaceAccess, type AppLocale, type AreaAccess, type GuardSessi
 import type { NavItem } from "@/modules/admin/routes";
 import { canSeeBilling, toAmbulanceActor, type Workspace } from "@/modules/admin/workspace";
 
-/** Ambulance area routes (FE spec 13). Emergency is a hard-gated placeholder with 112 always visible. */
+/** Ambulance area routes (FE spec 13). Emergency is a hard-gated placeholder with 108 always visible. */
 export const AMBULANCE_ROUTES = ["dashboard", "fleet", "crew", "availability", "requests", "trips", "driver", "billing", "support", "emergency"] as const;
 export type AmbulanceRoute = (typeof AMBULANCE_ROUTES)[number];
 

@@ -52,7 +52,7 @@ export function Footer() {
     <footer className="mt-auto bg-forest-strong text-on-forest">
       <div className="mx-auto grid max-w-content gap-10 px-4 py-10 sm:gap-12 sm:px-6 sm:py-14 lg:grid-cols-[1.2fr_2fr] lg:px-8">
         <div className="grid content-start gap-5">
-          <BrandLogo tone="paper" className="focus-visible:outline-paper [&_rect]:fill-paper [&_path]:text-forest [&_circle]:fill-forest" />
+          <BrandLogo tone="paper" className="focus-visible:outline-paper" />
           <p className="max-w-sm text-base text-on-forest-muted">{t("footer.tagline")}</p>
           <Link
             href="/emergency"

@@ -55,7 +55,7 @@
     "vehicle_breakdown": "Vehicle breakdown",
     "unsafe_conditions": "Unsafe conditions",
     "requirement_mismatch": "Vehicle does not suit the patient's needs",
-    "medical_emergency_redirected": "Medical emergency: 112 called",
+    "medical_emergency_redirected": "Medical emergency: 108 called",
     "driver_unable": "Driver unable to continue"
   },
   "decline": {
@@ -65,12 +65,11 @@
     "other": "Other reason"
   },
   "emergency": {
-    "call112": "In an emergency, call 112 now. Do not wait for a booking.",
+    "call112": "In an emergency, call 108 now. Do not wait for a booking.",
     "title": "Emergency",
     "dispatchUnavailable": "Emergency dispatch is not available on SureCure Visit.",
-    "body": "This service only handles planned, non-emergency transport. Nobody on the platform watches for emergencies or sends ambulances. If someone may be in danger, call 112 immediately.",
-    "callButton": "Call 112",
-    "callAmbulanceButton": "Ambulance: call 108"
+    "body": "This service only handles planned, non-emergency transport. Nobody on the platform watches for emergencies or sends ambulances. If someone may be in danger, call 108 immediately.",
+    "callButton": "Call 108"
   },
   "dashboard": {
     "title": "Transport overview",
@@ -233,7 +232,7 @@
     "confirmBody": "This updates the trip status for the patient and your operator.",
     "interrupt": "Report a problem",
     "interruptTitle": "End this trip because of a problem?",
-    "interruptBody": "The trip ends and your operator is told. If anyone is in danger, call 112 first.",
+    "interruptBody": "The trip ends and your operator is told. If anyone is in danger, call 108 first.",
     "done": "Saved. Your trip has been updated."
   },
   "billing": {
@@ -242,6 +241,6 @@
   },
   "support": {
     "title": "Support",
-    "body": "Support tickets for your trips are not connected yet. In an emergency, call 112."
+    "body": "Support tickets for your trips are not connected yet. In an emergency, call 108."
   }
 }

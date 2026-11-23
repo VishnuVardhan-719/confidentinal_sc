@@ -49,8 +49,8 @@
       "description": "SureCure Visit memberships are not on sale. Read how any future plan will be published."
     },
     "emergency": {
-      "title": "Emergency: call 112",
-      "description": "In a medical emergency in India, call 112. SureCure Visit does not dispatch emergency services."
+      "title": "Emergency: call 108",
+      "description": "In a medical emergency in India, call 108. SureCure Visit does not dispatch emergency services."
     }
   },
   "landing": {
@@ -59,7 +59,7 @@
       "lead": "Find doctors, lab sample collection, scheduled ambulance transport and caretakers who are verified and actually serve your PIN code. You choose who comes; they confirm your request.",
       "primary": "Search other services by PIN",
       "secondary": "See how it works",
-      "note": "Not for emergencies. In an emergency, call 112."
+      "note": "Not for emergencies. In an emergency, call 108."
     },
     "finder": {
       "title": "Who serves your PIN code?",
@@ -118,7 +118,7 @@
         "title": "Scheduled ambulance transport",
         "body": "Plan a trip in advance: a hospital discharge, a transfer or a regular appointment. Operators list their vehicle types and the areas they cover.",
         "emergencyTitle": "This is not an emergency service",
-        "emergencyBody": "SureCure Visit does not dispatch ambulances for emergencies. If someone needs urgent help, call 112 now.",
+        "emergencyBody": "SureCure Visit does not dispatch ambulances for emergencies. If someone needs urgent help, call 108 now.",
         "emergencyLink": "Read emergency guidance",
         "cta": "Plan a scheduled trip"
       },
@@ -254,21 +254,23 @@
     },
     "notTitle": "What we are not",
     "not": {
-      "emergency": "We are not an emergency service. In an emergency, call 112.",
+      "emergency": "We are not an emergency service. In an emergency, call 108.",
       "employer": "We are not the employer of the providers listed.",
       "ai": "We do not use AI to diagnose, match or accept bookings."
     },
     "teamTitle": "The team",
-    "teamBody": "Team profiles will be published here once the people involved have reviewed and approved them.",
-    "storyCta": "Read our story"
+    "teamBody": "Meet the three leaders behind SureCure Visit.",
+    "storyCta": "Read their letters"
   },
   "ourStory": {
     "title": "Our story",
     "lead": "SureCure Visit started from a simple idea: when someone needs care, it should be possible to bring trustworthy care to them.",
     "purposeTitle": "Why home care",
     "purposeBody": "Travelling for a consultation, a blood test or a check-up is often the hardest part of getting care. Bringing verified providers to the home, at a price agreed in advance, removes that step without lowering the standard of who you let in.",
-    "pendingTitle": "The full story is coming",
-    "pendingBody": "The founders’ own account of how SureCure Visit began will be published here after they have reviewed it. We would rather leave this space short than fill it with words that are not theirs."
+    "leadersTitle": "Letters from our leaders",
+    "englishNote": "These letters are in the leaders’ own words, in English.",
+    "portraitAlt": "Portrait of {name}",
+    "promiseTitle": "Our shared promise"
   },
   "storiesPage": {
     "title": "Stories",
@@ -340,7 +342,7 @@
     "verificationTitle": "Verification",
     "verificationBody": "Verification means our team has reviewed a provider’s identity, required registration or licence and service area. It is not a rating and not a guarantee of any outcome.",
     "emergencyTitle": "Emergencies",
-    "emergencyBody": "SureCure Visit is for planned care. In an emergency, call 112.",
+    "emergencyBody": "SureCure Visit is for planned care. In an emergency, call 108.",
     "emergencyCta": "Emergency guidance"
   },
   "faqPage": {
@@ -374,7 +376,7 @@
       },
       "emergency": {
         "q": "Can I use SureCure Visit in an emergency?",
-        "a": "No. SureCure Visit is for planned care and does not dispatch emergency services. In an emergency, call 112."
+        "a": "No. SureCure Visit is for planned care and does not dispatch emergency services. In an emergency, call 108."
       },
       "browse": {
         "q": "Do I need an account to look at providers?",
@@ -427,7 +429,7 @@
     "routes": {
       "emergency": {
         "title": "Emergency",
-        "body": "Call 112. Read what to do while help is on the way."
+        "body": "Call 108. Read what to do while help is on the way."
       },
       "faq": {
         "title": "Questions",
@@ -503,7 +505,7 @@
         },
         "emergencies": {
           "title": "Not an emergency service",
-          "body": "SureCure Visit is for planned care. Emergencies must go to 112."
+          "body": "SureCure Visit is for planned care. Emergencies must go to 108."
         },
         "liability": {
           "title": "Liability and disputes",
@@ -590,10 +592,10 @@
     "cta": "Find care without a membership"
   },
   "emergency": {
-    "title": "In a medical emergency, call 112",
-    "lead": "112 is India’s single emergency number for police, fire and ambulance. Calls are free. In Telangana and Andhra Pradesh, 108 is the free ambulance line.",
-    "call": "Call 112",
-    "callHint": "On a phone, this starts the call. You can also dial 1 1 2 yourself.",
+    "title": "In a medical emergency, call 108",
+    "lead": "108 is the emergency ambulance number in Telangana and Andhra Pradesh. Calls are free.",
+    "call": "Call 108",
+    "callHint": "On a phone, this starts the call. You can also dial 1 0 8 yourself.",
     "dispatchTitle": "SureCure Visit does not dispatch emergency help",
     "dispatchBody": "Our ambulance listings are for scheduled, non-emergency trips only. Booking through SureCure Visit is not a way to get emergency help.",
     "stepsTitle": "While you wait for help",
@@ -604,8 +606,7 @@
       "follow": "Follow the instructions the emergency call handler gives you.",
       "door": "If you can, have someone meet the ambulance at the gate or road."
     },
-    "disclaimer": "This page is general guidance, not medical advice.",
-    "callAmbulance": "Ambulance: call 108"
+    "disclaimer": "This page is general guidance, not medical advice."
   },
   "storyPage": {
     "back": "All stories",

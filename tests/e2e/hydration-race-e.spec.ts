@@ -52,7 +52,8 @@ test.describe("signup before hydration", () => {
     await passwordInput(page).fill("a-long-enough-password");
     await page.getByLabel(COPY.acceptTerms).check();
     await page.getByRole("button", { name: COPY.createAccount }).click();
-    await expect(page.getByText(COPY.checkEmail)).toBeVisible();
+    // The account is created and signed in at once; the picked role decides where it lands.
+    await expect(page).toHaveURL(/\/en\/doctor\/onboarding/);
   });
 
   test("a role preselected by ?role= is shown before hydration and survives it", async ({ page }) => {

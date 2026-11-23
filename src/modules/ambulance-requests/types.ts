@@ -2,7 +2,7 @@ import type { BaseProvider, ServiceRequest } from "@/modules/service-requests/co
 
 /**
  * Patient-side scheduled, NON-EMERGENCY ambulance transfers (for example hospital discharge or a planned
- * appointment). There is no live dispatch, tracking or ETA; emergencies go to 112.
+ * appointment). There is no live dispatch, tracking or ETA; emergencies go to 108.
  */
 export const VEHICLE_TYPES = ["patient_transport", "wheelchair_van", "basic_life_support"] as const;
 export type VehicleType = (typeof VEHICLE_TYPES)[number];

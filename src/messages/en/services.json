@@ -220,8 +220,8 @@
     "requestTitle": "Request a transfer from {name}",
     "requestDescription": "Choose the vehicle, pickup, drop-off and time. The operator accepts or declines your request.",
     "statusTitle": "Scheduled transfer with {name}",
-    "emergencyTitle": "Emergency? Call 112 now",
-    "emergencyCall": "Call 112",
+    "emergencyTitle": "Emergency? Call 108 now",
+    "emergencyCall": "Call 108",
     "emergencyBody": "This page books scheduled, non-emergency transfers only. It cannot send an ambulance now. In an emergency, do not wait for a reply here.",
     "noTracking": "No live tracking or arrival time is shown. The operator confirms the vehicle by hand.",
     "vehicles": "Vehicles",
@@ -272,9 +272,8 @@
       "vehicleType": "Choose a vehicle that can carry the patient.",
       "mobility": "Choose how the patient moves.",
       "destination": "Enter the drop-off area, city and a 6-digit PIN in this operator's area.",
-      "notEmergency": "Confirm this is not an emergency. For emergencies call 112."
-    },
-    "emergencyCallAmbulance": "Ambulance: call 108"
+      "notEmergency": "Confirm this is not an emergency. For emergencies call 108."
+    }
   },
   "errorPage": {
     "title": "We could not load this page",
@@ -290,7 +289,7 @@
       "ambulances": "Back to operators",
       "caretakers": "Back to caretakers"
     },
-    "emergency": "Emergency? Call 112 now. Do not wait for this page."
+    "emergency": "Emergency? Call 108 now. Do not wait for this page."
   },
   "labDirectory": {
     "metaTitle": "Lab tests: home collection and walk-in labs",
@@ -332,7 +331,7 @@
   },
   "ambulanceDirectory": {
     "metaTitle": "Scheduled ambulance transfers",
-    "metaDescription": "Find ambulance operators for planned, non-emergency transfers by PIN code. Each operator sets its own fares. For an emergency, call 112.",
+    "metaDescription": "Find ambulance operators for planned, non-emergency transfers by PIN code. Each operator sets its own fares. For an emergency, call 108.",
     "title": "Ambulance operators for planned transfers",
     "description": "Find operators that serve your PIN code. These are scheduled, non-emergency transfers only. Each operator sets its own fares and accepts or declines each request.",
     "view": "View operator",

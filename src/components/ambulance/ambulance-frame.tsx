@@ -24,12 +24,12 @@ const ICONS: Record<string, ShellIcon> = {
 };
 const PRIMARY = ["dashboard", "requests", "trips", "driver", "emergency"] as const;
 
-/** "Call 112" stays visible in the top bar on every ambulance screen (plain tel: link, works without JS). */
+/** "Call 108" stays visible in the top bar on every ambulance screen (plain tel: link, works without JS). */
 async function Call112() {
   const t = await getTranslations("ambulance.emergency");
   return (
     <a
-      href="tel:112"
+      href="tel:108"
       className="inline-flex min-h-target items-center gap-2 rounded-md bg-danger px-3 text-base font-semibold text-white hover:bg-danger-strong focus-visible:outline-2 focus-visible:outline-focus"
     >
       <Phone aria-hidden className="size-5" />

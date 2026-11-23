@@ -12,7 +12,7 @@ const STEPS = ["location", "stay", "move", "follow", "door"] as const;
 
 /**
  * Emergency guidance. Fully server-rendered: works without sign-in, JavaScript, payment or the
- * health questionnaire, and has no decorative motion. The 112 link is a plain tel: anchor.
+ * health questionnaire, and has no decorative motion. The 108 link is a plain tel: anchor.
  */
 export default function EmergencyPage() {
   const t = useTranslations("public.emergency");
@@ -25,18 +25,11 @@ export default function EmergencyPage() {
         <p className="measure text-xl text-muted">{t("lead")}</p>
         <div className="grid gap-3">
           <a
-            href="tel:112"
+            href="tel:108"
             className="inline-flex min-h-16 w-full items-center justify-center gap-3 rounded-lg bg-danger px-8 text-2xl font-bold text-white shadow-raised hover:bg-danger-strong focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus sm:w-fit"
           >
             <Phone aria-hidden className="size-7" />
             {t("call")}
-          </a>
-          <a
-            href="tel:108"
-            className="inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-lg border-2 border-danger bg-surface px-8 text-xl font-bold text-danger-strong hover:bg-danger-surface focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus sm:w-fit"
-          >
-            <Phone aria-hidden className="size-6" />
-            {t("callAmbulance")}
           </a>
           <p className="text-base text-muted">{t("callHint")}</p>
         </div>

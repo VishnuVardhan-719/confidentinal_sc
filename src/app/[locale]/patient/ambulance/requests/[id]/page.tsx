@@ -24,7 +24,7 @@ const toLocale = (value: string) => (value === "te" || value === "hi" ? value : 
 /** Server request time, read once per render after connection(). */
 function readClock(): number { return Date.now(); }
 
-/** A scheduled transfer request. No tracking or arrival time is shown; the 112 notice stays first. */
+/** A scheduled transfer request. No tracking or arrival time is shown; the 108 notice stays first. */
 export default async function AmbulanceRequestStatusPage({ params }: PageProps<"/[locale]/patient/ambulance/requests/[id]">) {
   const { locale: raw, id } = await params;
   await connection();

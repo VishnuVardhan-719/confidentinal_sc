@@ -341,11 +341,11 @@ test.describe("caretakers", () => {
 });
 
 test.describe("ambulance transfer", () => {
-  test("every ambulance page leads with the 112 emergency notice", async ({ page }) => {
+  test("every ambulance page leads with the 108 emergency notice", async ({ page }) => {
     await page.goto("/en/patient/ambulance");
     const banner = page.getByTestId("emergency-banner");
-    await expect(banner).toContainText("Emergency? Call 112 now");
-    await expect(banner.getByRole("link", { name: "Call 112" })).toHaveAttribute("href", "tel:112");
+    await expect(banner).toContainText("Emergency? Call 108 now");
+    await expect(banner.getByRole("link", { name: "Call 108" })).toHaveAttribute("href", "tel:108");
     // It is the first notice in the main content, above the synthetic-data notice.
     const firstNotice = page.locator("main [data-testid='emergency-banner'], main [data-fixture-notice]").first();
     await expect(firstNotice).toHaveAttribute("data-testid", "emergency-banner");
@@ -366,7 +366,7 @@ test.describe("ambulance transfer", () => {
     await page.getByRole("button", { name: "Send request" }).click();
     const summary = page.getByRole("alert").filter({ hasText: /problem/ });
     await expect(summary).toBeFocused();
-    await expect(summary).toContainText("Confirm this is not an emergency. For emergencies call 112.");
+    await expect(summary).toContainText("Confirm this is not an emergency. For emergencies call 108.");
     await expect(summary).toContainText("Choose how the patient moves.");
     await page.getByRole("radio", { name: "Needs a stretcher" }).check();
     await expect(page.getByRole("radio", { name: /Wheelchair van/ })).toBeDisabled();
@@ -428,11 +428,11 @@ test.describe("ambulance transfer", () => {
     await expectAxeClean(page, "amb/declined");
   });
 
-  test("keyboard only: the 112 call link and the form are reachable without a pointer", async ({ page }) => {
+  test("keyboard only: the 108 call link and the form are reachable without a pointer", async ({ page }) => {
     test.setTimeout(150_000);
     await page.goto("/en/patient/ambulance/request?providerId=00000000-0000-4000-8400-000000000001");
     await expect(page.getByRole("heading", { level: 1, name: /Request a transfer/ })).toBeVisible({ timeout: 20_000 });
-    await tabTo(page, page.getByRole("link", { name: "Call 112" }));
+    await tabTo(page, page.getByRole("link", { name: "Call 108" }));
     // Native radio groups: Tab enters the group, arrow keys choose within it.
     await tabTo(page, page.getByRole("radio", { name: "Walks without help" }));
     await page.keyboard.press("ArrowDown");

@@ -28,14 +28,14 @@ describe("service route error boundary", () => {
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(retry).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("link", { name: "Back to lab tests" }).getAttribute("href")).toBe("/patient/lab-tests");
-    expect(screen.queryByRole("link", { name: "112" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "108" })).toBeNull();
   });
 
-  it("keeps the 112 call link first on ambulance pages, in every locale", () => {
+  it("keeps the 108 call link first on ambulance pages, in every locale", () => {
     render(withIntl(h(ServiceRouteError, { area: "ambulance", error: new Error("x"), retry: vi.fn() }), "hi", hiServices));
-    const call = screen.getByRole("link", { name: "112" });
-    expect(call.getAttribute("href")).toBe("tel:112");
-    expect(screen.getByText("आपातकाल? अभी 112 पर कॉल करें। इस पेज का इंतज़ार न करें।")).toBeTruthy();
+    const call = screen.getByRole("link", { name: "108" });
+    expect(call.getAttribute("href")).toBe("tel:108");
+    expect(screen.getByText("आपातकाल? अभी 108 पर कॉल करें। इस पेज का इंतज़ार न करें।")).toBeTruthy();
     expect(screen.getByRole("link", { name: "एम्बुलेंस स्थानांतरण पर वापस" }).getAttribute("href")).toBe("/patient/ambulance");
     const order = [...document.querySelectorAll("a, h1")].map(node => node.tagName);
     expect(order[0]).toBe("A");

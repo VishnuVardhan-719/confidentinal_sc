@@ -91,10 +91,10 @@ describe("ambulance driver page", () => {
 });
 
 describe("emergency placeholder", () => {
-  it.each([{}, { FEATURE_EMERGENCY_DISPATCH: "true", FEATURE_GPS: "true" }])("dispatch unavailable, Call 112 tel link always shown (%o)", (env) => {
+  it.each([{}, { FEATURE_EMERGENCY_DISPATCH: "true", FEATURE_GPS: "true" }])("dispatch unavailable, Call 108 tel link always shown (%o)", (env) => {
     const { container } = render(withIntl(createElement(EmergencyView, { guidance: loadEmergencyPlaceholder({ env }) })));
-    const call = screen.getByRole("link", { name: "Call 112" });
-    expect(call.getAttribute("href")).toBe("tel:112");
+    const call = screen.getByRole("link", { name: "Call 108" });
+    expect(call.getAttribute("href")).toBe("tel:108");
     expect(screen.getByText("Emergency dispatch is not available on SureCure Visit.")).toBeTruthy();
     expect(container.querySelector('[data-gate="emergencyDispatch"]')).toBeTruthy();
     expect(screen.queryByRole("button", { name: /dispatch|book emergency|request ambulance now/i })).toBeNull();

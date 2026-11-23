@@ -12,7 +12,7 @@
     "about": "About",
     "stories": "Stories",
     "emergency": "Emergency",
-    "emergencyLong": "Emergency? Call 112",
+    "emergencyLong": "Emergency? Call 108",
     "location": "Find care by PIN",
     "menu": "Menu",
     "findDoctors": "Find doctors"
@@ -53,7 +53,7 @@
   },
   "footer": {
     "tagline": "A marketplace for home healthcare. You choose a verified provider who serves your area, and they confirm your request.",
-    "emergency": "Emergency? Call 112",
+    "emergency": "Emergency? Call 108",
     "identity": "SureCure Visit · surecurevisit.in. Company details will be published here once confirmed.",
     "columns": {
       "services": "Services",

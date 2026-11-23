@@ -25,7 +25,7 @@ import type { BaseProvider } from "@/modules/service-requests/core";
  * Same shape as /lab-tests: a plain GET PIN filter (so it works without JavaScript and the URL holds only a
  * public area code), a public page per provider, and a request button that goes to the signed-in request form
  * (the patient signs in there). Only the provider's own listing is shown: name, service area, catalogue and
- * price. Ambulance pages keep the 112 notice first; caretaker pages state the non-clinical scope.
+ * price. Ambulance pages keep the 108 notice first; caretaker pages state the non-clinical scope.
  */
 
 type SearchParamsRecord = Record<string, string | string[] | undefined>;

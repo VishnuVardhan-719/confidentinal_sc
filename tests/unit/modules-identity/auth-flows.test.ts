@@ -83,11 +83,24 @@ describe("runLogin", () => {
 });
 
 describe("runSignup + OTP", () => {
-  it("email signup always shows the same confirmation (no enumeration)", async () => {
-    const { d } = deps();
+  it("email signup signs the new account straight in and lands on the chosen role's onboarding", async () => {
+    const { d, written } = deps();
+    const base = { method: "email_password", password: "a-long-enough-password", acceptedTerms: "on", termsVersion: "v0", locale: "en" };
+    expect(await runSignup(d, form({ ...base, role: "patient", email: "new.patient@example.invalid" }))).toEqual({ status: "redirect", to: "/en/patient/onboarding" });
+    expect(await runSignup(d, form({ ...base, role: "doctor", email: "new.doctor@example.invalid" }))).toEqual({ status: "redirect", to: "/en/doctor/onboarding" });
+    expect(await runSignup(d, form({ ...base, role: "lab", email: "new.lab@example.invalid" }))).toEqual({ status: "redirect", to: "/en/lab/onboarding" });
+    expect(written.length).toBe(3);
+  });
+
+  it("falls back to the neutral check-your-email notice when the server will not sign the new account in yet", async () => {
+    const real = createFixtureAuthApi({ env: DEV, challengeStore: createFixtureChallengeStore() });
+    const { d, written } = deps({ ...real, login: async () => ({ ok: false, error: { code: "unauthenticated" } }) } as AuthApi);
     const base = { method: "email_password", password: "a-long-enough-password", acceptedTerms: "on", termsVersion: "v0", role: "patient" };
-    expect(await runSignup(d, form({ ...base, email: "patient.complete@example.invalid" }))).toEqual({ status: "check_email", email: "patient.complete@example.invalid" });
-    expect(await runSignup(d, form({ ...base, email: "new@example.invalid" }))).toEqual({ status: "check_email", email: "new@example.invalid" });
+    const fresh = await runSignup(d, form({ ...base, email: "new@example.invalid" }));
+    const existing = await runSignup(d, form({ ...base, email: "patient.complete@example.invalid" }));
+    expect(fresh).toEqual({ status: "check_email", email: "new@example.invalid" });
+    expect(existing).toEqual({ status: "check_email", email: "patient.complete@example.invalid" });
+    expect(written.length).toBe(0);
   });
 
   it("rejects admin role and missing consent with field errors", async () => {

@@ -6,6 +6,7 @@ Do now: nothing except answer the owner. Steps 1 to 8 of the checklist below are
 1. The owner reviews the frontend and sends change requests: implement them on feature branches, rerun the affected specs (one project per `int3-run.ps1` call), CodeRabbit, push.
 2. Only when the owner says "start backend": build the backend (do NOT connect it), see `docs/frontend/BACKEND_VERIFICATION_DECISIONS.md`.
 3. Only after the backend is complete: merge backend PRs and frontend, switch to `FRONTEND_ADAPTER=http` (`docs/frontend/BACKEND_CONNECT_PLAN.md`).
+2026-11-23 owner changes DONE: 108 is the only emergency number; signup signs straight in and lands in the role's onboarding (real backend needs email confirmation OFF); About + Our story show the three leaders (owner photos/letters, English) and the new SureCureVisit logo. See `.context/activeContext.md` (last section). Not published: role-only statements with gated claims (live tracking, QR, EHR, fixed pricing, alliances); owner to decide.
 Open product call: the signed-out patient guard drops the `providerId` query on login redirect.
 
 ## >>> START HERE: CHECKPOINT 2026-11-22 (user shut the laptop down; everything pushed) <<<

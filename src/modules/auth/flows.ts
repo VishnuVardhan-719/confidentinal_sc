@@ -124,14 +124,22 @@ export function readSignupForm(fd: FormData) {
 }
 
 export async function runSignup(deps: AuthDeps, fd: FormData): Promise<AuthFormState> {
-  const { input, role, next } = readSignupForm(fd);
+  const { input, role, next, locale } = readSignupForm(fd);
   const values: SafeValues = { role: role ?? undefined, ...("email" in input ? { email: input.email } : { phone: input.phone }) };
   const result = await deps.api.signup(input as Parameters<AuthApi["signup"]>[0]);
   if (!result.ok) return errorState(result.error, "signup", values);
   if (result.data.kind === "otp_challenge") {
     return { status: "otp", purpose: "signup", challenge: result.data.challenge, role, next };
   }
-  // Same message whether or not the account already existed (no enumeration).
+  // The account is created, so sign straight in with the same credentials: no "check your email" step.
+  // Only if sign-in is refused (the server still wants a confirmed email, or the address already belongs to
+  // another password) do we fall back to the neutral confirmation notice, which never says which case it was.
+  if ("email" in input && input.email && input.password) {
+    const login = await deps.api.login({ method: "email_password", email: input.email, password: input.password });
+    if (login.ok && login.data.kind === "signed_in") {
+      return completeSignIn(deps, login.data.session, locale, next, role, "signup");
+    }
+  }
   return { status: "check_email", email: values.email ?? "" };
 }
 

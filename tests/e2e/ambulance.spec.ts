@@ -1,7 +1,7 @@
 /**
  * FE14 ambulance e2e (FRONTEND_MASTER s13, s20 "Ambulance"): scheduled pickup/destination,
  * verified fleet/crew, accept with capacity + stale quote, trip states, driver sees only the
- * assigned trip, no emergency booking while dispatch is disabled, 112 always visible, no ETA.
+ * assigned trip, no emergency booking while dispatch is disabled, 108 always visible, no ETA.
  * Synthetic data only.
  *
  * Run: FRONTEND_ADAPTER=fixture APP_ENV=staging npx playwright test tests/e2e/ambulance.spec.ts
@@ -85,28 +85,28 @@ test.describe("ambulance driver", () => {
 });
 
 test.describe("emergency dispatch placeholder", () => {
-  test("dispatch is unavailable and Call 112 is always visible as a tel: link", async ({ page }) => {
+  test("dispatch is unavailable and Call 108 is always visible as a tel: link", async ({ page }) => {
     await signInAs(page, "ambulanceOperator", `${A}/emergency`);
     await expect(shown(page.getByText(COPY.dispatchUnavailable))).toBeVisible();
-    // The top bar also carries a Call 112 link; check the one in the page body.
+    // The top bar also carries a Call 108 link; check the one in the page body.
     const call = page.getByRole("main").getByRole("link", { name: COPY.call112 }).last();
     await expect(call).toBeVisible();
-    await expect(call).toHaveAttribute("href", "tel:112");
+    await expect(call).toHaveAttribute("href", "tel:108");
     await expect(page.getByRole("button", { name: /dispatch|request ambulance now|book emergency/i })).toHaveCount(0);
     await expect(page.locator("main")).not.toContainText(ETA_PATTERN);
   });
 
-  test("Call 112 stays visible with JavaScript disabled", async ({ browser }) => {
+  test("Call 108 stays visible with JavaScript disabled", async ({ browser }) => {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
-    // Signed out and without JS: the public /emergency page must still offer 112. The footer link
-    // "Emergency? Call 112" leads to this guidance page, so check the page body.
+    // Signed out and without JS: the public /emergency page must still offer 108. The footer link
+    // "Emergency? Call 108" leads to this guidance page, so check the page body.
     await page.goto(`/${LOCALE}/emergency`);
     const links = page.getByRole("main").getByRole("link", { name: COPY.call112 });
     await expect(links.first()).toBeVisible();
     const count = await links.count();
     expect(count).toBeGreaterThan(0);
-    for (let i = 0; i < count; i++) await expect(links.nth(i)).toHaveAttribute("href", "tel:112");
+    for (let i = 0; i < count; i++) await expect(links.nth(i)).toHaveAttribute("href", "tel:108");
     await context.close();
   });
 

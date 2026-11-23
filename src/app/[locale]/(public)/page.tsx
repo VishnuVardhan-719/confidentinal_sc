@@ -213,9 +213,9 @@ function ServicePathways() {
             <p className="text-base text-ink">{t("ambulances.emergencyBody")}</p>
             <div className="flex flex-wrap gap-3 pt-1">
               <Button asChild variant="danger">
-                <a href="tel:112">
+                <a href="tel:108">
                   <Phone aria-hidden />
-                  112
+                  108
                 </a>
               </Button>
               <ArrowLink href="/emergency">{t("ambulances.emergencyLink")}</ArrowLink>

@@ -8,7 +8,7 @@ export async function generateMetadata() {
   return privateMetadata((await getTranslations("ambulance.nav"))("emergency"));
 }
 
-/** Hard-gated placeholder: dispatch is never available; Call 112 is always shown. */
+/** Hard-gated placeholder: dispatch is never available; Call 108 is always shown. */
 export default function Page() {
   return <AmbulanceRouteGate route="emergency">{() => <EmergencyView guidance={loadEmergencyPlaceholder()} />}</AmbulanceRouteGate>;
 }

@@ -41,7 +41,7 @@
       "DISPUTED": "Disputed",
       "REFUNDED": "Refunded"
     },
-    "emergency": "Emergency? Call 112. Emergency help never waits for a code, booking or payment.",
+    "emergency": "Emergency? Call 108. Emergency help never waits for a code, booking or payment.",
     "age": "{age, plural, one {# year} other {# years}}",
     "ageUnknown": "Age not shared",
     "visitContext": "Visit and status"
@@ -243,7 +243,7 @@
     "earnings": { "title": "Earnings", "body": "Payouts are not automated. Amounts you record as collected appear on each visit." },
     "support": {
       "title": "Support",
-      "body": "In-app support tickets are not connected yet. For an emergency call 112. For account help, use the contact page.",
+      "body": "In-app support tickets are not connected yet. For an emergency call 108. For account help, use the contact page.",
       "contact": "Contact page"
     },
     "settings": { "title": "Settings", "body": "Language can be changed from the menu. Other settings are not connected yet." }

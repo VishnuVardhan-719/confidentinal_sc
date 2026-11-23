@@ -30,6 +30,8 @@ export type FixtureChallengeStore = {
   challenges: Map<string, Challenge>;
   /** Phone -> scenario chosen at OTP signup, so a later OTP login resolves to the same synthetic user. */
   phones: Map<string, FixtureScenario>;
+  /** Email -> scenario for accounts created by fixture signup, so the sign-in right after signup resolves. */
+  emails: Map<string, FixtureScenario>;
 };
 
 const ACCESS_PREFIX = "fixture-session.";
@@ -53,7 +55,7 @@ export function fixtureScenarioFromToken(token: string | null | undefined, prefi
 
 const mask = (phone: string): string => `+91 ******${phone.slice(-4)}`;
 
-export const createFixtureChallengeStore = (): FixtureChallengeStore => ({ challenges: new Map(), phones: new Map() });
+export const createFixtureChallengeStore = (): FixtureChallengeStore => ({ challenges: new Map(), phones: new Map(), emails: new Map() });
 
 /** Dev-server process memory so an OTP challenge survives between server actions. */
 const sharedStore: FixtureChallengeStore = createFixtureChallengeStore();
@@ -120,7 +122,13 @@ export function createFixtureAuthApi(options: FixtureAuthOptions = {}): AuthApi 
     async signup(input) {
       const valid = validateInput(signupSchema, input);
       if (!valid.ok) return valid.result;
-      if (valid.data.method === "email_password") return ok({ kind: "received" });
+      if (valid.data.method === "email_password") {
+        // A new synthetic account starts as a patient with no provider application. Provider roles begin their
+        // application from onboarding, exactly as the real flow does, so any role signs up the same way.
+        const email = valid.data.email.toLowerCase();
+        if (!FIXTURE_ACCOUNTS[email] && !store.emails.has(email)) store.emails.set(email, "patient_new");
+        return ok({ kind: "received" });
+      }
       const scenario = store.phones.get(valid.data.phone) ?? (valid.data.role === "patient" ? "patient_new" : "doctor_draft");
       store.phones.set(valid.data.phone, scenario);
       return ok({ kind: "otp_challenge", challenge: publicChallenge(issueChallenge(valid.data.phone, scenario)) });
@@ -173,7 +181,7 @@ export function createFixtureAuthApi(options: FixtureAuthOptions = {}): AuthApi 
         const scenario = store.phones.get(valid.data.phone) ?? DEFAULT_OTP_LOGIN_SCENARIO;
         return ok({ kind: "otp_challenge", challenge: publicChallenge(issueChallenge(valid.data.phone, scenario)) });
       }
-      const scenario = FIXTURE_ACCOUNTS[valid.data.email.toLowerCase()];
+      const scenario = FIXTURE_ACCOUNTS[valid.data.email.toLowerCase()] ?? store.emails.get(valid.data.email.toLowerCase());
       // Unknown account and wrong password look identical (no enumeration).
       if (!scenario) return fail("unauthenticated");
       const session = FIXTURE_SESSIONS[scenario];

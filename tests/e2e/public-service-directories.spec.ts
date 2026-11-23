@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 /**
  * Public ambulance and caretaker directories (/ambulances, /caretakers) in fixture mode, signed out, at 390 and
- * 1280. List by PIN, provider page, unknown id, 112 first on every ambulance page, non-clinical scope on every
+ * 1280. List by PIN, provider page, unknown id, 108 first on every ambulance page, non-clinical scope on every
  * caretaker page, metadata, three locales. Every state is axe-clean (WCAG 2 A/AA), has no horizontal scroll and
  * leaves browser storage empty. It stops at the request links: the requests themselves are covered by
  * service-requests.spec.ts.
@@ -24,13 +24,13 @@ async function checkPage(page: Page, label: string) {
   expect(await page.evaluate(() => [localStorage.length, sessionStorage.length]), `storage ${label}`).toEqual([0, 0]);
 }
 
-/** The 112 notice sits above the page heading, so it is the first thing read and the first thing seen. */
+/** The 108 notice sits above the page heading, so it is the first thing read and the first thing seen. */
 async function expectEmergencyFirst(page: Page) {
   const banner = page.getByTestId("emergency-banner").filter({ visible: true });
   await expect(banner).toBeVisible();
-  await expect(banner.getByRole("link", { name: "Call 112" })).toHaveAttribute("href", "tel:112");
+  await expect(banner.getByRole("link", { name: "Call 108" })).toHaveAttribute("href", "tel:108");
   const [bannerBox, headingBox] = await Promise.all([banner.boundingBox(), page.getByRole("heading", { level: 1 }).boundingBox()]);
-  expect(bannerBox && headingBox && bannerBox.y < headingBox.y, "112 notice above the heading").toBe(true);
+  expect(bannerBox && headingBox && bannerBox.y < headingBox.y, "108 notice above the heading").toBe(true);
 }
 
 test.describe("public ambulance directory", () => {
@@ -91,7 +91,7 @@ test.describe("public ambulance directory", () => {
     await checkPage(page, "ambulances invalid pin");
   });
 
-  test("an unknown operator is a not-found page that still shows 112 first", async ({ page }) => {
+  test("an unknown operator is a not-found page that still shows 108 first", async ({ page }) => {
     for (const id of [UNKNOWN, "not-an-id"]) {
       await page.goto(`/en/ambulances/${id}`);
       await expect(page.getByRole("heading", { level: 1, name: "This operator is not listed" })).toBeVisible({ timeout: 20_000 });
@@ -110,8 +110,8 @@ test.describe("public ambulance directory", () => {
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
   });
 
-  for (const [locale, heading, call] of [["te", "ముందుగా నిర్ణయించిన తరలింపుల కోసం అంబులెన్స్ ఆపరేటర్లు", "112"], ["hi", "पहले से तय स्थानांतरण के लिए एम्बुलेंस ऑपरेटर", "112"]] as const) {
-    test(`${locale}: translated, 112 first, no raw message keys`, async ({ page }) => {
+  for (const [locale, heading, call] of [["te", "ముందుగా నిర్ణయించిన తరలింపుల కోసం అంబులెన్స్ ఆపరేటర్లు", "108"], ["hi", "पहले से तय स्थानांतरण के लिए एम्बुलेंस ऑपरेटर", "108"]] as const) {
+    test(`${locale}: translated, 108 first, no raw message keys`, async ({ page }) => {
       await page.goto(`/${locale}/ambulances`);
       await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible({ timeout: 20_000 });
       await expect(page.getByTestId("emergency-banner").getByRole("link", { name: new RegExp(call) })).toBeVisible();

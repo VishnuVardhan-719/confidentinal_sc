@@ -54,7 +54,7 @@ export const COPY = {
   gated: /not available yet|currently unavailable|disabled/i,
   chooseWorkspace: /choose (an )?organi[sz]ation|choose (a )?workspace/i,
   switchWorkspace: /switch (organi[sz]ation|workspace)/i,
-  call112: /call 112/i,
+  call112: /call 108/i,
   dispatchUnavailable: /emergency dispatch is not available/i,
   // The placeholder option also reads "Select a reason", so match the error text only.
   reasonRequired: /select a reason to continue|reason is required/i,

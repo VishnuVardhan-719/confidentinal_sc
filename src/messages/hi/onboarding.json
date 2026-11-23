@@ -452,7 +452,7 @@
       "baseCity": "मुख्य शहर",
       "basePinCode": "मुख्य पिन कोड",
       "serviceMode": "सेवा का प्रकार",
-      "serviceModeHint": "केवल पहले से तय मरीज़ परिवहन। SureCure Visit के ज़रिए आपातकालीन डिस्पैच नहीं दिया जाता; आपात स्थिति में 112 पर कॉल करें।",
+      "serviceModeHint": "केवल पहले से तय मरीज़ परिवहन। SureCure Visit के ज़रिए आपातकालीन डिस्पैच नहीं दिया जाता; आपात स्थिति में 108 पर कॉल करें।",
       "vehicles": "वाहन",
       "vehicleRegistration": "पंजीकरण संख्या",
       "vehicleRegistrationHint": "जैसे TS 09 AB 1234।",
