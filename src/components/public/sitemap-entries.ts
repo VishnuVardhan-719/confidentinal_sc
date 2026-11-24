@@ -10,7 +10,10 @@ export function sitemapEntries(env: Record<string, string | undefined> = process
     LOCALES.map((locale) => ({
       url: `${SITE_URL}${localizedPath(locale, path)}`,
       alternates: {
-        languages: Object.fromEntries(LOCALES.map((l) => [l, `${SITE_URL}${localizedPath(l, path)}`])),
+        languages: {
+          ...Object.fromEntries(LOCALES.map((l) => [l, `${SITE_URL}${localizedPath(l, path)}`])),
+          "x-default": `${SITE_URL}${localizedPath("en", path)}`,
+        },
       },
     })),
   );

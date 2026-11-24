@@ -30,6 +30,7 @@ export function organizationSchema(description: string): WithContext<Organizatio
     image: `${SITE_URL}/opengraph-image.png`,
     description,
     slogan: "Healthcare at your doorstep",
+    knowsLanguage: ["en", "te", "hi"],
     founder: LEADERS.filter((l) => l.id !== "director").map((l) => ({
       "@type": "Person" as const,
       name: l.name,

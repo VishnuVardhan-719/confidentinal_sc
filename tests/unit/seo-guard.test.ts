@@ -67,6 +67,12 @@ describe("public page metadata", () => {
 });
 
 describe("canonical, hreflang and robots meta", () => {
+  it("every page carries og:image and twitter:image share cards", () => {
+    const m = pageMetadata({ locale: "en", path: "/about", title: "T", description: "D" });
+    expect(m.openGraph?.images).toEqual([expect.objectContaining({ url: "/opengraph-image.png", width: 1200, height: 630 })]);
+    expect(m.twitter?.images).toEqual([expect.objectContaining({ url: "/twitter-image.png" })]);
+  });
+
   it("alternates give a self canonical plus en, te, hi and x-default", () => {
     for (const locale of LOCALES) {
       for (const path of PUBLIC_PAGES) {

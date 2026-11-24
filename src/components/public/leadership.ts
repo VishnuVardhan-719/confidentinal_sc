@@ -34,7 +34,7 @@ export const LEADERS: Leader[] = [
       "Healthcare should never feel like a journey filled with difficulty, uncertainty, or unnecessary stress. For an elderly parent who struggles to walk, a child experiencing a sudden illness, or a patient recovering after surgery, even reaching a hospital can become a challenge.",
       "At SureCureVisit, we believe that quality healthcare should begin where comfort matters most: at home.",
       "Our vision is simple yet powerful: Care should travel to the patient, not the patient to care.",
-      "Through our digital healthcare platform, Curevist.in, we are building a connected home healthcare ecosystem that brings essential medical services closer to individuals and families. We connect patients with doctors, convenient doctor home visits, live doctor tracking, doorstep lab sample collection, digital prescriptions, secure health records, professional caretaker services, and emergency support.",
+      "Through our digital healthcare platform, surecurevisit.in, we are building a connected home healthcare ecosystem that brings essential medical services closer to individuals and families. We connect patients with doctors, convenient doctor home visits, live doctor tracking, doorstep lab sample collection, digital prescriptions, secure health records, professional caretaker services, and emergency support.",
       "But we are building more than a healthcare platform. We are building trust, simplifying access to medical services, and creating a healthcare experience where technology meets humanity.",
     ],
     listTitle: "We envision a future where",
@@ -66,7 +66,7 @@ export const LEADERS: Leader[] = [
       "At SureCureVisit, we believe that every patient deserves more than a medical service. They deserve attention, respect, comfort, and the reassurance that someone genuinely cares about their well-being.",
       "As Co-Founder and Director, I see healthcare from a deeply human perspective. Behind every appointment is a person, behind every medical need is a family, and behind every recovery is a story that deserves compassion.",
       "Our responsibility goes beyond connecting patients with healthcare professionals. It is about creating an experience where patients feel heard, families feel reassured, and quality medical support becomes easier to access.",
-      "Through Curevist.in, we are working towards a healthcare ecosystem that puts people first. Whether it is arranging a doctor visit at home, coordinating diagnostic services, supporting elderly individuals, providing professional caretaker assistance, or helping families manage healthcare needs, our focus remains on making every interaction meaningful.",
+      "Through surecurevisit.in, we are working towards a healthcare ecosystem that puts people first. Whether it is arranging a doctor visit at home, coordinating diagnostic services, supporting elderly individuals, providing professional caretaker assistance, or helping families manage healthcare needs, our focus remains on making every interaction meaningful.",
     ],
     listTitle: "What we stand for",
     list: [
@@ -97,7 +97,7 @@ export const LEADERS: Leader[] = [
     letter: [
       "At SureCureVisit, we believe that transforming healthcare requires more than a great idea. It requires strong leadership, responsible decisions, consistent dedication, and a commitment to creating meaningful change in society.",
       "As a Director of SureCureVisit Healthcare, I believe in building an organisation founded on trust, integrity, accountability, and a clear sense of purpose.",
-      "Our journey is about creating a healthcare ecosystem that brings patients, medical professionals, and essential healthcare services closer together. Through Curevist.in, we aim to make healthcare more accessible, convenient, and dependable for individuals and families.",
+      "Our journey is about creating a healthcare ecosystem that brings patients, medical professionals, and essential healthcare services closer together. Through surecurevisit.in, we aim to make healthcare more accessible, convenient, and dependable for individuals and families.",
       "My focus is on strengthening the foundation of our organisation, encouraging innovation, supporting sustainable growth, and ensuring that every step we take contributes to our larger mission.",
     ],
     listTitle: "The principles that guide us",

@@ -3,7 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { locale as rootLocale } from "next/root-params";
-import { SITE_URL } from "@/components/public/seo";
+import { SHARE_IMAGE, SITE_URL, TWITTER_IMAGE } from "@/components/public/seo";
 import { SkipLink } from "@/components/shared/skip-link";
 import { ToastProvider } from "@/components/ui/toast";
 import { CLIENT_NAMESPACES, pickNamespaces } from "@/i18n/messages";
@@ -38,7 +38,8 @@ export async function generateMetadata(): Promise<Metadata> {
       google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
       other: process.env.BING_SITE_VERIFICATION ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION } : undefined,
     },
-    twitter: { card: "summary_large_image" },
+    openGraph: { siteName: "SureCure Visit", type: "website", images: [SHARE_IMAGE] },
+    twitter: { card: "summary_large_image", images: [TWITTER_IMAGE] },
   };
 }
 

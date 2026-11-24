@@ -22,6 +22,10 @@ export function alternatesFor(locale: AppLocale, path: string): NonNullable<Meta
   return { canonical: localizedPath(locale, path), languages };
 }
 
+/** Share-card images (1200x630). The file-based opengraph-image sits outside the [locale] layout, so the tags are set here. */
+export const SHARE_IMAGE = { url: "/opengraph-image.png", width: 1200, height: 630, alt: "SureCureVisit: healthcare at your doorstep" };
+export const TWITTER_IMAGE = { url: "/twitter-image.png", width: 1200, height: 630, alt: SHARE_IMAGE.alt };
+
 export function pageMetadata({
   locale,
   path,
@@ -47,7 +51,9 @@ export function pageMetadata({
       siteName: "SureCure Visit",
       locale: { en: "en_IN", te: "te_IN", hi: "hi_IN" }[locale],
       type: "website",
+      images: [SHARE_IMAGE],
     },
+    twitter: { card: "summary_large_image", title, description, images: [TWITTER_IMAGE] },
     robots: index ? { index: true, follow: true } : { index: false, follow: true },
   };
 }

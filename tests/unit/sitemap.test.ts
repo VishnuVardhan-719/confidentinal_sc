@@ -17,10 +17,15 @@ describe("sitemap", () => {
     for (const locale of LOCALES) {
       const entry = entries.find((e) => e.url === `${SITE_URL}/${locale}/lab-tests`);
       expect(entry, locale).toBeDefined();
-      expect(entry?.alternates?.languages).toEqual(
-        Object.fromEntries(LOCALES.map((l) => [l, `${SITE_URL}/${l}/lab-tests`])),
-      );
+      expect(entry?.alternates?.languages).toEqual({
+        ...Object.fromEntries(LOCALES.map((l) => [l, `${SITE_URL}/${l}/lab-tests`])),
+        "x-default": `${SITE_URL}/en/lab-tests`,
+      });
     }
+  });
+
+  it("lists the doctors directory", () => {
+    expect(sitemapEntries(PROD).some((e) => e.url === `${SITE_URL}/en/doctors`)).toBe(true);
   });
 
   it("keeps every public page and adds no duplicates or detail pages", () => {

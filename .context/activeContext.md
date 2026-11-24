@@ -315,7 +315,7 @@ TODO: tsc/eslint ($TEMP/tsc22.log, eslint22.log), unit full, build, e2e (provide
 - Done in code: fixture signup resets patient draft (resetFixturePatientDraft); hero "Healthcare at your doorstep." (en/te/hi); new logo assets in public/brand + src/app/icon.png/apple-icon.png; BrandLogo = emblem + wordmark; JSON-LD (structured-data.tsx), robots AI-crawler rules, llms.txt route, manifest.ts, OG/Twitter images, verification env (GOOGLE_SITE_VERIFICATION / BING_SITE_VERIFICATION).
 - Gate 2026-11-24: tsc 0, eslint 0, unit 133 files/1994 tests pass, build OK.
 - Next: e2e (public, leadership, auth, onboarding, public-a11y, public-nav, mobile) via .context/e2e-seq.sh -> CodeRabbit --base-commit 3942235 -> commit+push feat/fe2-integration -> restart preview :3400 -> report; WAIT, backend only on "START BACKEND".
-- Owner-only SEO items: domain (surecurevisit.in vs Curevist.in), Search Console + Bing tokens in .env, Google Business Profile, backlinks/content. No fake ratings.
+- Owner-only SEO items: Search Console + Bing tokens in .env, Google Business Profile, backlinks/content. No fake ratings.
 
 ---
 # 2026-11-24 — logo→dashboard, filters scroll, location prompt (UNCOMMITTED on top of 747e867)
@@ -323,3 +323,9 @@ TODO: tsc/eslint ($TEMP/tsc22.log, eslint22.log), unit full, build, e2e (provide
 - Locality-or-PIN: src/components/public/{localities,saved-location,location-prompt}.ts(x); validateFinder/readPin/ServiceFinder/provider-directory use resolveLocation; en/te/hi messages (public.landing.finder, services.common pin*, common.locationPrompt).
 - Tests: tests/unit/localities.test.ts, tests/e2e/location-prompt.spec.ts, tests/e2e/support/location.ts (storageState "answered" in 4 configs + fixture-test.mjs guest).
 - TODO: gate (verify23.sh) -> e2e one at a time (public, public-a11y, public-service-directories, location-prompt, directory, doctor-search, service-requests, a11y-sweep-c) -> visual check logo/filters -> CodeRabbit --base-commit 747e867 -> commit/push -> restart :3400 preview -> report. Backend only on "START BACKEND".
+
+## 2026-11-24 domain confirmed + SEO pass
+- Domain CONFIRMED: surecurevisit.in (owner). Leadership letters' 'Curevist.in' replaced (3 spots in leadership.ts + incoming copy doc).
+- FIX: og:image/twitter:image were missing on every page (file-based images sit outside [locale] layout) -> set in seo.ts SHARE_IMAGE/TWITTER_IMAGE + layout.
+- Sitemap: +/doctors, x-default alternates. llms.txt: locality-or-PIN wording. Org JSON-LD knowsLanguage.
+- Next: verify23 gate, e2e public/public-a11y, CodeRabbit, push.
