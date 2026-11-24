@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createFixtureAuthApi, fixtureSessionFor } from "@/modules/auth/fixture";
 import { createFixtureOnboardingApi } from "@/modules/onboarding/fixture";
-import { createFixtureVerificationApi } from "@/modules/verification/fixture";
+import { createFixtureVerificationApi, fixtureRegisterSubmission } from "@/modules/verification/fixture";
 import { workspaceStateFor, landingPathFor } from "@/modules/auth/routes";
 
 const env = { FRONTEND_ADAPTER: "fixture", APP_ENV: "test" };
@@ -18,8 +18,9 @@ describe("a provider's own signup identity", () => {
     const auth = createFixtureAuthApi({ env });
     await auth.signup({ method: "email_password", role: "doctor", email: "own.doctor@example.invalid", password: "a-long-enough-password", acceptedTerms: true, termsVersion: "2026-11" } as never);
     const login = await auth.login({ method: "email_password", email: "own.doctor@example.invalid", password: "x" });
-    expect(login.ok && login.data.kind === "signed_in" ? login.data.session.accessToken : "").toBe("fixture-session.doctor_new");
-    const { identity } = stateOf("doctor_new");
+    const token = login.ok && login.data.kind === "signed_in" ? login.data.session.accessToken : "";
+    expect(token).toBe("fixture-session.doctor_new");
+    const { identity } = stateOf(token.replace("fixture-session.", "") as "doctor_new");
     expect(identity.workspaces.map((w) => w.role)).toEqual(["doctor"]);
     expect(landingPathFor(identity)).toBe("/en/doctor/onboarding");
   });
@@ -66,6 +67,27 @@ describe("a provider's own signup identity", () => {
     const approved = await verification.submitDecision(id, { decision: "approve", reason: "Synthetic evidence checked", expectedVersion: started.data.version } as never);
     expect(approved.ok).toBe(true);
     expect(stateOf("doctor_new").state).toBe("active");
+  });
+
+  it("a correction after changes-required reopens the same review instead of being dropped", async () => {
+    const verification = createFixtureVerificationApi({ env });
+    const id = ID(9001);
+    const record = {
+      providerId: id, category: "doctor", status: "submitted", version: 1, displayName: "Dr Resubmit", description: null, documents: [],
+      events: [{ fromState: "draft", toState: "submitted", publicReason: "Application submitted.", providerVersion: 1, occurredAt: "2026-11-24T00:00:00.000Z" }],
+    } as never;
+    fixtureRegisterSubmission(record);
+    const first = await verification.getProviderForReview(id);
+    if (!first.ok) throw new Error("no review record");
+    const started = await verification.startReview(id, { reason: "Synthetic check started", expectedVersion: first.data.version } as never);
+    if (!started.ok) throw new Error(JSON.stringify(started.error));
+    const changes = await verification.submitDecision(id, { decision: "changes_required", reason: "Synthetic: add a clearer document", expectedVersion: started.data.version } as never);
+    expect(changes.ok).toBe(true);
+
+    fixtureRegisterSubmission({ ...(record as object), version: 3 } as never);
+    const again = await verification.getProviderForReview(id);
+    expect(again.ok && again.data.status).toBe("submitted");
+    expect(again.ok && again.data.events.length).toBeGreaterThan(1);
   });
 
   it("a new signup starts with no application", async () => {

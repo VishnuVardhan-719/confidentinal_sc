@@ -163,7 +163,7 @@ export function createFixtureOnboardingApi(options: OnboardingFixtureOptions = {
       if (!draft) return fail("not_found");
       // The admin's decision on a submitted application is reflected back (e.g. "changes required" reopens editing).
       const decided = isShared ? fixtureReviewStatus(providerId) : null;
-      if (decided && decided !== draft.status && draft.status === "submitted") draft.status = decided;
+      if (decided && decided !== draft.status && (draft.status === "submitted" || draft.status === "under_review")) draft.status = decided;
       return ok(structuredClone(draft));
     },
 

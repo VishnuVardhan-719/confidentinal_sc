@@ -76,7 +76,17 @@ export const fixtureReviewStatus = (providerId: string): ProviderStatusDisplay |
  */
 export function fixtureRegisterSubmission(record: ProviderReviewDetail): void {
   const store = (sharedStore ??= createFixtureVerificationStore());
-  if (!store.providers.has(record.providerId)) store.providers.set(record.providerId, structuredClone(record));
+  const existing = store.providers.get(record.providerId);
+  if (!existing) {
+    store.providers.set(record.providerId, structuredClone(record));
+    return;
+  }
+  // A correction after "changes required" is a resubmission: reopen the review with the new evidence and keep the history.
+  // Any other existing state is a replay and is left alone so an admin decision is never overwritten.
+  if (existing.status === "changes_required") {
+    const next = structuredClone(record);
+    store.providers.set(record.providerId, { ...next, events: [...existing.events, ...next.events] });
+  }
 }
 
 export function createFixtureVerificationApi(options: FixtureOptions & { store?: FixtureVerificationStore } = {}): VerificationApi {
