@@ -15,6 +15,8 @@ import { ArrowLink, Container } from "@/components/public/layout";
 import { publicPageMetadata } from "@/components/public/metadata";
 import { PROVIDER_ROLES, signupHref } from "@/components/public/routes";
 import { ServiceFinder, type FinderLabels } from "@/components/public/service-finder";
+import { JsonLd, organizationSchema, websiteSchema } from "@/components/public/structured-data";
+import type { AppLocale } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 
 export function generateMetadata() {
@@ -30,7 +32,9 @@ const TRUST_LIMITS = ["ratings", "outcomes", "instant"] as const;
 
 export default async function LandingPage() {
   const t = await getTranslations("public.landing");
-  const stories = await getPublishedStories(await getLocale());
+  const locale = await getLocale();
+  const stories = await getPublishedStories(locale);
+  const tm = await getTranslations("common.meta");
   const finderLabels: FinderLabels = {
     pinLabel: t("finder.pinLabel"),
     pinHint: t("finder.pinHint"),
@@ -49,6 +53,8 @@ export default async function LandingPage() {
 
   return (
     <>
+      <JsonLd data={organizationSchema(tm("defaultDescription"))} />
+      <JsonLd data={websiteSchema(locale as AppLocale, tm("defaultDescription"))} />
       <Hero />
 
       {/* 3. Location and service finder */}

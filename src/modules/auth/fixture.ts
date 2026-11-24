@@ -2,6 +2,7 @@ import { fail, ok } from "@/lib/api/result";
 import {
   FIXTURE_ACCOUNTS,
   FIXTURE_OTP_CODE,
+  FIXTURE_IDS,
   FIXTURE_OTP_MAX_ATTEMPTS,
   FIXTURE_OTP_MAX_RESENDS,
   FIXTURE_OTP_RESEND_COOLDOWN_SECONDS,
@@ -15,6 +16,7 @@ import { assertFixtureAllowed, type FixtureOptions } from "./fixture-guard";
 import { validateInput } from "./http-client";
 import { loginSchema, otpVerifySchema, signupSchema, type OtpChallenge } from "./schemas";
 import { fixtureReviewStatus } from "@/modules/verification/fixture";
+import { resetFixturePatientDraft } from "@/modules/onboarding/fixture";
 import type { Session, SessionTokens } from "./types";
 
 /**
@@ -147,10 +149,14 @@ export function createFixtureAuthApi(options: FixtureAuthOptions = {}): AuthApi 
         // A new synthetic account starts as a patient with no provider application. Provider roles begin their
         // application from onboarding, exactly as the real flow does, so any role signs up the same way.
         const email = valid.data.email.toLowerCase();
-        if (!FIXTURE_ACCOUNTS[email] && !store.emails.has(email)) store.emails.set(email, "patient_new");
+        if (!FIXTURE_ACCOUNTS[email] && !store.emails.has(email)) {
+          store.emails.set(email, "patient_new");
+          resetFixturePatientDraft(FIXTURE_IDS.patientNew);
+        }
         return ok({ kind: "received" });
       }
       const scenario = store.phones.get(valid.data.phone) ?? (valid.data.role === "patient" ? "patient_new" : "doctor_draft");
+      if (scenario === "patient_new" && !store.phones.has(valid.data.phone)) resetFixturePatientDraft(FIXTURE_IDS.patientNew);
       store.phones.set(valid.data.phone, scenario);
       return ok({ kind: "otp_challenge", challenge: publicChallenge(issueChallenge(valid.data.phone, scenario)) });
     },

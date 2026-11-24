@@ -23,6 +23,22 @@ export async function generateMetadata(): Promise<Metadata> {
     description: t("defaultDescription"),
     applicationName: "SureCure Visit",
     formatDetection: { telephone: false },
+    category: "health",
+    keywords: [
+      "SureCure Visit",
+      "SureCureVisit",
+      "healthcare at your doorstep",
+      "doctor home visit",
+      "home lab test sample collection",
+      "ambulance transport",
+      "caretaker at home",
+    ],
+    // Search Console / Bing tokens are read from the environment so they never live in the repo.
+    verification: {
+      google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+      other: process.env.BING_SITE_VERIFICATION ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION } : undefined,
+    },
+    twitter: { card: "summary_large_image" },
   };
 }
 

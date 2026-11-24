@@ -7,6 +7,7 @@ import { FaqSearch } from "@/components/public/faq-search";
 import { ArrowLink, Container, PublicPageIntro } from "@/components/public/layout";
 import { publicPageMetadata } from "@/components/public/metadata";
 import { richTextToPlain } from "@/components/public/rich-text";
+import { JsonLd, faqSchema } from "@/components/public/structured-data";
 import { FixtureNotice } from "@/components/shared/fixture-notice";
 
 export function generateMetadata() {
@@ -38,6 +39,7 @@ export default async function FaqPage() {
 
   return (
     <>
+      <JsonLd data={faqSchema(builtIn)} />
       <PublicPageIntro title={t("title")} lead={t("lead")}>
         <ArrowLink href="/contact">{tl("contact")}</ArrowLink>
       </PublicPageIntro>

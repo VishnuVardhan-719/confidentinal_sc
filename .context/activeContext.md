@@ -310,3 +310,9 @@ TODO: tsc/eslint ($TEMP/tsc22.log, eslint22.log), unit full, build, e2e (provide
 - Helper: .context/e2e-seq.sh "spec:project ..." runs specs one at a time -> $TEMP/e2e-seq.log (SEQ_DONE).
 - Remaining: CodeRabbit result, commit+push, preview :3400, report, WAIT for "START BACKEND".
 - COMMITTED+PUSHED e1749d1 (approval gate + founder text). CodeRabbit: 1 minor (e2e-seq.sh usage comment) fixed. Preview http://localhost:3400/en restarted. WAITING for owner approval; backend only on "START BACKEND".
+
+# 2026-11-24 — signup prefill + hero + logo + favicon + SEO/GEO (UNCOMMITTED on top of 3942235)
+- Done in code: fixture signup resets patient draft (resetFixturePatientDraft); hero "Healthcare at your doorstep." (en/te/hi); new logo assets in public/brand + src/app/icon.png/apple-icon.png; BrandLogo = emblem + wordmark; JSON-LD (structured-data.tsx), robots AI-crawler rules, llms.txt route, manifest.ts, OG/Twitter images, verification env (GOOGLE_SITE_VERIFICATION / BING_SITE_VERIFICATION).
+- Gate 2026-11-24: tsc 0, eslint 0, unit 133 files/1994 tests pass, build OK.
+- Next: e2e (public, leadership, auth, onboarding, public-a11y, public-nav, mobile) via .context/e2e-seq.sh -> CodeRabbit --base-commit 3942235 -> commit+push feat/fe2-integration -> restart preview :3400 -> report; WAIT, backend only on "START BACKEND".
+- Owner-only SEO items: domain (surecurevisit.in vs Curevist.in), Search Console + Bing tokens in .env, Google Business Profile, backlinks/content. No fake ratings.

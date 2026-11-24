@@ -58,6 +58,11 @@ const getSharedStore = (): FixtureOnboardingStore =>
     [FIXTURE_IDS.doctorDraftUser]: "empty",
   }));
 
+/** A brand-new signup starts with an empty questionnaire (the demo draft is only for the sample sign-in account). */
+export const resetFixturePatientDraft = (actorId: string): void => {
+  getSharedStore().patientDrafts.set(actorId, emptyPatientDraft());
+};
+
 export function createFixtureOnboardingApi(options: OnboardingFixtureOptions = {}): OnboardingApi {
   assertFixtureAllowed(options.env);
   const now = options.now ?? (() => new Date());

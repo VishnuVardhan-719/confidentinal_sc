@@ -87,7 +87,7 @@ test("unknown routes and unpublished stories show the localized 404", async ({ p
 test("landing shows all content blocks and no fabricated social proof", async ({ page }) => {
   await page.goto("/en");
   for (const name of [
-    "Care that comes closer.",
+    "Healthcare at your doorstep.",
     "Who serves your PIN code?",
     "Four kinds of care, booked the same way",
     "How a visit happens",
