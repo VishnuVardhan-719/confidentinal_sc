@@ -70,6 +70,15 @@ let sharedStore: FixtureVerificationStore | null = null;
  */
 export const fixtureReviewStatus = (providerId: string): ProviderStatusDisplay | null => sharedStore?.providers.get(providerId)?.status ?? null;
 
+/**
+ * A provider application submitted through the fixture onboarding API joins the admin's review queue, exactly
+ * as a real submission would. Existing records are left alone so an admin decision is never overwritten.
+ */
+export function fixtureRegisterSubmission(record: ProviderReviewDetail): void {
+  const store = (sharedStore ??= createFixtureVerificationStore());
+  if (!store.providers.has(record.providerId)) store.providers.set(record.providerId, structuredClone(record));
+}
+
 export function createFixtureVerificationApi(options: FixtureOptions & { store?: FixtureVerificationStore } = {}): VerificationApi {
   assertFixtureAllowed(options.env);
   const now = options.now ?? (() => new Date());

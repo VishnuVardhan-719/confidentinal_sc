@@ -28,6 +28,8 @@ export async function storageFor(browser: Browser, baseURL: string | undefined, 
   if (hit) return hit;
   // Explicitly empty: inside a test, browser.newContext() inherits the project's storageState.
   const ctx = await browser.newContext({ baseURL, storageState: { cookies: [], origins: [] } });
+  // The first-visit locality prompt would cover pages under test; these visitors have already answered it.
+  await ctx.addInitScript(() => localStorage.setItem("scv.location.v1", JSON.stringify({ v: 1, skipped: true })));
   const page = await ctx.newPage();
   await signIn(page, email);
   const file = join(tmpdir(), `scv-e2e-${key}-${email.split("@")[0]}.json`);

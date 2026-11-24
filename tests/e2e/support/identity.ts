@@ -101,7 +101,8 @@ export async function expectNoPrivateBrowserStorage(page: Page): Promise<void> {
     local: Object.keys(window.localStorage),
     session: Object.keys(window.sessionStorage),
   }));
-  expect(stored.local).toEqual([]);
+  // scv.location.v1 is the visitor's own chosen locality (public convenience), never health data.
+  expect(stored.local.filter((key) => key !== "scv.location.v1")).toEqual([]);
   expect(stored.session).toEqual([]);
 }
 

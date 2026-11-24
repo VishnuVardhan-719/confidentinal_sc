@@ -55,7 +55,7 @@ export const LEADERS: Leader[] = [
   {
     id: "cofounder",
     name: "Sai Varshitha",
-    role: "Co-Founder & Director",
+    role: "Co-Founder & Director of Administration",
     photo: "/team/cofounder.webp",
     photoWidth: 640,
     photoHeight: 744,
@@ -87,7 +87,7 @@ export const LEADERS: Leader[] = [
   {
     id: "director",
     name: "Pamulapati Satyanarayana Reddy",
-    role: "Director",
+    role: "Director of Finance & Governance",
     photo: "/team/director.webp",
     photoWidth: 640,
     photoHeight: 827,

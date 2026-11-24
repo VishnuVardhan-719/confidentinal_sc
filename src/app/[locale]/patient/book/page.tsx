@@ -32,10 +32,14 @@ export default async function PatientBookPage({ params, searchParams }: PageProp
   const { locale: raw } = await params;
   await connection();
   const locale = toLocale(raw);
-  const session = await requirePatientSession(locale, `/${locale}/patient/book`);
   const query = await searchParams;
   const providerId = z.uuid().safeParse(first(query.providerId));
   const serviceId = z.uuid().safeParse(first(query.serviceId));
+  // The return path keeps the (public, validated) provider and service IDs, so signing in lands back on this booking.
+  const returnPath = providerId.success && serviceId.success
+    ? `/${locale}/patient/book?providerId=${providerId.data}&serviceId=${serviceId.data}`
+    : `/${locale}/patient/book`;
+  const session = await requirePatientSession(locale, returnPath);
   // Advisory guard for navigation; every server action re-checks the session.
   if (session.status !== "ok") return <AccessDenied reason={session.reason} />;
 

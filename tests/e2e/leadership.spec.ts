@@ -3,8 +3,8 @@ import { expect, test } from "@playwright/test";
 /** Leadership letters and the SureCureVisit logo (owner-supplied artwork, 2026-11-23). */
 const LEADERS = [
   { name: "Pamulapati Vamsi Krishna Reddy", role: "Founder, CEO & Managing Director" },
-  { name: "Sai Varshitha", role: "Co-Founder & Director" },
-  { name: "Pamulapati Satyanarayana Reddy", role: "Director" },
+  { name: "Sai Varshitha", role: "Co-Founder & Director of Administration" },
+  { name: "Pamulapati Satyanarayana Reddy", role: "Director of Finance & Governance" },
 ];
 
 test("our story shows the three leaders with loaded portraits, roles and letters", async ({ page }) => {

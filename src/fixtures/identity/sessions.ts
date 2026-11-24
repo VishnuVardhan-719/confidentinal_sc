@@ -19,6 +19,11 @@ export const FIXTURE_IDS = {
   caretakerUser: "00000000-0000-4000-8000-000000000501",
   adminUser: "00000000-0000-4000-8000-000000000601",
   multiRoleUser: "00000000-0000-4000-8000-000000000701",
+  /** Brand-new provider signups. Each starts with no application; the application is overlaid at sign-in. */
+  doctorNewUser: "00000000-0000-4000-8000-000000000211",
+  labNewUser: "00000000-0000-4000-8000-000000000311",
+  ambulanceNewUser: "00000000-0000-4000-8000-000000000411",
+  caretakerNewUser: "00000000-0000-4000-8000-000000000511",
   doctorDraftProvider: "00000000-0000-4000-8000-000000002001",
   doctorActiveProvider: "00000000-0000-4000-8000-000000002002",
   doctorSubmittedProvider: "00000000-0000-4000-8000-000000002003",
@@ -36,6 +41,10 @@ export const FIXTURE_IDS = {
 export const FIXTURE_SCENARIOS = [
   "anonymous",
   "patient_new",
+  "doctor_new",
+  "lab_new",
+  "ambulance_new",
+  "caretaker_new",
   "patient_complete",
   "doctor_draft",
   "doctor_active",
@@ -57,12 +66,22 @@ const identity = (userId: string, displayName: string, workspaces: Identity["wor
   workspaces,
 });
 
+/** A provider who just signed up: a workspace for their role only (never a patient one), application not yet started. */
+const newProvider = (userId: string, displayName: string, role: "doctor" | "lab" | "ambulance" | "caretaker"): Session => ({
+  kind: "authenticated",
+  identity: identity(userId, displayName, [{ role, state: "onboarding_incomplete" }]),
+});
+
 export const FIXTURE_SESSIONS: Readonly<Record<FixtureScenario, Session>> = {
   anonymous: { kind: "anonymous" },
   patient_new: {
     kind: "authenticated",
     identity: identity(FIXTURE_IDS.patientNew, "Synthetic Patient A", [{ role: "patient", state: "onboarding_incomplete" }]),
   },
+  doctor_new: newProvider(FIXTURE_IDS.doctorNewUser, "New Doctor", "doctor"),
+  lab_new: newProvider(FIXTURE_IDS.labNewUser, "New Lab", "lab"),
+  ambulance_new: newProvider(FIXTURE_IDS.ambulanceNewUser, "New Ambulance Operator", "ambulance"),
+  caretaker_new: newProvider(FIXTURE_IDS.caretakerNewUser, "New Caretaker", "caretaker"),
   patient_complete: {
     kind: "authenticated",
     identity: identity(FIXTURE_IDS.patientComplete, "Synthetic Patient B", [{ role: "patient", state: "active" }]),

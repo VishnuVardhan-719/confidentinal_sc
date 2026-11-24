@@ -16,7 +16,8 @@ import { assertFixtureAllowed, type FixtureOptions } from "./fixture-guard";
 import { validateInput } from "./http-client";
 import { loginSchema, otpVerifySchema, signupSchema, type OtpChallenge } from "./schemas";
 import { fixtureReviewStatus } from "@/modules/verification/fixture";
-import { resetFixturePatientDraft } from "@/modules/onboarding/fixture";
+import { fixtureApplicationFor, fixturePatientSubmitted, resetFixtureApplication, resetFixturePatientDraft } from "@/modules/onboarding/fixture";
+import type { ProviderCategory } from "./roles";
 import type { Session, SessionTokens } from "./types";
 
 /**
@@ -64,6 +65,11 @@ export function fixtureScenarioFromToken(token: string | null | undefined, prefi
 export function fixtureSessionFor(scenario: FixtureScenario): Session {
   const base = FIXTURE_SESSIONS[scenario];
   if (base.kind !== "authenticated") return base;
+  if (scenario === "patient_new" && fixturePatientSubmitted(FIXTURE_IDS.patientNew)) {
+    return { kind: "authenticated", identity: { ...base.identity, workspaces: [{ role: "patient", state: "active" }] } };
+  }
+  const newCategory = NEW_PROVIDER_SCENARIOS[scenario];
+  if (newCategory) return withApplication(base, newCategory);
   if (!base.identity.workspaces.some((w) => w.state === "pending_review" && w.providerId)) return base;
   const workspaces = base.identity.workspaces.map((w) => {
     if (w.state !== "pending_review" || !w.providerId) return w;
@@ -73,6 +79,43 @@ export function fixtureSessionFor(scenario: FixtureScenario): Session {
     if (status === "rejected" || status === "suspended") return { ...w, state: "restricted" as const, providerStatus: status };
     return w;
   });
+  return { kind: "authenticated", identity: { ...base.identity, workspaces } };
+}
+
+/** Scenario a brand-new account of each signup role resolves to. */
+const NEW_PROVIDER_SCENARIOS: Partial<Record<FixtureScenario, ProviderCategory>> = {
+  doctor_new: "doctor",
+  lab_new: "lab",
+  ambulance_new: "ambulance",
+  caretaker_new: "caretaker",
+};
+const SCENARIO_FOR_ROLE: Record<string, FixtureScenario> = {
+  patient: "patient_new",
+  doctor: "doctor_new",
+  lab: "lab_new",
+  ambulance: "ambulance_new",
+  caretaker: "caretaker_new",
+};
+const scenarioForSignup = (role: string): FixtureScenario => SCENARIO_FOR_ROLE[role] ?? "patient_new";
+
+/**
+ * A new provider account's single workspace, brought in line with the application it has started: no application
+ * yet -> start one; draft or changes requested -> keep editing; submitted or under review -> awaiting the admin;
+ * approved -> active; rejected or suspended -> restricted. The admin's decision is the source of truth.
+ */
+function withApplication(base: Extract<Session, { kind: "authenticated" }>, category: ProviderCategory): Session {
+  const application = fixtureApplicationFor(category);
+  if (!application) return base;
+  const { providerId, status } = application;
+  const state =
+    status === "active" || status === "approved"
+      ? "active"
+      : status === "submitted" || status === "under_review"
+        ? "pending_review"
+        : status === "rejected" || status === "suspended"
+          ? "restricted"
+          : "onboarding_incomplete";
+  const workspaces = base.identity.workspaces.map((w) => ({ ...w, state: state as typeof w.state, providerId, providerStatus: status }));
   return { kind: "authenticated", identity: { ...base.identity, workspaces } };
 }
 
@@ -150,13 +193,19 @@ export function createFixtureAuthApi(options: FixtureAuthOptions = {}): AuthApi 
         // application from onboarding, exactly as the real flow does, so any role signs up the same way.
         const email = valid.data.email.toLowerCase();
         if (!FIXTURE_ACCOUNTS[email] && !store.emails.has(email)) {
-          store.emails.set(email, "patient_new");
-          resetFixturePatientDraft(FIXTURE_IDS.patientNew);
+          const scenario = scenarioForSignup(valid.data.role);
+          store.emails.set(email, scenario);
+          if (scenario === "patient_new") resetFixturePatientDraft(FIXTURE_IDS.patientNew);
+          else resetFixtureApplication(NEW_PROVIDER_SCENARIOS[scenario] as ProviderCategory);
         }
         return ok({ kind: "received" });
       }
-      const scenario = store.phones.get(valid.data.phone) ?? (valid.data.role === "patient" ? "patient_new" : "doctor_draft");
-      if (scenario === "patient_new" && !store.phones.has(valid.data.phone)) resetFixturePatientDraft(FIXTURE_IDS.patientNew);
+      const known = store.phones.has(valid.data.phone);
+      const scenario = store.phones.get(valid.data.phone) ?? scenarioForSignup(valid.data.role);
+      if (!known) {
+        if (scenario === "patient_new") resetFixturePatientDraft(FIXTURE_IDS.patientNew);
+        else resetFixtureApplication(NEW_PROVIDER_SCENARIOS[scenario] as ProviderCategory);
+      }
       store.phones.set(valid.data.phone, scenario);
       return ok({ kind: "otp_challenge", challenge: publicChallenge(issueChallenge(valid.data.phone, scenario)) });
     },

@@ -1,5 +1,5 @@
 import type { Locale, Role } from "./roles";
-import { homePath, landingPathFor, onboardingPath, workspaceStateFor } from "./routes";
+import { homePath, isApprovalGatedRole, landingPathFor, onboardingPath, pendingApprovalPath, workspaceStateFor } from "./routes";
 import type { Identity } from "./types";
 import type { SessionLookup } from "./guard";
 
@@ -35,6 +35,8 @@ function workspaceHref(identity: Identity, role: Role, locale: Locale): string |
   const state = workspaceStateFor(identity, role);
   if (state === null) return null;
   if (role === "admin") return state === "active" ? homePath(role, locale) : null;
+  // A provider awaiting admin approval may reach only the waiting page, never the role dashboard.
+  if (state === "pending_review" && isApprovalGatedRole(role)) return pendingApprovalPath(locale, role);
   return state === "onboarding_incomplete" || state === "unknown" ? onboardingPath(role, locale) : homePath(role, locale);
 }
 
