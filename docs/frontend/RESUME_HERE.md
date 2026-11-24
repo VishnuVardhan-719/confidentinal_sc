@@ -166,3 +166,10 @@ Remaining: about 3 hours of agent or lead time plus review, about 700 Kiro credi
 ## After the frontend is complete
 
 Connect to the backend with `FRONTEND_ADAPTER=http` (Docker is needed only for local Supabase), then carry out the user's change requests.
+
+## Checkpoint 2026-11-24 (a300338)
+- Signup questionnaire starts empty; hero "Healthcare at your doorstep."; new logo + favicon (public/brand, src/app/icon.png, apple-icon.png).
+- SEO/GEO in frontend: JSON-LD (src/components/public/structured-data.tsx), robots AI-crawler rules, /llms.txt, manifest, OG/Twitter images, GOOGLE_SITE_VERIFICATION / BING_SITE_VERIFICATION env.
+- Owner-only: domain decision (surecurevisit.in vs Curevist.in), Search Console + Bing tokens, Google Business Profile, backlinks/content.
+- CodeRabbit declined: shared fixture `patient_new` draft reset (fixture-only; one static identity per scenario by design).
+- Backend: do NOT start until the exact words "START BACKEND".
