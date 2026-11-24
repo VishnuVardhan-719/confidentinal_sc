@@ -34,3 +34,8 @@ Vercel -> Project -> Domains -> add `surecurevisit.in` and `www.surecurevisit.in
 `deploy/vercel-frontend` (so the Preview deployment is served on the domain). Then set the DNS records Vercel shows at the
 registrar (A `76.76.21.21` for the apex, CNAME `cname.vercel-dns.com` for www; confirm against the values Vercel displays).
 Only the owner should change DNS.
+
+## Launch splash and target repo (2026-11-24)
+- The "Launching soon" welcome screen shows when `APP_ENV` is `staging` or `production`. `LAUNCH_SPLASH=off` removes it, `LAUNCH_SPLASH=on` forces it. It is dismissed with the button or Escape and returns on a full page load.
+- Target repo: https://github.com/surecurevisit/SureCureVisit-Frontend (frontend only, no backend branches). The access token lives in `~/.secrets/github_surecurevisit_frontend_token`. It was pasted into a chat, so revoke or rotate it after the deploy.
+- Strong search ranking needs `APP_ENV=production` (indexable). A fixture-backed production deploy is refused by design, so either connect the backend or add a reviewed pre-launch mode. Decide at "lets deploy".
