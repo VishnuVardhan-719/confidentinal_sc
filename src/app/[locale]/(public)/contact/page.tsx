@@ -2,7 +2,7 @@ import { ArrowRight, ShieldAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Container, PublicPageIntro } from "@/components/public/layout";
 import { publicPageMetadata } from "@/components/public/metadata";
-import { Notice } from "@/components/shared/notice";
+import { ContactDetails } from "@/components/shared/contact-details";
 import { Link } from "@/i18n/navigation";
 
 export function generateMetadata() {
@@ -17,7 +17,7 @@ const ROUTES = [
 ] as const;
 
 /**
- * No contact form: there is no approved support endpoint or staffed channel yet, and a form that
+ * No contact form: only the owner's published phone, email and Instagram, and a form that
  * goes nowhere would be a fake CTA. No health-detail fields will ever be added here.
  */
 export default function ContactPage() {
@@ -27,9 +27,12 @@ export default function ContactPage() {
       <PublicPageIntro title={t("title")} lead={t("lead")} />
       <Container className="grid gap-12 pb-20 lg:grid-cols-12">
         <div className="grid content-start gap-6 lg:col-span-5">
-          <Notice tone="neutral" title={t("pendingTitle")}>
-            {t("pendingBody")}
-          </Notice>
+          <section aria-labelledby="reach" className="grid gap-3">
+            <h2 id="reach" className="font-display text-2xl font-medium text-ink">
+              {t("reachTitle")}
+            </h2>
+            <ContactDetails className="text-lg" />
+          </section>
           <p className="flex gap-3 text-base text-muted">
             <ShieldAlert aria-hidden className="mt-0.5 size-5 shrink-0 text-forest" />
             {t("privacyNote")}

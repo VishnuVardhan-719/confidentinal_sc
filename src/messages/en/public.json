@@ -6,11 +6,11 @@
     },
     "about": {
       "title": "About us",
-      "description": "What SureCure Visit is, how the marketplace works and what we do not do."
+      "description": "SureCure Visit (Sure Cure Visit) is a Hyderabad home healthcare platform founded by Pamulapati Vamsi Krishna Reddy, with co-founder Sai Varshitha and director Pamulapati Satyanarayana Reddy."
     },
     "ourStory": {
       "title": "Our story",
-      "description": "Why SureCure Visit exists: bringing verified care to people at home."
+      "description": "Why SureCure Visit exists, and the founder, co-founder and director behind it: Pamulapati Vamsi Krishna Reddy, Sai Varshitha and Pamulapati Satyanarayana Reddy."
     },
     "stories": {
       "title": "Stories",
@@ -55,6 +55,7 @@
   },
   "landing": {
     "hero": {
+      "priority": "Your health is our priority.",
       "title": "Healthcare at your doorstep.",
       "lead": "Find doctors, lab sample collection, scheduled ambulance transport and caretakers who are verified and actually serve your PIN code. You choose who comes; they confirm your request.",
       "primary": "Search other services by PIN",
@@ -241,6 +242,7 @@
     }
   },
   "about": {
+    "priority": "Your health is our priority.",
     "title": "About SureCure Visit",
     "lead": "A marketplace for healthcare at home: doctors, laboratories, scheduled ambulance operators and caretakers, each verified and each serving the areas they say they serve.",
     "missionTitle": "What we are for",
@@ -422,9 +424,8 @@
   },
   "contact": {
     "title": "Contact",
-    "lead": "Official contact channels will be listed here as soon as they are confirmed. Until then, these pages may answer your question.",
-    "pendingTitle": "Contact details are not published yet",
-    "pendingBody": "We will not show a phone number, email or chat link until it is confirmed and staffed.",
+    "lead": "Reach us by phone, email or Instagram. These pages may also answer your question.",
+    "reachTitle": "Reach us",
     "routesTitle": "Find help now",
     "routes": {
       "emergency": {

@@ -29,9 +29,17 @@ export function LocationPrompt() {
   useEffect(() => {
     if (quiet || readSavedLocation()) return;
     // A beat after load, so the page paints first and the question does not fight the first render.
-    const timer = window.setTimeout(() => {
-      if (!readSavedLocation()) setOpen(true);
-    }, 600);
+    // While the "Launching soon" welcome screen is up the question waits for it to be dismissed.
+    let timer = 0;
+    const attempt = () => {
+      if (readSavedLocation()) return;
+      if (document.querySelector("[data-launch-splash]")) {
+        timer = window.setTimeout(attempt, 400);
+        return;
+      }
+      setOpen(true);
+    };
+    timer = window.setTimeout(attempt, 600);
     return () => window.clearTimeout(timer);
   }, [quiet]);
 

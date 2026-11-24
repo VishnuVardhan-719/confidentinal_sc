@@ -24,8 +24,9 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -92,6 +93,8 @@ export function AppShell({
   children: ReactNode;
 }) {
   const ta = useTranslations("accessibility");
+  const ts = useTranslations("auth.session");
+  const locale = useLocale();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const primary = nav.filter((n) => n.primary).slice(0, 5);
@@ -156,8 +159,9 @@ export function AppShell({
                   {ta("menuDescription")}
                 </SheetDescription>
                 <nav aria-label={ta("sidebarNavigation")}>{navList(true)}</nav>
-                <div className="border-t border-border pt-3">
+                <div className="grid gap-3 border-t border-border pt-3">
                   <LocaleSwitcher variant="inline" />
+                  <SignOutButton locale={locale} label={ts("signOut")} variant="secondary" />
                 </div>
               </div>
             </SheetContent>
@@ -165,6 +169,7 @@ export function AppShell({
           <div className="min-w-0 flex-1 truncate font-semibold text-ink">{topbarTitle}</div>
           <LocaleSwitcher className="hidden sm:inline-flex" />
           {topbarActions}
+          <SignOutButton locale={locale} label={ts("signOut")} variant="quiet" />
         </header>
 
         <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex-1 px-4 py-6 pb-28 outline-none sm:px-6 lg:px-8 lg:pb-10">

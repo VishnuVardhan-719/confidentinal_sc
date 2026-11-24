@@ -329,3 +329,11 @@ TODO: tsc/eslint ($TEMP/tsc22.log, eslint22.log), unit full, build, e2e (provide
 - FIX: og:image/twitter:image were missing on every page (file-based images sit outside [locale] layout) -> set in seo.ts SHARE_IMAGE/TWITTER_IMAGE + layout.
 - Sitemap: +/doctors, x-default alternates. llms.txt: locality-or-PIN wording. Org JSON-LD knowsLanguage.
 - Next: verify23 gate, e2e public/public-a11y, CodeRabbit, push.
+
+
+## 2026-11-24 checkpoint (post role-signup/admin-queue work)
+- feat/fe2-integration pushed at 9f7a113; deploy copy branch deploy/vercel-frontend pushed at the same commit (development continues on feat/fe2-integration).
+- Done: role-specific provider signup (own identity, pending page, admin queue, approve -> dashboard), new patient active after questionnaire (booking loop fixed), booking return path keeps provider/service, leader titles updated, pending provider logo no longer links to dashboard, location key allowed in storage check, e2e helper seeds location answer.
+- Gate: tsc/eslint clean, 2008 unit tests, build ok; e2e auth 28, onboarding 16, provider-approval 7, role-signup 5, booking-journey 5, patient-bookings 10 (scenario=requested), logo-home 3.
+- Waiting on owner: Vercel login/deploy as Preview (fixtures refuse VERCEL_ENV=production), DNS, START BACKEND.
+- Not rerun: a11y sweeps, mobile-390 variants, directory.spec.mjs, service-requests.

@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import { SERVICES } from "@/components/public/routes";
 import { Link } from "@/i18n/navigation";
 import { BrandLogo } from "./brand-logo";
+import { ContactDetails } from "./contact-details";
 import { LocaleSwitcher } from "./locale-switcher";
 
 const COLUMNS = [
@@ -54,6 +55,11 @@ export function Footer() {
         <div className="grid content-start gap-5">
           <BrandLogo tone="paper" className="focus-visible:outline-paper" />
           <p className="max-w-sm text-base text-on-forest-muted">{t("footer.tagline")}</p>
+          <p className="max-w-sm font-display text-xl font-bold text-on-forest">{t("footer.priority")}</p>
+          <div className="grid gap-1">
+            <h2 className="text-sm font-semibold text-on-forest">{t("footer.contact.title")}</h2>
+            <ContactDetails tone="paper" className="max-w-sm" />
+          </div>
           <Link
             href="/emergency"
             className="inline-flex min-h-target w-fit items-center gap-2 rounded-md bg-paper px-4 font-semibold text-danger focus-visible:outline-paper"

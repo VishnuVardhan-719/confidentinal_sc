@@ -16,6 +16,8 @@ const SAME_IN_ALL_LOCALES = new Set([
   "common.locales.te",
   "common.locales.hi",
   "common.footer.columns.company",
+  // Brand name and domain only.
+  "common.footer.identity",
   // Pure placeholder pattern with no words to translate.
   "onboarding.adminReview.decision.dialogTitle",
 ]);

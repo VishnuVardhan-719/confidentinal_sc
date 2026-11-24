@@ -35,8 +35,6 @@ export function AreaShell({
   children: ReactNode;
 }) {
   const tk = useKeyTranslator();
-  const locale = useLocale();
-  const ts = useTranslations("auth.session");
   const items: ShellNavItem[] = nav.map((n) => ({
     href: stripLocale(n.href),
     label: tk(n.labelKey),
@@ -48,12 +46,7 @@ export function AreaShell({
       workspaceLabel={workspaceLabel}
       nav={items}
       topbarTitle={topbarTitle}
-      topbarActions={
-        <>
-          {topbarActions}
-          <SignOutButton locale={locale} label={ts("signOut")} variant="quiet" />
-        </>
-      }
+      topbarActions={topbarActions}
     >
       {children}
     </AppShell>

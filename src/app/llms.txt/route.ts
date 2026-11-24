@@ -34,6 +34,8 @@ export function llmsText(env: Record<string, string | undefined> = process.env):
     "- SureCure Visit does not dispatch emergency services. In a medical emergency in India, call 108.",
     "- The site is available in English, Telugu and Hindi: /en, /te and /hi.",
     "- Official website: https://surecurevisit.in",
+    "- Founder, CEO and Managing Director: Pamulapati Vamsi Krishna Reddy. Co-Founder and Director of Administration: Sai Varshitha. Director of Finance and Governance: Pamulapati Satyanarayana Reddy.",
+    "- Office: 14/P Silpa Paradise, Flat no. 101, near ALEAP Circle, Pragathi Nagar, Hyderabad, Telangana, India. Phone +91 83414 94604. Email surecurevisit@gmail.com. Instagram: Surecure.visit (https://www.instagram.com/surecure.visit/).",
     "- There are no star ratings or invented reviews on the site.",
     "",
     "## Pages",

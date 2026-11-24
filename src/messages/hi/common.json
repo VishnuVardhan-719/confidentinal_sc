@@ -1,4 +1,9 @@
 {
+  "launchSplash": {
+    "title": "जल्द ही लॉन्च",
+    "body": "और भी नए फीचर्स के साथ। जानने के लिए जुड़े रहें।",
+    "enter": "एक नज़र डालें"
+  },
   "brand": "SureCure Visit",
   "homeLink": "होम",
   "meta": {
@@ -52,9 +57,17 @@
     "hi": "हिन्दी"
   },
   "footer": {
+    "priority": "आपका स्वास्थ्य हमारी प्राथमिकता है।",
+    "contact": {
+      "title": "संपर्क करें",
+      "phone": "फ़ोन",
+      "email": "ईमेल",
+      "instagram": "इंस्टाग्राम",
+      "office": "कार्यालय का पता"
+    },
     "tagline": "घर पर स्वास्थ्य सेवाओं के लिए एक मार्केटप्लेस। आप अपने क्षेत्र में सेवा देने वाला सत्यापित प्रदाता चुनते हैं, और वे आपके अनुरोध की पुष्टि करते हैं।",
     "emergency": "आपातकाल? 108 पर कॉल करें",
-    "identity": "SureCure Visit · surecurevisit.in. कंपनी का विवरण पुष्टि होने के बाद यहाँ प्रकाशित किया जाएगा।",
+    "identity": "SureCure Visit · surecurevisit.in",
     "columns": {
       "services": "सेवाएँ",
       "company": "SureCure Visit",

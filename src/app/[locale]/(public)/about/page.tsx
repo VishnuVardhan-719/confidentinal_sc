@@ -17,7 +17,9 @@ export default function AboutPage() {
   const tOur = useTranslations("public.ourStory");
   return (
     <>
-      <PublicPageIntro title={t("title")} lead={t("lead")} />
+      <PublicPageIntro title={t("title")} lead={t("lead")}>
+        <p className="border-l-4 border-forest pl-4 font-display text-[clamp(1.5rem,1.2rem+1.2vw,2.125rem)] leading-tight font-bold tracking-[-0.01em] text-forest">{t("priority")}</p>
+      </PublicPageIntro>
       <Container className="grid gap-16 pb-20">
         <section aria-labelledby="mission" className="grid gap-6 border-t border-border pt-10 lg:grid-cols-12">
           <h2 id="mission" className="font-display text-2xl font-medium text-ink lg:col-span-4">

@@ -1,4 +1,9 @@
 {
+  "launchSplash": {
+    "title": "Launching soon",
+    "body": "With more new features. Stay tuned to find out.",
+    "enter": "Take a look around"
+  },
   "brand": "SureCure Visit",
   "homeLink": "Home",
   "meta": {
@@ -52,9 +57,17 @@
     "hi": "हिन्दी"
   },
   "footer": {
+    "priority": "Your health is our priority.",
+    "contact": {
+      "title": "Contact us",
+      "phone": "Phone",
+      "email": "Email",
+      "instagram": "Instagram",
+      "office": "Office address"
+    },
     "tagline": "A marketplace for home healthcare. You choose a verified provider who serves your area, and they confirm your request.",
     "emergency": "Emergency? Call 108",
-    "identity": "SureCure Visit · surecurevisit.in. Company details will be published here once confirmed.",
+    "identity": "SureCure Visit · surecurevisit.in",
     "columns": {
       "services": "Services",
       "company": "SureCure Visit",

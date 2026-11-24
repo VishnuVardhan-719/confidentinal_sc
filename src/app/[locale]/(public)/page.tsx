@@ -2,6 +2,8 @@ import { ArrowRight, Check, Minus, Phone } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 import { getPublishedStories, type PublicContentResult, type PublicStorySummary } from "@/components/public/content-source";
+import { LaunchSplash } from "@/components/public/launch-splash";
+import { launchSplashEnabled } from "@/components/public/launch-splash-config";
 import { FixtureNotice } from "@/components/shared/fixture-notice";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -55,6 +57,7 @@ export default async function LandingPage() {
     <>
       <JsonLd data={organizationSchema(tm("defaultDescription"))} />
       <JsonLd data={websiteSchema(locale as AppLocale, tm("defaultDescription"))} />
+      {launchSplashEnabled() ? <LaunchSplash /> : null}
       <Hero />
 
       {/* 3. Location and service finder */}
@@ -108,6 +111,7 @@ function Hero() {
               {t("note")}
             </Link>
           </p>
+          <p className="border-l-4 border-forest pl-4 font-display text-[clamp(1.5rem,1.2rem+1.2vw,2.125rem)] leading-tight font-bold tracking-[-0.01em] text-forest">{t("priority")}</p>
         </div>
         <HeroArt className="mx-auto w-full max-w-md lg:col-span-5 lg:max-w-none lg:translate-y-6" />
         {/* R-C2-4: fe-c's DoctorSearchBar (same /doctors?q=&city=|pin= contract). */}

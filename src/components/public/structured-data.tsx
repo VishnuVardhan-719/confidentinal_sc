@@ -1,5 +1,6 @@
 import type { FAQPage, Organization, WebSite, WithContext } from "schema-dts";
 import { LEADERS } from "@/components/public/leadership";
+import { CONTACT } from "@/components/public/contact";
 import { SITE_URL } from "@/components/public/seo";
 import type { AppLocale } from "@/i18n/routing";
 
@@ -18,24 +19,45 @@ export function JsonLd({ data }: { data: object }) {
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(data) }} />;
 }
 
+const person = (l: (typeof LEADERS)[number]) => ({
+  "@type": "Person" as const,
+  "@id": `${SITE_URL}/#person-${l.id}`,
+  name: l.name,
+  jobTitle: l.role,
+  description: l.summary,
+  image: `${SITE_URL}${l.photo}`,
+  url: `${SITE_URL}/en/about`,
+  worksFor: { "@id": ORGANIZATION_ID },
+});
+
 export function organizationSchema(description: string): WithContext<Organization> {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": ORGANIZATION_ID,
     name: "SureCure Visit",
-    alternateName: ["SureCureVisit", "SureCure Visit Healthcare"],
+    alternateName: ["SureCureVisit", "Sure Cure Visit", "SureCure Visit Healthcare", "SureCureVisit Healthcare"],
     url: SITE_URL,
+    email: CONTACT.email,
+    telephone: CONTACT.phoneTel,
+    address: { "@type": "PostalAddress", ...CONTACT.address },
+    sameAs: [CONTACT.instagramUrl],
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        contactType: "customer support",
+        telephone: CONTACT.phoneTel,
+        email: CONTACT.email,
+        availableLanguage: ["English", "Telugu", "Hindi"],
+      },
+    ],
     logo: { "@type": "ImageObject", url: `${SITE_URL}/brand/logo-full.webp`, width: "800", height: "800" },
     image: `${SITE_URL}/opengraph-image.png`,
     description,
     slogan: "Healthcare at your doorstep",
     knowsLanguage: ["en", "te", "hi"],
-    founder: LEADERS.filter((l) => l.id !== "director").map((l) => ({
-      "@type": "Person" as const,
-      name: l.name,
-      jobTitle: l.role,
-    })),
+    founder: LEADERS.filter((l) => l.id !== "director").map(person),
+    employee: LEADERS.filter((l) => l.id === "director").map(person),
   };
 }
 
@@ -46,7 +68,7 @@ export function websiteSchema(locale: AppLocale, description: string): WithConte
     "@id": WEBSITE_ID,
     url: SITE_URL,
     name: "SureCure Visit",
-    alternateName: "SureCureVisit",
+    alternateName: ["SureCureVisit", "Sure Cure Visit"],
     description,
     inLanguage: locale,
     publisher: { "@id": ORGANIZATION_ID },

@@ -10,6 +10,8 @@ export type Leader = {
   photo: string;
   photoWidth: number;
   photoHeight: number;
+  /** One factual sentence for search engines and answer engines, drawn from the leader's own published letter. */
+  summary: string;
   heading: string;
   quote: string;
   letter: string[];
@@ -25,6 +27,8 @@ export const LEADERS: Leader[] = [
     id: "founder",
     name: "Pamulapati Vamsi Krishna Reddy",
     role: "Founder, CEO & Managing Director",
+    summary:
+      "Pamulapati Vamsi Krishna Reddy is the Founder, CEO and Managing Director of SureCure Visit Healthcare (surecurevisit.in). He founded SureCure Visit on the belief that care should travel to the patient, not the patient to care, bringing doctors, lab sample collection, caretakers and emergency guidance to the doorstep.",
     photo: "/team/founder.webp",
     photoWidth: 640,
     photoHeight: 853,
@@ -56,6 +60,8 @@ export const LEADERS: Leader[] = [
     id: "cofounder",
     name: "Sai Varshitha",
     role: "Co-Founder & Director of Administration",
+    summary:
+      "Sai Varshitha is the Co-Founder and Director of Administration of SureCure Visit Healthcare. Her focus is making every patient feel valued, supported and cared for, with compassion, transparency and comfort at home.",
     photo: "/team/cofounder.webp",
     photoWidth: 640,
     photoHeight: 744,
@@ -88,6 +94,8 @@ export const LEADERS: Leader[] = [
     id: "director",
     name: "Pamulapati Satyanarayana Reddy",
     role: "Director of Finance & Governance",
+    summary:
+      "Pamulapati Satyanarayana Reddy is the Director of Finance and Governance of SureCure Visit Healthcare. His focus is strengthening the foundation of the organisation, encouraging innovation and supporting sustainable, responsible growth.",
     photo: "/team/director.webp",
     photoWidth: 640,
     photoHeight: 827,
