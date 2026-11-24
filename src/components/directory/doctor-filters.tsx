@@ -111,7 +111,7 @@ export function DoctorFilters({ search, onApply, pending }: { search: DoctorSear
         <h2 id="filters-desktop-title" className="text-lg font-semibold text-ink">{t("title")}</h2>
         {hidden}
         <FilterFields draft={desktop} setDraft={setDesktop} idPrefix="filters-desktop" />
-        <div className="flex flex-wrap gap-3">
+        <div className="sticky bottom-0 -mx-1 flex flex-wrap gap-3 border-t border-border bg-paper px-1 py-3">
           <Button type="submit" disabled={pending}>{t("apply")}</Button>
           <Button type="button" variant="quiet" onClick={() => { setDesktop(EMPTY_DRAFT); onApply(applyDraft(search, null)); }}>{t("clear")}</Button>
         </div>

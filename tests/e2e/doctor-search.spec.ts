@@ -52,7 +52,7 @@ test.describe("doctor search", () => {
     await page.getByRole("button", { name: "Use this location" }).first().click();
     await expect(page.getByText(/Sorted by distance from your location: 17\.4400, 78\.3500/)).toBeVisible();
     expect(page.url()).not.toMatch(/17\.44|78\.35|lat|lng/);
-    expect(await page.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
+    expect(await page.evaluate(() => [Object.keys(localStorage).filter((k) => k !== "scv.location.v1").length, sessionStorage.length])).toEqual([0, 0]);
     await page.getByRole("button", { name: "Show on map" }).click();
     await expect(page.getByText("Map view is not available yet")).toBeVisible();
   });

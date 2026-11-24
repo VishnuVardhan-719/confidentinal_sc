@@ -6,9 +6,9 @@
     "workspace": "Patient"
   },
   "common": {
-    "pinLabel": "PIN code",
-    "pinHint": "6 digits, for example 500001.",
-    "pinError": "Enter a 6-digit PIN code that does not start with 0.",
+    "pinLabel": "Locality or PIN code",
+    "pinHint": "A locality such as Madhapur, or a 6-digit PIN such as 500001.",
+    "pinError": "Enter a known locality or a 6-digit PIN code that does not start with 0.",
     "search": "Search",
     "showAll": "Show all",
     "results": "{count, plural, =0 {No providers} one {# provider} other {# providers}}",

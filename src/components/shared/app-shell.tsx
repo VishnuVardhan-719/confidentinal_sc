@@ -132,7 +132,7 @@ export function AppShell({
     <div className="flex min-h-dvh bg-paper">
       <aside className="sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col border-r border-border bg-surface lg:flex">
         <div className="px-4 py-4">
-          <BrandLogo />
+          <BrandLogo href={nav[0]?.href} />
           <p className="mt-1 pl-1 text-sm font-medium text-muted">{workspaceLabel}</p>
         </div>
         <nav aria-label={ta("sidebarNavigation")} className="flex-1 overflow-y-auto px-3 py-2">

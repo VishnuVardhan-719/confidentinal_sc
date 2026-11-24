@@ -52,7 +52,7 @@ export function DoctorResults({ search, page, nearSearch = searchDoctorsNearActi
 
   return (
     <div className="grid gap-8 lg:grid-cols-[17rem_minmax(0,1fr)]">
-      <aside className="lg:sticky lg:top-6 lg:self-start">
+      <aside className="lg:sticky lg:top-24 lg:-mx-1 lg:max-h-[calc(100dvh-7rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:px-1">
         <DoctorFilters key={query} search={search} pending={pending} onApply={navigate} />
       </aside>
       <section aria-labelledby="results-heading" className="grid min-w-0 content-start gap-5">

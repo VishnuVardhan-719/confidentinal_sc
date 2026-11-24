@@ -1,5 +1,5 @@
 import { Suspense, type ReactNode } from "react";
-import { BrandLogo } from "@/components/shared/brand-logo";
+import { SessionBrandLogo } from "@/components/shared/session-brand-logo";
 import { LocaleSwitcher } from "@/components/shared/locale-switcher";
 import { MAIN_CONTENT_ID } from "@/components/shared/skip-link";
 import { SessionLinks } from "./session-links";
@@ -16,7 +16,7 @@ export function AccountFrame({ children, actions, nested = false }: { children: 
     <>
       <header className="border-b border-border bg-paper">
         <div className="mx-auto flex min-h-16 max-w-content flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 sm:px-6 lg:px-8">
-          <BrandLogo />
+          <SessionBrandLogo />
           <div className="flex-1" />
           <LocaleSwitcher />
           {actions ?? (

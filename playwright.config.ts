@@ -1,3 +1,4 @@
+import { locationAnswered } from "./tests/e2e/support/location";
 import { defineConfig, devices } from "@playwright/test";
 import { wsEnv } from "./tests/e2e/workspace-servers";
 
@@ -23,6 +24,7 @@ export default defineConfig({
   timeout: 60_000,
   use: {
     baseURL,
+    storageState: locationAnswered(new URL(baseURL).origin),
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },

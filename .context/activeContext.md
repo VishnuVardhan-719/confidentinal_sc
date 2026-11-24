@@ -316,3 +316,10 @@ TODO: tsc/eslint ($TEMP/tsc22.log, eslint22.log), unit full, build, e2e (provide
 - Gate 2026-11-24: tsc 0, eslint 0, unit 133 files/1994 tests pass, build OK.
 - Next: e2e (public, leadership, auth, onboarding, public-a11y, public-nav, mobile) via .context/e2e-seq.sh -> CodeRabbit --base-commit 3942235 -> commit+push feat/fe2-integration -> restart preview :3400 -> report; WAIT, backend only on "START BACKEND".
 - Owner-only SEO items: domain (surecurevisit.in vs Curevist.in), Search Console + Bing tokens in .env, Google Business Profile, backlinks/content. No fake ratings.
+
+---
+# 2026-11-24 — logo→dashboard, filters scroll, location prompt (UNCOMMITTED on top of 747e867)
+- Done in tree: BrandLogo href (public-header/app-shell/SessionBrandLogo in account-frame + ops area-shell); doctor filters aside sticky+own scroll with pinned action row.
+- Locality-or-PIN: src/components/public/{localities,saved-location,location-prompt}.ts(x); validateFinder/readPin/ServiceFinder/provider-directory use resolveLocation; en/te/hi messages (public.landing.finder, services.common pin*, common.locationPrompt).
+- Tests: tests/unit/localities.test.ts, tests/e2e/location-prompt.spec.ts, tests/e2e/support/location.ts (storageState "answered" in 4 configs + fixture-test.mjs guest).
+- TODO: gate (verify23.sh) -> e2e one at a time (public, public-a11y, public-service-directories, location-prompt, directory, doctor-search, service-requests, a11y-sweep-c) -> visual check logo/filters -> CodeRabbit --base-commit 747e867 -> commit/push -> restart :3400 preview -> report. Backend only on "START BACKEND".

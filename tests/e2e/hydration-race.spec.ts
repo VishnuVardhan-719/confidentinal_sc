@@ -107,6 +107,8 @@ test.describe("input before hydration is never silently lost", () => {
  */
 test.describe("shared controls: input before hydration (R-FE-D-41)", () => {
   test("home service finder keeps a PIN and service chosen before hydration", async ({ page }) => {
+    // This context signs in as a doctor, so it has not answered the first-visit location prompt.
+    await page.addInitScript(() => localStorage.setItem("scv.location.v1", JSON.stringify({ v: 1, skipped: true })));
     const release = await loadWithoutJs(page, "/en");
     const form = page.locator("form:has(input[name=pin])").first();
     const pin = form.locator("input[name=pin]");
@@ -118,7 +120,7 @@ test.describe("shared controls: input before hydration (R-FE-D-41)", () => {
     expect({ pin: early, service: chose }).toEqual({ pin: true, service: true });
     await expect(pin, "PIN typed before hydration").toHaveValue("500001");
     await expect(form.locator("input[value=labTests]"), "service chosen before hydration").toBeChecked();
-    await expect(form.getByText(/enter your 6-digit pin code|choose a service/i)).toHaveCount(0);
+    await expect(form.getByText(/enter your locality or 6-digit pin code|choose a service/i)).toHaveCount(0);
     await form.locator("button[type=submit]").click();
     await expect(page).toHaveURL(/\/en\/lab-tests\?pin=500001$/, { timeout: 5000 });
   });

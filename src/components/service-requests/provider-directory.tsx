@@ -2,6 +2,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { GateNotice } from "@/components/shared/gate-notice";
 import { InlineError } from "@/components/shared/inline-error";
+import { LOCALITIES } from "@/components/public/localities";
 import { Notice } from "@/components/shared/notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,8 +36,9 @@ export async function ProviderDirectory<P extends BaseProvider>({ segment, resul
         <p id="provider-pin-hint" className="text-sm text-muted">{t("pinHint")}</p>
         {pinInvalid ? <InlineError id="provider-pin-error" message={t("pinError")} /> : null}
         <div className="flex flex-wrap items-center gap-3">
-          <Input id="provider-pin" name="pin" defaultValue={pin ?? ""} inputMode="numeric" maxLength={6} autoComplete="postal-code" className="w-40"
+          <Input id="provider-pin" name="pin" defaultValue={pin ?? ""} maxLength={60} autoComplete="off" list="provider-pin-options" className="w-64 max-w-full"
             aria-describedby={pinInvalid ? "provider-pin-error provider-pin-hint" : "provider-pin-hint"} aria-invalid={pinInvalid || undefined} />
+          <datalist id="provider-pin-options">{LOCALITIES.map((l) => <option key={l.name} value={l.name} />)}</datalist>
           <Button type="submit">{t("search")}</Button>
           {pin || pinInvalid ? <Button asChild variant="quiet"><Link href={segment}>{t("showAll")}</Link></Button> : null}
         </div>

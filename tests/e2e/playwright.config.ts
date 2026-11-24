@@ -1,3 +1,4 @@
+import { locationAnswered } from "./support/location";
 import { defineConfig, devices } from "@playwright/test";
 
 /**
@@ -21,6 +22,7 @@ export default defineConfig({
   outputDir: `${process.env.TEMP ?? process.env.TMPDIR ?? "/tmp"}/scv-e2e-identity`,
   use: {
     baseURL: `http://localhost:${PORT}`,
+    storageState: locationAnswered(`http://localhost:${PORT}`),
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },

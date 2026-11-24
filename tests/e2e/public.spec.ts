@@ -88,7 +88,7 @@ test("landing shows all content blocks and no fabricated social proof", async ({
   await page.goto("/en");
   for (const name of [
     "Healthcare at your doorstep.",
-    "Who serves your PIN code?",
+    "Who serves your area?",
     "Four kinds of care, booked the same way",
     "How a visit happens",
     "What “verified” means here",
@@ -131,19 +131,27 @@ test("every link on public pages points to a real route", async ({ page, request
 test("finder validates the PIN and routes to the chosen directory", async ({ page }) => {
   await page.goto("/en#finder");
   await page.getByRole("button", { name: "Show providers" }).click();
-  await expect(page.getByText("Enter your 6-digit PIN code")).toBeVisible();
+  await expect(page.getByText("Enter your locality or 6-digit PIN code")).toBeVisible();
   await expect(page.getByText("Choose a service")).toBeVisible();
-  await expect(page.getByRole("textbox", { name: "PIN code" })).toBeFocused();
+  await expect(page.getByRole("combobox", { name: "Your locality or PIN code" })).toBeFocused();
 
-  await page.getByRole("textbox", { name: "PIN code" }).fill("012345");
+  await page.getByRole("combobox", { name: "Your locality or PIN code" }).fill("012345");
   await page.locator('label[for="finder-service-labTests"]').click();
   await expect(page.getByRole("radio", { name: /Lab tests/ })).toBeChecked();
   await page.getByRole("button", { name: "Show providers" }).click();
-  await expect(page.getByText("A PIN code has 6 digits and does not start with 0")).toBeVisible();
+  await expect(page.getByText(/We do not know that locality/)).toBeVisible();
 
-  await page.getByRole("textbox", { name: "PIN code" }).fill("500001");
+  await page.getByRole("combobox", { name: "Your locality or PIN code" }).fill("500001");
   await page.getByRole("button", { name: "Show providers" }).click();
   await expect(page).toHaveURL(/\/en\/lab-tests\?pin=500001$/);
+});
+
+test("finder accepts a locality name instead of a PIN", async ({ page }) => {
+  await page.goto("/en#finder");
+  await page.getByRole("combobox", { name: "Your locality or PIN code" }).fill("Madhapur");
+  await page.locator('label[for="finder-service-doctors"]').click();
+  await page.getByRole("button", { name: "Show providers" }).click();
+  await expect(page).toHaveURL(/\/en\/doctors\?pin=500081$/);
 });
 
 test.describe("without JavaScript", () => {
@@ -159,7 +167,7 @@ test.describe("without JavaScript", () => {
 
   test("finder submits as a plain form", async ({ page }) => {
     await page.goto("/te");
-    await page.getByRole("textbox", { name: "పిన్ కోడ్" }).fill("500001");
+    await page.getByRole("combobox", { name: "పిన్ కోడ్" }).fill("500001");
     await page.locator('input[name="service"][value="caretakers"]').check({ force: true });
     await page.locator('form[action="/te/find"] button[type="submit"]').click();
     await expect(page).toHaveURL(/\/te\/caretakers\?pin=500001$/);

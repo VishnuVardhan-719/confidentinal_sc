@@ -15,7 +15,7 @@ async function checkPage(page: Page, label: string) {
   expect(axe.violations.map(v => `${v.id}: ${v.nodes.length}`), `axe ${label}`).toEqual([]);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow, `horizontal scroll ${label}`).toBeLessThanOrEqual(0);
-  expect(await page.evaluate(() => [localStorage.length, sessionStorage.length]), `storage ${label}`).toEqual([0, 0]);
+  expect(await page.evaluate(() => [Object.keys(localStorage).filter((k) => k !== "scv.location.v1").length, sessionStorage.length]), `storage ${label}`).toEqual([0, 0]);
 }
 
 test.describe("public directory smoke", () => {

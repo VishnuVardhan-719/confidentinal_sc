@@ -98,7 +98,7 @@ test.describe("lab tests", () => {
     await expectFitsViewport(page);
     await page.getByLabel("PIN code").fill("12");
     await page.getByRole("button", { name: "Search" }).click();
-    await expect(page.getByText("Enter a 6-digit PIN code that does not start with 0.").filter({ visible: true }).first()).toBeVisible();
+    await expect(page.getByText("Enter a known locality or a 6-digit PIN code that does not start with 0.").filter({ visible: true }).first()).toBeVisible();
     await page.getByLabel("PIN code").fill("500081");
     await page.getByRole("button", { name: "Search" }).click();
     await expect(page).toHaveURL(/pin=500081$/);

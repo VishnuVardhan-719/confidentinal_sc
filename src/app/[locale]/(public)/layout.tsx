@@ -1,3 +1,4 @@
+import { LocationPrompt } from "@/components/public/location-prompt";
 import { Footer } from "@/components/shared/footer";
 import { OfflineBanner } from "@/components/shared/offline-banner";
 import { PublicHeaderWithAccount } from "@/components/shared/public-header-with-account";
@@ -12,6 +13,7 @@ export default function PublicLayout({ children }: LayoutProps<"/[locale]">) {
         {children}
       </main>
       <Footer />
+      <LocationPrompt />
     </>
   );
 }

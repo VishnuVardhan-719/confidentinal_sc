@@ -62,20 +62,20 @@
       "note": "Not for emergencies. In an emergency, call 108."
     },
     "finder": {
-      "title": "Who serves your PIN code?",
+      "title": "Who serves your area?",
       "description": "Coverage depends on where verified providers operate. If nobody serves your area yet, the results page will say so.",
-      "pinLabel": "PIN code",
-      "pinHint": "6 digits, for example 500001",
+      "pinLabel": "Your locality or PIN code",
+      "pinHint": "Type a locality such as Madhapur, or a 6-digit PIN such as 500001",
       "serviceLegend": "What do you need?",
       "submit": "Show providers",
       "submitting": "Opening results…",
       "noSignIn": "No sign-in needed to look.",
       "errors": {
-        "pinRequired": "Enter your 6-digit PIN code",
-        "pinInvalid": "A PIN code has 6 digits and does not start with 0",
+        "pinRequired": "Enter your locality or 6-digit PIN code",
+        "pinInvalid": "We do not know that locality. Try a nearby one such as Madhapur, or a 6-digit PIN that does not start with 0",
         "serviceRequired": "Choose a service",
-        "offline": "You are offline. Your PIN and choice are kept; try again once you are connected.",
-        "invalidLink": "That search link could not be used. Enter a 6-digit PIN code and choose a service."
+        "offline": "You are offline. Your area and choice are kept; try again once you are connected.",
+        "invalidLink": "That search link could not be used. Enter your locality or a 6-digit PIN code and choose a service."
       }
     },
     "services": {

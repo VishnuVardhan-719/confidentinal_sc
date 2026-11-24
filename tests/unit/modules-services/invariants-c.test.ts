@@ -37,7 +37,12 @@ describe("no private data in browser storage or URLs", () => {
   it("no source file reads or writes localStorage or sessionStorage", () => {
     // Code only: comments that promise "never localStorage" are fine.
     const code = (text: string) => text.replace(/\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gm, "");
-    expect(ALL.filter(f => /\b(localStorage|sessionStorage)\b/.test(code(f.text))).map(f => f.file)).toEqual([]);
+    // One reviewed exception: the visitor's own coarse area (locality or PIN, never coordinates or health data)
+    // for the first-visit location prompt. It is never sent anywhere until the visitor searches with it.
+    const ALLOWED = new Set(["components/public/saved-location.ts"]);
+    expect(ALL.filter(f => !ALLOWED.has(f.file) && /\b(localStorage|sessionStorage)\b/.test(code(f.text))).map(f => f.file)).toEqual([]);
+    const saved = ALL.find(f => f.file === "components/public/saved-location.ts")!;
+    expect(code(saved.text).match(/localStorage\.\w+\(\s*[A-Z_]+/g)?.every(m => m.endsWith("LOCATION_KEY"))).toBe(true);
   });
 
   it("fe-c links and redirects carry only public ids and filters in the query string", () => {

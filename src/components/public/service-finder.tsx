@@ -2,14 +2,16 @@
 
 import { ArrowRight, CircleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useRef, useState, useSyncExternalStore, useTransition, type FormEvent } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, useTransition, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { fieldControlClass } from "@/components/ui/input";
 import { ServiceIcon } from "@/components/shared/service-icon";
 import { useOnHydrated } from "@/components/shared/use-early-input";
 import { useRouter } from "@/i18n/navigation";
-import { normalizePin, PIN_PATTERN_SOURCE, validateFinder, type FinderErrors } from "./finder";
+import { validateFinder, type FinderErrors } from "./finder";
+import { LOCALITIES } from "./localities";
+import { LOCATION_EVENT, readSavedLocation } from "./saved-location";
 import { SERVICES, type ServiceKey } from "./routes";
 
 const noopSubscribe = () => () => {};
@@ -31,8 +33,9 @@ export type FinderLabels = {
 };
 
 /**
- * PIN + service finder. Works without JS as a GET form to /{locale}/find (native required/pattern
- * validation). With JS it validates inline and navigates to /{service}?pin=. No geolocation.
+ * Locality-or-PIN + service finder. Works without JS as a GET form to /{locale}/find (native required
+ * validation, the server resolves a locality to its PIN). With JS it validates inline and navigates to
+ * /{service}?pin=. Starts from the location the visitor gave in the first-visit prompt. No geolocation.
  */
 export function ServiceFinder({ labels, idPrefix = "finder" }: { labels: FinderLabels; idPrefix?: string }) {
   const tc = useTranslations("common.services");
@@ -47,12 +50,16 @@ export function ServiceFinder({ labels, idPrefix = "finder" }: { labels: FinderL
   // A PIN typed or a service chosen while JS was still loading is in the DOM, not in state: adopt
   // it at hydration so React does not clear it (REQUESTS R-FE-D-41).
   const formRef = useRef<HTMLFormElement>(null);
+  const touched = useRef(false);
   useOnHydrated(() => {
     if (!formRef.current) return;
     const fd = new FormData(formRef.current);
-    const earlyPin = normalizePin(String(fd.get("pin") ?? ""));
+    const earlyPin = String(fd.get("pin") ?? "").trim().slice(0, 60);
     const earlyService = SERVICES.find((s) => s.key === fd.get("service"))?.key;
-    if (earlyPin) setPin(earlyPin);
+    if (earlyPin) {
+      setPin(earlyPin);
+      touched.current = true;
+    }
     if (earlyService) setService(earlyService);
     // Sent back by /find with input it could not use: say so once, then drop the flag from the URL.
     const url = new URL(window.location.href);
@@ -62,6 +69,17 @@ export function ServiceFinder({ labels, idPrefix = "finder" }: { labels: FinderL
       window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
     }
   });
+
+  // Start from the location the visitor already gave (first-visit prompt), unless they have typed.
+  useEffect(() => {
+    const adopt = () => {
+      const saved = readSavedLocation();
+      if (saved && "label" in saved && !touched.current) setPin(saved.label);
+    };
+    adopt();
+    window.addEventListener(LOCATION_EVENT, adopt);
+    return () => window.removeEventListener(LOCATION_EVENT, adopt);
+  }, []);
 
   // Progressive enhancement: native validation on the server render, inline messages once hydrated.
   const enhanced = useSyncExternalStore(noopSubscribe, () => true, () => false);
@@ -117,19 +135,26 @@ export function ServiceFinder({ labels, idPrefix = "finder" }: { labels: FinderL
           id={pinId}
           name="pin"
           type="text"
-          inputMode="numeric"
-          autoComplete="postal-code"
+          autoComplete="off"
+          autoCapitalize="words"
+          maxLength={60}
           required
-          pattern={PIN_PATTERN_SOURCE}
+          list={`${pinId}-options`}
           value={pin}
           onChange={(e) => {
-            setPin(normalizePin(e.target.value));
+            touched.current = true;
+            setPin(e.target.value);
             if (errors.pin) setErrors((x) => ({ ...x, pin: undefined }));
           }}
           aria-describedby={errors.pin ? `${pinErrorId} ${pinHintId}` : pinHintId}
           aria-invalid={errors.pin ? true : undefined}
-          className={cn(fieldControlClass, "max-w-56 font-display text-2xl tracking-[0.12em] tabular")}
+          className={cn(fieldControlClass, "max-w-md")}
         />
+        <datalist id={`${pinId}-options`}>
+          {LOCALITIES.map((l) => (
+            <option key={l.name} value={l.name} />
+          ))}
+        </datalist>
       </div>
 
       <fieldset className="grid gap-3" aria-describedby={errors.service ? serviceErrorId : undefined}>

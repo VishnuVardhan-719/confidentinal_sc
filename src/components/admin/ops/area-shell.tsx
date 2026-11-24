@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { AppShell, type ShellIcon, type ShellNavItem } from "@/components/shared/app-shell";
 import { MAIN_CONTENT_ID } from "@/components/shared/skip-link";
-import { BrandLogo } from "@/components/shared/brand-logo";
+import { SessionBrandLogo } from "@/components/shared/session-brand-logo";
 import { switchWorkspaceAction } from "@/modules/admin/server-actions";
 import type { NavItem } from "@/modules/admin/routes";
 import type { ProviderArea, Workspace } from "@/modules/admin/workspace";
@@ -85,7 +85,7 @@ export function OpsFrame({ children }: { children: ReactNode }) {
     <>
       <header className="border-b border-border">
         <div className="mx-auto flex h-16 max-w-content items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
-          <BrandLogo />
+          <SessionBrandLogo />
           <SignOutButton locale={locale} label={ts("signOut")} variant="quiet" />
         </div>
       </header>

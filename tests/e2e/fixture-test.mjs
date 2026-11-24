@@ -18,8 +18,13 @@ export function providerId(index) { return "00000000-0000-4000-8000-" + String(i
 export const test = base.extend({
   fixtureScenario: ["directory.available", { option: true }],
   identity: ["guest", { option: true }],
-  storageState: async ({ identity }, provide) => {
-    if (identity === "guest") { await provide({ cookies: [], origins: [] }); return; }
+  storageState: async ({ identity, baseURL }, provide) => {
+    // A guest has already answered the first-visit location prompt, so it does not cover the page under test.
+    if (identity === "guest") {
+      const origin = new URL(baseURL ?? "http://127.0.0.1:3000").origin;
+      await provide({ cookies: [], origins: [{ origin, localStorage: [{ name: "scv.location.v1", value: JSON.stringify({ v: 1, skipped: true }) }] }] });
+      return;
+    }
     const variable = "E2E_" + identity.toUpperCase() + "_STORAGE_STATE";
     const path = process.env[variable];
     if (!path) throw new Error("Missing authorized synthetic test-auth state: " + variable);

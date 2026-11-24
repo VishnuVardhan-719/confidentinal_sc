@@ -44,7 +44,7 @@ export function PublicHeader({ account }: { account?: PublicAccount | null }) {
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-paper/95 backdrop-blur-sm supports-[backdrop-filter]:bg-paper/85">
       <div className="mx-auto flex h-16 max-w-content items-center gap-2 px-4 sm:px-6 xl:h-[4.5rem] lg:px-8">
-        <BrandLogo className="mr-auto xl:mr-2" />
+        <BrandLogo href={account?.workspaces[0]?.href ?? "/"} className="mr-auto xl:mr-2" />
 
         <nav aria-label={ta("mainNavigation")} className="hidden items-center gap-0.5 xl:flex">
           <DropdownMenu>

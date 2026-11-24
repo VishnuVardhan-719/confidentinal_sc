@@ -15,6 +15,7 @@ import type { ApiResult } from "@/lib/api/result";
 import { formatPaise, type Locale } from "@/lib/format";
 import { createAmbulanceDirectoryApi } from "@/modules/ambulance-requests/directory";
 import { VEHICLE_FITS, type AmbulanceProvider } from "@/modules/ambulance-requests/types";
+import { resolveLocation } from "@/components/public/localities";
 import { pinSchema } from "@/modules/catalog/schemas";
 import { createCareDirectoryApi } from "@/modules/care-requests/directory";
 import type { CareProvider } from "@/modules/care-requests/types";
@@ -33,9 +34,12 @@ const first = (value: string | string[] | undefined) => (Array.isArray(value) ? 
 const unavailable = { ok: false as const, error: { code: "unavailable" as const } };
 
 function readPin(record: SearchParamsRecord): { pin: string | null; invalid: boolean } {
+  // The field takes a 6-digit PIN or a known locality name; both end up as the PIN the directory filters on.
   const raw = first(record.pin);
-  const parsed = raw ? pinSchema.safeParse(raw) : null;
-  return { pin: parsed?.success ? parsed.data : null, invalid: parsed !== null && !parsed.success };
+  if (!raw) return { pin: null, invalid: false };
+  const resolved = resolveLocation(raw);
+  const parsed = resolved ? pinSchema.safeParse(resolved.pin) : null;
+  return { pin: parsed?.success ? parsed.data : null, invalid: !parsed?.success };
 }
 
 function Intro({ title, description, emergency }: { title: string; description: string; emergency?: boolean }) {

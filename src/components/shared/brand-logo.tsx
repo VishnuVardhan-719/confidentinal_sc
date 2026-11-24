@@ -9,11 +9,20 @@ import { cn } from "@/components/ui/cn";
  * tagline lives at /brand/logo-full.webp. On the dark footer the logo sits on a paper chip so the navy
  * letters keep their contrast.
  */
-export function BrandLogo({ className, tone = "ink" }: { className?: string; tone?: "ink" | "paper" }) {
+export function BrandLogo({
+  className,
+  tone = "ink",
+  href = "/",
+}: {
+  className?: string;
+  tone?: "ink" | "paper";
+  /** Locale-less target. Signed-in visitors pass their dashboard so the logo returns them there, not to the landing page. */
+  href?: string;
+}) {
   const t = useTranslations("common");
   return (
     <Link
-      href="/"
+      href={href}
       className={cn(
         "inline-flex min-h-target shrink-0 items-center gap-2 rounded-md",
         tone === "paper" && "bg-paper px-3 py-2",

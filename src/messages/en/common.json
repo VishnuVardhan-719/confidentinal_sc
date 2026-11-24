@@ -197,5 +197,14 @@
     "label": "More results",
     "next": "Show more",
     "first": "Back to the first page"
+  },
+  "locationPrompt": {
+    "title": "Where do you need care?",
+    "body": "Tell us your locality or PIN code and we will show who serves your area. It stays in this browser and is not sent anywhere until you search.",
+    "label": "Locality or PIN code",
+    "hint": "For example Madhapur or 500081",
+    "save": "Save my area",
+    "skip": "Not now",
+    "error": "We do not know that locality. Try a nearby one or a 6-digit PIN."
   }
 }

@@ -27,7 +27,7 @@ async function sweep(page: Page, label: string) {
   expect(serious.map(v => `${label}: ${v.id} (${v.impact}) ${v.nodes.map(n => n.target.join(" ")).join(", ")}`)).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), `${label}: horizontal scroll`).toBe(true);
   // No browser storage and only public filters or ids in the query string.
-  expect(await page.evaluate(() => [localStorage.length, sessionStorage.length]), `${label}: browser storage used`).toEqual([0, 0]);
+  expect(await page.evaluate(() => [Object.keys(localStorage).filter((k) => k !== "scv.location.v1").length, sessionStorage.length]), `${label}: browser storage used`).toEqual([0, 0]);
   const keys = [...new URL(page.url()).searchParams.keys()].filter(key => !["providerId", "serviceId", "pin", "speciality", "sort", "showFull", "availability", "next", "test", "city"].includes(key));
   expect(keys, `${label}: unexpected query parameters`).toEqual([]);
   // First Tab stop from the top of the page: it must be on screen and show a focus indicator.
@@ -75,7 +75,7 @@ const STATIC_ROUTES: [string, string, RegExp | string][] = [
   ["book: completed request", `/en/patient/book/${PAID_BOOKING}`, "Visit completed"],
   ["book: receipt", `/en/patient/book/${PAID_BOOKING}/receipt`, "This receipt confirms payment to the doctor. It is not a tax invoice."],
   ["lab: list", "/en/patient/lab-tests", "Lab tests at home"],
-  ["lab: invalid PIN", "/en/patient/lab-tests?pin=12", "Enter a 6-digit PIN code that does not start with 0."],
+  ["lab: invalid PIN", "/en/patient/lab-tests?pin=12", "Enter a known locality or a 6-digit PIN code that does not start with 0."],
   ["lab: empty PIN", "/en/patient/lab-tests?pin=600001", "No providers serve this PIN yet"],
   ["lab: form", `/en/patient/lab-tests/request?providerId=${LAB(1)}`, "Request tests from Synthetic lab 1"],
   ["lab: no covered address", `/en/patient/lab-tests/request?providerId=${LAB(3)}`, "None of your saved addresses is in this area"],

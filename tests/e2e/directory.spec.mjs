@@ -28,10 +28,10 @@ scenario("directory.available", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await visitFixture(page, "/en/doctors");
     await expect(page.getByTestId("directory-needs-pin")).toBeVisible();
-    await page.getByLabel("PIN code", { exact: true }).fill("123");
+    await page.getByLabel("Locality or PIN code", { exact: true }).fill("123");
     await page.getByRole("button", { name: "Search", exact: true }).click();
     await expect(page.getByRole("alert")).toContainText(/PIN/i);
-    await page.getByLabel("PIN code", { exact: true }).fill("500001");
+    await page.getByLabel("Locality or PIN code", { exact: true }).fill("500001");
     await page.getByRole("button", { name: "Search", exact: true }).click();
     await expect(page).toHaveURL(/pin=500001/);
     await page.getByRole("button", { name: "Filters", exact: true }).click();
@@ -89,12 +89,12 @@ scenario("directory.delayed_then_empty", () => {
     await visitFixture(page, "/en/doctors?pin=500001");
     await expect(page.getByTestId("provider-card")).toHaveCount(1);
     const observation = await appObserver.begin("superseded-directory-requests");
-    await page.getByLabel("PIN code", { exact: true }).fill("500002");
+    await page.getByLabel("Locality or PIN code", { exact: true }).fill("500002");
     await page.getByRole("button", { name: "Search", exact: true }).click();
     await expect(page.getByTestId("directory-results")).toHaveAttribute("aria-busy", "true");
     await expect(page.getByTestId("directory-stale-notice")).toBeVisible();
     await expect(page.getByTestId("provider-card").getByRole("link")).toHaveAttribute("aria-disabled", "true");
-    await page.getByLabel("PIN code", { exact: true }).fill("500003");
+    await page.getByLabel("Locality or PIN code", { exact: true }).fill("500003");
     await page.getByRole("button", { name: "Search", exact: true }).click();
     expect(await appObserver.settle(observation)).toMatchObject({ inFlight: 0 });
     await expect(page.getByTestId("directory-empty")).toBeVisible();

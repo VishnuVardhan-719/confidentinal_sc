@@ -1,5 +1,6 @@
 import { toAsciiDigits } from "@/components/shared/input-format";
 import { DEFAULT_LOCALE, isAppLocale } from "@/i18n/routing";
+import { resolveLocation } from "./localities";
 import { SERVICES, type ServiceKey } from "./routes";
 
 /** Indian PIN shape: 6 digits, first digit 1-9. Shape only; the server decides whether it is served. */
@@ -28,14 +29,16 @@ export type FinderErrors = { pin?: "pinRequired" | "pinInvalid"; service?: "serv
 export type FinderResult = { ok: true; href: string } | { ok: false; errors: FinderErrors };
 
 export function validateFinder(input: { pin?: string | null; service?: string | null }): FinderResult {
-  // Full digit string, never truncated: "5000019" must be rejected, not shortened to a valid PIN.
-  const pin = toAsciiDigits(input.pin ?? "");
+  // The field holds a 6-digit PIN or a locality name. A PIN is taken whole, never truncated:
+  // "5000019" must be rejected, not shortened to a valid PIN.
+  const typed = (input.pin ?? "").trim();
+  const resolved = resolveLocation(typed);
   const errors: FinderErrors = {};
-  if (!pin) errors.pin = "pinRequired";
-  else if (!isValidPin(pin)) errors.pin = "pinInvalid";
+  if (!typed) errors.pin = "pinRequired";
+  else if (!resolved) errors.pin = "pinInvalid";
   if (!isServiceKey(input.service)) errors.service = "serviceRequired";
-  if (errors.pin || errors.service) return { ok: false, errors };
-  return { ok: true, href: finderHref(input.service as ServiceKey, pin) };
+  if (errors.pin || errors.service || !resolved) return { ok: false, errors };
+  return { ok: true, href: finderHref(input.service as ServiceKey, resolved.pin) };
 }
 
 /**
