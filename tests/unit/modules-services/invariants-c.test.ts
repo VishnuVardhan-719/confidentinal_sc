@@ -42,7 +42,9 @@ describe("no private data in browser storage or URLs", () => {
     const ALLOWED = new Set(["components/public/saved-location.ts"]);
     expect(ALL.filter(f => !ALLOWED.has(f.file) && /\b(localStorage|sessionStorage)\b/.test(code(f.text))).map(f => f.file)).toEqual([]);
     const saved = ALL.find(f => f.file === "components/public/saved-location.ts")!;
-    expect(code(saved.text).match(/localStorage\.\w+\(\s*[A-Z_]+/g)?.every(m => m.endsWith("LOCATION_KEY"))).toBe(true);
+    const firstArgs = [...code(saved.text).matchAll(/localStorage\.\w+\(\s*([^,)]*)/g)].map(m => m[1].trim());
+    expect(firstArgs.length).toBeGreaterThan(0);
+    expect(firstArgs.every(arg => arg === "LOCATION_KEY")).toBe(true);
   });
 
   it("fe-c links and redirects carry only public ids and filters in the query string", () => {

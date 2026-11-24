@@ -1,3 +1,4 @@
+> 2026-11-24 update: logo opens the dashboard when signed in, doctor filters scroll on their own, finder and directories take a locality or PIN, first-visit location prompt (`src/components/public/{localities,saved-location,location-prompt}`). Locality->PIN is a curated Hyderabad list; the real backend needs a locality->PIN directory. Playwright configs start with the prompt answered (`tests/e2e/support/location.ts`). Still waiting for the owner; backend only on "START BACKEND".
 > 2026-11-23 update: provider approval gate pushed as e1749d1; waiting for owner approval, backend only on "START BACKEND". See .context/activeContext.md.
 ## >>> FRONTEND COMPLETE 2026-11-22: WAIT FOR THE OWNER <<<
 

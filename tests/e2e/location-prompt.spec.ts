@@ -4,11 +4,21 @@ import { LOCATION_KEY } from "./support/location";
 // First visit: no stored answer, so the prompt opens.
 test.use({ storageState: { cookies: [], origins: [] } });
 
+test.beforeEach(async ({ page }) => {
+  await page.clock.install();
+});
+
+/** The prompt decides after a short fixed delay: run the page clock past it instead of sleeping in real time. */
+async function settle(page: import("@playwright/test").Page) {
+  await page.clock.runFor(1500);
+}
+
 const stored = (page: import("@playwright/test").Page) =>
   page.evaluate((key) => window.localStorage.getItem(key), LOCATION_KEY);
 
 test("a first visit asks where care is needed, and a locality is saved and reused", async ({ page }) => {
   await page.goto("/en");
+  await settle(page);
   const dialog = page.getByRole("dialog", { name: "Where do you need care?" });
   await expect(dialog).toBeVisible();
 
@@ -24,28 +34,31 @@ test("a first visit asks where care is needed, and a locality is saved and reuse
   // The finder starts from the saved area, and the question is not asked again.
   await expect(page.getByRole("combobox", { name: "Your locality or PIN code" })).toHaveValue("Madhapur");
   await page.reload();
-  await page.waitForTimeout(1200);
+  await settle(page);
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
 test("Not now is remembered and nothing else is stored", async ({ page }) => {
   await page.goto("/en/faq");
+  await settle(page);
   const dialog = page.getByRole("dialog", { name: "Where do you need care?" });
   await expect(dialog).toBeVisible();
   await dialog.getByRole("button", { name: "Not now" }).click();
   await expect(dialog).toBeHidden();
   expect(JSON.parse((await stored(page)) ?? "null")).toEqual({ v: 1, skipped: true });
   await page.goto("/en");
-  await page.waitForTimeout(1200);
+  await settle(page);
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
 test("Escape closes the prompt, and the emergency page is never covered", async ({ page }) => {
   await page.goto("/en/emergency");
-  await page.waitForTimeout(1200);
+  await settle(page);
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
   await page.goto("/en");
+
+  await settle(page);
   const dialog = page.getByRole("dialog", { name: "Where do you need care?" });
   await expect(dialog).toBeVisible();
   await page.keyboard.press("Escape");
@@ -54,5 +67,6 @@ test("Escape closes the prompt, and the emergency page is never covered", async 
 
 test("the prompt is translated", async ({ page }) => {
   await page.goto("/te");
+  await settle(page);
   await expect(page.getByRole("dialog", { name: "మీకు ఎక్కడ సేవ కావాలి?" })).toBeVisible();
 });
