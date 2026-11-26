@@ -32,8 +32,8 @@ function pagesUnder(dir: string): string[] {
 const routeOf = (file: string) => "/" + relative(PUBLIC_DIR, file).replace(/\\/g, "/").replace(/\/?page\.tsx$/, "");
 
 describe("public page metadata", () => {
-  // The directory pages (/doctors, /lab-tests, /ambulances, /caretakers) are not in PUBLIC_PAGES: each builds its own metadata with pageMetadata().
-  const pages = pagesUnder(PUBLIC_DIR).filter((f) => !/\[/.test(relative(PUBLIC_DIR, f)) && !/^(doctors|lab-tests|ambulances|caretakers)[\\/]/.test(relative(PUBLIC_DIR, f)));
+  // The directory pages (/doctors, /lab-tests, /ambulances, /caretakers) are not in PUBLIC_PAGES: each builds its own metadata with pageMetadata(), and so does /launching-soon, the noindex pre-launch holding page.
+  const pages = pagesUnder(PUBLIC_DIR).filter((f) => !/\[/.test(relative(PUBLIC_DIR, f)) && !/^(doctors|lab-tests|ambulances|caretakers|launching-soon)[\\/]/.test(relative(PUBLIC_DIR, f)));
   const calls = pages.map((f) => {
     const m = /publicPageMetadata\("([A-Za-z]+)",\s*"([^"]+)"\)/.exec(readFileSync(f, "utf8"));
     return { file: relative(process.cwd(), f), route: routeOf(f).replace(/^\/$/, "/"), key: m?.[1], path: m?.[2] };

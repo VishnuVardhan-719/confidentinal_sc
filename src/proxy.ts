@@ -2,6 +2,7 @@ import createMiddleware from "next-intl/middleware";
 import { NextResponse, type NextRequest } from "next/server";
 import { getPublishedStory } from "@/modules/content/public";
 import { routing } from "./i18n/routing";
+import { HOLDING_PATH, isPrelaunch, prelaunchDecision } from "./lib/launch-mode";
 
 /** Locale routing, plus a real HTTP 404 for story URLs that are not published. No auth decisions here. */
 const intl = createMiddleware(routing);
@@ -16,6 +17,19 @@ const STORY_PATH = /^\/(en|te|hi)\/stories\/([^/]+)\/?$/;
  * requests pass through and the page shows its "not available yet" state.
  */
 export default async function proxy(request: NextRequest) {
+  if (isPrelaunch()) {
+    const decision = prelaunchDecision(request.nextUrl.pathname, request.method);
+    if (decision.action === "refuse-method") {
+      return new NextResponse("Not available yet", { status: 503, headers: { "Retry-After": "86400", "X-Robots-Tag": "noindex" } });
+    }
+    if (decision.action === "hold") {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${decision.locale}${HOLDING_PATH}`;
+      url.search = "";
+      // The target page cannot set a status under Cache Components, so this stays 200; it is noindex by header and meta.
+      return NextResponse.rewrite(url, { headers: { "X-Robots-Tag": "noindex" } });
+    }
+  }
   const match = STORY_PATH.exec(request.nextUrl.pathname);
   if (match) {
     const [, locale, rawSlug] = match;

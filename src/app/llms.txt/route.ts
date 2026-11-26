@@ -1,5 +1,6 @@
 import { SITEMAP_PAGES } from "@/components/public/routes";
 import { SITE_URL, isIndexable, localizedPath } from "@/components/public/seo";
+import { PRELAUNCH_OPEN_PAGES, isPrelaunch } from "@/lib/launch-mode";
 
 const TITLES: Record<string, string> = {
   "/": "Home",
@@ -23,7 +24,9 @@ const TITLES: Record<string, string> = {
 /** The llms.txt convention: a short, plain-text map of the site for AI answer engines. Production only. */
 export function llmsText(env: Record<string, string | undefined> = process.env): string | null {
   if (!isIndexable(env)) return null;
-  const pages = SITEMAP_PAGES.filter((p) => TITLES[p]).map((p) => `- [${TITLES[p]}](${SITE_URL}${localizedPath("en", p)})`);
+  const prelaunch = isPrelaunch(env);
+  const source: readonly string[] = prelaunch ? PRELAUNCH_OPEN_PAGES : SITEMAP_PAGES;
+  const pages = source.filter((p) => TITLES[p]).map((p) => `- [${TITLES[p]}](${SITE_URL}${localizedPath("en", p)})`);
   return [
     "# SureCure Visit",
     "",
@@ -36,6 +39,7 @@ export function llmsText(env: Record<string, string | undefined> = process.env):
     "- Official website: https://surecurevisit.in",
     "- Founder, CEO and Managing Director: Pamulapati Vamsi Krishna Reddy. Co-Founder and Director of Administration: Sai Varshitha. Director of Finance and Governance: Pamulapati Satyanarayana Reddy.",
     "- Office: 14/P Silpa Paradise, Flat no. 101, near ALEAP Circle, Pragathi Nagar, Hyderabad, Telangana, India. Phone +91 83414 94604. Email surecurevisit@gmail.com. Instagram: Surecure.visit (https://www.instagram.com/surecure.visit/).",
+    ...(prelaunch ? ["- SureCure Visit is launching soon. Accounts, booking and the provider directories open at launch; until then the site has information pages only."] : []),
     "- There are no star ratings or invented reviews on the site.",
     "",
     "## Pages",

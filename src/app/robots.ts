@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL, isIndexable } from "@/components/public/seo";
+import { isPrelaunch } from "@/lib/launch-mode";
 
 /** Search and answer-engine crawlers we want reading the public pages (generative engine optimisation). */
 export const AI_CRAWLERS = [
@@ -17,6 +18,8 @@ export const AI_CRAWLERS = [
 ] as const;
 
 const PRIVATE_SEGMENTS = ["patient", "doctor", "lab", "ambulance", "caretaker", "admin", "workspace", "account"];
+/** Closed in pre-launch mode (src/lib/launch-mode.ts): the proxy answers 503, crawlers need not try. */
+const PRELAUNCH_CLOSED = ["doctors", "lab-tests", "ambulances", "caretakers", "stories", "become-a-provider", "login", "signup", "find", "launching-soon"];
 
 /**
  * Crawl rules. Non-production deployments disallow everything. Private workspaces are disallowed in
@@ -29,7 +32,7 @@ export default function robots(): MetadataRoute.Robots {
   const rule = (userAgent: string | string[]) => ({
     userAgent,
     allow: "/",
-    disallow: ["/api/", ...PRIVATE_SEGMENTS.map((s) => `/*/${s}`)],
+    disallow: ["/api/", ...[...PRIVATE_SEGMENTS, ...(isPrelaunch() ? PRELAUNCH_CLOSED : [])].map((s) => `/*/${s}`)],
   });
   return {
     rules: [rule("*"), rule([...AI_CRAWLERS])],

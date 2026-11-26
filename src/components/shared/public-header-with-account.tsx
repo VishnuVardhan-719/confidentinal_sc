@@ -1,8 +1,11 @@
 import { Suspense } from "react";
+import { isPrelaunch } from "@/lib/launch-mode";
 import { PublicHeader } from "./public-header";
 import { getPublicAccount } from "./session-seam";
 
 async function HeaderWithSession() {
+  // Pre-launch has no sessions at all, so the header never asks the backend who is signed in.
+  if (isPrelaunch()) return <PublicHeader account={null} />;
   const account = await getPublicAccount();
   return <PublicHeader account={account} />;
 }

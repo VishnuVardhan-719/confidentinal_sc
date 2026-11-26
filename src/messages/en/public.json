@@ -1,4 +1,13 @@
 {
+  "prelaunch": {
+    "title": "This part opens at launch",
+    "lead": "SureCure Visit is launching soon. Accounts, booking and the provider directories open when we go live.",
+    "body": "Until then you can read how it will work, meet the team and get in touch.",
+    "home": "Back to home",
+    "how": "How it works",
+    "contact": "Contact us",
+    "emergency": "In an emergency, call 108."
+  },
   "meta": {
     "landing": {
       "title": "SureCure Visit: verified healthcare at home",
