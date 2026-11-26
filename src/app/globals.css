@@ -196,6 +196,49 @@
   }
 }
 
+/* Welcome screen "opening": the forest screen closes down onto the button like an iris while its text lifts away
+   and the site settles in behind it. Removed entirely with reduced motion (the component skips it too). */
+@media (prefers-reduced-motion: no-preference) {
+  [data-launch-splash][data-opening] {
+    animation: scv-iris 900ms cubic-bezier(0.65, 0, 0.2, 1) forwards;
+  }
+  [data-launch-splash][data-opening] [data-splash-content] {
+    animation: scv-splash-out 420ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  }
+  html[data-site-reveal] main {
+    animation: scv-site-in 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes scv-iris {
+  from {
+    clip-path: circle(var(--iris-r, 150%) at var(--iris-x, 50%) var(--iris-y, 50%));
+  }
+  to {
+    clip-path: circle(0 at var(--iris-x, 50%) var(--iris-y, 50%));
+  }
+}
+
+@keyframes scv-splash-out {
+  to {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.97);
+  }
+}
+
+@keyframes scv-site-in {
+  from {
+    opacity: 0.6;
+    transform: scale(1.035);
+    filter: saturate(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
 @keyframes scv-rise {
   from {
     opacity: 0.55;
