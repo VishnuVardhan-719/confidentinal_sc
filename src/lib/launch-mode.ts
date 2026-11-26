@@ -37,11 +37,26 @@ export type PrelaunchDecision =
 
 const LOCALE_PATH = /^\/(en|te|hi)(\/.*)?$/;
 
+/**
+ * Decide on the path exactly as the router will read it: percent-decoded once (Next and next-intl both do this,
+ * so `/%65n/login` is `/en/login`) with repeated slashes collapsed. A path that cannot be decoded is held.
+ */
 export function prelaunchDecision(pathname: string, method: string): PrelaunchDecision {
-  const match = LOCALE_PATH.exec(pathname);
-  // No locale prefix: next-intl redirects to the prefixed URL, which is decided on the next request.
-  if (!match) return { action: "pass" };
   if (method !== "GET" && method !== "HEAD") return { action: "refuse-method" };
+  let path: string;
+  try {
+    path = decodeURIComponent(pathname).replace(/\/{2,}/g, "/");
+  } catch {
+    return { action: "hold", locale: "en" };
+  }
+  const match = LOCALE_PATH.exec(path);
+  if (!match) {
+    // Static files (robots.txt, sitemap.xml, images) have no locale and contain a dot. Pages live only under a locale.
+    if (path.includes(".")) return { action: "pass" };
+    const bare = path.replace(/\/+$/, "") || "/";
+    // An unprefixed open page is redirected to its locale URL, which is decided on the next request. Anything else is held.
+    return bare === "/" || (PRELAUNCH_OPEN_PAGES as readonly string[]).includes(bare) ? { action: "pass" } : { action: "hold", locale: "en" };
+  }
   const rest = (match[2] ?? "").replace(/\/+$/, "") || "/";
   return (PRELAUNCH_OPEN_PAGES as readonly string[]).includes(rest) ? { action: "pass" } : { action: "hold", locale: match[1] };
 }

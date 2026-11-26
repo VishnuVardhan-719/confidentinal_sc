@@ -38,8 +38,23 @@ describe("pre-launch mode", () => {
     }
   });
 
-  it("leaves unprefixed paths to the locale redirect, which is decided on the next request", () => {
-    expect(prelaunchDecision("/login", "GET")).toEqual({ action: "pass" });
+  it("sends unprefixed open pages to the locale redirect, holds the rest, and leaves static files alone", () => {
+    expect(prelaunchDecision("/", "GET")).toEqual({ action: "pass" });
+    expect(prelaunchDecision("/about", "GET")).toEqual({ action: "pass" });
+    expect(prelaunchDecision("/login", "GET")).toEqual({ action: "hold", locale: "en" });
+    expect(prelaunchDecision("/doctors", "GET")).toEqual({ action: "hold", locale: "en" });
+    expect(prelaunchDecision("/robots.txt", "GET")).toEqual({ action: "pass" });
+    expect(prelaunchDecision("/brand/emblem.webp", "GET")).toEqual({ action: "pass" });
+    expect(prelaunchDecision("/login", "POST")).toEqual({ action: "refuse-method" });
+  });
+
+  it("cannot be bypassed by encoding, dots or extra slashes", () => {
+    const held = ["/%65n/login", "/%45n/login", "/en%2Flogin", "/%2Fen/login", "/en//login", "/en/doctors/a.b", "/en/verify/abc.def", "/en/stories/x.y", "/%65n/doctors/a.b", "/en/about%2F..%2Flogin", "/en/%2e%2e/admin", "/te/patient/x.y", "/%2565n/login", "/en/%ZZ"];
+    for (const path of held) {
+      const decision = prelaunchDecision(path, "GET");
+      expect(decision.action, path).toBe("hold");
+    }
+    expect(prelaunchDecision("/%65n/about", "GET")).toEqual({ action: "pass" });
   });
 
   it("lists only the open pages in the sitemap and llms.txt", () => {

@@ -30,6 +30,8 @@ export default async function proxy(request: NextRequest) {
       return NextResponse.rewrite(url, { headers: { "X-Robots-Tag": "noindex" } });
     }
   }
+  // Static files and any other dotted path never reach locale routing (unchanged behaviour: the matcher used to skip them).
+  if (request.nextUrl.pathname.includes(".")) return NextResponse.next();
   const match = STORY_PATH.exec(request.nextUrl.pathname);
   if (match) {
     const [, locale, rawSlug] = match;
@@ -50,7 +52,7 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Skip API routes, Next internals, Vercel internals and any path containing a dot (static files,
-  // sitemap.xml, robots.txt).
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  // Skip API routes, Next internals and Vercel internals. Paths with a dot (static files, sitemap.xml, robots.txt)
+  // are skipped inside proxy() instead, so pre-launch mode can still hold a dotted URL under a locale.
+  matcher: ["/((?!api|_next|_vercel).*)"],
 };

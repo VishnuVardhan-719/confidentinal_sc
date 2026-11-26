@@ -31,6 +31,15 @@ test("every gated route answers with the holding page, noindex by header", async
   }
 });
 
+test("encoded or dotted spellings of a gated route are held too", async ({ request }) => {
+  for (const path of ["/%65n/login", "/%45n/signup", "/en/doctors/a.b", "/en/verify/abc.def", "/en/stories/x.y", "/te/patient/x.y", "/en//login"]) {
+    const res = await request.get(path, { maxRedirects: 5 });
+    const html = await res.text();
+    expect(html, path).toContain(TITLE[path.includes("/te/") ? "te" : "en"]);
+    expect(html, path).not.toContain("Sign in to SureCure Visit");
+  }
+});
+
 test("a state-changing request to any page is refused", async ({ request }) => {
   for (const path of ["/en", "/en/login", "/en/about", "/en/patient/dashboard"]) {
     for (const method of ["POST", "PUT", "PATCH", "DELETE"] as const) {
