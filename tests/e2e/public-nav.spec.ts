@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+const OFFICIAL_EXTERNAL = new Set(["mailto:surecurevisit@gmail.com", "https://www.instagram.com/surecure.visit/"]);
+
 /**
  * Nav walk (USER-REQ-1 A): every link in the public header (desktop menu + mobile sheet), the
  * footer and the landing page must resolve. Routes built by other workstreams are listed as
@@ -43,10 +45,12 @@ for (const locale of LOCALES) {
     for (const href of hrefs) {
       expect(href, "empty or placeholder link").not.toMatch(/^(#|javascript:)?$/);
       if (href.startsWith("tel:")) {
-        expect(href).toBe("tel:108");
+        expect(["tel:108", "tel:+918341494604"], "only 108 and the official company number").toContain(href);
         continue;
       }
       if (href.startsWith("#")) continue;
+      // The owner-supplied footer contacts are the only external links allowed.
+      if (OFFICIAL_EXTERNAL.has(href)) continue;
       // Internal only; language-switch links may point at another locale.
       expect(/^\/(en|te|hi)(\/|$|\?|#)/.test(href), `link leaves the site: ${href}`).toBe(true);
       const path = href.split("#")[0];

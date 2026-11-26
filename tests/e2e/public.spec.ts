@@ -1,6 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
+const OFFICIAL_EXTERNAL = new Set(["mailto:surecurevisit@gmail.com", "https://www.instagram.com/surecure.visit/"]);
+
 const LOCALES = ["en", "te", "hi"] as const;
 const PAGES = [
   "",
@@ -115,10 +117,12 @@ test("every link on public pages points to a real route", async ({ page, request
   }
   for (const href of hrefs) {
     if (href.startsWith("tel:")) {
-      expect(href).toBe("tel:108");
+      expect(["tel:108", "tel:+918341494604"], "only 108 and the official company number").toContain(href);
       continue;
     }
     if (href.startsWith("#")) continue;
+    // The owner-supplied footer contacts are the only external links allowed.
+    if (OFFICIAL_EXTERNAL.has(href)) continue;
     expect(href.startsWith("/"), `external or empty link: ${href}`).toBe(true);
     const pathOnly = href.split("#")[0].split("?")[0];
     const unlocalized = pathOnly.replace(/^\/(en|te|hi)(?=\/|$)/, "") || "/";
